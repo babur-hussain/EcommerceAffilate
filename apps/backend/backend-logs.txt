@@ -1,0 +1,101 @@
+
+> @ecommerceearn/backend@1.0.0 dev
+> ts-node-dev --respawn --transpile-only src/server.ts
+
+[INFO] 01:54:02 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+✓ Firebase Admin initialized with service account file
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"slug":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"productId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"businessId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"firebaseUid":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"firebaseUid":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"businessId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"code":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65412) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+{"level":30,"time":"2026-01-07T20:24:05.113Z","msg":"MongoDB connected"}
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at startServer (/Users/baburhussain/Documents/ecommerceearn/apps/backend/src/server.ts:18:12)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR] 01:54:05 Error: listen EADDRINUSE: address already in use :::4000
+{"level":30,"time":"2026-01-07T20:24:05.127Z","signal":"SIGTERM","msg":"Received shutdown signal"}
+{"level":50,"time":"2026-01-07T20:24:05.127Z","err":{"type":"Error","message":"Server is not running.","stack":"Error: Server is not running.\n    at Server.close (node:net:2359:12)\n    at Object.onceWrapper (node:events:622:28)\n    at Server.emit (node:events:508:28)\n    at emitCloseNT (node:net:2419:8)\n    at processTicksAndRejections (node:internal/process/task_queues:89:21)","code":"ERR_SERVER_NOT_RUNNING"},"msg":"Error during HTTP server close"}
+[INFO] 01:54:30 Restarting: /Users/baburhussain/Documents/ecommerceearn/apps/backend/src/routes/business.route.ts has been modified
+✓ Firebase Admin initialized with service account file
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"slug":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"productId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"businessId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"firebaseUid":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"firebaseUid":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"businessId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"code":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:65726) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+{"level":30,"time":"2026-01-07T20:24:32.007Z","msg":"MongoDB connected"}
+{"level":30,"time":"2026-01-07T20:24:32.013Z","port":4000,"msg":"Backend server running"}
+🌐 INCOMING: GET /api/business/test - Auth: NO
+{"level":30,"time":"2026-01-07T20:24:36.668Z","requestId":"4c6127c6-4d80-4ab1-96a6-634d6abbde9a","method":"GET","path":"/api/business/test","status":401,"durationMs":5.14}
+🌐 INCOMING: GET /health - Auth: NO
+{"level":30,"time":"2026-01-07T20:24:47.320Z","requestId":"c14a11bf-f04b-4376-86c2-59c01d5425bd","method":"GET","path":"/health","status":200,"durationMs":0.88}
+🌐 INCOMING: POST /api/business/register - Auth: YES
+{"level":30,"time":"2026-01-07T20:24:55.260Z","requestId":"ffd039f1-c261-40f4-b1cc-a35b56737094","method":"POST","path":"/api/business/register","status":401,"durationMs":1.29}
+[INFO] 01:55:07 Restarting: /Users/baburhussain/Documents/ecommerceearn/apps/backend/src/app.ts has been modified
+{"level":30,"time":"2026-01-07T20:25:07.247Z","signal":"SIGTERM","msg":"Received shutdown signal"}
+{"level":40,"time":"2026-01-07T20:25:07.285Z","msg":"MongoDB disconnected"}
+{"level":30,"time":"2026-01-07T20:25:07.285Z","msg":"MongoDB connection closed"}
+✓ Firebase Admin initialized with service account file
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"slug":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"productId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"businessId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"firebaseUid":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"firebaseUid":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"businessId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"code":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66230) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+{"level":30,"time":"2026-01-07T20:25:08.948Z","msg":"MongoDB connected"}
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at startServer (/Users/baburhussain/Documents/ecommerceearn/apps/backend/src/server.ts:18:12)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR] 01:55:08 Error: listen EADDRINUSE: address already in use :::4000
+{"level":30,"time":"2026-01-07T20:25:08.961Z","signal":"SIGTERM","msg":"Received shutdown signal"}
+{"level":50,"time":"2026-01-07T20:25:08.961Z","err":{"type":"Error","message":"Server is not running.","stack":"Error: Server is not running.\n    at Server.close (node:net:2359:12)\n    at Object.onceWrapper (node:events:622:28)\n    at Server.emit (node:events:508:28)\n    at emitCloseNT (node:net:2419:8)\n    at processTicksAndRejections (node:internal/process/task_queues:89:21)","code":"ERR_SERVER_NOT_RUNNING"},"msg":"Error during HTTP server close"}
+[INFO] 01:55:30 Restarting: /Users/baburhussain/Documents/ecommerceearn/apps/backend/src/routes/business.route.ts has been modified
+✓ Firebase Admin initialized with service account file
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"slug":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"productId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"businessId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"firebaseUid":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"firebaseUid":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"businessId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"code":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:66242) [MONGOOSE] Warning: Duplicate schema index on {"userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+{"level":30,"time":"2026-01-07T20:25:31.342Z","msg":"MongoDB connected"}
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at startServer (/Users/baburhussain/Documents/ecommerceearn/apps/backend/src/server.ts:18:12)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR] 01:55:31 Error: listen EADDRINUSE: address already in use :::4000
+{"level":30,"time":"2026-01-07T20:25:31.356Z","signal":"SIGTERM","msg":"Received shutdown signal"}
+{"level":50,"time":"2026-01-07T20:25:31.356Z","err":{"type":"Error","message":"Server is not running.","stack":"Error: Server is not running.\n    at Server.close (node:net:2359:12)\n    at Object.onceWrapper (node:events:622:28)\n    at Server.emit (node:events:508:28)\n    at emitCloseNT (node:net:2419:8)\n    at processTicksAndRejections (node:internal/process/task_queues:89:21)","code":"ERR_SERVER_NOT_RUNNING"},"msg":"Error during HTTP server close"}
