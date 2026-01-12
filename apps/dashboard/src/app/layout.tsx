@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'Dashboard - ShopPlatform Business',
-  description: 'Influencer-First Ecommerce Marketplace Dashboard',
+  title: "Dashboard - ShopPlatform Business",
+  description: "Influencer-First Ecommerce Marketplace Dashboard",
 };
 
 export default function RootLayout({
@@ -11,5 +11,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
 }

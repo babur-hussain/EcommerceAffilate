@@ -38,6 +38,10 @@ export const env = {
   IMAGE_CDN_BASE_URL: process.env.IMAGE_CDN_BASE_URL,
   payments: {
     provider: process.env.PAYMENT_PROVIDER || 'MOCK',
+    razorpay: {
+      key_id: process.env.RAZORPAY_KEY_ID || '',
+      key_secret: process.env.RAZORPAY_KEY_SECRET || '',
+    },
   },
   ads: {
     clickCost: numberFromEnv('CLICK_COST', isProduction ? 5 : 1),
