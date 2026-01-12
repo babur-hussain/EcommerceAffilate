@@ -47,6 +47,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Error fetching profile:", error);
       console.log("Error status:", error.response?.status);
 
+      // Check for network/connection errors
+      if (error.code === "ECONNREFUSED" || error.code === "ERR_NETWORK" || error.message?.includes("ERR_CONNECTION_REFUSED")) {
+        const errorMsg = "Backend server is not running. Please start the backend server on port 4000.";
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+
       // If user is not a super admin (403) or not found (404), deny access
       if (error.response?.status === 403 || error.response?.status === 404) {
         throw new Error("Access denied: Not a super admin");
@@ -116,7 +123,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = await userCredential.user.getIdToken();
       localStorage.setItem("authToken", token);
 
-      toast.success("Signed in successfully!");
+      // Fetch profile immediately to verify super admin access and set user state
+      try {
+        await fetchProfile(token, userCredential.user);
+        
+        // Set user only if profile fetch succeeds (meaning user is SUPER_ADMIN)
+        const userData: User = {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email || "",
+          name: userCredential.user.displayName || undefined,
+          role: "SUPER_ADMIN",
+          isActive: true,
+        };
+        setUser(userData);
+        
+        toast.success("Signed in successfully!");
+      } catch (profileError: any) {
+        console.error("Profile fetch error during sign in:", profileError);
+        
+        // If not a super admin, sign out
+        if (profileError.message?.includes("Not a super admin")) {
+          await firebaseSignOut(auth);
+          toast.error("Access denied: Not a super admin");
+          throw new Error("Access denied: Not a super admin");
+        }
+        
+        throw profileError;
+      }
     } catch (error: any) {
       console.error("Sign in error:", error);
       let errorMessage = "Failed to sign in";

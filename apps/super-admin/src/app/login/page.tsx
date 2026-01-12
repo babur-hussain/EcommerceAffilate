@@ -13,10 +13,11 @@ export default function LoginPage() {
   const { signIn, user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // Redirect if already logged in
+  // Redirect if already logged in or after successful sign in
   useEffect(() => {
     if (!authLoading && user) {
       router.push("/admin");
+      setLoading(false);
     }
   }, [user, authLoading, router]);
 
@@ -27,13 +28,14 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push("/admin");
+      // Don't redirect immediately - let the useEffect handle it once user state is set
+      // The onAuthStateChanged listener will fetch the profile and set the user
+      // Keep loading true until user is set (handled in useEffect)
     } catch (err: any) {
       console.error("Login error:", err);
       setError(
         err.message || "Failed to sign in. Please check your credentials."
       );
-    } finally {
       setLoading(false);
     }
   };
