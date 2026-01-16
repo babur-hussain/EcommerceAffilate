@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
     "axios": "^1.7.0",
     "date-fns": "^3.6.0",
     "firebase": "^10.12.0",
@@ -21,10 +22,9 @@
     "recharts": "^2.12.0"
   },
   "devDependencies": {
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^20.10.0",
-    "@types/react": "^18.2.79",
     "@types/react-beautiful-dnd": "^13.1.8",
-    "@types/react-dom": "^18.2.25",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",

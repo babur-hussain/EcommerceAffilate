@@ -6,8 +6,9 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api";
 import toast from "react-hot-toast";
-import { ArrowLeft, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Upload, X, MapPin } from "lucide-react";
 import Link from "next/link";
+import LocationPickerModal from "@/components/LocationPickerModal";
 
 interface Brand {
   _id: string;
@@ -91,7 +92,7 @@ interface Product {
   hazardous?: boolean;
   shippingClass?: string;
   pickupLocation?: string;
-  processingTime?: number | string;
+  processingTime?: { value: number; unit: 'hours' | 'days' };
   shippingCharges?: number | string;
   codAvailable?: boolean;
   internationalShipping?: boolean;
@@ -125,6 +126,7 @@ interface Product {
   publishDate?: string;
   visibility?: string;
   brandId?: string;
+  trustBadges?: string[];
 }
 
 // Section component moved outside to prevent recreation on every render
@@ -148,40 +150,35 @@ const Section = ({
   return (
     <div
       ref={sectionRef}
-      className={`border rounded-xl mb-6 transition-all duration-300 ${
-        isActive
-          ? "border-primary-500 shadow-lg"
-          : "border-gray-200 shadow-sm hover:border-gray-300"
-      }`}
+      className={`border rounded-xl mb-6 transition-all duration-300 ${isActive
+        ? "border-primary-500 shadow-lg"
+        : "border-gray-200 shadow-sm hover:border-gray-300"
+        }`}
     >
       <button
         type="button"
         onClick={() => onToggle(name)}
-        className={`w-full px-6 py-5 flex items-center justify-between rounded-t-xl transition-all duration-200 ${
-          isActive
-            ? "bg-gradient-to-r from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-150"
-            : "bg-gray-50 hover:bg-gray-100"
-        }`}
+        className={`w-full px-6 py-5 flex items-center justify-between rounded-t-xl transition-all duration-200 ${isActive
+          ? "bg-gradient-to-r from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-150"
+          : "bg-gray-50 hover:bg-gray-100"
+          }`}
       >
         <h3
-          className={`text-lg font-semibold flex items-center gap-3 ${
-            isActive ? "text-primary-700" : "text-gray-900"
-          }`}
+          className={`text-lg font-semibold flex items-center gap-3 ${isActive ? "text-primary-700" : "text-gray-900"
+            }`}
         >
           {title}
         </h3>
         <div
-          className={`transition-transform duration-200 ${
-            isActive ? "rotate-180 text-primary-600" : "text-gray-500"
-          }`}
+          className={`transition-transform duration-200 ${isActive ? "rotate-180 text-primary-600" : "text-gray-500"
+            }`}
         >
           <ChevronDown className="h-5 w-5" />
         </div>
       </button>
       <div
-        className={`overflow-hidden transition-all duration-300 ${
-          isActive ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
-        }`}
+        className={`overflow-hidden transition-all duration-300 ${isActive ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+          }`}
       >
         <div className="p-6 bg-white space-y-6 rounded-b-xl">{children}</div>
       </div>
@@ -202,6 +199,7 @@ export default function EditProductPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const [formData, setFormData] = useState({
@@ -277,7 +275,7 @@ export default function EditProductPage() {
     // 9. Shipping & Logistics
     shippingClass: "Standard",
     pickupLocation: "",
-    processingTime: "2",
+    processingTime: { value: 2, unit: "days" } as { value: number; unit: "hours" | "days" },
     shippingCharges: "Free",
     codAvailable: true,
     internationalShipping: false,
@@ -324,19 +322,23 @@ export default function EditProductPage() {
     visibility: "Public",
 
     brandId: "",
+    trustBadges: [] as string[],
   });
+
+  const [availableTrustBadges, setAvailableTrustBadges] = useState<Array<{ id: string; name: string; description: string }>>([]);
 
   useEffect(() => {
     fetchBrands();
     fetchCategories();
     fetchProduct();
+    fetchTrustBadges();
   }, []);
 
   const fetchProduct = async () => {
     try {
       setFetchingProduct(true);
       const response = await apiClient.get(`/api/products/${productId}`);
-      const product: Product = response.data;
+      const product: Partial<Product> = response.data;
 
       // Pre-fill form with product data
       setFormData({
@@ -399,8 +401,14 @@ export default function EditProductPage() {
         hazardous: product.hazardous || false,
         shippingClass: product.shippingClass || "Standard",
         pickupLocation: product.pickupLocation || "",
-        processingTime: product.processingTime?.toString() || "2",
-        shippingCharges: product.shippingCharges || "Free",
+        processingTime:
+          typeof product.processingTime === "object" && product.processingTime
+            ? product.processingTime
+            : {
+              value: parseInt(product.processingTime?.toString() || "2"),
+              unit: "days",
+            },
+        shippingCharges: product.shippingCharges?.toString() || "Free",
         codAvailable:
           product.codAvailable !== undefined ? product.codAvailable : true,
         internationalShipping: product.internationalShipping || false,
@@ -438,6 +446,7 @@ export default function EditProductPage() {
         publishDate: product.publishDate || "",
         visibility: product.visibility || "Public",
         brandId: product.brandId || "",
+        trustBadges: product.trustBadges || [],
       });
 
       // Set existing images as preview
@@ -472,6 +481,22 @@ export default function EditProductPage() {
     } catch (error) {
       console.error("Failed to fetch categories:", error);
       toast.error("Failed to load categories");
+    }
+  };
+
+  const fetchTrustBadges = async () => {
+    try {
+      const response = await apiClient.get<{ business?: { trustBadges?: string[] } }>("/api/me");
+      const business = response.data.business;
+      if (business?.trustBadges) {
+        const badgesResponse = await apiClient.get<Array<{ id: string; name: string; description: string }>>("/api/super-admin/trust-badges");
+        const assignedBadges = badgesResponse.data.filter((badge) =>
+          business.trustBadges!.includes(badge.id)
+        );
+        setAvailableTrustBadges(assignedBadges);
+      }
+    } catch (error) {
+      console.error("Failed to fetch trust badges:", error);
     }
   };
 
@@ -669,13 +694,23 @@ export default function EditProductPage() {
           height: formData.height,
         },
         shippingClass: formData.shippingClass,
-        processingTime: parseInt(formData.processingTime),
+        processingTime: {
+          value:
+            typeof formData.processingTime === "object"
+              ? formData.processingTime.value
+              : parseInt(formData.processingTime),
+          unit:
+            typeof formData.processingTime === "object"
+              ? formData.processingTime.unit
+              : "days",
+        },
         codAvailable: formData.codAvailable,
         seoTitle: formData.seoTitle || formData.title,
         seoDescription: formData.seoDescription,
         seoKeywords: formData.seoKeywords,
         status: formData.status,
         visibility: formData.visibility,
+        trustBadges: formData.trustBadges,
       };
 
       // Only update images if new ones were uploaded
@@ -1578,11 +1613,10 @@ export default function EditProductPage() {
                     />
                     <label
                       htmlFor="image-upload"
-                      className={`flex flex-col items-center justify-center cursor-pointer ${
-                        imageFiles.length >= 7
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
+                      className={`flex flex-col items-center justify-center cursor-pointer ${imageFiles.length >= 7
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                        }`}
                     >
                       <svg
                         className="w-12 h-12 text-gray-400 mb-3"
@@ -1824,26 +1858,68 @@ export default function EditProductPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Pickup Location
                   </label>
-                  <input
-                    type="text"
-                    name="pickupLocation"
-                    value={formData.pickupLocation}
-                    onChange={handleChange}
-                    className={textareaClass}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="pickupLocation"
+                      value={formData.pickupLocation}
+                      onChange={handleChange}
+                      className={textareaClass.replace("w-full", "flex-1")}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLocationPicker(true)}
+                      className="p-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-500"
+                      title="Pick from map"
+                    >
+                      <MapPin className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <LocationPickerModal
+                    isOpen={showLocationPicker}
+                    onClose={() => setShowLocationPicker(false)}
+                    onSelect={(address) => {
+                      setFormData({ ...formData, pickupLocation: address });
+                    }}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Processing Time (Days)
+                    Processing Time
                   </label>
-                  <input
-                    type="number"
-                    name="processingTime"
-                    value={formData.processingTime}
-                    onChange={handleChange}
-                    min="0"
-                    className={textareaClass}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={formData.processingTime.value}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          processingTime: {
+                            ...formData.processingTime,
+                            value: parseInt(e.target.value) || 0,
+                          },
+                        })
+                      }
+                      min="0"
+                      className={textareaClass.replace("w-full", "flex-1")}
+                    />
+                    <select
+                      value={formData.processingTime.unit}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          processingTime: {
+                            ...formData.processingTime,
+                            unit: e.target.value as "hours" | "days",
+                          },
+                        })
+                      }
+                      className={textareaClass.replace("w-full", "w-32")}
+                    >
+                      <option value="hours">Hours</option>
+                      <option value="days">Days</option>
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2346,6 +2422,76 @@ export default function EditProductPage() {
                     <option value="Private">Private</option>
                   </select>
                 </div>
+              </div>
+            </Section>
+
+            {/* 1️⃣6️⃣ Trust Badges */}
+            <Section
+              title="1️⃣6️⃣ Trust Badges"
+              name="trustBadges"
+              isActive={activeSection === "trustBadges"}
+              onToggle={toggleSection}
+              sectionRef={(el) => {
+                if (el) sectionRefs.current["trustBadges"] = el;
+              }}
+            >
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Select trust badges to display on this product (assigned by admin)
+                </p>
+
+                {availableTrustBadges.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">
+                    No trust badges assigned to your business yet. Contact admin to get badges assigned.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {availableTrustBadges.map((badge) => {
+                      const isSelected = formData.trustBadges.includes(badge.id);
+                      return (
+                        <div
+                          key={badge.id}
+                          onClick={() => {
+                            if (isSelected) {
+                              setFormData(prev => ({
+                                ...prev,
+                                trustBadges: prev.trustBadges.filter(id => id !== badge.id)
+                              }));
+                            } else {
+                              setFormData(prev => ({
+                                ...prev,
+                                trustBadges: [...prev.trustBadges, badge.id]
+                              }));
+                            }
+                          }}
+                          className={`cursor-pointer border rounded-lg p-4 transition-all duration-200 flex items-start gap-3
+                            ${isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}
+                          `}
+                        >
+                          <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors
+                            ${isSelected ? 'bg-primary-600 border-primary-600' : 'border-gray-300 bg-white'}
+                          `}>
+                            {isSelected && (
+                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${isSelected ? 'text-primary-900' : 'text-gray-900'}`}>
+                              {badge.name}
+                            </h3>
+                            {badge.description && (
+                              <p className={`text-xs mt-1 ${isSelected ? 'text-primary-700' : 'text-gray-500'}`}>
+                                {badge.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </Section>
           </form>
