@@ -1879,637 +1879,640 @@ export default function EditProductPage() {
                       <MapPin className="h-5 w-5" />
                     </button>
                   </div>
-                  <LocationPickerModal
-                    isOpen={showLocationPicker}
-                    onClose={() => setShowLocationPicker(false)}
-                    onSelect={(address, lat, lng) => {
+                </div>
+              </div>
+              {/* Location Picker Modal moved outside to generic valid location later, or effectively it is fine inside a div, 
+                    BUT the whole page content is wrapped in a <form> tag?
+                    Let's check where the form starts. Line 250 in the original file probably.
+                 */
+              }
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Processing Time
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={formData.processingTime.value}
+                    onChange={(e) =>
                       setFormData({
                         ...formData,
-                        pickupLocation: address,
-                        // We'll store coordinates in a temporary field until the backend schema supports it, 
-                        // or if we add it to the schema now. 
-                        // Let's assume we are adding it as per user request.
-                        pickupLocationCoordinates: { lat, lng }
-                      } as any);
-                    }}
-                    initialLat={formData.pickupLocationCoordinates?.lat}
-                    initialLng={formData.pickupLocationCoordinates?.lng}
+                        processingTime: {
+                          ...formData.processingTime,
+                          value: parseInt(e.target.value) || 0,
+                        },
+                      })
+                    }
+                    min="0"
+                    className={textareaClass.replace("w-full", "flex-1")}
                   />
+                  <select
+                    value={formData.processingTime.unit}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        processingTime: {
+                          ...formData.processingTime,
+                          unit: e.target.value as "hours" | "days",
+                        },
+                      })
+                    }
+                    className={textareaClass.replace("w-full", "w-32")}
+                  >
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Processing Time
-                  </label>
-                  <div className="flex gap-2">
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Shipping Charges
+                </label>
+                <select
+                  name="shippingCharges"
+                  value={formData.shippingCharges}
+                  onChange={handleChange}
+                  className={textareaClass}
+                >
+                  <option value="Free">Free</option>
+                  <option value="Flat">Flat Rate</option>
+                  <option value="Weight-based">Weight-based</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="codAvailable"
+                  checked={formData.codAvailable}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  COD Available
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="internationalShipping"
+                  checked={formData.internationalShipping}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  International Shipping
+                </label>
+              </div>
+            </div>
+          </Section>
+
+          {/* 10. Compliance & Legal */}
+          <Section
+            title="🔟 Compliance & Legal"
+            name="compliance"
+            isActive={activeSection === "compliance"}
+            onToggle={toggleSection}
+            sectionRef={(el) => {
+              sectionRefs.current["compliance"] = el;
+            }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  FSSAI Number (Food Products)
+                </label>
+                <input
+                  type="text"
+                  name="fssaiNumber"
+                  value={formData.fssaiNumber}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Drug License Number (Medical)
+                </label>
+                <input
+                  type="text"
+                  name="drugLicenseNumber"
+                  value={formData.drugLicenseNumber}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  BIS / ISI Certification
+                </label>
+                <input
+                  type="text"
+                  name="bisCertification"
+                  value={formData.bisCertification}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
+              </div>
+              <div className="flex items-center pt-7">
+                <input
+                  type="checkbox"
+                  name="expiryDateRequired"
+                  checked={formData.expiryDateRequired}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Expiry Date Required
+                </label>
+              </div>
+              {formData.expiryDateRequired && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Manufacturing Date
+                    </label>
                     <input
-                      type="number"
-                      value={formData.processingTime.value}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          processingTime: {
-                            ...formData.processingTime,
-                            value: parseInt(e.target.value) || 0,
-                          },
-                        })
-                      }
-                      min="0"
-                      className={textareaClass.replace("w-full", "flex-1")}
+                      type="date"
+                      name="manufacturingDate"
+                      value={formData.manufacturingDate}
+                      onChange={handleChange}
+                      className={textareaClass}
                     />
-                    <select
-                      value={formData.processingTime.unit}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          processingTime: {
-                            ...formData.processingTime,
-                            unit: e.target.value as "hours" | "days",
-                          },
-                        })
-                      }
-                      className={textareaClass.replace("w-full", "w-32")}
-                    >
-                      <option value="hours">Hours</option>
-                      <option value="days">Days</option>
-                    </select>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Shipping Charges
-                  </label>
-                  <select
-                    name="shippingCharges"
-                    value={formData.shippingCharges}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="Free">Free</option>
-                    <option value="Flat">Flat Rate</option>
-                    <option value="Weight-based">Weight-based</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Expiry Date
+                    </label>
+                    <input
+                      type="date"
+                      name="expiryDate"
+                      value={formData.expiryDate}
+                      onChange={handleChange}
+                      className={textareaClass}
+                    />
+                  </div>
+                </>
+              )}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Safety Disclaimer
+                </label>
+                <textarea
+                  name="safetyDisclaimer"
+                  value={formData.safetyDisclaimer}
+                  onChange={handleChange}
+                  rows={2}
+                  className={textareaClass}
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="codAvailable"
-                    checked={formData.codAvailable}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    COD Available
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="internationalShipping"
-                    checked={formData.internationalShipping}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    International Shipping
-                  </label>
-                </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Legal Disclaimer
+                </label>
+                <textarea
+                  name="legalDisclaimer"
+                  value={formData.legalDisclaimer}
+                  onChange={handleChange}
+                  rows={2}
+                  className={textareaClass}
+                />
               </div>
-            </Section>
+            </div>
+          </Section>
 
-            {/* 10. Compliance & Legal */}
-            <Section
-              title="🔟 Compliance & Legal"
-              name="compliance"
-              isActive={activeSection === "compliance"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["compliance"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    FSSAI Number (Food Products)
-                  </label>
-                  <input
-                    type="text"
-                    name="fssaiNumber"
-                    value={formData.fssaiNumber}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Drug License Number (Medical)
-                  </label>
-                  <input
-                    type="text"
-                    name="drugLicenseNumber"
-                    value={formData.drugLicenseNumber}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    BIS / ISI Certification
-                  </label>
-                  <input
-                    type="text"
-                    name="bisCertification"
-                    value={formData.bisCertification}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div className="flex items-center pt-7">
-                  <input
-                    type="checkbox"
-                    name="expiryDateRequired"
-                    checked={formData.expiryDateRequired}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Expiry Date Required
-                  </label>
-                </div>
-                {formData.expiryDateRequired && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Manufacturing Date
-                      </label>
-                      <input
-                        type="date"
-                        name="manufacturingDate"
-                        value={formData.manufacturingDate}
-                        onChange={handleChange}
-                        className={textareaClass}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="date"
-                        name="expiryDate"
-                        value={formData.expiryDate}
-                        onChange={handleChange}
-                        className={textareaClass}
-                      />
-                    </div>
-                  </>
-                )}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Safety Disclaimer
-                  </label>
-                  <textarea
-                    name="safetyDisclaimer"
-                    value={formData.safetyDisclaimer}
-                    onChange={handleChange}
-                    rows={2}
-                    className={textareaClass}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Legal Disclaimer
-                  </label>
-                  <textarea
-                    name="legalDisclaimer"
-                    value={formData.legalDisclaimer}
-                    onChange={handleChange}
-                    rows={2}
-                    className={textareaClass}
-                  />
-                </div>
+          {/* 11. SEO & Discoverability */}
+          <Section
+            title="1️⃣1️⃣ SEO & Discoverability"
+            name="seo"
+            isActive={activeSection === "seo"}
+            onToggle={toggleSection}
+            sectionRef={(el) => {
+              sectionRefs.current["seo"] = el;
+            }}
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SEO Title
+                </label>
+                <input
+                  type="text"
+                  name="seoTitle"
+                  value={formData.seoTitle}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
               </div>
-            </Section>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SEO Meta Description
+                </label>
+                <textarea
+                  name="seoDescription"
+                  value={formData.seoDescription}
+                  onChange={handleChange}
+                  rows={2}
+                  className={textareaClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SEO Keywords (comma separated)
+                </label>
+                <input
+                  type="text"
+                  name="seoKeywords"
+                  value={formData.seoKeywords}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Search Keywords (Backend)
+                </label>
+                <input
+                  type="text"
+                  name="searchKeywords"
+                  value={formData.searchKeywords}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  URL Slug
+                </label>
+                <input
+                  type="text"
+                  name="urlSlug"
+                  value={formData.urlSlug}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+          </Section>
 
-            {/* 11. SEO & Discoverability */}
-            <Section
-              title="1️⃣1️⃣ SEO & Discoverability"
-              name="seo"
-              isActive={activeSection === "seo"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["seo"] = el;
-              }}
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SEO Title
-                  </label>
-                  <input
-                    type="text"
-                    name="seoTitle"
-                    value={formData.seoTitle}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SEO Meta Description
-                  </label>
-                  <textarea
-                    name="seoDescription"
-                    value={formData.seoDescription}
-                    onChange={handleChange}
-                    rows={2}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SEO Keywords (comma separated)
-                  </label>
-                  <input
-                    type="text"
-                    name="seoKeywords"
-                    value={formData.seoKeywords}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Search Keywords (Backend)
-                  </label>
-                  <input
-                    type="text"
-                    name="searchKeywords"
-                    value={formData.searchKeywords}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    URL Slug
-                  </label>
-                  <input
-                    type="text"
-                    name="urlSlug"
-                    value={formData.urlSlug}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
+          {/* 12. Offers & Promotions */}
+          <Section
+            title="1️⃣2️⃣ Offers & Promotions"
+            name="offers"
+            isActive={activeSection === "offers"}
+            onToggle={toggleSection}
+            sectionRef={(el) => {
+              sectionRefs.current["offers"] = el;
+            }}
+          >
+            <div className="space-y-3">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="eligibleForOffers"
+                  checked={formData.eligibleForOffers}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Eligible for Platform Offers
+                </label>
               </div>
-            </Section>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="bankOfferEnabled"
+                  checked={formData.bankOfferEnabled}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Bank Offer Enabled
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="flashSaleEligible"
+                  checked={formData.flashSaleEligible}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Flash Sale Eligible
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="dealOfDayEligible"
+                  checked={formData.dealOfDayEligible}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Deal of the Day Eligible
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="bulkDiscountEnabled"
+                  checked={formData.bulkDiscountEnabled}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Bulk Purchase Discount (B2B)
+                </label>
+              </div>
+            </div>
+          </Section>
 
-            {/* 12. Offers & Promotions */}
-            <Section
-              title="1️⃣2️⃣ Offers & Promotions"
-              name="offers"
-              isActive={activeSection === "offers"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["offers"] = el;
-              }}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="eligibleForOffers"
-                    checked={formData.eligibleForOffers}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Eligible for Platform Offers
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="bankOfferEnabled"
-                    checked={formData.bankOfferEnabled}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Bank Offer Enabled
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="flashSaleEligible"
-                    checked={formData.flashSaleEligible}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Flash Sale Eligible
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="dealOfDayEligible"
-                    checked={formData.dealOfDayEligible}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Deal of the Day Eligible
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="bulkDiscountEnabled"
-                    checked={formData.bulkDiscountEnabled}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Bulk Purchase Discount (B2B)
-                  </label>
-                </div>
+          {/* 13. B2B / Wholesale */}
+          <Section
+            title="1️⃣3️⃣ B2B / Wholesale (Optional)"
+            name="b2b"
+            isActive={activeSection === "b2b"}
+            onToggle={toggleSection}
+            sectionRef={(el) => {
+              sectionRefs.current["b2b"] = el;
+            }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Wholesale Price
+                </label>
+                <input
+                  type="number"
+                  name="wholesalePrice"
+                  value={formData.wholesalePrice}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className={textareaClass}
+                />
               </div>
-            </Section>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Minimum Wholesale Quantity
+                </label>
+                <input
+                  type="number"
+                  name="minWholesaleQty"
+                  value={formData.minWholesaleQty}
+                  onChange={handleChange}
+                  min="0"
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="tieredPricing"
+                  checked={formData.tieredPricing}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Tiered Pricing
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="businessOnlyVisibility"
+                  checked={formData.businessOnlyVisibility}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Business-only Visibility
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="gstInvoiceMandatory"
+                  checked={formData.gstInvoiceMandatory}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 rounded"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  GST Invoice Mandatory
+                </label>
+              </div>
+            </div>
+          </Section>
 
-            {/* 13. B2B / Wholesale */}
-            <Section
-              title="1️⃣3️⃣ B2B / Wholesale (Optional)"
-              name="b2b"
-              isActive={activeSection === "b2b"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["b2b"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Wholesale Price
-                  </label>
-                  <input
-                    type="number"
-                    name="wholesalePrice"
-                    value={formData.wholesalePrice}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Minimum Wholesale Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="minWholesaleQty"
-                    value={formData.minWholesaleQty}
-                    onChange={handleChange}
-                    min="0"
-                    className={textareaClass}
-                  />
-                </div>
+          {/* 14. Quality & Moderation */}
+          <Section
+            title="1️⃣4️⃣ Quality & Moderation"
+            name="quality"
+            isActive={activeSection === "quality"}
+            onToggle={toggleSection}
+            sectionRef={(el) => {
+              sectionRefs.current["quality"] = el;
+            }}
+          >
+            <div className="space-y-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="flex items-start">
+                <input
+                  type="checkbox"
+                  name="qualityCheckConfirmed"
+                  checked={formData.qualityCheckConfirmed}
+                  onChange={handleChange}
+                  required
+                  className="h-4 w-4 text-primary-600 rounded mt-1"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  <span className="font-semibold">
+                    * I confirm that I have performed a self quality check
+                  </span>{" "}
+                  on this product and it meets all quality standards.
+                </label>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="tieredPricing"
-                    checked={formData.tieredPricing}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Tiered Pricing
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="businessOnlyVisibility"
-                    checked={formData.businessOnlyVisibility}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Business-only Visibility
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="gstInvoiceMandatory"
-                    checked={formData.gstInvoiceMandatory}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    GST Invoice Mandatory
-                  </label>
-                </div>
+              <div className="flex items-start">
+                <input
+                  type="checkbox"
+                  name="authenticityConfirmed"
+                  checked={formData.authenticityConfirmed}
+                  onChange={handleChange}
+                  required
+                  className="h-4 w-4 text-primary-600 rounded mt-1"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  <span className="font-semibold">
+                    * Product Authenticity Declaration:
+                  </span>{" "}
+                  I declare that this product is genuine and authentic.
+                </label>
               </div>
-            </Section>
+              <div className="flex items-start">
+                <input
+                  type="checkbox"
+                  name="brandAuthorizationConfirmed"
+                  checked={formData.brandAuthorizationConfirmed}
+                  onChange={handleChange}
+                  required
+                  className="h-4 w-4 text-primary-600 rounded mt-1"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  <span className="font-semibold">
+                    * Brand Authorization:
+                  </span>{" "}
+                  I confirm that I am authorized to sell products under this
+                  brand.
+                </label>
+              </div>
+            </div>
+          </Section>
 
-            {/* 14. Quality & Moderation */}
-            <Section
-              title="1️⃣4️⃣ Quality & Moderation"
-              name="quality"
-              isActive={activeSection === "quality"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["quality"] = el;
-              }}
-            >
-              <div className="space-y-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="qualityCheckConfirmed"
-                    checked={formData.qualityCheckConfirmed}
-                    onChange={handleChange}
-                    required
-                    className="h-4 w-4 text-primary-600 rounded mt-1"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    <span className="font-semibold">
-                      * I confirm that I have performed a self quality check
-                    </span>{" "}
-                    on this product and it meets all quality standards.
-                  </label>
-                </div>
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="authenticityConfirmed"
-                    checked={formData.authenticityConfirmed}
-                    onChange={handleChange}
-                    required
-                    className="h-4 w-4 text-primary-600 rounded mt-1"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    <span className="font-semibold">
-                      * Product Authenticity Declaration:
-                    </span>{" "}
-                    I declare that this product is genuine and authentic.
-                  </label>
-                </div>
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="brandAuthorizationConfirmed"
-                    checked={formData.brandAuthorizationConfirmed}
-                    onChange={handleChange}
-                    required
-                    className="h-4 w-4 text-primary-600 rounded mt-1"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    <span className="font-semibold">
-                      * Brand Authorization:
-                    </span>{" "}
-                    I confirm that I am authorized to sell products under this
-                    brand.
-                  </label>
-                </div>
+          {/* 15. Product Status */}
+          <Section
+            title="1️⃣5️⃣ Product Status & Publishing"
+            name="status"
+            isActive={activeSection === "status"}
+            onToggle={toggleSection}
+            sectionRef={(el) => {
+              sectionRefs.current["status"] = el;
+            }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Product Status
+                </label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className={textareaClass}
+                >
+                  <option value="draft">Save as Draft</option>
+                  <option value="pending">Submit for Approval</option>
+                  <option value="active">Publish Immediately</option>
+                </select>
               </div>
-            </Section>
-
-            {/* 15. Product Status */}
-            <Section
-              title="1️⃣5️⃣ Product Status & Publishing"
-              name="status"
-              isActive={activeSection === "status"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["status"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Status
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="draft">Save as Draft</option>
-                    <option value="pending">Submit for Approval</option>
-                    <option value="active">Publish Immediately</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Schedule Publish Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="publishDate"
-                    value={formData.publishDate}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Visibility
-                  </label>
-                  <select
-                    name="visibility"
-                    value={formData.visibility}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="Public">Public</option>
-                    <option value="Business Only">Business Only</option>
-                    <option value="Private">Private</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Schedule Publish Date
+                </label>
+                <input
+                  type="datetime-local"
+                  name="publishDate"
+                  value={formData.publishDate}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
               </div>
-            </Section>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Product Visibility
+                </label>
+                <select
+                  name="visibility"
+                  value={formData.visibility}
+                  onChange={handleChange}
+                  className={textareaClass}
+                >
+                  <option value="Public">Public</option>
+                  <option value="Business Only">Business Only</option>
+                  <option value="Private">Private</option>
+                </select>
+              </div>
+            </div>
+          </Section>
 
-            {/* 1️⃣6️⃣ Trust Badges */}
-            <Section
-              title="1️⃣6️⃣ Trust Badges"
-              name="trustBadges"
-              isActive={activeSection === "trustBadges"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                if (el) sectionRefs.current["trustBadges"] = el;
-              }}
-            >
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  Select trust badges to display on this product (assigned by admin)
+          {/* 1️⃣6️⃣ Trust Badges */}
+          <Section
+            title="1️⃣6️⃣ Trust Badges"
+            name="trustBadges"
+            isActive={activeSection === "trustBadges"}
+            onToggle={toggleSection}
+            sectionRef={(el) => {
+              if (el) sectionRefs.current["trustBadges"] = el;
+            }}
+          >
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Select trust badges to display on this product (assigned by admin)
+              </p>
+
+              {availableTrustBadges.length === 0 ? (
+                <p className="text-sm text-gray-500 italic">
+                  No trust badges assigned to your business yet. Contact admin to get badges assigned.
                 </p>
-
-                {availableTrustBadges.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic">
-                    No trust badges assigned to your business yet. Contact admin to get badges assigned.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {availableTrustBadges.map((badge) => {
-                      const isSelected = formData.trustBadges.includes(badge.id);
-                      return (
-                        <div
-                          key={badge.id}
-                          onClick={() => {
-                            if (isSelected) {
-                              setFormData(prev => ({
-                                ...prev,
-                                trustBadges: prev.trustBadges.filter(id => id !== badge.id)
-                              }));
-                            } else {
-                              setFormData(prev => ({
-                                ...prev,
-                                trustBadges: [...prev.trustBadges, badge.id]
-                              }));
-                            }
-                          }}
-                          className={`cursor-pointer border rounded-lg p-4 transition-all duration-200 flex items-start gap-3
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {availableTrustBadges.map((badge) => {
+                    const isSelected = formData.trustBadges.includes(badge.id);
+                    return (
+                      <div
+                        key={badge.id}
+                        onClick={() => {
+                          if (isSelected) {
+                            setFormData(prev => ({
+                              ...prev,
+                              trustBadges: prev.trustBadges.filter(id => id !== badge.id)
+                            }));
+                          } else {
+                            setFormData(prev => ({
+                              ...prev,
+                              trustBadges: [...prev.trustBadges, badge.id]
+                            }));
+                          }
+                        }}
+                        className={`cursor-pointer border rounded-lg p-4 transition-all duration-200 flex items-start gap-3
                             ${isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}
                           `}
-                        >
-                          <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors
+                      >
+                        <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors
                             ${isSelected ? 'bg-primary-600 border-primary-600' : 'border-gray-300 bg-white'}
                           `}>
-                            {isSelected && (
-                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${isSelected ? 'text-primary-900' : 'text-gray-900'}`}>
-                              {badge.name}
-                            </h3>
-                            {badge.description && (
-                              <p className={`text-xs mt-1 ${isSelected ? 'text-primary-700' : 'text-gray-500'}`}>
-                                {badge.description}
-                              </p>
-                            )}
-                          </div>
+                          {isSelected && (
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </Section>
-          </form>
-        </div>
+                        <div className="flex-1">
+                          <h3 className={`font-medium ${isSelected ? 'text-primary-900' : 'text-gray-900'}`}>
+                            {badge.name}
+                          </h3>
+                          {badge.description && (
+                            <p className={`text-xs mt-1 ${isSelected ? 'text-primary-700' : 'text-gray-500'}`}>
+                              {badge.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </Section>
+        </form>
       </div>
-    </ProtectedRoute>
+      <LocationPickerModal
+        isOpen={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        onSelect={(address, lat, lng) => {
+          setFormData({
+            ...formData,
+            pickupLocation: address,
+            pickupLocationCoordinates: { lat, lng }
+          } as any);
+        }}
+        initialLat={formData.pickupLocationCoordinates?.lat}
+        initialLng={formData.pickupLocationCoordinates?.lng}
+      />
+    </div>
+    </ProtectedRoute >
   );
 }
