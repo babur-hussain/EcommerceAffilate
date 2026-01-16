@@ -178,6 +178,7 @@ router.put(
         status,
         visibility,
         attributes,
+        saleStartDate,
         saleEndDate,
         protectPromiseFee,
         offers,
