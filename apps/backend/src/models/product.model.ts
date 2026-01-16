@@ -14,7 +14,9 @@ export interface IProduct extends Document {
   title: string;
   slug: string;
   description?: string;
+  shortDescription?: string;
   price: number;
+  mrp?: number;
   category: string;
   brand?: string;
   image: string;          // Keep for backward compatibility
@@ -31,11 +33,34 @@ export interface IProduct extends Document {
   popularityScore: number;   // System-calculated (sales/views)
   stock: number;
   lowStockThreshold: number;
+  saleStartDate?: Date;
+  saleEndDate?: Date;
+  protectPromiseFee?: number;
+  processingTime?: {
+    value: number;
+    unit: 'hours' | 'days';
+  };
   primaryImage?: string;
   thumbnailImage?: string;
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string[];
+  warrantyDetails?: string;
+  warrantyDuration?: string;
+  pickupLocation?: string;
+  pickupLocationCoordinates?: { lat: number; lng: number };
+  attributes?: {
+    attributeId: mongoose.Types.ObjectId;
+    value: any;
+  }[];
+  trustBadges?: string[];
+  offers?: {
+    type: string; // 'Bank' | 'Exchange' | 'EMI' | 'Special'
+    title: string;
+    description: string;
+    discountAmount: number;
+    code?: string;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,10 +80,18 @@ const productSchema = new Schema<IProduct>(
       type: String,
       trim: true,
     },
+    shortDescription: {
+      type: String,
+      trim: true,
+    },
     price: {
       type: Number,
       required: [true, 'Price is required'],
       min: [0.01, 'Price must be greater than 0'],
+    },
+    mrp: {
+      type: Number,
+      min: [0, 'MRP must be positive'],
     },
     category: {
       type: String,
@@ -137,6 +170,27 @@ const productSchema = new Schema<IProduct>(
       default: 5,
       min: 0,
     },
+    saleStartDate: {
+      type: Date,
+    },
+    saleEndDate: {
+      type: Date,
+    },
+    protectPromiseFee: {
+      type: Number,
+      min: 0,
+    },
+    processingTime: {
+      value: { type: Number, default: 1 },
+      unit: { type: String, enum: ['hours', 'days'], default: 'days' }
+    },
+    offers: [{
+      type: { type: String, required: true },
+      title: { type: String, required: true },
+      description: { type: String },
+      discountAmount: { type: Number, required: true, min: 0 },
+      code: { type: String }
+    }],
     primaryImage: {
       type: String,
       trim: true,
@@ -157,9 +211,39 @@ const productSchema = new Schema<IProduct>(
       type: [String],
       default: [],
     },
+    warrantyDetails: {
+      type: String,
+      trim: true
+    },
+    warrantyDuration: {
+      type: String,
+      trim: true
+    },
+    pickupLocation: {
+      type: String,
+      trim: true
+    },
+    pickupLocationCoordinates: {
+      lat: { type: Number },
+      lng: { type: Number }
+    },
+    attributes: [{
+      attributeId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Attribute',
+        required: true
+      },
+      value: {
+        type: Schema.Types.Mixed, // Can be string, number, boolean, or array
+        required: true
+      }
+    }],
+    trustBadges: [{ type: String }],
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 
@@ -168,12 +252,12 @@ productSchema.pre('save', function (next) {
   if (!this.slug || this.isModified('title')) {
     this.slug = generateSlug(this.title);
   }
-  
+
   // Sync images array with single image for backward compatibility
   if (this.image && (!this.images || this.images.length === 0)) {
     this.images = [this.image];
   }
-  
+
   next();
 });
 

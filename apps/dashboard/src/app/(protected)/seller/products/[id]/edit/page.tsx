@@ -92,6 +92,7 @@ interface Product {
   hazardous?: boolean;
   shippingClass?: string;
   pickupLocation?: string;
+  pickupLocationCoordinates?: { lat: number; lng: number };
   processingTime?: { value: number; unit: 'hours' | 'days' };
   shippingCharges?: number | string;
   codAvailable?: boolean;
@@ -275,6 +276,7 @@ export default function EditProductPage() {
     // 9. Shipping & Logistics
     shippingClass: "Standard",
     pickupLocation: "",
+    pickupLocationCoordinates: undefined as { lat: number; lng: number } | undefined,
     processingTime: { value: 2, unit: "days" } as { value: number; unit: "hours" | "days" },
     shippingCharges: "Free",
     codAvailable: true,
@@ -401,6 +403,7 @@ export default function EditProductPage() {
         hazardous: product.hazardous || false,
         shippingClass: product.shippingClass || "Standard",
         pickupLocation: product.pickupLocation || "",
+        pickupLocationCoordinates: product.pickupLocationCoordinates,
         processingTime:
           typeof product.processingTime === "object" && product.processingTime
             ? product.processingTime
@@ -704,6 +707,7 @@ export default function EditProductPage() {
               ? formData.processingTime.unit
               : "days",
         },
+        pickupLocationCoordinates: formData.pickupLocationCoordinates,
         codAvailable: formData.codAvailable,
         seoTitle: formData.seoTitle || formData.title,
         seoDescription: formData.seoDescription,
@@ -1878,9 +1882,18 @@ export default function EditProductPage() {
                   <LocationPickerModal
                     isOpen={showLocationPicker}
                     onClose={() => setShowLocationPicker(false)}
-                    onSelect={(address) => {
-                      setFormData({ ...formData, pickupLocation: address });
+                    onSelect={(address, lat, lng) => {
+                      setFormData({
+                        ...formData,
+                        pickupLocation: address,
+                        // We'll store coordinates in a temporary field until the backend schema supports it, 
+                        // or if we add it to the schema now. 
+                        // Let's assume we are adding it as per user request.
+                        pickupLocationCoordinates: { lat, lng }
+                      } as any);
                     }}
+                    initialLat={formData.pickupLocationCoordinates?.lat}
+                    initialLng={formData.pickupLocationCoordinates?.lng}
                   />
                 </div>
                 <div>
