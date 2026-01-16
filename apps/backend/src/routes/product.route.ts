@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import mongoose from "mongoose";
 import { Product } from "../models/product.model";
 import { Brand } from "../models/brand.model";
+import Category from "../models/category.model";
+import { TrustBadge } from "../models/trustBadge.model";
 import { calculatePopularityScore } from "../services/popularity.service";
 import { consumeClickBudget } from "../services/sponsorship.service";
 import { clearCacheByPrefix, RANKING_CACHE_PREFIX } from "../utils/cache";
@@ -22,11 +24,17 @@ router.post("/products", requireBrand, async (req: Request, res: Response) => {
       category,
       image,
       description,
+      shortDescription,
       brand,
       images,
       primaryImage,
       thumbnailImage,
       brandId,
+      attributes,
+      saleStartDate,
+      saleEndDate,
+      protectPromiseFee,
+      offers,
     } = req.body;
 
     const authUser = (req as any).user as
@@ -88,12 +96,18 @@ router.post("/products", requireBrand, async (req: Request, res: Response) => {
       category,
       image,
       description,
+      shortDescription,
       brand: brand || brandDoc.name,
       images: images || [image], // Use images array or default to single image
       primaryImage: primaryImage || image,
       thumbnailImage: thumbnailImage || image,
       brandId: brandDoc._id,
       businessId: brandDoc.businessId,
+      attributes: attributes || [],
+      saleStartDate,
+      saleEndDate,
+      protectPromiseFee,
+      offers: offers || [],
       // sponsoredScore and popularityScore will use defaults (0)
       // These are controlled by admin/system logic only
     });
@@ -163,6 +177,12 @@ router.put(
         seoKeywords,
         status,
         visibility,
+        attributes,
+        saleEndDate,
+        protectPromiseFee,
+        offers,
+        pickupLocation,
+        pickupLocationCoordinates,
       } = req.body;
 
       const updates: any = {};
@@ -223,6 +243,12 @@ router.put(
       }
       if (primaryImage !== undefined) updates.primaryImage = primaryImage;
       if (thumbnailImage !== undefined) updates.thumbnailImage = thumbnailImage;
+      if (saleStartDate !== undefined) updates.saleStartDate = saleStartDate;
+      if (saleEndDate !== undefined) updates.saleEndDate = saleEndDate;
+      if (protectPromiseFee !== undefined) updates.protectPromiseFee = protectPromiseFee;
+      if (offers !== undefined) updates.offers = offers;
+      if (pickupLocation !== undefined) updates.pickupLocation = pickupLocation;
+      if (pickupLocationCoordinates !== undefined) updates.pickupLocationCoordinates = pickupLocationCoordinates;
 
       const updated = await Product.findByIdAndUpdate(id, updates, {
         new: true,
@@ -275,6 +301,56 @@ router.patch(
   }
 );
 
+// GET /api/products/public/random - Get random products (for Top Picks etc)
+router.get("/products/public/random", async (req: Request, res: Response) => {
+  try {
+    const count = await Product.countDocuments({ isActive: true });
+    // Fetch up to 10 random products
+    const randomSize = Math.min(10, count);
+
+    // Aggregation pipeline to get random products
+    const products = await Product.aggregate([
+      { $match: { isActive: true } },
+      { $sample: { size: randomSize } }
+    ]);
+
+    // Fetch category details for restriction logic
+    const categoryNames = [...new Set(products.map((p) => p.category))];
+    const categories = await Category.find({ name: { $in: categoryNames } }).lean();
+    const categoryMap = categories.reduce((acc, cat) => {
+      acc[cat.name] = {
+        _id: cat._id,
+        name: cat.name,
+        parentCategory: cat.parentCategory,
+      };
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Format the products similar to other endpoints
+    const formatted = products.map((p) => {
+      // Since aggregate results are plain objects, we can pass them to resolvePrimaryImage
+      const primaryImageResolved = resolvePrimaryImage(p);
+      return {
+        ...p,
+        primaryImage: primaryImageResolved,
+        optimizedImages: buildOptimizedVariants(primaryImageResolved),
+        seoTitle: p.metaTitle || p.title,
+        seoDescription: p.metaDescription || p.description,
+        seoKeywords: p.metaKeywords || [],
+        categoryMeta: getCategoryMeta(p.category),
+        categoryDetails: categoryMap[p.category],
+      };
+    });
+
+    res.json(formatted);
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Failed to fetch random products",
+      message: error.message,
+    });
+  }
+});
+
 // GET /api/products/:id - Get single product by ID
 router.get("/products/:id", async (req: Request, res: Response) => {
   try {
@@ -284,9 +360,30 @@ router.get("/products/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid product ID" });
     }
 
-    const product = await Product.findById(id).lean();
+    const product = await Product.findById(id).populate({
+      path: 'businessId',
+      select: 'businessIdentity.tradeName'
+    }).lean();
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
+    }
+
+    const categoryDoc = await Category.findOne({ name: product.category }).lean();
+
+    // Fetch Trust Badges
+    // Determine if trustBadges contains IDs (strings) or objects
+    let trustBadgesData: any[] = [];
+    if (product.trustBadges && product.trustBadges.length > 0) {
+      // If it's an array of ID strings, fetch the details
+      const badges = await TrustBadge.find({
+        id: { $in: product.trustBadges }
+      }).select('name icon id startColor endColor').lean();
+
+      // Sort badges to match the order in product.trustBadges
+      const badgeMap = new Map(badges.map(b => [b.id, b]));
+      trustBadgesData = product.trustBadges
+        .map((id: string) => badgeMap.get(id))
+        .filter((b: any) => b !== undefined);
     }
 
     const primaryImageResolved = resolvePrimaryImage(product);
@@ -298,6 +395,15 @@ router.get("/products/:id", async (req: Request, res: Response) => {
       seoDescription: product.metaDescription || product.description,
       seoKeywords: product.metaKeywords || [],
       categoryMeta: getCategoryMeta(product.category),
+      categoryDetails: categoryDoc
+        ? {
+          _id: categoryDoc._id,
+          name: categoryDoc.name,
+          parentCategory: categoryDoc.parentCategory,
+        }
+        : undefined,
+      sellerName: (product.businessId as any)?.businessIdentity?.tradeName,
+      trustBadges: trustBadgesData // Override with populated data
     };
 
     res.json(formatted);
@@ -312,7 +418,41 @@ router.get("/products/:id", async (req: Request, res: Response) => {
 // GET /api/products - Get all active products
 router.get("/products", async (req: Request, res: Response) => {
   try {
-    const products = await Product.find({ isActive: true }).lean();
+    const { category, limit, search } = req.query;
+
+    const filter: any = { isActive: true };
+    if (category) {
+      filter.category = category;
+    }
+
+    if (search) {
+      filter.title = { $regex: search, $options: 'i' };
+    }
+
+    const maxLimit = parseInt(limit as string) || 0;
+
+    // Create query with filter
+    const query = Product.find(filter).lean();
+
+    // Apply limit if specified
+    if (maxLimit > 0) {
+      query.limit(maxLimit);
+    }
+
+    const products = await query.exec();
+
+    // Fetch category details
+    const categoryNames = [...new Set(products.map((p) => p.category))];
+    const categories = await Category.find({ name: { $in: categoryNames } }).lean();
+    const categoryMap = categories.reduce((acc, cat) => {
+      acc[cat.name] = {
+        _id: cat._id,
+        name: cat.name,
+        parentCategory: cat.parentCategory,
+      };
+      return acc;
+    }, {} as Record<string, any>);
+
     const formatted = products.map((p) => {
       const primaryImageResolved = resolvePrimaryImage(p);
       return {
@@ -323,10 +463,11 @@ router.get("/products", async (req: Request, res: Response) => {
         seoDescription: p.metaDescription || p.description,
         seoKeywords: p.metaKeywords || [],
         categoryMeta: getCategoryMeta(p.category),
+        categoryDetails: categoryMap[p.category],
       };
     });
 
-    if (formatted.length === 0) {
+    if (formatted.length === 0 && !category) {
       // Serve a small public placeholder catalog when DB is empty so the storefront is never blank
       const placeholders = [
         {

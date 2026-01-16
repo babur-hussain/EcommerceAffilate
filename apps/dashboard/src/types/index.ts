@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'SELLER_OWNER' | 'SELLER_MANAGER' | 'SELLER_STAFF' | 'INFLUENCER' | 'CUSTOMER';
+export type UserRole = 'ADMIN' | 'SELLER_OWNER' | 'SELLER_MANAGER' | 'SELLER_STAFF' | 'INFLUENCER' | 'CUSTOMER' | 'BUSINESS_OWNER' | 'BUSINESS_MANAGER' | 'BUSINESS_STAFF';
 
 export interface User {
   id: string;
@@ -43,6 +43,8 @@ export interface Product {
   brandId?: string;
   businessId: string;
   isActive: boolean;
+  pickupLocation?: string;
+  pickupLocationCoordinates?: { lat: number; lng: number };
   createdAt: string;
   updatedAt: string;
 }
