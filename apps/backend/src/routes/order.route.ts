@@ -4,11 +4,15 @@ import { Order } from '../models/order.model';
 import { Address } from '../models/address.model';
 import { Product } from '../models/product.model';
 import { requireCustomer, requireAdmin } from '../middlewares/rbac';
-import { createNotification } from '../services/notification.service';
+import { createNotification, notifySellers } from '../services/notification.service';
 import { applyCoupon } from '../services/coupon.service';
 import { logAction } from '../services/audit.service';
 import { createInfluencerAttribution, rejectInfluencerAttribution } from '../services/influencer.service';
 import { InfluencerAttribution } from '../models/influencerAttribution.model';
+
+import { Business } from '../models/business.model';
+import { admin } from '../config/firebaseAdmin';
+import { createPaymentOrder, verifyPayment } from '../services/payment.service';
 
 const router = Router();
 
@@ -19,7 +23,14 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { items, addressId, couponCode, influencerCode } = req.body as { items?: Array<{ productId: string; quantity: number }>; addressId?: string; couponCode?: string; influencerCode?: string };
+    const { items, addressId, couponCode, influencerCode, selectedOfferIds, paymentMethod } = req.body as {
+      items?: Array<{ productId: string; quantity: number }>;
+      addressId?: string;
+      couponCode?: string;
+      influencerCode?: string;
+      selectedOfferIds?: string[];
+      paymentMethod?: string;
+    };
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
     }
@@ -50,15 +61,15 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
 
         const productIds = items.map((i) => i.productId);
         const products = await Product.find({ _id: { $in: productIds }, isActive: true })
-          .select('price stock')
+          .select('price stock shippingCharges protectPromiseFee lastChanceOffers')
           .session(session);
 
         if (products.length !== productIds.length) {
           throw new Error('INVALID_PRODUCTS');
         }
 
-        const productMap = new Map<string, { price: number; stock: number }>();
-        products.forEach((p) => productMap.set(p._id.toString(), { price: p.price, stock: p.stock }));
+        const productMap = new Map<string, any>();
+        products.forEach((p) => productMap.set(p._id.toString(), p));
 
         for (const item of items) {
           const product = productMap.get(item.productId);
@@ -73,7 +84,40 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
           price: productMap.get(i.productId)!.price,
         }));
 
-        const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        // Calculate base total (items * price)
+        let totalAmount = orderItems.reduce((sum, item) => sum + (Number(item.price) || 0) * item.quantity, 0);
+
+        // Add Shipping & Protect Fees
+        let totalShipping = 0;
+        let totalProtectFee = 0;
+        const processedAddOns: { title: string; price: number; offerId?: string }[] = [];
+
+        products.forEach(p => {
+          // Explicitly convert to number to handle potential string data in DB
+          const shipping = Number(p.shippingCharges) || 0;
+          const protect = Number(p.protectPromiseFee) || 0;
+
+          totalShipping += shipping;
+          totalProtectFee += protect;
+
+          // Process Add-On Offers (Upsells)
+          if (Array.isArray(selectedOfferIds) && selectedOfferIds.length > 0 && p.lastChanceOffers) {
+            p.lastChanceOffers.forEach((offer: any) => {
+              // Check if this offer is selected (comparing IDs carefully)
+              if (offer._id && selectedOfferIds.includes(offer._id.toString())) {
+                const offerPrice = Number(offer.offerPrice) || 0;
+                totalAmount += offerPrice;
+                processedAddOns.push({
+                  title: offer.title,
+                  price: offerPrice,
+                  offerId: offer._id.toString()
+                });
+              }
+            });
+          }
+        });
+
+        totalAmount += totalShipping + totalProtectFee;
 
         // Apply coupon if provided
         let discountAmount = 0;
@@ -119,11 +163,15 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
                 country: address.country,
               },
               totalAmount,
+              shippingCharges: totalShipping,
+              protectPromiseFee: totalProtectFee,
+              addOns: processedAddOns,
               couponCode: appliedCode,
               influencerCode: influencerCode ? influencerCode.toUpperCase() : undefined,
               discountAmount,
               payableAmount,
               status: 'CREATED',
+              paymentProvider: paymentMethod === 'COD' ? 'COD' : undefined,
             },
           ],
           { session }
@@ -162,6 +210,11 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
           console.error('Failed to create influencer attribution:', attrError);
         }
       }
+
+      // If COD, notify sellers immediately (since there is no online payment verification)
+      if (paymentMethod === 'COD') {
+        void notifySellers(createdOrder);
+      }
     }
   } catch (error: any) {
     if (error?.message === 'INSUFFICIENT_STOCK') {
@@ -185,10 +238,46 @@ router.get('/orders/mine', requireCustomer, async (req: Request, res: Response) 
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    const orders = await Order.find({ userId: user.id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ userId: user.id })
+      .sort({ createdAt: -1 })
+      .populate('items.productId', 'title images');
     res.json(orders);
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to fetch orders', message: error.message });
+  }
+});
+
+router.post('/orders/:id/pay', requireCustomer, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { provider } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid order id' });
+    }
+
+    const result = await createPaymentOrder(id, provider || 'RAZORPAY');
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to initiate payment', message: error.message });
+  }
+});
+
+router.post('/orders/:id/verify', requireCustomer, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await verifyPayment(id, req.body);
+    res.json({ status: result });
+
+    // If payment verified, notify sellers
+    if (result === 'SUCCESS' || (result as any)?.status === 'SUCCESS') {
+      const order = await Order.findById(id).populate('items.productId');
+      if (order) {
+        void notifySellers(order);
+      }
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to verify payment', message: error.message });
   }
 });
 
@@ -370,8 +459,7 @@ router.post('/orders/:id/refund', requireAdmin, async (req: Request, res: Respon
         updatedOrder.userId.toString(),
         'RETURN',
         'Return approved',
-        `Your return for order ${updatedOrder._id} has been approved. Refund amount: ${
-          updatedOrder.refundAmount ?? updatedOrder.totalAmount
+        `Your return for order ${updatedOrder._id} has been approved. Refund amount: ${updatedOrder.refundAmount ?? updatedOrder.totalAmount
         }`
       );
 

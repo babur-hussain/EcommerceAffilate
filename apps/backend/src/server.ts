@@ -1,6 +1,6 @@
 import http from 'http';
+import { env } from './config/env'; // Load env vars first
 import app from './app';
-import { env } from './config/env';
 import { connectMongo, disconnectMongo } from './config/mongo';
 import { logger } from './utils/logger';
 
@@ -42,4 +42,5 @@ const startServer = async () => {
   }
 };
 
+// Forced restart for callbackUrl fix
 startServer();

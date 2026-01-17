@@ -36,6 +36,8 @@ export interface IUser extends Document {
   };
   bio?: string;
   profileImage?: string;
+  coins?: number;
+  membershipStatus?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -117,6 +119,16 @@ const userSchema = new Schema<IUser>(
     profileImage: {
       type: String,
       trim: true,
+    },
+    coins: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    membershipStatus: {
+      type: String,
+      default: 'Classic',
+      trim: true
     },
     isActive: {
       type: Boolean,

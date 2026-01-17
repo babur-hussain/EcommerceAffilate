@@ -42,6 +42,12 @@ export const env = {
       key_id: process.env.RAZORPAY_KEY_ID || '',
       key_secret: process.env.RAZORPAY_KEY_SECRET || '',
     },
+    paytm: {
+      merchantId: process.env.PAYTM_MID || '',
+      merchantKey: process.env.PAYTM_MKEY || '',
+      website: process.env.PAYTM_WEBSITE || 'WEBSTAGING',
+      isProduction: process.env.PAYTM_ENV === 'PROD',
+    },
   },
   ads: {
     clickCost: numberFromEnv('CLICK_COST', isProduction ? 5 : 1),

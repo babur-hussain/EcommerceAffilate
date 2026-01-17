@@ -41,11 +41,28 @@ router.get('/me', verifyFirebaseToken, async (req: Request, res: Response) => {
         businessId: user.businessId,
         isActive: user.isActive,
         businessActive,
+        coins: user.coins || 0,
+        membershipStatus: user.membershipStatus || 'Classic',
       },
     });
   } catch (e) {
     return res.status(500).json({ error: 'Failed to load profile' });
   }
+});
+
+router.get('/me/account-layout', verifyFirebaseToken, (req: Request, res: Response) => {
+  // TODO: Fetch this from a proper Content Management System or Database
+  const layout = {
+    sections: [
+      {
+        id: 'recently_viewed_stores',
+        title: 'Recently Viewed Stores',
+        type: 'horizontal_list',
+        items: [] // Empty for now, would be populated by real data logic
+      }
+    ]
+  };
+  res.json(layout);
 });
 
 export default router;

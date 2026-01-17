@@ -1,5 +1,6 @@
 import DashboardLayout from '@/components/DashboardLayout';
 import { AuthProvider } from '@/context/AuthContext';
+import NewOrderAlarm from '@/components/NewOrderAlarm';
 
 export default function SellerLayout({
   children,
@@ -8,6 +9,7 @@ export default function SellerLayout({
 }) {
   return (
     <AuthProvider>
+      <NewOrderAlarm />
       <DashboardLayout>{children}</DashboardLayout>
     </AuthProvider>
   );

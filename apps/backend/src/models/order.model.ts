@@ -23,19 +23,26 @@ export interface IOrder extends Document {
   influencerCode?: string;
   discountAmount: number;
   payableAmount: number;
+  shippingCharges?: number;
+  protectPromiseFee?: number;
+  addOns?: {
+    title: string;
+    price: number;
+    offerId?: string;
+  }[];
   totalAmount: number;
   status:
-    | 'CREATED'
-    | 'PAID'
-    | 'SHIPPED'
-    | 'DELIVERED'
-    | 'RETURN_REQUESTED'
-    | 'RETURNED'
-    | 'REFUNDED'
-    | 'CANCELLED';
+  | 'CREATED'
+  | 'PAID'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'RETURN_REQUESTED'
+  | 'RETURNED'
+  | 'REFUNDED'
+  | 'CANCELLED';
   returnReason?: string;
   refundAmount?: number;
-  paymentProvider?: 'RAZORPAY' | 'CASHFREE';
+  paymentProvider?: 'RAZORPAY' | 'PAYTM' | 'CASHFREE' | 'COD';
   paymentOrderId?: string;
   paymentStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
   createdAt: Date;
@@ -93,6 +100,13 @@ const orderSchema = new Schema<IOrder>(
     influencerCode: { type: String, trim: true, uppercase: true },
     discountAmount: { type: Number, required: true, min: 0, default: 0 },
     payableAmount: { type: Number, required: true, min: 0 },
+    shippingCharges: { type: Number, default: 0, min: 0 },
+    protectPromiseFee: { type: Number, default: 0, min: 0 },
+    addOns: [{
+      title: { type: String },
+      price: { type: Number, min: 0 },
+      offerId: { type: String }
+    }],
     totalAmount: {
       type: Number,
       required: true,
@@ -123,7 +137,7 @@ const orderSchema = new Schema<IOrder>(
     },
     paymentProvider: {
       type: String,
-      enum: ['RAZORPAY', 'CASHFREE'],
+      enum: ['RAZORPAY', 'PAYTM', 'CASHFREE', 'COD'],
     },
     paymentOrderId: {
       type: String,

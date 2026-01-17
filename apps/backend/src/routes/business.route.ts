@@ -126,11 +126,11 @@ router.post(
           // Ensure user role is correct
           if (
             mongoUser.role !== "SELLER_OWNER" ||
-            mongoUser.businessId !== existingBusiness._id.toString()
+            mongoUser.businessId?.toString() !== existingBusiness._id.toString()
           ) {
             console.log("🔧 Updating user role to SELLER_OWNER");
             mongoUser.role = "SELLER_OWNER";
-            mongoUser.businessId = existingBusiness._id.toString();
+            mongoUser.businessId = existingBusiness._id;
             await mongoUser.save();
           }
 
@@ -149,11 +149,11 @@ router.post(
             );
           }
 
-          logger.info("Business information updated successfully", {
+          logger.info({
             businessId: existingBusiness._id,
             userId: mongoUser._id,
             accountType,
-          });
+          }, "Business information updated successfully");
 
           return res.status(200).json({
             success: true,
@@ -211,7 +211,7 @@ router.post(
       // Update user role to SELLER_OWNER (for dashboard access)
       try {
         mongoUser.role = "SELLER_OWNER";
-        mongoUser.businessId = business._id.toString();
+        mongoUser.businessId = business._id;
         await mongoUser.save();
         console.log("✅ User role updated to SELLER_OWNER");
       } catch (userUpdateError: any) {
@@ -238,11 +238,11 @@ router.post(
         // Don't fail the request - business is registered, claims can be set later
       }
 
-      logger.info("Business registered successfully", {
+      logger.info({
         businessId: business._id,
         userId: mongoUser._id,
         accountType,
-      });
+      }, "Business registered successfully");
 
       return res.status(201).json({
         success: true,
@@ -262,10 +262,10 @@ router.post(
       });
     } catch (error: any) {
       console.error("❌ Business registration error:", error.message);
-      logger.error("Business registration error", {
+      logger.error({
         error: error.message,
         stack: error.stack,
-      });
+      }, "Business registration error");
       return res.status(500).json({
         error: "Business registration failed",
         details: error.message,
@@ -399,6 +399,58 @@ router.get(
       res
         .status(500)
         .json({ error: "Failed to fetch brands", message: error.message });
+    }
+  }
+);
+
+// GET /api/business/orders - Get orders that contain products from the authenticated seller's business
+router.get(
+  "/business/orders",
+  verifyFirebaseToken,
+  async (req: Request, res: Response) => {
+    try {
+      const authUser = (req as any).user as
+        | { id?: string; role?: string; businessId?: string }
+        | undefined;
+
+      if (!authUser?.id) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      if (!authUser.businessId) {
+        return res
+          .status(403)
+          .json({ error: "No business associated with this account" });
+      }
+
+      // 1. Find all products owned by this business
+      const products = await Product.find({ businessId: authUser.businessId }).select('_id');
+      const productIds = products.map(p => p._id);
+
+      if (productIds.length === 0) {
+        return res.json([]);
+      }
+
+      // 2. Find orders that contain any of these products
+      const { Order } = await import("../models/order.model");
+
+      const orders = await Order.find({
+        "items.productId": { $in: productIds }
+      })
+        .sort({ createdAt: -1 })
+        .populate("items.productId", "title price image businessId")
+        .populate("userId", "name email phone");
+
+      console.log(
+        `✅ Found ${orders.length} orders for business ${authUser.businessId}`
+      );
+
+      res.json(orders);
+    } catch (error: any) {
+      console.error("❌ Error fetching business orders:", error.message);
+      res
+        .status(500)
+        .json({ error: "Failed to fetch orders", message: error.message });
     }
   }
 );

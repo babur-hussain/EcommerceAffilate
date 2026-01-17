@@ -36,6 +36,7 @@ export interface IProduct extends Document {
   saleStartDate?: Date;
   saleEndDate?: Date;
   protectPromiseFee?: number;
+  shippingCharges?: number;
   processingTime?: {
     value: number;
     unit: 'hours' | 'days';
@@ -192,7 +193,13 @@ const productSchema = new Schema<IProduct>(
     },
     protectPromiseFee: {
       type: Number,
+      default: 0,
       min: 0,
+    },
+    shippingCharges: {
+      type: Number,
+      default: 0,
+      min: 0
     },
     processingTime: {
       value: { type: Number, default: 1 },
