@@ -59,17 +59,39 @@ const attachUserContext = async (req: Request, decodedToken: any) => {
     user = await User.create({
       uid: decodedToken.uid,
       email: normalizedEmail,
+      name: decodedToken.name,
+      profileImage: decodedToken.picture,
       firebaseUid: decodedToken.uid,
       role: role,
       isActive: true,
     });
-  } else if (!user.firebaseUid || !user.uid) {
-    user.firebaseUid = decodedToken.uid;
-    user.uid = user.uid || decodedToken.uid;
+  } else {
+    // Update existing user fields if missing
+    let updated = false;
+    if (!user.firebaseUid) {
+      user.firebaseUid = decodedToken.uid;
+      updated = true;
+    }
+    if (!user.uid) {
+      user.uid = decodedToken.uid;
+      updated = true;
+    }
     if (normalizedEmail && !user.email) {
       user.email = normalizedEmail;
+      updated = true;
     }
-    await user.save();
+    if (decodedToken.name && !user.name) {
+      user.name = decodedToken.name;
+      updated = true;
+    }
+    if (decodedToken.picture && !user.profileImage) {
+      user.profileImage = decodedToken.picture;
+      updated = true;
+    }
+
+    if (updated) {
+      await user.save();
+    }
   }
 
   req.user = {

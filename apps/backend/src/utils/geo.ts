@@ -29,6 +29,32 @@ const deg2rad = (deg: number): number => {
     return deg * (Math.PI / 180);
 };
 
+// Nominatim Geocoding (Free)
+// Note: Respect usage policy (max 1 req/sec, specific user-agent)
+export const geocodePincode = async (pincode: string): Promise<{ lat: number; lng: number } | null> => {
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(pincode)}&country=India&format=json&limit=1`;
+
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'EcommerceEarn/1.0 (internal-delivery-calc)'
+            }
+        });
+
+        if (response.data && response.data.length > 0) {
+            const result = response.data[0];
+            return {
+                lat: parseFloat(result.lat),
+                lng: parseFloat(result.lon)
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error(`Geocoding failed for pincode ${pincode}:`, error);
+        return null;
+    }
+};
+
 export const getDistanceMatrix = async (
     originPincode: string,
     destinationPincode: string

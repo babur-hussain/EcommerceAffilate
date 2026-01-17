@@ -12,12 +12,26 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "android": {
+      "package": "com.ecommerceearn.app",
+      "usesCleartextTraffic": true,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAySaFrQnBDE5VanTMpi4wz87MDOZQvOUE"
+        }
+      }
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ecommerceearn.app"
-    },
-    "android": {
-      "package": "com.ecommerceearn.app"
+      "bundleIdentifier": "com.ecommerceearn.app",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyAySaFrQnBDE5VanTMpi4wz87MDOZQvOUE"
+      }
     },
     "scheme": "ecommerceearn",
     "plugins": [
@@ -25,6 +39,9 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "http://192.168.29.193:4000"
     }
   }
 }

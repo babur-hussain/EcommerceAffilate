@@ -1,5 +1,5 @@
 import '../globals.css';
-import { Toaster } from 'react-hot-toast';
+import { Providers } from '@/components/Providers';
 
 export default function ProtectedLayout({
   children,
@@ -9,8 +9,9 @@ export default function ProtectedLayout({
   return (
     <html lang="en">
       <body>
-        {children}
-        <Toaster position="top-right" />
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

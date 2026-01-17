@@ -1,5 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence, getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-url-polyfill/auto';
 
 const firebaseConfig = {
@@ -20,8 +21,17 @@ if (!getApps().length) {
   app = getApps()[0];
 }
 
-// Initialize Firebase Auth
-export const auth: Auth = getAuth(app);
+// Initialize Firebase Auth with persistence
+let auth: Auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+  });
+} catch (e) {
+  auth = getAuth(app);
+}
+
+export { auth };
 
 // Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();

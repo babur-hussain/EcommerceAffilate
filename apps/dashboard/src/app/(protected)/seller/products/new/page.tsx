@@ -32,6 +32,14 @@ interface Variant {
   image: string;
 }
 
+interface Attribute {
+  _id: string;
+  name: string;
+  code: string;
+  type: string;
+  values: string[];
+}
+
 // Section component moved outside to prevent recreation on every render
 interface SectionProps {
   title: string;
@@ -53,40 +61,35 @@ const Section = ({
   return (
     <div
       ref={sectionRef}
-      className={`border rounded-xl mb-6 transition-all duration-300 ${
-        isActive
-          ? "border-primary-500 shadow-lg"
-          : "border-gray-200 shadow-sm hover:border-gray-300"
-      }`}
+      className={`border rounded-xl mb-6 transition-all duration-300 ${isActive
+        ? "border-primary-500 shadow-lg"
+        : "border-gray-200 shadow-sm hover:border-gray-300"
+        }`}
     >
       <button
         type="button"
         onClick={() => onToggle(name)}
-        className={`w-full px-6 py-5 flex items-center justify-between rounded-t-xl transition-all duration-200 ${
-          isActive
-            ? "bg-gradient-to-r from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-150"
-            : "bg-gray-50 hover:bg-gray-100"
-        }`}
+        className={`w-full px-6 py-5 flex items-center justify-between rounded-t-xl transition-all duration-200 ${isActive
+          ? "bg-gradient-to-r from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-150"
+          : "bg-gray-50 hover:bg-gray-100"
+          }`}
       >
         <h3
-          className={`text-lg font-semibold flex items-center gap-3 ${
-            isActive ? "text-primary-700" : "text-gray-900"
-          }`}
+          className={`text-lg font-semibold flex items-center gap-3 ${isActive ? "text-primary-700" : "text-gray-900"
+            }`}
         >
           {title}
         </h3>
         <div
-          className={`transition-transform duration-200 ${
-            isActive ? "rotate-180 text-primary-600" : "text-gray-500"
-          }`}
+          className={`transition-transform duration-200 ${isActive ? "rotate-180 text-primary-600" : "text-gray-500"
+            }`}
         >
           <ChevronDown className="h-5 w-5" />
         </div>
       </button>
       <div
-        className={`overflow-hidden transition-all duration-300 ${
-          isActive ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
-        }`}
+        className={`overflow-hidden transition-all duration-300 ${isActive ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+          }`}
       >
         <div className="p-6 bg-white space-y-6 rounded-b-xl">{children}</div>
       </div>
@@ -226,11 +229,22 @@ export default function NewProductPage() {
     visibility: "Public",
 
     brandId: "",
+    saleStartDate: "", // ISO string or date input value
+    saleEndDate: "",   // ISO string or date input value
+    protectPromiseFee: "",
+    offers: [], // Array of { type, title, description, discountAmount, code }
+    attributes: [] as { attributeId: string; value: string }[],
+    trustBadges: [] as string[],
   });
+
+  const [availableAttributes, setAvailableAttributes] = useState<Attribute[]>([]);
+  const [availableTrustBadges, setAvailableTrustBadges] = useState<Array<{ id: string; name: string; description: string }>>([]);
 
   useEffect(() => {
     fetchBrands();
     fetchCategories();
+    fetchAttributes();
+    fetchTrustBadges();
   }, []);
 
   const fetchBrands = async () => {
@@ -249,6 +263,32 @@ export default function NewProductPage() {
     } catch (error) {
       console.error("Failed to fetch categories:", error);
       toast.error("Failed to load categories");
+    }
+  };
+
+  const fetchAttributes = async () => {
+    try {
+      const response = await apiClient.get<Attribute[]>("/api/attributes");
+      setAvailableAttributes(response.data);
+    } catch (error) {
+      console.error("Failed to fetch attributes:", error);
+    }
+  };
+
+  const fetchTrustBadges = async () => {
+    try {
+      const response = await apiClient.get<{ business?: { trustBadges?: string[] } }>("/api/me");
+      const business = response.data.business;
+      if (business?.trustBadges) {
+        // Fetch all badges and filter by assigned ones
+        const badgesResponse = await apiClient.get<Array<{ id: string; name: string; description: string }>>("/api/super-admin/trust-badges");
+        const assignedBadges = badgesResponse.data.filter((badge) =>
+          business.trustBadges!.includes(badge.id)
+        );
+        setAvailableTrustBadges(assignedBadges);
+      }
+    } catch (error) {
+      console.error("Failed to fetch trust badges:", error);
     }
   };
 
@@ -453,6 +493,14 @@ export default function NewProductPage() {
         seoKeywords: formData.seoKeywords,
         status: formData.status,
         visibility: formData.visibility,
+        saleStartDate: formData.saleStartDate || undefined,
+        saleEndDate: formData.saleEndDate || undefined,
+        protectPromiseFee: formData.protectPromiseFee ? parseFloat(formData.protectPromiseFee) : undefined,
+        offers: formData.offers.map(offer => ({
+          ...offer,
+          discountAmount: parseFloat(offer.discountAmount) || 0
+        })),
+        attributes: formData.attributes.filter(a => a.attributeId && a.value),
       };
 
       await apiClient.post("/api/products", productData);
@@ -517,7 +565,35 @@ export default function NewProductPage() {
     setFormData({ ...formData, variants: newVariants });
   };
 
+  const addOffer = () => {
+    setFormData({
+      ...formData,
+      offers: [
+        ...formData.offers,
+        {
+          type: "Bank",
+          title: "",
+          description: "",
+          discountAmount: "",
+          code: "",
+        },
+      ],
+    });
+  };
+
+  const removeOffer = (index: number) => {
+    const newOffers = formData.offers.filter((_, i) => i !== index);
+    setFormData({ ...formData, offers: newOffers });
+  };
+
+  const handleOfferChange = (index: number, field: string, value: string) => {
+    const newOffers = [...formData.offers];
+    newOffers[index][field] = value;
+    setFormData({ ...formData, offers: newOffers });
+  };
+
   const toggleSection = (section: string) => {
+    // ... existing toggleSection code
     const newSection = activeSection === section ? "" : section;
     setActiveSection(newSection);
 
@@ -530,6 +606,27 @@ export default function NewProductPage() {
         });
       }, 100);
     }
+  };
+
+  const addAttribute = () => {
+    setFormData({
+      ...formData,
+      attributes: [
+        ...formData.attributes,
+        { attributeId: "", value: "" },
+      ],
+    });
+  };
+
+  const removeAttribute = (index: number) => {
+    const newAttributes = formData.attributes.filter((_, i) => i !== index);
+    setFormData({ ...formData, attributes: newAttributes });
+  };
+
+  const handleAttributeChange = (index: number, field: string, value: string) => {
+    const newAttributes = [...formData.attributes];
+    (newAttributes[index] as any)[field] = value;
+    setFormData({ ...formData, attributes: newAttributes });
   };
 
   // Reusable input classes for better styling
@@ -816,9 +913,45 @@ export default function NewProductPage() {
               </div>
             </Section>
 
-            {/* 3. Pricing & Taxation */}
+            {/* 3. Sale Configuration (New Section) */}
             <Section
-              title="3️⃣ Pricing & Taxation"
+              title="3️⃣ Sale Configuration"
+              name="saleConfig"
+              isActive={activeSection === "saleConfig"}
+              onToggle={toggleSection}
+              sectionRef={(el) => {
+                sectionRefs.current["saleConfig"] = el;
+              }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className={labelClass}>Sale Start Date</label>
+                  <input
+                    type="datetime-local"
+                    name="saleStartDate"
+                    value={formData.saleStartDate}
+                    onChange={handleChange}
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-gray-500">Optional: Determine when the sale price becomes active.</p>
+                </div>
+                <div className="space-y-2">
+                  <label className={labelClass}>Sale End Date</label>
+                  <input
+                    type="datetime-local"
+                    name="saleEndDate"
+                    value={formData.saleEndDate}
+                    onChange={handleChange}
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-gray-500">Required for the countdown timer to appear.</p>
+                </div>
+              </div>
+            </Section>
+
+            {/* 4. Pricing & Taxation (Renumbered) */}
+            <Section
+              title="4️⃣ Pricing & Taxation"
               name="pricing"
               isActive={activeSection === "pricing"}
               onToggle={toggleSection}
@@ -896,6 +1029,20 @@ export default function NewProductPage() {
                     onChange={handleChange}
                     min="0"
                     className={textareaClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Protect Promise Fee
+                  </label>
+                  <input
+                    type="number"
+                    name="protectPromiseFee"
+                    value={formData.protectPromiseFee}
+                    onChange={handleChange}
+                    min="0"
+                    className={textareaClass}
+                    placeholder="Optional service fee"
                   />
                 </div>
                 <div>
@@ -1162,6 +1309,96 @@ export default function NewProductPage() {
               </div>
             </Section>
 
+            {/* 7. Offers & Discounts (New Section) */}
+            <Section
+              title="7️⃣ Offers & Discounts"
+              name="offers"
+              isActive={activeSection === "offers"}
+              onToggle={toggleSection}
+              sectionRef={(el) => {
+                sectionRefs.current["offers"] = el;
+              }}
+            >
+              <div className="space-y-4">
+                {formData.offers.map((offer, index) => (
+                  <div
+                    key={index}
+                    className="p-4 border border-gray-200 rounded-lg bg-gray-50"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelClass}>Offer Type</label>
+                        <select
+                          value={offer.type}
+                          onChange={(e) => handleOfferChange(index, "type", e.target.value)}
+                          className={selectClass}
+                        >
+                          <option value="Bank">Bank Offer</option>
+                          <option value="Exchange">Exchange Offer</option>
+                          <option value="EMI">EMI Plan</option>
+                          <option value="Special">Special Discount</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className={labelClass}>Offer Title *</label>
+                        <input
+                          type="text"
+                          value={offer.title}
+                          onChange={(e) => handleOfferChange(index, "title", e.target.value)}
+                          placeholder="e.g., 10% off on SBI Cards"
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Discount Amount (₹) *</label>
+                        <input
+                          type="number"
+                          value={offer.discountAmount}
+                          onChange={(e) => handleOfferChange(index, "discountAmount", e.target.value)}
+                          min="0"
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Coupon Code (Optional)</label>
+                        <input
+                          type="text"
+                          value={offer.code}
+                          onChange={(e) => handleOfferChange(index, "code", e.target.value)}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className={labelClass}>Description</label>
+                        <textarea
+                          rows={2}
+                          value={offer.description}
+                          onChange={(e) => handleOfferChange(index, "description", e.target.value)}
+                          className={textareaClass}
+                          placeholder="Details about the offer..."
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeOffer(index)}
+                      className="mt-2 text-red-600 hover:text-red-700 text-sm font-medium"
+                    >
+                      Remove Offer
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addOffer}
+                  className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
+                >
+                  + Add New Offer
+                </button>
+              </div>
+            </Section>
+
             {/* 6. Product Description */}
             <Section
               title="6️⃣ Product Description & Content"
@@ -1305,6 +1542,75 @@ export default function NewProductPage() {
               </div>
             </Section>
 
+            {/* Attributes Section */}
+            <Section
+              title="✨ Product Attributes"
+              name="attributes"
+              isActive={activeSection === "attributes"}
+              onToggle={toggleSection}
+              sectionRef={(el) => {
+                sectionRefs.current["attributes"] = el;
+              }}
+            >
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500">
+                  Add specific attributes like Material, Color, Fabric, etc.
+                </p>
+                {formData.attributes.map((attr, index) => (
+                  <div key={index} className="flex gap-4 items-start">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Attribute Name
+                      </label>
+                      <select
+                        value={attr.attributeId}
+                        onChange={(e) =>
+                          handleAttributeChange(index, "attributeId", e.target.value)
+                        }
+                        className={selectClass}
+                      >
+                        <option value="">Select Attribute</option>
+                        {availableAttributes.map((a) => (
+                          <option key={a._id} value={a._id}>
+                            {a.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Value
+                      </label>
+                      <input
+                        type="text"
+                        value={attr.value}
+                        onChange={(e) =>
+                          handleAttributeChange(index, "value", e.target.value)
+                        }
+                        placeholder="Value (e.g. Cotton, Blue)"
+                        className={inputClass}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeAttribute(index)}
+                      className="mt-7 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addAttribute}
+                  className="mt-2 text-sm text-primary-600 font-medium hover:text-primary-700 flex items-center"
+                >
+                  + Add New Attribute
+                </button>
+              </div>
+            </Section>
+
             {/* 7. Media & Assets */}
             <Section
               title="7️⃣ Media & Assets"
@@ -1332,11 +1638,10 @@ export default function NewProductPage() {
                     />
                     <label
                       htmlFor="image-upload"
-                      className={`flex flex-col items-center justify-center cursor-pointer ${
-                        imageFiles.length >= 7
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
+                      className={`flex flex-col items-center justify-center cursor-pointer ${imageFiles.length >= 7
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                        }`}
                     >
                       <svg
                         className="w-12 h-12 text-gray-400 mb-3"
@@ -2100,6 +2405,76 @@ export default function NewProductPage() {
                     <option value="Private">Private</option>
                   </select>
                 </div>
+              </div>
+            </Section>
+
+            {/* 1️⃣6️⃣ Trust Badges */}
+            <Section
+              title="1️⃣6️⃣ Trust Badges"
+              name="trustBadges"
+              isActive={activeSection === "trustBadges"}
+              onToggle={toggleSection}
+              sectionRef={(el) => {
+                if (el) sectionRefs.current["trustBadges"] = el;
+              }}
+            >
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Select trust badges to display on this product (assigned by admin)
+                </p>
+
+                {availableTrustBadges.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">
+                    No trust badges assigned to your business yet. Contact admin to get badges assigned.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {availableTrustBadges.map((badge) => {
+                      const isSelected = formData.trustBadges.includes(badge.id);
+                      return (
+                        <div
+                          key={badge.id}
+                          onClick={() => {
+                            if (isSelected) {
+                              setFormData(prev => ({
+                                ...prev,
+                                trustBadges: prev.trustBadges.filter(id => id !== badge.id)
+                              }));
+                            } else {
+                              setFormData(prev => ({
+                                ...prev,
+                                trustBadges: [...prev.trustBadges, badge.id]
+                              }));
+                            }
+                          }}
+                          className={`cursor-pointer border rounded-lg p-4 transition-all duration-200 flex items-start gap-3
+                            ${isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}
+                          `}
+                        >
+                          <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors
+                            ${isSelected ? 'bg-primary-600 border-primary-600' : 'border-gray-300 bg-white'}
+                          `}>
+                            {isSelected && (
+                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className={`font-medium ${isSelected ? 'text-primary-900' : 'text-gray-900'}`}>
+                              {badge.name}
+                            </h3>
+                            {badge.description && (
+                              <p className={`text-xs mt-1 ${isSelected ? 'text-primary-700' : 'text-gray-500'}`}>
+                                {badge.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </Section>
 

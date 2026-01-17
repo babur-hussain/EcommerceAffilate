@@ -6,7 +6,15 @@ export interface ICategory extends Document {
   description?: string;
   image?: string;
   icon?: string;
+  posters?: string[];
   parentCategory?: mongoose.Types.ObjectId;
+  attributes: {
+    attributeId: mongoose.Types.ObjectId;
+    position: number;
+    isRequired: boolean;
+  }[];
+  group?: string;
+  subCategoryGroupOrder?: string[]; // Groups ordering for subcategories (only relevant for Parent Categories)
   isActive: boolean;
   order: number;
   metaTitle?: string;
@@ -21,7 +29,6 @@ const categorySchema = new Schema<ICategory>(
       type: String,
       required: [true, 'Category name is required'],
       trim: true,
-      unique: true,
     },
     slug: {
       type: String,
@@ -39,11 +46,38 @@ const categorySchema = new Schema<ICategory>(
     icon: {
       type: String,
     },
+    posters: {
+      type: [String],
+      default: [],
+    },
     parentCategory: {
       type: Schema.Types.ObjectId,
       ref: 'Category',
       default: null,
     },
+    group: {
+      type: String,
+      trim: true,
+      description: 'Main Title for grouping subcategories (e.g. Staples under Grocery)',
+    },
+    subCategoryGroupOrder: {
+      type: [String], // Array of group names in order
+      default: [],
+    },
+    attributes: [{
+      attributeId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Attribute',
+      },
+      position: {
+        type: Number,
+        default: 0,
+      },
+      isRequired: {
+        type: Boolean,
+        default: false,
+      },
+    }],
     isActive: {
       type: Boolean,
       default: true,

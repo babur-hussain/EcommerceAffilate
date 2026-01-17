@@ -122,8 +122,13 @@ export default function LocationPickerModal({ isOpen, onClose, onSelect, initial
                     setIsLocating(false);
                 },
                 (err) => {
-                    console.error(err);
-                    toast.error("Could not get your location");
+                    console.error("Geolocation Error:", err);
+                    let msg = "Could not get your location.";
+                    if (err.code === 1) msg = "Location permission denied. Please enable it in browser settings.";
+                    if (err.code === 2) msg = "Location unavailable. Please try searching for your city/address instead.";
+                    if (err.code === 3) msg = "Location request timed out. Please try user search.";
+
+                    toast.error(msg);
                     setIsLocating(false);
                 }
             );
@@ -166,7 +171,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelect, initial
                                 placeholder="Search for a city or area..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-gray-900 placeholder:text-gray-400"
                             />
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                         </div>

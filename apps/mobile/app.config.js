@@ -13,9 +13,15 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.ecommerceearn.app',
+      infoPlist: {
+        NSAppTransportSecurity: {
+          NSAllowsArbitraryLoads: true,
+        },
+      },
     },
     android: {
       package: 'com.ecommerceearn.app',
+      usesCleartextTraffic: true,
     },
     scheme: 'ecommerceearn',
     plugins: ['expo-router'],
@@ -23,7 +29,7 @@ export default {
       typedRoutes: true,
     },
     extra: {
-      apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000',
+      apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.29.240:4000',
     },
   },
 };

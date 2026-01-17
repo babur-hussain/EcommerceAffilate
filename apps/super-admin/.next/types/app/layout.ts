@@ -1,4 +1,4 @@
-// File: C:\Users\dauds\OneDrive\Desktop\New folder\ecommerceearn\New folder\ecommerceearn\apps\super-admin\src\app\layout.tsx
+// File: /Users/baburhussain/Pictures/ecommerceearn/apps/super-admin/src/app/layout.tsx
 import * as entry from '../../../src/app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

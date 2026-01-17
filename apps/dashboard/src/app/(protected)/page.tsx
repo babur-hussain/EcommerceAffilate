@@ -10,10 +10,10 @@ export default function HomePage() {
 
   useEffect(() => {
     console.log('[HomePage] Setting up auth listener...');
-    
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('[HomePage] Auth state changed:', firebaseUser?.email || 'no user');
-      
+
       if (!firebaseUser) {
         console.log('[HomePage] No Firebase user, redirecting to login');
         window.location.href = '/login';
@@ -24,7 +24,7 @@ export default function HomePage() {
         // Get the Firebase ID token
         const token = await firebaseUser.getIdToken(true); // Force refresh token
         console.log('[HomePage] Got token, length:', token.length);
-        
+
         // Fetch user profile through Next.js API route (avoids CORS issues)
         const response = await fetch('/api/me', {
           headers: {
@@ -32,14 +32,14 @@ export default function HomePage() {
             'Content-Type': 'application/json',
           },
         });
-        
+
         const data = await response.json();
         console.log('[HomePage] API response:', response.status, data);
-        
+
         if (!response.ok) {
           throw new Error(data.error || `Failed to fetch user: ${response.status}`);
         }
-        
+
         const userData = data.user;
         console.log('[HomePage] User profile fetched:', userData);
 
@@ -52,7 +52,7 @@ export default function HomePage() {
           case 'BUSINESS_OWNER':
           case 'BUSINESS_MANAGER':
           case 'BUSINESS_STAFF':
-            redirectPath = '/business';
+            redirectPath = '/seller';
             break;
           case 'SELLER_OWNER':
           case 'SELLER_MANAGER':
@@ -60,14 +60,14 @@ export default function HomePage() {
             redirectPath = '/seller';
             break;
           case 'INFLUENCER':
-            redirectPath = '/influencer';
+            redirectPath = '/seller';
             break;
           default:
             setError(`No dashboard access for role: ${userData.role}`);
             setChecking(false);
             return;
         }
-        
+
         console.log('[HomePage] Redirecting to:', redirectPath);
         window.location.href = redirectPath;
       } catch (err: any) {

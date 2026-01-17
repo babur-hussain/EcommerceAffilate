@@ -61,6 +61,20 @@ export interface IProduct extends Document {
     discountAmount: number;
     code?: string;
   }[];
+  lastChanceOffers?: {
+    title: string;
+    description?: string;
+    originalPrice: number;
+    offerPrice: number;
+    discountPercentage?: number;
+    tag?: string;
+    features?: string[];
+    image?: string;
+  }[];
+  fees?: {
+    name: string;
+    amount: number;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -190,6 +204,20 @@ const productSchema = new Schema<IProduct>(
       description: { type: String },
       discountAmount: { type: Number, required: true, min: 0 },
       code: { type: String }
+    }],
+    lastChanceOffers: [{
+      title: { type: String, required: true },
+      description: { type: String },
+      originalPrice: { type: Number, required: true },
+      offerPrice: { type: Number, required: true },
+      discountPercentage: { type: Number },
+      tag: { type: String },
+      features: [{ type: String }],
+      image: { type: String }
+    }],
+    fees: [{
+      name: { type: String, required: true },
+      amount: { type: Number, required: true, default: 0 }
     }],
     primaryImage: {
       type: String,

@@ -10,7 +10,7 @@ const isValidRole = (role: any): role is UserRole => validRoles.includes(role);
 // POST /auth/register
 router.post('/auth/register', async (req: Request, res: Response) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role, name, firebaseUid } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -29,7 +29,19 @@ router.post('/auth/register', async (req: Request, res: Response) => {
     }
 
     const passwordHash = await hashPassword(password);
-    const user = await User.create({ email: normalizedEmail, passwordHash, role: roleToUse });
+
+    // Generate a random UID if not provided (using crypto for UUID)
+    const { randomUUID } = require('crypto');
+    const uid = randomUUID();
+
+    const user = await User.create({
+      uid,
+      email: normalizedEmail,
+      passwordHash,
+      role: roleToUse,
+      name,
+      firebaseUid
+    });
 
     const token = generateJWT(user);
     res.status(201).json({ token, role: user.role });

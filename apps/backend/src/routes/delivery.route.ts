@@ -61,11 +61,19 @@ router.post('/calculate', async (req, res) => {
             });
         }
 
-        // 2. Calculate Distance (Real API or Fallback logic)
+        // 2. Calculate Distance using Google Maps API
         let distanceKm = 0;
         let apiError = null;
 
-        const mapResult = await getDistanceMatrix(origin, destinationPincode);
+        // Origin for Google Maps: Preference Order -> Coordinates String > Pickup Location String > Pincode
+        let originString = origin;
+        if (product.pickupLocationCoordinates && product.pickupLocationCoordinates.lat) {
+            originString = `${product.pickupLocationCoordinates.lat},${product.pickupLocationCoordinates.lng}`;
+        } else if (product.pickupLocation) {
+            originString = product.pickupLocation;
+        }
+
+        const mapResult = await getDistanceMatrix(originString, destinationPincode);
 
         if (mapResult.distanceInKm !== null) {
             distanceKm = mapResult.distanceInKm;
@@ -73,8 +81,8 @@ router.post('/calculate', async (req, res) => {
             console.warn(`Google Maps API failed (${mapResult.error}), using fallback logic.`);
             apiError = mapResult.error;
 
-            // Fallback based on Pincode Logic
-            const isOriginPincode = /^\d6$/.test(origin); // Simple check if it looks like a pincode
+            // Fallback based on Pincode Logic (Approximate, only if Origin is a Pincode)
+            const isOriginPincode = /^\d+$/.test(origin); // Simple numeric check
 
             if (origin === destinationPincode) {
                 distanceKm = 5;
@@ -95,51 +103,64 @@ router.post('/calculate', async (req, res) => {
             isActive: true
         });
 
-        // 4. Calculate Total Time
-        // Processing Time
-        let processingDays = 1;
+        // 4. Calculate Total Time in Hours
+        // Processing Time (Convert to Hours)
+        let processingHours = 24; // Default 1 day
         if (product.processingTime) {
             if (product.processingTime.unit === 'hours') {
-                processingDays = Math.ceil(product.processingTime.value / 24);
+                processingHours = product.processingTime.value;
             } else {
-                processingDays = product.processingTime.value;
+                processingHours = product.processingTime.value * 24;
             }
         }
 
-        // Transit Time (from Rule)
-        let transitDays = 3; // Default fallback
-        if (rule) {
+        // Transit Time (Convert to Hours)
+        let transitHours = 72; // Default 3 days
+
+        if (mapResult.durationInSeconds) {
+            // Real API Data: Add 4 hours buffer for handling
+            transitHours = (mapResult.durationInSeconds / 3600) + 4;
+        } else if (rule) {
+            // Rule-based
             if (rule.timeUnit === 'hours') {
-                transitDays = Math.ceil(rule.timeValue / 24);
+                transitHours = rule.timeValue;
             } else {
-                transitDays = rule.timeValue;
+                transitHours = rule.timeValue * 24;
             }
         } else {
-            // No rule matched (maybe huge distance), default logic
-            if (distanceKm < 50) transitDays = 1;
-            else if (distanceKm < 200) transitDays = 2;
-            else if (distanceKm < 1000) transitDays = 4;
-            else transitDays = 7;
+            // Fallback Logic
+            if (distanceKm < 50) transitHours = 4; // ~4 hours for local
+            else if (distanceKm < 200) transitHours = 24; // 1 day
+            else if (distanceKm < 1000) transitHours = 96; // 4 days
+            else transitHours = 168; // 7 days
         }
 
-        const totalDays = processingDays + transitDays;
+        const totalHours = Math.ceil(processingHours + transitHours);
+        const totalDays = Math.ceil(totalHours / 24);
 
-        // Create response
+        // Format Response
         const today = new Date();
         const deliveryDate = new Date(today);
-        deliveryDate.setDate(today.getDate() + totalDays);
+        deliveryDate.setHours(today.getHours() + totalHours);
+
+        // precise text for short duration, date for long
+        let deliveryTimeText = `Delivery by ${deliveryDate.toDateString()}`;
+        if (totalHours < 48) {
+            deliveryTimeText = `Delivery in ${totalHours} hours`;
+        }
 
         res.json({
             distanceKm,
-            processingDays,
-            transitDays,
+            processingHours,
+            transitHours,
+            totalHours,
             totalDays,
             estimatedDate: deliveryDate,
             formattedDate: deliveryDate.toDateString(),
+            deliveryTimeText, // New field for UI
             ruleApplied: rule ? rule.name : 'Standard Fallback',
             originPincode: origin,
-            destinationPincode,
-            apiError // Return if there was an error for debugging (optional, maybe remove in prod)
+            destinationPincode
         });
 
     } catch (error) {

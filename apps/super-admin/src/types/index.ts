@@ -24,6 +24,14 @@ export interface Seller {
     businessName: string;
     businessType: string;
     status: "PENDING" | "APPROVED" | "REJECTED";
+    trustBadges?: string[];
+    address?: {
+      street: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      country: string;
+    };
   };
   stats: {
     totalProducts: number;

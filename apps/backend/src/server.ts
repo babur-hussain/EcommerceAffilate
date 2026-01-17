@@ -15,8 +15,11 @@ const startServer = async () => {
     // Start HTTP server only if DB connection succeeds
     const server = http.createServer(app);
 
-    server.listen(PORT, () => {
-      logger.info({ port: PORT }, 'Backend server running');
+    // Listen on all network interfaces (0.0.0.0) to allow mobile app connections
+    server.listen(PORT, '0.0.0.0', () => {
+      logger.info({ port: PORT, host: '0.0.0.0' }, 'Backend server running on all network interfaces');
+      console.log(`🚀 Server listening on http://0.0.0.0:${PORT}`);
+      console.log(`📱 Mobile devices can connect using your local IP address`);
     });
 
     const shutdown = async (signal: NodeJS.Signals) => {

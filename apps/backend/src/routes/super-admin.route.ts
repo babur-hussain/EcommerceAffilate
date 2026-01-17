@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import mongoose from "mongoose";
 import { verifyFirebaseToken } from "../middlewares/firebaseAuth";
 import { User } from "../models/user.model";
 import { Business } from "../models/business.model";
@@ -23,7 +24,7 @@ const verifySuperAdmin = async (req: Request, res: Response, next: any) => {
         .json({ error: "Forbidden: Super admin access required" });
     }
 
-    req.user = user;
+    req.user = user as any;
     next();
   } catch (error) {
     console.error("Super admin verification error:", error);
@@ -258,13 +259,13 @@ router.get(
       const sellersGrowth =
         newSellersLastWeek > 0
           ? ((newSellersThisWeek - newSellersLastWeek) / newSellersLastWeek) *
-            100
+          100
           : 0;
       const influencersGrowth =
         newInfluencersLastWeek > 0
           ? ((newInfluencersThisWeek - newInfluencersLastWeek) /
-              newInfluencersLastWeek) *
-            100
+            newInfluencersLastWeek) *
+          100
           : 0;
 
       const ordersLastWeek = await Order.find({
@@ -359,11 +360,11 @@ router.get(
             createdAt: seller.createdAt,
             business: business
               ? {
-                  _id: business._id,
-                  businessName: business.businessName,
-                  businessType: business.businessType,
-                  status: business.status,
-                }
+                _id: business._id,
+                businessName: business.businessIdentity.tradeName,
+                businessType: business.businessIdentity.businessType,
+                status: business.status,
+              }
               : null,
             stats: {
               totalProducts: products,
@@ -379,6 +380,102 @@ router.get(
     } catch (error: any) {
       console.error("Error fetching sellers:", error);
       res.status(500).json({ error: "Failed to fetch sellers" });
+    }
+  }
+);
+
+// GET /api/super-admin/sellers/:id - Get single seller details
+router.get(
+  "/super-admin/sellers/:id",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const seller = await User.findById(id);
+
+      if (!seller) {
+        return res.status(404).json({ error: "Seller not found" });
+      }
+
+      if (seller.role !== "SELLER_OWNER") {
+        return res.status(400).json({ error: "User is not a seller" });
+      }
+
+      const business = await Business.findOne({ userId: seller._id });
+      const products = await Product.countDocuments({ sellerId: seller._id });
+      const orders = await Order.find({ "items.sellerId": seller._id });
+
+      const totalOrders = orders.length;
+      const totalRevenue = orders.reduce(
+        (sum, order) => sum + order.totalAmount,
+        0
+      );
+
+      const sellerDetails = {
+        _id: seller._id,
+        uid: seller.uid,
+        email: seller.email,
+        name: seller.name || seller.email,
+        role: seller.role,
+        phoneNumber: seller.phoneNumber,
+        isActive: seller.isActive,
+        createdAt: seller.createdAt,
+        business: business
+          ? {
+            _id: business._id,
+            businessName: business.businessIdentity.tradeName,
+            businessType: business.businessIdentity.businessType,
+            status: business.status,
+            address: business.addresses.registered,
+            trustBadges: business.trustBadges || []
+          }
+          : null,
+        stats: {
+          totalProducts: products,
+          totalOrders,
+          totalRevenue,
+          commissionPaid: 0,
+        },
+      };
+
+      res.json(sellerDetails);
+    } catch (error: any) {
+      console.error("Error fetching seller details:", error);
+      res.status(500).json({ error: "Failed to fetch seller details" });
+    }
+  }
+);
+
+// PATCH /api/super-admin/businesses/:id/trust-badges - Update business trust badges
+router.patch(
+  "/super-admin/businesses/:id/trust-badges",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { badges } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: 'Invalid business ID' });
+      }
+
+      if (!Array.isArray(badges)) {
+        return res.status(400).json({ error: 'badges must be an array' });
+      }
+
+      const updated = await Business.findByIdAndUpdate(
+        id,
+        { trustBadges: badges },
+        { new: true }
+      );
+
+      if (!updated) return res.status(404).json({ error: 'Business not found' });
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating trust badges:", error);
+      res.status(500).json({ error: 'Failed to update trust badges', message: error.message });
     }
   }
 );
@@ -530,9 +627,8 @@ router.patch(
       await influencer.save();
 
       res.json({
-        message: `Influencer ${
-          isActive ? "activated" : "suspended"
-        } successfully`,
+        message: `Influencer ${isActive ? "activated" : "suspended"
+          } successfully`,
       });
     } catch (error: any) {
       console.error("Error updating influencer status:", error);

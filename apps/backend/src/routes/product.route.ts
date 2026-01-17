@@ -35,6 +35,8 @@ router.post("/products", requireBrand, async (req: Request, res: Response) => {
       saleEndDate,
       protectPromiseFee,
       offers,
+      lastChanceOffers,
+      fees,
     } = req.body;
 
     const authUser = (req as any).user as
@@ -108,6 +110,8 @@ router.post("/products", requireBrand, async (req: Request, res: Response) => {
       saleEndDate,
       protectPromiseFee,
       offers: offers || [],
+      lastChanceOffers: lastChanceOffers || [],
+      fees: fees || [],
       // sponsoredScore and popularityScore will use defaults (0)
       // These are controlled by admin/system logic only
     });
@@ -182,6 +186,8 @@ router.put(
         saleEndDate,
         protectPromiseFee,
         offers,
+        lastChanceOffers,
+        fees,
         pickupLocation,
         pickupLocationCoordinates,
       } = req.body;
@@ -248,6 +254,8 @@ router.put(
       if (saleEndDate !== undefined) updates.saleEndDate = saleEndDate;
       if (protectPromiseFee !== undefined) updates.protectPromiseFee = protectPromiseFee;
       if (offers !== undefined) updates.offers = offers;
+      if (lastChanceOffers !== undefined) updates.lastChanceOffers = lastChanceOffers;
+      if (fees !== undefined) updates.fees = fees;
       if (pickupLocation !== undefined) updates.pickupLocation = pickupLocation;
       if (pickupLocationCoordinates !== undefined) updates.pickupLocationCoordinates = pickupLocationCoordinates;
 

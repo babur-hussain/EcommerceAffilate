@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export type UserRole =
   | "ADMIN"
+  | "SUPER_ADMIN"
   | "BUSINESS_OWNER"
   | "BUSINESS_MANAGER"
   | "BUSINESS_STAFF"
@@ -74,6 +75,7 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: [
         "ADMIN",
+        "SUPER_ADMIN",
         "BUSINESS_OWNER",
         "BUSINESS_MANAGER",
         "BUSINESS_STAFF",

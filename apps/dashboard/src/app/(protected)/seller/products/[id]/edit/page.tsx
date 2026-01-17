@@ -6,7 +6,9 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api";
 import toast from "react-hot-toast";
-import { ArrowLeft, ChevronDown, ChevronUp, Upload, X, MapPin } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Upload, X, MapPin, Trash2, Plus } from "lucide-react";
+import UpsellOfferManager from '@/components/UpsellOfferManager';
+import FeesManager from '@/components/FeesManager';
 import Link from "next/link";
 import LocationPickerModal from "@/components/LocationPickerModal";
 
@@ -126,7 +128,21 @@ interface Product {
   status?: string;
   publishDate?: string;
   visibility?: string;
+  lastChanceOffers?: {
+    title: string;
+    description?: string;
+    originalPrice: number;
+    offerPrice: number;
+    discountPercentage?: number;
+    tag?: string;
+    features?: string[];
+    image?: string;
+  }[];
   brandId?: string;
+  fees?: {
+    name: string;
+    amount: number;
+  }[];
   trustBadges?: string[];
 }
 
@@ -200,7 +216,6 @@ export default function EditProductPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const [formData, setFormData] = useState({
@@ -244,6 +259,8 @@ export default function EditProductPage() {
 
     // 5. Variants
     variants: [] as Variant[],
+    lastChanceOffers: [] as any[],
+    fees: [] as { name: string; amount: number }[],
 
     // 6. Product Description
     shortDescription: "",
@@ -404,6 +421,8 @@ export default function EditProductPage() {
         shippingClass: product.shippingClass || "Standard",
         pickupLocation: product.pickupLocation || "",
         pickupLocationCoordinates: product.pickupLocationCoordinates,
+        lastChanceOffers: product.lastChanceOffers || [],
+        fees: product.fees || [],
         processingTime:
           typeof product.processingTime === "object" && product.processingTime
             ? product.processingTime
@@ -708,6 +727,8 @@ export default function EditProductPage() {
               : "days",
         },
         pickupLocationCoordinates: formData.pickupLocationCoordinates,
+        lastChanceOffers: formData.lastChanceOffers,
+        fees: formData.fees,
         codAvailable: formData.codAvailable,
         seoTitle: formData.seoTitle || formData.title,
         seoDescription: formData.seoDescription,
@@ -716,6 +737,9 @@ export default function EditProductPage() {
         visibility: formData.visibility,
         trustBadges: formData.trustBadges,
       };
+
+      console.log("🎁 Last Chance Offers being sent:", productData.lastChanceOffers);
+      console.log("📦 Full product data:", productData);
 
       // Only update images if new ones were uploaded
       if (uploadedImageUrls.length > 0) {
@@ -1211,6 +1235,60 @@ export default function EditProductPage() {
                   <label className="ml-2 text-sm text-gray-700">
                     Tax Inclusive Price
                   </label>
+                </div>
+              </div>
+
+              {/* Fees Manager */}
+              <FeesManager
+                fees={formData.fees}
+                onChange={(fees) => setFormData({ ...formData, fees })}
+              />
+
+              {/* Delivery Charges */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Delivery Charges
+                </label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryChargeType"
+                        value="free"
+                        checked={String(formData.shippingCharges) === '0' || formData.shippingCharges === ''}
+                        onChange={() => setFormData({ ...formData, shippingCharges: '0' })}
+                        className="h-4 w-4 text-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">Free Delivery</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="deliveryChargeType"
+                        value="chargeable"
+                        checked={String(formData.shippingCharges) !== '0' && formData.shippingCharges !== ''}
+                        onChange={() => setFormData({ ...formData, shippingCharges: '' })}
+                        className="h-4 w-4 text-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">Chargeable</span>
+                    </label>
+                  </div>
+
+                  {String(formData.shippingCharges) !== '0' && formData.shippingCharges !== '' && (
+                    <div className="w-64">
+                      <input
+                        type="number"
+                        name="shippingCharges"
+                        value={formData.shippingCharges}
+                        onChange={handleChange}
+                        placeholder="Enter delivery charge amount"
+                        min="0"
+                        step="0.01"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </Section>
@@ -1870,16 +1948,53 @@ export default function EditProductPage() {
                       onChange={handleChange}
                       className={textareaClass.replace("w-full", "flex-1")}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowLocationPicker(true)}
-                      className="p-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-500"
-                      title="Pick from map"
-                    >
-                      <MapPin className="h-5 w-5" />
-                    </button>
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Latitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 12.9716"
+                      value={formData.pickupLocationCoordinates?.lat || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          pickupLocationCoordinates: {
+                            ...formData.pickupLocationCoordinates,
+                            lat: parseFloat(e.target.value) || 0
+                          }
+                        } as any)
+                      }
+                      className={textareaClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Longitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 77.5946"
+                      value={formData.pickupLocationCoordinates?.lng || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          pickupLocationCoordinates: {
+                            ...formData.pickupLocationCoordinates,
+                            lng: parseFloat(e.target.value) || 0
+                          }
+                        } as any)
+                      }
+                      className={textareaClass}
+                    />
+                  </div>
+                </div>
+                {/* Manual Coordinates Input End */}
                 {/* Location Picker Modal moved outside to generic valid location later, or effectively it is fine inside a div, 
                     BUT the whole page content is wrapped in a <form> tag?
                     Let's check where the form starts. Line 250 in the original file probably.
@@ -2496,22 +2611,26 @@ export default function EditProductPage() {
                 )}
               </div>
             </Section>
+
+            {/* 1️⃣7️⃣ Last Chance Upsell */}
+            <Section
+              title="1️⃣7️⃣ Last Chance Upsell"
+              name="lastChance"
+              isActive={activeSection === "lastChance"}
+              onToggle={toggleSection}
+              sectionRef={(el) => {
+                if (el) sectionRefs.current["lastChance"] = el;
+              }}
+            >
+              <UpsellOfferManager
+                offers={formData.lastChanceOffers || []}
+                onChange={(newOffers) => setFormData({ ...formData, lastChanceOffers: newOffers } as any)}
+              />
+            </Section>
+
           </form>
         </div>
-        <LocationPickerModal
-          isOpen={showLocationPicker}
-          onClose={() => setShowLocationPicker(false)}
-          onSelect={(address, lat, lng) => {
-            setFormData({
-              ...formData,
-              pickupLocation: address,
-              pickupLocationCoordinates: { lat, lng }
-            } as any);
-          }}
-          initialLat={formData.pickupLocationCoordinates?.lat}
-          initialLng={formData.pickupLocationCoordinates?.lng}
-        />
-      </div>
+      </div >
     </ProtectedRoute >
   );
 }

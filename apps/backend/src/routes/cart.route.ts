@@ -11,7 +11,7 @@ router.get('/cart', requireCustomer, async (req: Request, res: Response) => {
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    let cart = await Cart.findOne({ userId: user.id });
+    let cart = await Cart.findOne({ userId: user.id }).populate('items.productId');
     if (!cart) {
       cart = await Cart.create({ userId: user.id, items: [] });
     }
@@ -66,6 +66,7 @@ router.post('/cart/add', requireCustomer, async (req: Request, res: Response) =>
     }
 
     await cart.save();
+    await cart.populate('items.productId');
     res.json(cart);
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to add to cart', message: error.message });
@@ -96,6 +97,7 @@ router.post('/cart/remove', requireCustomer, async (req: Request, res: Response)
     }
 
     await cart.save();
+    await cart.populate('items.productId');
     res.json(cart);
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to remove from cart', message: error.message });
@@ -142,6 +144,7 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
     item.quantity = qty2;
 
     await cart.save();
+    await cart.populate('items.productId');
     res.json(cart);
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to update cart item', message: error.message });

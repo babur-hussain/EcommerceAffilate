@@ -33,29 +33,41 @@ import homepageRouter from "./routes/homepage.route";
 import adminHomepageRouter from "./routes/admin.homepage.route";
 import categoryRouter from "./routes/category.route";
 import adminCategoryRouter from "./routes/admin.category.route";
+import adminAttributeRouter from "./routes/admin.attribute.route";
+import attributeRouter from "./routes/attribute.route";
+import adminTrustBadgeRouter from "./routes/admin.trustBadge.route";
 import superAdminRouter from "./routes/super-admin.route";
+import offerRouter from "./routes/offer.route";
+import deliveryRuleRouter from "./routes/deliveryRule.route";
+import deliveryRouter from "./routes/delivery.route";
 import { requestLogger } from "./middlewares/requestLogger";
 import { logger, loggerWithContext } from "./utils/logger";
 
 const app: Express = express();
 
 // CORS: allow web frontend and dashboard origins (MUST be before helmet)
-app.use(
-  cors({
-    origin: [
+// In development, allow all origins for mobile app compatibility
+// In production, use whitelist for security
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? [
       "http://localhost:3000",
       "http://localhost:3001",
       "http://localhost:3002",
       "http://localhost:3003", // Super Admin Panel
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["Content-Length", "X-Request-Id"],
-    credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  })
-);
+      "http://192.168.29.193:3000", // Previous IP
+      "http://192.168.29.240:3000", // Current IP
+    ]
+    : true, // Allow all origins in development
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Content-Length", "X-Request-Id"],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
 
 // Security middleware
 app.disable("x-powered-by");
@@ -82,8 +94,7 @@ const upload = multer({
 // DEBUG: Log ALL incoming requests
 app.use((req, res, next) => {
   console.log(
-    `🌐 INCOMING: ${req.method} ${req.url} - Auth: ${
-      req.headers.authorization ? "YES" : "NO"
+    `🌐 INCOMING: ${req.method} ${req.url} - Auth: ${req.headers.authorization ? "YES" : "NO"
     }`
   );
   if (req.url.includes("/business/register")) {
@@ -135,8 +146,14 @@ app.use("/api", meRouter);
 app.use("/api", homepageRouter);
 app.use("/api", adminHomepageRouter);
 app.use("/api", categoryRouter);
+app.use("/api", attributeRouter);
 app.use("/api", superAdminRouter);
-// app.use('/api/admin', adminCategoryRouter); // TODO: Fix auth middleware issues
+app.use("/api", offerRouter);
+app.use("/api/delivery-rules", deliveryRuleRouter);
+app.use("/api/delivery", deliveryRouter);
+app.use('/api/super-admin', adminCategoryRouter);
+app.use('/api/super-admin', adminAttributeRouter);
+app.use('/api/super-admin', adminTrustBadgeRouter);
 
 // Global error handler
 // Note: keep last

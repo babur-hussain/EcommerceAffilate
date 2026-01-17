@@ -39,6 +39,32 @@ router.patch('/admin/businesses/:id/status', async (req: Request, res: Response)
   }
 });
 
+router.patch('/admin/businesses/:id/trust-badges', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { badges } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid business ID' });
+    }
+
+    if (!Array.isArray(badges)) {
+      return res.status(400).json({ error: 'badges must be an array' });
+    }
+
+    const updated = await Business.findByIdAndUpdate(
+      id,
+      { trustBadges: badges },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ error: 'Business not found' });
+    res.json(updated);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to update trust badges', message: error.message });
+  }
+});
+
 router.get('/admin/businesses/:id/brands', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

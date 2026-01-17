@@ -47,6 +47,16 @@ export interface Product {
   pickupLocationCoordinates?: { lat: number; lng: number };
   createdAt: string;
   updatedAt: string;
+  lastChanceOffers?: {
+    title: string;
+    description?: string;
+    originalPrice: number;
+    offerPrice: number;
+    discountPercentage?: number;
+    tag?: string;
+    features?: string[];
+    image?: string;
+  }[];
 }
 
 export interface Order {

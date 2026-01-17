@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "apps/*",
+    "apps/web",
+    "apps/dashboard",
+    "apps/influencer-dashboard",
+    "apps/backend",
+    "apps/super-admin",
     "packages/*"
   ],
   "scripts": {
@@ -12,6 +16,11 @@
     "mobile": "npm run start --workspace=apps/mobile"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "razorpay": "^2.9.6"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7"
   }
 }

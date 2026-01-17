@@ -254,6 +254,13 @@ export default function SellersPage() {
                             <CheckCircle className="h-5 w-5" />
                           </button>
                         )}
+                        <a
+                          href={`/admin/sellers/${seller._id}`}
+                          className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg"
+                          title="Manage Details"
+                        >
+                          <MoreVertical className="h-5 w-5" />
+                        </a>
                         {seller.isActive ? (
                           <button
                             onClick={() => handleSuspend(seller._id)}

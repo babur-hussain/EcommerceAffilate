@@ -36,6 +36,8 @@ router.get('/me', verifyFirebaseToken, async (req: Request, res: Response) => {
         id: String(user._id),
         email: user.email,
         role: user.role,
+        name: user.name,
+        profileImage: user.profileImage,
         businessId: user.businessId,
         isActive: user.isActive,
         businessActive,

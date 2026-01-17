@@ -15,14 +15,21 @@ import {
   UserCheck,
   BarChart3,
   Shield,
+  Tags,
+  Sliders,
+  Percent,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Sellers", href: "/admin/sellers", icon: Store },
   { name: "Influencers", href: "/admin/influencers", icon: UserCheck },
+  { name: "Categories", href: "/admin/categories", icon: Tags },
+  { name: "Attributes", href: "/admin/attributes", icon: Sliders },
   { name: "All Users", href: "/admin/users", icon: Users },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { name: "Steal Deals", href: "/admin/offers", icon: Percent },
+  { name: "Delivery Rules", href: "/admin/delivery-rules", icon: TrendingUp },
   { name: "Reports", href: "/admin/reports", icon: FileText },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
@@ -76,11 +83,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary-50 text-primary-700"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                  ? "bg-primary-50 text-primary-700"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 <item.icon className="h-5 w-5" />
                 {item.name}

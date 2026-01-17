@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Category from '../models/category.model';
 
 const router = express.Router();
@@ -7,8 +8,29 @@ const router = express.Router();
 router.get('/categories', async (req, res) => {
   try {
     console.log('🔍 Fetching categories...');
-    const categories = await Category.find({ isActive: true })
-      .select('name slug description image icon parentCategory order')
+    const { parentCategory } = req.query;
+    const query: any = { isActive: true };
+
+    if (parentCategory) {
+      if (mongoose.Types.ObjectId.isValid(parentCategory as string)) {
+        query.parentCategory = parentCategory;
+      } else {
+        // If not a valid ObjectId, try finding the parent category by name
+        const parent = await Category.findOne({
+          name: { $regex: new RegExp(`^${parentCategory}$`, 'i') }
+        }).select('_id');
+
+        if (parent) {
+          query.parentCategory = parent._id;
+        } else {
+          // If parent category not found by name either, return empty list immediately
+          return res.json([]);
+        }
+      }
+    }
+
+    const categories = await Category.find(query)
+      .select('name slug description image icon posters parentCategory order group subCategoryGroupOrder')
       .sort({ order: 1, name: 1 })
       .lean();
 
@@ -20,14 +42,21 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-// Get category by slug
-router.get('/categories/:slug', async (req, res) => {
+// Get category by slug or ID
+router.get('/categories/:idOrSlug', async (req, res) => {
   try {
-    const category = await Category.findOne({ 
-      slug: req.params.slug, 
-      isActive: true 
-    })
+    const { idOrSlug } = req.params;
+    let query: any = { isActive: true };
+
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      query = { _id: idOrSlug, isActive: true };
+    } else {
+      query = { slug: idOrSlug, isActive: true };
+    }
+
+    const category = await Category.findOne(query)
       .populate('parentCategory', 'name slug')
+      .populate('attributes.attributeId', 'name code type isFilterable values')
       .lean();
 
     if (!category) {
@@ -44,9 +73,9 @@ router.get('/categories/:slug', async (req, res) => {
 // Get subcategories by parent category slug
 router.get('/categories/:slug/subcategories', async (req, res) => {
   try {
-    const parentCategory = await Category.findOne({ 
-      slug: req.params.slug, 
-      isActive: true 
+    const parentCategory = await Category.findOne({
+      slug: req.params.slug,
+      isActive: true,
     });
 
     if (!parentCategory) {
@@ -57,7 +86,7 @@ router.get('/categories/:slug/subcategories', async (req, res) => {
       parentCategory: parentCategory._id,
       isActive: true,
     })
-      .select('name slug description image icon order')
+      .select('name slug description image icon posters order group')
       .sort({ order: 1, name: 1 })
       .lean();
 
