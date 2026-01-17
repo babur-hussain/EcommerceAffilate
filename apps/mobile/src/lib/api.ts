@@ -2,26 +2,22 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 
 const getBaseUrl = () => {
-  /*
-  if (Constants.expoConfig?.extra?.apiUrl) {
-    return Constants.expoConfig.extra.apiUrl;
-  }
-  */
+  // Check for EXPO_PUBLIC_API_URL or fallback to dynamic host
+  const configuredUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (configuredUrl) return configuredUrl;
 
-  // Hardcode IP to ensure connectivity during dev
-  return 'http://192.168.29.193:4000';
-
-  /*
   const hostUri = Constants.expoConfig?.hostUri;
   if (!hostUri) {
-    return 'http://localhost:4000';
+    // Fallback to localhost if no hostUri (e.g. simulator)
+    return 'http://192.168.29.193:4000';
   }
 
+  // Use the same IP as the Expo Bundler
   const ip = hostUri.split(':')[0];
   return `http://${ip}:4000`;
-  */
 };
 
 const API_URL = getBaseUrl();
@@ -35,9 +31,15 @@ const api = axios.create({
   },
 });
 
-// Cache key generator
+// Cache key generator with sorted keys for determinism
 const getCacheKey = (url: string, params: any) => {
-  return `CACHE_${url}_${JSON.stringify(params || {})}`;
+  const sortedParams = params
+    ? Object.keys(params).sort().reduce((obj: any, key) => {
+      obj[key] = params[key];
+      return obj;
+    }, {})
+    : {};
+  return `CACHE_${url}_${JSON.stringify(sortedParams)}`;
 };
 
 // Request interceptor to add auth token
@@ -73,41 +75,58 @@ api.interceptors.response.use(
     const netInfo = await NetInfo.fetch();
     const isOffline = !netInfo.isConnected || !netInfo.isInternetReachable;
 
-    // Enhanced error logging for debugging
-    if (error.code === 'ECONNABORTED' || error.message === 'Network Error' || isOffline) {
-      console.log('⚠️ Network issue or offline. Attempting to fetch from cache...');
+    // We check for a special header or config property to bypass cache on refresh
+    const skipCache =
+      error.config?.skipErrorCache ||
+      (error.config?.headers && error.config.headers['x-skip-error-cache']);
 
-      if (error.config && error.config.method === 'get' && error.config.url) {
-        try {
-          const key = getCacheKey(error.config.url, error.config.params);
-          const cachedData = await AsyncStorage.getItem(key);
+    const shouldTryCache =
+      error.config &&
+      error.config.method === 'get' &&
+      error.config.url &&
+      !skipCache &&
+      (!error.response || error.response.status !== 401);
 
-          if (cachedData) {
-            console.log('✅ Serving cached data for:', error.config.url);
-            return {
-              data: JSON.parse(cachedData),
-              status: 200,
-              statusText: 'OK',
-              headers: {},
-              config: error.config,
-              request: {}
-            };
-          } else {
-            console.log('ℹ️ No cached data found for:', error.config.url);
-          }
-        } catch (e) {
-          console.error('Failed to retrieve cached response', e);
+    if (shouldTryCache) {
+      console.log('⚠️ Request failed. Attempting to fetch from device cache for:', error.config.url);
+
+      try {
+        const key = getCacheKey(error.config.url, error.config.params);
+        const cachedData = await AsyncStorage.getItem(key);
+
+        if (cachedData) {
+          console.log('✅ Serving cached data from device for:', error.config.url);
+          return {
+            data: JSON.parse(cachedData),
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config: error.config,
+            request: {}
+          };
+        } else {
+          console.log('ℹ️ No cached data found in device for:', error.config.url);
         }
+      } catch (e) {
+        console.error('Failed to retrieve cached response from device', e);
       }
 
-      console.warn('❌ Request failed/timed out and no cache available.');
+      console.warn('❌ Request failed/timed out and no cache available in device.');
     } else if (error.message === 'Network Error') {
       console.warn('❌ Network Error - Cannot reach server');
     }
 
     if (error.response?.status === 401) {
       await AsyncStorage.removeItem('authToken');
-      // Navigation will be handled by auth context
+      // Force navigation to login
+      try {
+        if (router.canDismiss()) {
+          router.dismissAll();
+        }
+        router.replace('/login');
+      } catch (e) {
+        console.log("Navigation error on 401", e);
+      }
     }
     return Promise.reject(error);
   }

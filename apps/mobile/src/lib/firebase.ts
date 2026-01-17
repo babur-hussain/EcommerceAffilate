@@ -1,4 +1,5 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+// @ts-ignore
 import { initializeAuth, getReactNativePersistence, getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-url-polyfill/auto';
@@ -29,6 +30,11 @@ try {
   });
 } catch (e) {
   auth = getAuth(app);
+  // If auth already initialized (e.g. fast refresh), ensure persistence is set
+  // This prevents losing auth state on reload/restart in some edge cases
+  auth.setPersistence(getReactNativePersistence(ReactNativeAsyncStorage)).catch((err) => {
+    console.warn("Failed to set persistence on existing auth instance", err);
+  });
 }
 
 export { auth };

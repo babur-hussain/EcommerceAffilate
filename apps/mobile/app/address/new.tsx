@@ -198,7 +198,7 @@ export default function AddAddressScreen() {
                     <MapView
                         ref={mapRef}
                         style={styles.map}
-                        provider={PROVIDER_GOOGLE}
+                        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                         initialRegion={{
                             latitude: location?.coords.latitude || 37.78825,
                             longitude: location?.coords.longitude || -122.4324,

@@ -40,6 +40,7 @@ import superAdminRouter from "./routes/super-admin.route";
 import offerRouter from "./routes/offer.route";
 import deliveryRuleRouter from "./routes/deliveryRule.route";
 import deliveryRouter from "./routes/delivery.route";
+import partnerRouter from "./routes/partner.route";
 import { requestLogger } from "./middlewares/requestLogger";
 import { logger, loggerWithContext } from "./utils/logger";
 
@@ -151,6 +152,7 @@ app.use("/api", superAdminRouter);
 app.use("/api", offerRouter);
 app.use("/api/delivery-rules", deliveryRuleRouter);
 app.use("/api/delivery", deliveryRouter);
+app.use("/api/partner", partnerRouter);
 app.use('/api/super-admin', adminCategoryRouter);
 app.use('/api/super-admin', adminAttributeRouter);
 app.use('/api/super-admin', adminTrustBadgeRouter);

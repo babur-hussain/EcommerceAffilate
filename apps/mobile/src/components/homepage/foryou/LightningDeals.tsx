@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import LightningDealCard, { LightningDealProduct } from './LightningDealCard';
 import api from '../../../lib/api';
+import CachedImage from '../../shared/CachedImage';
 
 // Visual overrides for specific slots to match the screenshot
 const DEAL_OVERRIDES = [
@@ -127,10 +128,10 @@ export default function LightningDeals() {
             />
 
             {/* Lightning Bolt Decoration (Approximate CSS shape or image) */}
-            <Image
+            <CachedImage
                 source={{ uri: 'https://cdn-icons-png.flaticon.com/512/616/616490.png' }} // Simple lightning icon for reference
                 style={styles.lightningIcon}
-                resizeMode="contain"
+                contentFit="contain"
             />
 
             <View style={styles.header}>

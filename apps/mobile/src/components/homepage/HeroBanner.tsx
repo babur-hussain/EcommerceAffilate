@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, Image, NativeSyntheticEvent, NativeScrollEvent, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../lib/api';
+import CachedImage from '../shared/CachedImage';
 
 const { width } = Dimensions.get('window');
 const BANNER_HEIGHT = 200;
@@ -122,7 +123,7 @@ export default function HeroBanner() {
             >
                 {banners.map((banner) => (
                     <View key={banner.id} style={styles.slide}>
-                        <Image source={{ uri: banner.image }} style={styles.image} />
+                        <CachedImage source={{ uri: banner.image }} style={styles.image} contentFit="cover" />
                         <LinearGradient
                             colors={['transparent', 'rgba(0,0,0,0.8)']}
                             style={styles.gradient}

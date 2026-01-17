@@ -438,7 +438,7 @@ router.get(
         "items.productId": { $in: productIds }
       })
         .sort({ createdAt: -1 })
-        .populate("items.productId", "title price image businessId")
+        .populate("items.productId", "title price image businessId brand category shortDescription")
         .populate("userId", "name email phone");
 
       console.log(
@@ -451,6 +451,82 @@ router.get(
       res
         .status(500)
         .json({ error: "Failed to fetch orders", message: error.message });
+    }
+  }
+);
+
+// PATCH /api/business/orders/:id/status - Update order status
+router.patch(
+  "/business/orders/:id/status",
+  verifyFirebaseToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { status, deliveryStatus } = req.body;
+      const authUser = (req as any).user as
+        | { id?: string; role?: string; businessId?: string }
+        | undefined;
+
+      if (!authUser?.id) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      if (!authUser.businessId) {
+        return res.status(403).json({ error: "No business associated with this account" });
+      }
+
+      const { Order } = await import("../models/order.model");
+
+      // Verify that this order contains products from this seller
+      // This is a crucial security step to prevent sellers from updating orders that don't belong to them
+      const order = await Order.findById(id);
+
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Check if the order has items from this business
+      // We need to fetch the products referenced in the order items to check their businessId
+      // However, for efficiency, we can rely on the fact that we should populate or check against known product IDs
+      // A safer way is to Find the order AND ensure at least one item's product belongs to this business.
+      // But since products are embedded with just ID in items, we need to check the Product collection
+      // or rely on previous flow.
+
+      // Let's verify ownership by checking if any product in the order belongs to this business
+      const { Product } = await import("../models/product.model");
+      const orderProductIds = order.items.map(item => item.productId);
+
+      const count = await Product.countDocuments({
+        _id: { $in: orderProductIds },
+        businessId: authUser.businessId
+      });
+
+      if (count === 0) {
+        return res.status(403).json({ error: "You are not authorized to update this order" });
+      }
+
+      // Update fields
+      if (status) order.status = status;
+      if (deliveryStatus) order.deliveryStatus = deliveryStatus;
+
+      await order.save();
+
+      console.log(`✅ Order ${id} status updated to ${status} by business ${authUser.businessId}`);
+
+      // Trigger Dispatch System if status is SHIPPED (Waiting Pickup)
+      if (status === 'SHIPPED') {
+        const { DispatchService } = await import("../services/dispatch.service");
+        // Run properly in background, don't await strictly if you want fast response, 
+        // but awaiting ensures errors are caught in logs.
+        DispatchService.startDispatch(id).catch(err => {
+          console.error("Failed to trigger dispatch:", err);
+        });
+      }
+
+      res.json({ success: true, order });
+    } catch (error: any) {
+      console.error("❌ Error updating order status:", error.message);
+      res.status(500).json({ error: "Failed to update status", message: error.message });
     }
   }
 );

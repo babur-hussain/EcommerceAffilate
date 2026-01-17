@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import api from '../../src/lib/api';
 import { useCart } from '../../src/context/CartContext';
 
@@ -89,12 +90,14 @@ export default function ProductDetailScreen() {
     if (!product) return;
     try {
       await addToCart(product._id, 1, product);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       Alert.alert('Error', 'Failed to add to cart');
     }
   };
 
   const handleBuyNow = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     console.log('🛒 Buy Now clicked');
     console.log('📊 Product:', product?.title);
     console.log('🎁 Offers available:', product?.lastChanceOffers);
@@ -109,6 +112,8 @@ export default function ProductDetailScreen() {
       proceedToCheckout([]);
     }
   };
+
+
 
   const proceedToCheckout = (selectedOfferIds: string[]) => {
     console.log('🛍️ Proceeding to checkout with offers:', selectedOfferIds);
@@ -221,6 +226,10 @@ export default function ProductDetailScreen() {
           price={product.price}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
+          onOpenCart={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/cart');
+          }}
         />
       </View>
 

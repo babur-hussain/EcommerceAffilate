@@ -2,10 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Dimensions, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../src/lib/api';
+import PaymentSection from '../../src/components/checkout/PaymentSection';
+import RazorpayCheckout from 'react-native-razorpay';
+// import RazorpayCheckout from '../../src/mocks/RazorpayCheckout';
+// @ts-ignore
+// import AllInOneSDKManager from 'paytm-allinone-react-native';
+import AllInOneSDKManager from '../../src/mocks/PaytmAllInOneSDKManager';
+import { useAuth } from '../../src/context/AuthContext';
+import { useCart } from '../../src/context/CartContext';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +29,7 @@ interface CheckoutProduct {
     ratingCount?: number;
     protectPromiseFee?: number;
     shippingCharges?: number;
+    offers?: any[];
 }
 
 interface UpsellOffer {
@@ -34,11 +44,30 @@ interface UpsellOffer {
     image?: string;
 }
 
+interface Address {
+    _id: string;
+    name: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+    isDefault: boolean;
+    type?: string;
+}
+
 export default function CheckoutScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const productId = params.productId as string;
     const selectedOffersParam = params.selectedOffers as string;
+    const source = params.source as string;
+    const isCartCheckout = source === 'cart';
+
+    const { user } = useAuth();
+    const { cart, cartTotal } = useCart();
 
     const [product, setProduct] = useState<CheckoutProduct | null>(null);
     const [upsellOffers, setUpsellOffers] = useState<UpsellOffer[]>([]);
@@ -48,12 +77,44 @@ export default function CheckoutScreen() {
     const [currentStep, setCurrentStep] = useState(2);
     const [isPriceDetailsVisible, setPriceDetailsVisible] = useState(false);
     const [selectedDonation, setSelectedDonation] = useState<number | null>(null);
+    const [addressId, setAddressId] = useState<string | null>(null);
+    const [addresses, setAddresses] = useState<Address[]>([]);
+    const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+    const [isAddressModalVisible, setAddressModalVisible] = useState(false);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchAddresses();
+        }, [])
+    );
+
+    const fetchAddresses = async () => {
+        try {
+            const res = await api.get('/api/addresses'); // Verified endpoint
+            if (res.data && Array.isArray(res.data)) {
+                setAddresses(res.data);
+
+                // Select default or first
+                const defaultAddr = res.data.find((a: Address) => a.isDefault) || res.data[0];
+                if (defaultAddr) {
+                    setAddressId(defaultAddr._id);
+                    setSelectedAddress(defaultAddr);
+                }
+            }
+        } catch (e) {
+            console.log("Error fetching addresses", e);
+            // Alert.alert("Error", "Failed to load addresses");
+        }
+    };
 
     useEffect(() => {
         if (productId) {
             fetchProductDetails();
+        } else if (isCartCheckout) {
+            setLoading(false);
+            // Cart data is already in context
         }
-    }, [productId]);
+    }, [productId, isCartCheckout]);
 
     useEffect(() => {
         if (selectedOffersParam) {
@@ -83,6 +144,7 @@ export default function CheckoutScreen() {
                 ratingCount: data.ratingCount || 12567,
                 protectPromiseFee: data.protectPromiseFee || 0,
                 shippingCharges: typeof data.shippingCharges === 'number' ? data.shippingCharges : parseFloat(data.shippingCharges) || 0,
+                offers: data.offers || [],
             });
 
             setUpsellOffers(data.lastChanceOffers || []);
@@ -147,7 +209,186 @@ export default function CheckoutScreen() {
     };
 
     const handleContinue = () => {
-        Alert.alert('Checkout', `Proceeding to payment with total: ₹${calculateTotal().toLocaleString()}`);
+        if (currentStep === 2) {
+            setCurrentStep(3);
+        } else {
+            // Recalculate total dynamically in case of state changes
+            const finalTotal = isCartCheckout ? cartTotal : calculateTotal();
+            Alert.alert('Checkout', `Proceeding to payment with total: ₹${finalTotal.toLocaleString()}`);
+        }
+    };
+
+    const handleBack = () => {
+        if (currentStep === 3) {
+            setCurrentStep(2);
+        } else {
+            router.back();
+        }
+    };
+
+    const handlePaymentSelect = async (method: string) => {
+        if (!product) return;
+
+        // We need an addressId. For this implementation, we'll try to find one or alert.
+        // If addressId is null, we can't create order.
+        // For development/demo, if we can't fetch one, we might fail.
+        // Let's assume we have a valid addressId or we fetch it ad-hoc.
+        let validAddressId = addressId;
+        if (!validAddressId) {
+            try {
+                // Quick hack: fetch addresses if not loaded
+                // Actually, let's just create a dummy address ID if we are in dev/test environment OR ask user to add address
+                // Since I cannot implement full address management now, I will warn the user.
+                Alert.alert("Address Required", "Please select a delivery address in Step 1.");
+                return;
+            } catch { }
+        }
+
+        setLoading(true);
+        try {
+            // 1. Create Order
+            let items: any[] = [];
+
+            if (isCartCheckout && cart && cart.items) {
+                items = cart.items.map((item: any) => ({
+                    productId: typeof item.productId === 'string' ? item.productId : item.productId._id,
+                    quantity: item.quantity
+                }));
+            } else if (product) {
+                items = [{ productId: product._id, quantity: product.quantity }];
+                // Add upsells for single product checkout
+                upsellOffers.forEach((offer, idx) => {
+                    const id = offer._id || `temp-${idx}`;
+                    if (selectedOffers.includes(id) && offer._id) {
+                        // items.push({ productId: offer._id, quantity: 1 });
+                    }
+                });
+            }
+
+            if (items.length === 0) {
+                Alert.alert("Error", "No items to checkout.");
+                setLoading(false);
+                return;
+            }
+
+            const orderPayload = {
+                items,
+                addressId: validAddressId,
+                selectedOfferIds: selectedOffers.filter(id => !id.toString().startsWith('temp-')), // Filter out temp IDs if any
+                paymentMethod: method // Pass the selected payment method (e.g., 'COD', 'PAYTM', 'RAZORPAY')
+                // couponCode: ... // if we had coupons
+            };
+
+            // Create order to get ID
+            const orderRes = await api.post('/api/orders', orderPayload);
+            const order = orderRes.data;
+            const orderId = order._id;
+
+            if (method === 'COD') {
+                // Direct success
+                router.push('/checkout/success');
+            } else if (method === 'PAYTM') {
+                try {
+                    const payRes = await api.post(`/api/orders/${orderId}/pay`, { provider: 'PAYTM' });
+                    const { mid, orderId: paytmOrderId, txnToken, amount, callbackUrl, isStaging, restrictAppInvoke } = payRes.data;
+
+                    // Start Paytm Transaction
+                    AllInOneSDKManager.startTransaction(
+                        paytmOrderId,
+                        mid,
+                        txnToken,
+                        amount,
+                        callbackUrl,
+                        isStaging,
+                        restrictAppInvoke,
+                        `paytm${mid}` // urlScheme
+                    ).then(async (result: any) => {
+                        console.log("Paytm Result:", result);
+                        /*
+                           Response format:
+                           {
+                               "BANKNAME": "WALLET",
+                               "BANKTXNID": "123456",
+                               "CHECKSUMHASH": "...",
+                               "CURRENCY": "INR",
+                               "GATEWAYNAME": "WALLET",
+                               "MID": "...",
+                               "ORDERID": "...",
+                               "PAYMENTMODE": "PPI",
+                               "RESPCODE": "01",
+                               "RESPMSG": "Txn Success",
+                               "STATUS": "TXN_SUCCESS",
+                               "TXNAMOUNT": "100.00",
+                               "TXNDATE": "2023-01-01 12:00:00",
+                               "TXNID": "..."
+                           }
+                        */
+                        if (result.STATUS === 'TXN_SUCCESS') {
+                            // Verify with backend
+                            await api.post(`/api/orders/${orderId}/verify`, result);
+                            Alert.alert("Payment Successful", "Your order has been placed successfully!", [
+                                { text: "OK", onPress: () => router.push('/') }
+                            ]);
+                        } else {
+                            Alert.alert("Payment Failed", result.RESPMSG || "Transaction failed");
+                        }
+                    }).catch((err: any) => {
+                        console.error("Paytm SDK Error:", err);
+                        Alert.alert("Payment Failed", "Transaction cancelled or failed.");
+                    });
+                } catch (e) {
+                    console.error("Paytm Init Error:", e);
+                    Alert.alert("Error", "Failed to initiate Paytm payment");
+                }
+            } else {
+                // Online Payment (Razorpay) - Backup
+                const payRes = await api.post(`/api/orders/${orderId}/pay`, { provider: 'RAZORPAY' });
+                const { paymentOrderId, key_id, amount, name, description, prefill } = payRes.data;
+
+                const options = {
+                    description: description || 'Payment for Order',
+                    image: 'https://i.imgur.com/3g7nmJC.png', // Placeholder
+                    currency: 'INR',
+                    key: key_id,
+                    amount: amount,
+                    name: name || 'Ecommerce App',
+                    order_id: paymentOrderId,
+                    prefill: {
+                        email: user?.email || 'user@example.com',
+                        contact: (selectedAddress?.phone || user?.phone || '').replace(/\s/g, ''),
+                        name: selectedAddress?.name || user?.name || ''
+                    },
+                    readonly: {
+                        contact: true,
+                        email: true
+                    },
+                    theme: { color: '#6366f1', hide_topbar: true }
+                };
+
+                RazorpayCheckout.open(options).then(async (data: any) => {
+                    // Success
+                    // Verify payment
+                    await api.post(`/api/orders/${orderId}/verify`, {
+                        razorpay_order_id: data.razorpay_order_id,
+                        razorpay_payment_id: data.razorpay_payment_id,
+                        razorpay_signature: data.razorpay_signature
+                    });
+
+                    // Navigate to success screen
+                    router.push('/checkout/success');
+                }).catch((error: any) => {
+                    // Failure
+                    console.log("Razorpay Error", error);
+                    Alert.alert("Payment Failed", "Transaction was cancelled or failed. Please try again.");
+                });
+            }
+
+        } catch (error: any) {
+            console.error("Payment Flow Error", error);
+            Alert.alert("Error", error.response?.data?.error || "Failed to process order/payment");
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (loading) {
@@ -158,7 +399,7 @@ export default function CheckoutScreen() {
         );
     }
 
-    if (!product) {
+    if (!product && !isCartCheckout) {
         return (
             <View style={styles.center}>
                 <Text>Product not found</Text>
@@ -166,9 +407,39 @@ export default function CheckoutScreen() {
         );
     }
 
-    const total = calculateTotal();
-    const discount = calculateDiscount();
-    const discountPercent = calculateDiscountPercent();
+    // --- Derived Values for Render ---
+    // We can iterate cart items to find total MRP if we want to show savings.
+    const cartMrp = isCartCheckout && cart?.items
+        ? cart.items.reduce((sum: number, item: any) => {
+            const p = item.productId || {};
+            const m = p.mrp || (p.price * 1.3);
+            return sum + (m * item.quantity);
+        }, 0)
+        : 0;
+
+    const total = isCartCheckout ? cartTotal : calculateTotal();
+    const discount = isCartCheckout ? (cartMrp - cartTotal) : calculateDiscount();
+    const mrp = isCartCheckout ? cartMrp : (product?.mrp || 0);
+    const discountPercent = isCartCheckout
+        ? (cartMrp > 0 ? Math.round(((cartMrp - total) / cartMrp) * 100) : 0)
+        : calculateDiscountPercent();
+
+    // Render Payment Section for Step 3
+    if (currentStep === 3) {
+        return (
+            <SafeAreaView style={styles.safeArea} edges={['top']}>
+                <StatusBar style="dark" />
+                <Stack.Screen options={{ headerShown: false }} />
+                <PaymentSection
+                    totalAmount={total}
+                    discount={discount}
+                    offers={product?.offers || []}
+                    onPaymentSelect={handlePaymentSelect}
+                    onBack={handleBack}
+                />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -178,7 +449,7 @@ export default function CheckoutScreen() {
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton}>
                         <Ionicons name="arrow-back" size={24} color="#1F2937" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Order Summary</Text>
@@ -223,85 +494,138 @@ export default function CheckoutScreen() {
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>Deliver to:</Text>
-                            <TouchableOpacity>
-                                <Text style={styles.changeButton}>Change</Text>
+                            <TouchableOpacity onPress={() => setAddressModalVisible(true)}>
+                                <Text style={styles.changeButton}>{selectedAddress ? 'Change' : 'Add Address'}</Text>
                             </TouchableOpacity>
                         </View>
 
-                        <View style={styles.addressCard}>
-                            <View style={styles.addressHeader}>
-                                <Text style={styles.addressName}>Babur</Text>
-                                <View style={styles.homeTag}>
-                                    <Text style={styles.homeTagText}>HOME</Text>
+                        {selectedAddress ? (
+                            <View style={styles.addressCard}>
+                                <View style={styles.addressHeader}>
+                                    <Text style={styles.addressName}>{selectedAddress.name}</Text>
+                                    <View style={styles.homeTag}>
+                                        <Text style={styles.homeTagText}>{selectedAddress.type || 'HOME'}</Text>
+                                    </View>
                                 </View>
+                                <Text style={styles.addressText}>
+                                    {selectedAddress.addressLine1}, {selectedAddress.addressLine2 ? selectedAddress.addressLine2 + ', ' : ''}
+                                    {selectedAddress.city}, {selectedAddress.state} - {selectedAddress.pincode}
+                                </Text>
+                                <Text style={styles.phoneText}>{selectedAddress.phone}</Text>
                             </View>
-                            <Text style={styles.addressText}>
-                                Agnihotri Colony, Chandrashekhar Ward, Sadar, Betul,{'\n'}
-                                Genius Class, Betul 460001
-                            </Text>
-                            <Text style={styles.phoneText}>6264134364</Text>
-                        </View>
+                        ) : (
+                            <View style={styles.addressCard}>
+                                <Text style={{ color: '#6B7280' }}>No address selected. Please add one.</Text>
+                                <TouchableOpacity style={[styles.continueButton, { marginTop: 10, height: 40 }]} onPress={() => router.push('/address/new?returnTo=/checkout')}>
+                                    <Text style={styles.continueButtonText}>Add New Address</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
 
                     {/* Product Card */}
-                    <View style={styles.productCard}>
-                        <View style={styles.productRow}>
-                            <Image source={{ uri: product.image }} style={styles.productImage} resizeMode="contain" />
+                    {/* Product Card(s) */}
+                    {isCartCheckout ? (
+                        <View>
+                            {cart?.items.map((item: any, index: number) => {
+                                const p = item.productId || {};
+                                const itemPrice = (p.price || 0) * item.quantity;
+                                const itemMrp = (p.mrp || (p.price * 1.3)) * item.quantity;
+                                const itemDiscount = itemMrp - itemPrice;
+                                const itemDiscountPercent = Math.round((itemDiscount / itemMrp) * 100);
 
-                            <View style={styles.productInfo}>
-                                <Text style={styles.productTitle} numberOfLines={2}>
-                                    {product.title}
-                                </Text>
-
-                                <View style={styles.ratingRow}>
-                                    <View style={styles.ratingBadge}>
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <Ionicons
-                                                key={star}
-                                                name="star"
-                                                size={12}
-                                                color={star <= Math.floor(product.rating || 0) ? "#16A34A" : "#D1D5DB"}
-                                            />
-                                        ))}
-                                    </View>
-                                    <Text style={styles.ratingText}>
-                                        {product.rating} · ({product.ratingCount?.toLocaleString()})
-                                    </Text>
-                                    <View style={styles.assuredBadge}>
-                                        <Ionicons name="shield-checkmark" size={14} color="#2563EB" />
-                                        <Text style={styles.assuredText}>Assured</Text>
-                                    </View>
-                                </View>
-
-                                <View style={styles.priceRow}>
-                                    <View style={styles.discountBadge}>
-                                        <Ionicons name="arrow-down" size={12} color="#16A34A" />
-                                        <Text style={styles.discountText}>{discountPercent}%</Text>
-                                    </View>
-                                    <Text style={styles.mrpText}>₹{product.mrp?.toLocaleString()}</Text>
-                                    <Text style={styles.priceText}>₹{product.price.toLocaleString()}</Text>
-                                </View>
-
-                                <View style={styles.qtyRow}>
-                                    <Text style={styles.qtyLabel}>Qty: {product.quantity}</Text>
-                                    {(product.protectPromiseFee || 0) > 0 && (
-                                        <View style={styles.protectRow}>
-                                            <Text style={styles.protectText}>+ ₹{product.protectPromiseFee} Protect Promise Fee</Text>
-                                            <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
+                                return (
+                                    <View key={item._id || index} style={[styles.productCard, { marginBottom: 12 }]}>
+                                        <View style={styles.productRow}>
+                                            <Image source={{ uri: p.image || p.primaryImage }} style={styles.productImage} resizeMode="contain" />
+                                            <View style={styles.productInfo}>
+                                                <Text style={styles.productTitle} numberOfLines={2}>{p.title}</Text>
+                                                <View style={styles.ratingRow}>
+                                                    <View style={styles.ratingBadge}>
+                                                        <Ionicons name="star" size={12} color="#16A34A" />
+                                                        <Text style={{ color: '#fff', fontSize: 10, marginLeft: 2 }}>4.7</Text>
+                                                    </View>
+                                                    <Text style={styles.ratingText}>(12k)</Text>
+                                                </View>
+                                                <View style={styles.priceRow}>
+                                                    <View style={styles.discountBadge}>
+                                                        <Ionicons name="arrow-down" size={12} color="#16A34A" />
+                                                        <Text style={styles.discountText}>{itemDiscountPercent}%</Text>
+                                                    </View>
+                                                    <Text style={styles.mrpText}>₹{Math.round(p.mrp || (p.price * 1.3)).toLocaleString()}</Text>
+                                                    <Text style={styles.priceText}>₹{p.price.toLocaleString()}</Text>
+                                                </View>
+                                                <View style={styles.qtyRow}>
+                                                    <Text style={styles.qtyLabel}>Qty: {item.quantity}</Text>
+                                                </View>
+                                            </View>
                                         </View>
-                                    )}
-                                </View>
+                                    </View>
+                                );
+                            })}
+                        </View>
+                    ) : (
+                        product && (
+                            <View style={styles.productCard}>
+                                <View style={styles.productRow}>
+                                    <Image source={{ uri: product.image }} style={styles.productImage} resizeMode="contain" />
 
-                                <View style={styles.emiRow}>
-                                    <Text style={styles.emiText}>Or Pay ₹6,398</Text>
-                                    <View style={styles.coinBadge}>
-                                        <Ionicons name="cash" size={12} color="#F59E0B" />
-                                        <Text style={styles.coinText}>25592</Text>
+                                    <View style={styles.productInfo}>
+                                        <Text style={styles.productTitle} numberOfLines={2}>
+                                            {product.title}
+                                        </Text>
+
+                                        <View style={styles.ratingRow}>
+                                            <View style={styles.ratingBadge}>
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <Ionicons
+                                                        key={star}
+                                                        name="star"
+                                                        size={12}
+                                                        color={star <= Math.floor(product.rating || 0) ? "#16A34A" : "#D1D5DB"}
+                                                    />
+                                                ))}
+                                            </View>
+                                            <Text style={styles.ratingText}>
+                                                {product.rating} · ({product.ratingCount?.toLocaleString()})
+                                            </Text>
+                                            <View style={styles.assuredBadge}>
+                                                <Ionicons name="shield-checkmark" size={14} color="#2563EB" />
+                                                <Text style={styles.assuredText}>Assured</Text>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.priceRow}>
+                                            <View style={styles.discountBadge}>
+                                                <Ionicons name="arrow-down" size={12} color="#16A34A" />
+                                                <Text style={styles.discountText}>{discountPercent}%</Text>
+                                            </View>
+                                            <Text style={styles.mrpText}>₹{product.mrp?.toLocaleString()}</Text>
+                                            <Text style={styles.priceText}>₹{product.price.toLocaleString()}</Text>
+                                        </View>
+
+                                        <View style={styles.qtyRow}>
+                                            <Text style={styles.qtyLabel}>Qty: {product.quantity}</Text>
+                                            {(product.protectPromiseFee || 0) > 0 && (
+                                                <View style={styles.protectRow}>
+                                                    <Text style={styles.protectText}>+ ₹{product.protectPromiseFee} Protect Promise Fee</Text>
+                                                    <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
+                                                </View>
+                                            )}
+                                        </View>
+
+                                        <View style={styles.emiRow}>
+                                            <Text style={styles.emiText}>Or Pay ₹6,398</Text>
+                                            <View style={styles.coinBadge}>
+                                                <Ionicons name="cash" size={12} color="#F59E0B" />
+                                                <Text style={styles.coinText}>25592</Text>
+                                            </View>
+                                        </View>
                                     </View>
                                 </View>
                             </View>
-                        </View>
-                    </View>
+                        )
+                    )}
 
                     {/* Protection Plans */}
                     {upsellOffers.length > 0 && upsellOffers.map((offer, index) => {
@@ -351,7 +675,7 @@ export default function CheckoutScreen() {
                             <Text style={styles.restAssuredTitle}>Rest assured with Open Box Delivery</Text>
                         </View>
 
-                        <Image source={{ uri: product.image }} style={styles.restAssuredImage} resizeMode="contain" />
+                        <Image source={{ uri: (isCartCheckout ? ((cart?.items[0]?.productId as any)?.image || (cart?.items[0]?.productId as any)?.primaryImage || 'https://via.placeholder.com/150') : product?.image) }} style={styles.restAssuredImage} resizeMode="contain" />
 
                         <Text style={styles.restAssuredDesc}>
                             Delivery agent will open the package so you can check for correct product, damage or missing items. Share OTP to accept the delivery.{' '}
@@ -400,7 +724,7 @@ export default function CheckoutScreen() {
                     <View style={styles.priceBreakdown}>
                         <View style={styles.priceRowCompact}>
                             <Text style={styles.priceLabelCompact}>MRP(incl. of all taxes)</Text>
-                            <Text style={styles.priceValueCompact}>₹{(product.mrp || 0).toLocaleString()}</Text>
+                            <Text style={styles.priceValueCompact}>₹{(mrp || 0).toLocaleString()}</Text>
                         </View>
 
                         <View style={styles.dottedSeparator} />
@@ -410,7 +734,7 @@ export default function CheckoutScreen() {
                                 <Text style={styles.priceLabelCompact}>Fees</Text>
                                 <Ionicons name="chevron-down" size={14} color="#6B7280" />
                             </View>
-                            <Text style={styles.priceValueCompact}>₹{product.protectPromiseFee || 0}</Text>
+                            <Text style={styles.priceValueCompact}>₹{(isCartCheckout ? 0 : (product?.protectPromiseFee || 0))}</Text>
                         </TouchableOpacity>
 
                         <View style={styles.dottedSeparator} />
@@ -452,7 +776,7 @@ export default function CheckoutScreen() {
                 {/* Bottom Bar */}
                 <View style={styles.bottomBar}>
                     <View style={styles.totalSection}>
-                        <Text style={styles.totalStrike}>₹{(product.mrp || 0).toLocaleString()}</Text>
+                        <Text style={styles.totalStrike}>₹{(mrp || 0).toLocaleString()}</Text>
                         <Text style={styles.totalAmount}>₹{total.toLocaleString()}</Text>
                         <TouchableOpacity onPress={() => setPriceDetailsVisible(true)}>
                             <Text style={styles.viewDetails}>View price details</Text>
@@ -488,7 +812,7 @@ export default function CheckoutScreen() {
                                     <Text style={styles.modalValue}>₹{product?.price.toLocaleString()}</Text>
                                 </View>
 
-                                {product?.protectPromiseFee && product.protectPromiseFee > 0 && (
+                                {(product?.protectPromiseFee || 0) > 0 && (
                                     <View style={styles.modalRow}>
                                         <Text style={styles.modalLabel}>Protect Promise Fee</Text>
                                         <Text style={styles.modalValue}>₹{product.protectPromiseFee}</Text>
@@ -512,7 +836,7 @@ export default function CheckoutScreen() {
                                     </View>
                                 )}
 
-                                {selectedDonation && selectedDonation > 0 && (
+                                {(selectedDonation || 0) > 0 && (
                                     <View>
                                         <View style={styles.modalDivider} />
                                         <View style={styles.modalRow}>
@@ -554,6 +878,61 @@ export default function CheckoutScreen() {
                                 </View>
                             </ScrollView>
                         )}
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Address Selection Modal */}
+            <Modal
+                visible={isAddressModalVisible}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setAddressModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContainer, { height: '60%' }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Address</Text>
+                            <TouchableOpacity onPress={() => setAddressModalVisible(false)}>
+                                <Ionicons name="close" size={24} color="#1F2937" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.modalContent}>
+                            {addresses.map((addr) => (
+                                <TouchableOpacity
+                                    key={addr._id}
+                                    style={[
+                                        styles.addressCard,
+                                        { borderWidth: 1, borderColor: selectedAddress?._id === addr._id ? '#2563EB' : '#E5E7EB', marginBottom: 12 }
+                                    ]}
+                                    onPress={() => {
+                                        setSelectedAddress(addr);
+                                        setAddressId(addr._id);
+                                        setAddressModalVisible(false);
+                                    }}
+                                >
+                                    <View style={styles.addressHeader}>
+                                        <Text style={styles.addressName}>{addr.name}</Text>
+                                        {addr.isDefault && <View style={styles.homeTag}><Text style={styles.homeTagText}>DEFAULT</Text></View>}
+                                    </View>
+                                    <Text style={styles.addressText}>
+                                        {addr.addressLine1}, {addr.city} - {addr.pincode}
+                                    </Text>
+                                    <Text style={styles.phoneText}>{addr.phone}</Text>
+                                </TouchableOpacity>
+                            ))}
+
+                            <TouchableOpacity
+                                style={[styles.continueButton, { marginTop: 10, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#2563EB' }]}
+                                onPress={() => {
+                                    setAddressModalVisible(false);
+                                    router.push('/address/new');
+                                }}
+                            >
+                                <Text style={[styles.continueButtonText, { color: '#2563EB' }]}>+ Add New Address</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
                     </View>
                 </View>
             </Modal>

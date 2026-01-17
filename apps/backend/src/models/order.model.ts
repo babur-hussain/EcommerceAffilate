@@ -34,6 +34,7 @@ export interface IOrder extends Document {
   status:
   | 'CREATED'
   | 'PAID'
+  | 'PROCESSING'
   | 'SHIPPED'
   | 'DELIVERED'
   | 'RETURN_REQUESTED'
@@ -47,6 +48,8 @@ export interface IOrder extends Document {
   paymentStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
   createdAt: Date;
   updatedAt: Date;
+  deliveryPartnerId?: mongoose.Types.ObjectId;
+  deliveryStatus?: 'PENDING_PICKUP' | 'SEARCHING_FOR_PARTNER' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'FAILED';
 }
 
 const orderItemSchema = new Schema<IOrderItem>(
@@ -117,6 +120,7 @@ const orderSchema = new Schema<IOrder>(
       enum: [
         'CREATED',
         'PAID',
+        'PROCESSING',
         'SHIPPED',
         'DELIVERED',
         'RETURN_REQUESTED',
@@ -146,6 +150,16 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       enum: ['PENDING', 'SUCCESS', 'FAILED'],
       default: 'PENDING',
+    },
+    deliveryPartnerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      index: true,
+    },
+    deliveryStatus: {
+      type: String,
+      enum: ['PENDING_PICKUP', 'SEARCHING_FOR_PARTNER', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FAILED'],
+      default: 'PENDING_PICKUP',
     },
   },
   {

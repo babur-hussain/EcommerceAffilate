@@ -247,6 +247,30 @@ router.get('/orders/mine', requireCustomer, async (req: Request, res: Response) 
   }
 });
 
+router.get('/orders/:id', requireCustomer, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = (req as any).user as { id?: string } | undefined;
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid order id' });
+    }
+
+    const order = await Order.findOne({ _id: id, userId: user.id })
+      .populate('items.productId', 'title images price')
+      .populate('deliveryPartnerId', 'name phone');
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    res.json(order);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch order', message: error.message });
+  }
+});
+
 router.post('/orders/:id/pay', requireCustomer, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

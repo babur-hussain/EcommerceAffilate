@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform, Animated, Easing, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform, Easing, FlatList } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { TopCategoryBoxes, TabType } from '../shared/TopCategoryBoxes';
 import { useUserLocation } from '../../hooks/useUserLocation';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing as ReanimatedEasing } from 'react-native-reanimated';
 
 // ==================== Shared Types ====================
 
@@ -170,6 +171,7 @@ const searchStyles = StyleSheet.create({
 });
 
 // --- CategoriesSlider ---
+
 const sliderCategories: Category[] = [
     { id: '1', name: 'For You', icon: 'local-offer', iconFamily: 'MaterialIcons' },
     { id: '695ff7de3f61939001a0637d', name: 'Fashion', icon: 'checkroom', iconFamily: 'MaterialIcons' },
@@ -197,16 +199,14 @@ function CategoriesSlider({ onCategorySelect, selectedCategory, showIcons = true
     const router = useRouter();
     const flatListRef = useRef<FlatList>(null);
 
-    // Standard Animated API values
-    const animValue = useRef(new Animated.Value(1)).current;
+    // Reanimated Shared Value
+    const animValue = useSharedValue(1);
 
     useEffect(() => {
-        Animated.timing(animValue, {
-            toValue: showIcons ? 1 : 0,
+        animValue.value = withTiming(showIcons ? 1 : 0, {
             duration: 300,
-            useNativeDriver: false, // Layout properties like height/margin cannot use native driver
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        }).start();
+            easing: ReanimatedEasing.bezier(0.25, 0.1, 0.25, 1),
+        });
     }, [showIcons]);
 
     // Scroll to selected category when it changes or on mount
@@ -222,26 +222,32 @@ function CategoriesSlider({ onCategorySelect, selectedCategory, showIcons = true
                         viewPosition: 0.5 // Center the item
                     });
                 } catch (e) {
-                    // Ignore errors if layout not ready yet, onScrollToIndexFailed will handle it potentially
+                    // Ignore errors if layout not ready yet
                 }
             }
         }
     }, [selectedCategory]);
 
-    const iconHeight = animValue.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 30],
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            height: withTiming(animValue.value * 30, { duration: 0 }), // Immediate update based on value
+            opacity: withTiming(animValue.value, { duration: 0 }),
+            marginBottom: withTiming(animValue.value * 4, { duration: 0 }),
+            // Note: We depend on animValue updates from the useEffect for timing
+            // But here we simply interpolate. 
+            // Better approach for reanimated:
+            // The animValue goes 0->1.
+        };
     });
 
-    const iconOpacity = animValue.interpolate({
-        inputRange: [0, 0.5, 1],
-        outputRange: [0, 0, 1],
-    });
+    // Actually, let's refine the style to be purely derived
+    const containerStyle = useAnimatedStyle(() => ({
+        height: animValue.value * 30,
+        opacity: animValue.value,
+        marginBottom: animValue.value * 4,
+        overflow: 'hidden'
+    }));
 
-    const marginBottom = animValue.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 4],
-    });
 
     const handleCategoryPress = (category: Category) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -263,7 +269,6 @@ function CategoriesSlider({ onCategorySelect, selectedCategory, showIcons = true
         return <IconComponent name={category.icon as any} size={24} color="#FFFFFF" />;
     };
 
-    // Retry scrolling if layout wasn't ready
     const onScrollToIndexFailed = (info: { index: number; highestMeasuredFrameIndex: number; averageItemLength: number }) => {
         const wait = new Promise(resolve => setTimeout(resolve, 100));
         wait.then(() => {
@@ -295,11 +300,7 @@ function CategoriesSlider({ onCategorySelect, selectedCategory, showIcons = true
                         >
                             <Animated.View style={[
                                 sliderStyles.iconContainer,
-                                {
-                                    height: iconHeight,
-                                    opacity: iconOpacity,
-                                    marginBottom: marginBottom
-                                }
+                                containerStyle
                             ]}>
                                 {renderIcon(item)}
                             </Animated.View>

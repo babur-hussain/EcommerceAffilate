@@ -8,6 +8,7 @@ export type UserRole =
   | "BUSINESS_STAFF"
   | "SELLER_OWNER"
   | "INFLUENCER"
+  | "DELIVERY_PARTNER"
   | "CUSTOMER";
 
 export interface IUser extends Document {
@@ -39,6 +40,12 @@ export interface IUser extends Document {
   coins?: number;
   membershipStatus?: string;
   isActive: boolean;
+  isOnline?: boolean;
+  location?: {
+    type: 'Point';
+    coordinates: number[]; // [longitude, latitude]
+  };
+  fcmToken?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -83,6 +90,7 @@ const userSchema = new Schema<IUser>(
         "BUSINESS_STAFF",
         "SELLER_OWNER",
         "INFLUENCER",
+        "DELIVERY_PARTNER",
         "CUSTOMER",
       ],
       default: "CUSTOMER",
@@ -134,9 +142,31 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: true,
     },
+    isOnline: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point'
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0]
+      }
+    },
+    fcmToken: {
+      type: String,
+      trim: true
+    }
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 
@@ -147,5 +177,6 @@ userSchema.index({ referralCode: 1 }, { unique: true, sparse: true });
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ businessId: 1 });
+userSchema.index({ location: '2dsphere' });
 
 export const User = mongoose.model<IUser>("User", userSchema);

@@ -3,6 +3,7 @@ import { env } from './config/env'; // Load env vars first
 import app from './app';
 import { connectMongo, disconnectMongo } from './config/mongo';
 import { logger } from './utils/logger';
+import { DispatchService } from './services/dispatch.service';
 
 const PORT = env.PORT;
 
@@ -11,6 +12,9 @@ const startServer = async () => {
   try {
     // Connect to MongoDB first
     await connectMongo();
+
+    // Initialize Dispatch Service (Cron Jobs)
+    DispatchService.init();
 
     // Start HTTP server only if DB connection succeeds
     const server = http.createServer(app);

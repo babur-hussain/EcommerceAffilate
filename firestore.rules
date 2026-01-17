@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Current user can read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Seller Notifications Rule (The Fix)
+    match /seller_notifications/{notificationId} {
+      // Allow searching where sellerUid == auth.uid
+      allow list: if request.auth != null && resource.data.sellerUid == request.auth.uid;
+      // Allow reading individual doc if it belongs to user
+      allow get: if request.auth != null && resource.data.sellerUid == request.auth.uid;
+      // Allow creation if you are assigning it to yourself (for simulation)
+      allow create: if request.auth != null && request.resource.data.sellerUid == request.auth.uid;
+      // Allow updates/deletes if it belongs to you
+      allow update, delete: if request.auth != null && resource.data.sellerUid == request.auth.uid;
+    }
+    
+    // Existing business rules (assumed)
+    match /businesses/{businessId} {
+       allow read: if true;
+       allow write: if request.auth != null;
+    }
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

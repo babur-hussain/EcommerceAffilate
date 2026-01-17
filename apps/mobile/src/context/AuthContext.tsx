@@ -24,6 +24,8 @@ interface User {
   role?: string;
   isActive?: boolean;
   profileImage?: string;
+  coins?: number;
+  membershipStatus?: string;
 }
 
 interface AuthContextType {
@@ -33,6 +35,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,35 +44,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchUserProfile = async (firebaseUser: FirebaseUser) => {
+    try {
+      const response = await api.get('/api/me');
+      const userData: User = {
+        uid: firebaseUser.uid,
+        _id: response.data.user.id || response.data.user._id, // Handle both id formats
+        email: firebaseUser.email || '',
+        name: response.data.user.name || firebaseUser.displayName,
+        phone: response.data.user.phone,
+        role: response.data.user.role,
+        isActive: response.data.user.isActive,
+        profileImage: response.data.user.profileImage || firebaseUser.photoURL,
+        coins: response.data.user.coins,
+        membershipStatus: response.data.user.membershipStatus,
+      };
+      setUser(userData);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Still set basic user info from Firebase
+      setUser((prev) => ({
+        ...prev,
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        name: firebaseUser.displayName || prev?.name,
+      }));
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const token = await firebaseUser.getIdToken();
         await AsyncStorage.setItem('authToken', token);
-
-        // Fetch user profile from backend
-        try {
-          const response = await api.get('/api/me');
-          const userData: User = {
-            uid: firebaseUser.uid,
-            _id: response.data.user._id,
-            email: firebaseUser.email || '',
-            name: response.data.user.name || firebaseUser.displayName,
-            phone: response.data.user.phone,
-            role: response.data.user.role,
-            isActive: response.data.user.isActive,
-            profileImage: response.data.user.profileImage || firebaseUser.photoURL,
-          };
-          setUser(userData);
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
-          // Still set basic user info from Firebase
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            name: firebaseUser.displayName || undefined,
-          });
-        }
+        await fetchUserProfile(firebaseUser);
       } else {
         setUser(null);
         await AsyncStorage.removeItem('authToken');
@@ -79,6 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => unsubscribe();
   }, []);
+
+  const refreshUser = async () => {
+    if (auth.currentUser) {
+      // Force token refresh if needed, usually just re-fetching profile is enough
+      await fetchUserProfile(auth.currentUser);
+    }
+  };
 
   // Google Sign-In Configuration
   // TODO: Replace these with your actual Client IDs from Google Cloud Console
@@ -124,9 +139,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name,
         firebaseUid: userCredential.user.uid
       });
-    } catch (error) {
-      console.error('Error creating user in backend:', error);
-      // Optional: Delete firebase user if backend creation fails
+    } catch (error: any) {
+      if (error.response && error.response.status === 409) {
+        console.log('User already exists in backend, proceeding.');
+      } else {
+        console.error('Error creating user in backend:', error);
+        // Optional: Delete firebase user if backend creation fails
+      }
     }
   };
 
@@ -160,7 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

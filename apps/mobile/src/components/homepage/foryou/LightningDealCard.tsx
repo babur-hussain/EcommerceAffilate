@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import CachedImage from '../../shared/CachedImage';
 
 export interface LightningDealProduct {
     id: string;
@@ -53,7 +54,7 @@ export default function LightningDealCard({ product, onAdd, onSeeMore }: Lightni
                     <Ionicons name="heart-outline" size={22} color="#9CA3AF" />
                 </TouchableOpacity>
                 {product.image ? (
-                    <Image source={product.image} style={styles.image} resizeMode="contain" />
+                    <CachedImage source={product.image} style={styles.image} contentFit="contain" />
                 ) : (
                     <View style={[styles.image, { backgroundColor: '#F3F4F6' }]} />
                 )}

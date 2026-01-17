@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ImageBackground, Image } from 'react-
 import { LinearGradient } from 'expo-linear-gradient';
 import TrendingProductCard, { TrendingProduct } from './TrendingProductCard';
 import api from '../../../lib/api';
+import CachedImage from '../../shared/CachedImage';
 
 // Hardcoded visual overrides to match the design
 const VISUAL_OVERRIDES = [
@@ -111,10 +112,10 @@ export default function TrendingNearYou() {
             Ideally this would be a local asset like 'assets/patterns/sparkles.png'
             For now, using a highly transparent repeating view or just the gradient as exact pattern is hard without asset
           */}
-                <Image
+                <CachedImage
                     source={{ uri: 'https://www.transparenttextures.com/patterns/cubes.png' }} // Example subtle pattern URL or use local
                     style={[styles.patternImage, { opacity: 0.05 }]}
-                    resizeMode="repeat"
+                    contentFit="cover"
                 />
             </View>
 

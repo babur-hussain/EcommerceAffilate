@@ -25,7 +25,11 @@ export default function RootLayout() {
             >
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="login" options={{
+                headerShown: false,
+                presentation: 'modal',
+                animation: 'slide_from_bottom'
+              }} />
               <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="influencers" options={{ headerShown: false }} />
               <Stack.Screen name="address/new" options={{ headerShown: false }} />

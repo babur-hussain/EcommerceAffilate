@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/splash-new.jpg",
       "backgroundColor": "#6366f1",
       "resizeMode": "contain"
     },
@@ -27,7 +28,14 @@
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "LSApplicationQueriesSchemes": [
+          "phonepe",
+          "tez",
+          "paytm",
+          "bhim",
+          "cred"
+        ]
       },
       "config": {
         "googleMapsApiKey": "AIzaSyAySaFrQnBDE5VanTMpi4wz87MDOZQvOUE"

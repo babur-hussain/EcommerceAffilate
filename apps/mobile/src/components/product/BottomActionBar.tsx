@@ -6,18 +6,18 @@ interface BottomActionBarProps {
     price: number;
     onAddToCart: () => void;
     onBuyNow: () => void;
+    onOpenCart: () => void;
 }
 
-export default function BottomActionBar({ price, onAddToCart, onBuyNow }: BottomActionBarProps) {
+export default function BottomActionBar({ price, onAddToCart, onBuyNow, onOpenCart }: BottomActionBarProps) {
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={styles.cartButton} onPress={onAddToCart}>
+            <TouchableOpacity style={styles.cartButton} onPress={onOpenCart}>
                 <Ionicons name="cart-outline" size={24} color="#374151" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.emiButton}>
-                <Text style={styles.emiTitle}>Buy with EMI</Text>
-                <Text style={styles.emiSub}>From ₹3,334/m</Text>
+            <TouchableOpacity style={styles.emiButton} onPress={onAddToCart}>
+                <Text style={styles.emiTitle}>Add to Cart</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.buyButton} onPress={onBuyNow}>

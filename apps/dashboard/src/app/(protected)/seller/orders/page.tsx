@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { FileText, Package, Clock, CheckCircle, AlertCircle, Settings, Volume2, Play, Bell, BellOff, StopCircle } from 'lucide-react';
+import OrderDetailsModal from '@/components/seller/OrderDetailsModal';
 import { apiClient } from '@/lib/api';
 import { ALARM_SOUNDS, getAlarmSettings, setAlarmSettings } from '@/lib/alarmSettings';
 import toast from 'react-hot-toast';
@@ -17,6 +18,9 @@ interface OrderItem {
     image: string;
     price: number;
     businessId: string;
+    brand?: string;
+    category?: string;
+    shortDescription?: string;
   };
   quantity: number;
   price: number;
@@ -31,8 +35,22 @@ interface Order {
   };
   totalAmount: number;
   status: string;
+  deliveryStatus?: string;
+  paymentStatus?: string;
+  paymentProvider?: string;
   createdAt: string;
   items: OrderItem[];
+  shippingAddress?: {
+    name: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+  };
+  shippingCharges?: number;
 }
 
 export default function OrdersPage() {
@@ -40,6 +58,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Stats
   const [stats, setStats] = useState({
@@ -147,6 +166,29 @@ export default function OrdersPage() {
       setError("Failed to load orders");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateStatus = async (orderId: string, newStatus: string, newDeliveryStatus?: string) => {
+    // Optimistic update
+    const previousOrders = [...orders];
+    setOrders(orders.map(o =>
+      o._id === orderId
+        ? { ...o, status: newStatus, deliveryStatus: newDeliveryStatus || o.deliveryStatus }
+        : o
+    ));
+
+    try {
+      await apiClient.patch(`/api/business/orders/${orderId}/status`, {
+        status: newStatus,
+        deliveryStatus: newDeliveryStatus
+      });
+      toast.success(`Order ${newStatus === 'SHIPPED' ? 'marked ready' : 'accepted'}`);
+      fetchOrders(); // Re-fetch to confirm and get any computed fields
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      toast.error('Failed to update status');
+      setOrders(previousOrders); // Revert on failure
     }
   };
 
@@ -327,12 +369,12 @@ export default function OrdersPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -346,27 +388,93 @@ export default function OrdersPage() {
                     </tr>
                   ) : (
                     orders.map((order) => (
-                      <tr key={order._id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          #{order._id.slice(-6).toUpperCase()}
+                      <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-lg bg-gray-100 border border-gray-200 flex-shrink-0 overflow-hidden">
+                              {order.items[0]?.productId.image && (
+                                <img
+                                  src={order.items[0].productId.image}
+                                  alt={order.items[0].productId.title}
+                                  className="h-full w-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900 line-clamp-1 max-w-[200px]" title={order.items[0]?.productId.title}>
+                                {order.items[0]?.productId.title}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5 space-x-2">
+                                <span>Qty: {order.items[0]?.quantity}</span>
+                                {order.items.length > 1 && (
+                                  <span className="text-blue-600 font-medium">+{order.items.length - 1} more</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-400 mt-0.5">#{order._id.slice(-6).toUpperCase()}</div>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {order.userId?.name || 'Guest'}
+                          <div className="font-medium text-gray-900">{order.userId?.name || 'Guest'}</div>
                           <div className="text-xs text-gray-400">{order.userId?.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          <div className="text-xs text-gray-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ₹{order.totalAmount.toLocaleString()}
+                          <div className="font-semibold">₹{order.totalAmount.toLocaleString()}</div>
+                          <div className={`text-xs font-medium ${order.paymentProvider === 'COD' ? 'text-orange-600' : 'text-green-600'}`}>
+                            {order.paymentProvider === 'COD' ? 'COD' : 'Prepaid'}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                            {order.status}
-                          </span>
+                          <div className="flex flex-col gap-1.5">
+                            <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-medium rounded-full w-fit ${getStatusColor(order.status)
+                              }`}>
+                              {order.status}
+                            </span>
+                            {order.deliveryStatus && (
+                              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 pl-1">
+                                {order.deliveryStatus.replace(/_/g, ' ')}
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 hover:text-blue-900 cursor-pointer">
-                          View Details
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex items-center gap-2">
+                            {order.status === 'CREATED' && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); updateStatus(order._id, 'PROCESSING'); }}
+                                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-1.5"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                Accept
+                              </button>
+                            )}
+
+                            {order.status === 'PROCESSING' && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); updateStatus(order._id, 'SHIPPED', 'PENDING_PICKUP'); }}
+                                className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1.5"
+                              >
+                                <Package className="w-3.5 h-3.5" />
+                                Ready
+                              </button>
+                            )}
+
+                            {order.status === 'SHIPPED' && order.deliveryStatus === 'PENDING_PICKUP' && (
+                              <span className="text-xs text-indigo-600 font-medium flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded">
+                                <Clock className="w-3.5 h-3.5" /> Waiting Pickup
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => setSelectedOrder(order)}
+                            className="text-gray-400 hover:text-blue-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                            title="View Full Details"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -377,6 +485,12 @@ export default function OrdersPage() {
           )}
         </div>
       </div>
+      {selectedOrder && (
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+        />
+      )}
     </ProtectedRoute>
   );
 }

@@ -11,6 +11,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -134,10 +135,10 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }: CartItemProps) => {
           <Text style={styles.actionText}>Remove</Text>
         </TouchableOpacity>
         <View style={styles.qtyEditButton}>
-          <TouchableOpacity onPress={() => onUpdateQuantity(productId, quantity - 1)} style={styles.qtyBtn}>
+          <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdateQuantity(productId, quantity - 1); }} style={styles.qtyBtn}>
             <MaterialIcons name="remove" size={16} color="#333" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => onUpdateQuantity(productId, quantity + 1)} style={styles.qtyBtn}>
+          <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdateQuantity(productId, quantity + 1); }} style={styles.qtyBtn}>
             <MaterialIcons name="add" size={16} color="#333" />
           </TouchableOpacity>
         </View>
@@ -189,14 +190,14 @@ const GroceryCartView = ({ items, updateQuantity, basketTotal }: any) => {
               <View style={styles.groceryQuantityControl}>
                 <TouchableOpacity
                   style={styles.groceryQtyBtn}
-                  onPress={() => updateQuantity(pid, item.quantity - 1)}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateQuantity(pid, item.quantity - 1); }}
                 >
                   <Text style={styles.groceryQtyBtnText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.groceryQtyText}>{item.quantity}</Text>
                 <TouchableOpacity
                   style={styles.groceryQtyBtn}
-                  onPress={() => updateQuantity(pid, item.quantity + 1)}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateQuantity(pid, item.quantity + 1); }}
                 >
                   <Text style={styles.groceryQtyBtnText}>+</Text>
                 </TouchableOpacity>
@@ -325,7 +326,10 @@ export default function CartScreen() {
       router.push('/login');
       return;
     }
-    Alert.alert('Place Order', `Proceeding with ${activeTab} order of ₹${total.toLocaleString()}`);
+    router.push({
+      pathname: '/checkout',
+      params: { source: 'cart' }
+    });
   };
 
   // --- Render ---
@@ -492,7 +496,7 @@ const styles = StyleSheet.create({
   },
   contentBackground: {
     flex: 1,
-    backgroundColor: '#F1F3F6',
+    backgroundColor: '#FFFFFF',
   },
   tabsStickyContainer: {
     backgroundColor: '#FFFFFF',
@@ -555,8 +559,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    marginTop: 8,
-    marginBottom: 8,
+    borderBottomWidth: 8,
+    borderBottomColor: '#F1F3F6',
   },
   addressHeaderRow: {
     flexDirection: 'row',
@@ -604,7 +608,8 @@ const styles = StyleSheet.create({
   // Common Cart Item Styles
   cartItemContainer: {
     backgroundColor: '#fff',
-    marginBottom: 8,
+    borderBottomWidth: 8,
+    borderBottomColor: '#F1F3F6',
   },
   cartItemContent: {
     flexDirection: 'row',
@@ -788,7 +793,8 @@ const styles = StyleSheet.create({
   priceDetailsContainer: {
     backgroundColor: '#fff',
     padding: 16,
-    marginTop: 8,
+    borderTopWidth: 8,
+    borderTopColor: '#F1F3F6',
   },
   priceHeader: {
     fontSize: 16,
@@ -916,7 +922,8 @@ const styles = StyleSheet.create({
   itemsList: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    borderBottomWidth: 16,
+    borderBottomColor: '#F1F3F6',
   },
   groceryItemCard: {
     flexDirection: 'row',

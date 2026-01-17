@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { CachedImage } from '../common/CachedImage';
+import CachedImage from '../shared/CachedImage';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -28,10 +28,12 @@ export default function ProductCard({ product, onPress, width: customWidth }: Pr
             onPress={onPress}
             activeOpacity={0.9}
         >
+
             <View style={styles.imageContainer}>
                 <CachedImage
-                    uri={product.images[0] || 'https://via.placeholder.com/150'}
+                    source={{ uri: product.images[0] || 'https://via.placeholder.com/150' }}
                     style={styles.image}
+                    contentFit="cover"
                 />
                 <TouchableOpacity style={styles.favoriteButton}>
                     <MaterialIcons name="favorite-border" size={20} color="#4F46E5" />

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { useNavigation, useRouter, useLocalSearchParams } from 'expo-router';
 import { HomeStaticHeader, HomeStickyHeader } from '../../src/components/homepage/HomeHeader';
@@ -40,6 +40,7 @@ const TABS: Tab[] = [
 export default function HomeScreen() {
   const router = useRouter(); // expo-router hook
   const params = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>('shopping');
   const [selectedCategory, setSelectedCategory] = useState<string>('For You');
 
@@ -154,8 +155,10 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: safeAreaColor }]} edges={['top']}>
-      <StatusBar barStyle={statusBarStyle} backgroundColor={safeAreaColor} />
+    <View style={[styles.safeArea, { backgroundColor: safeAreaColor }]}>
+      <View style={{ height: insets.top, backgroundColor: safeAreaColor }}>
+        <StatusBar barStyle={statusBarStyle} backgroundColor={safeAreaColor} />
+      </View>
 
       {/* Tab Content - All tabs are mounted, inactive ones are hidden */}
       <View style={styles.contentContainer}>
@@ -189,7 +192,7 @@ export default function HomeScreen() {
           />
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
