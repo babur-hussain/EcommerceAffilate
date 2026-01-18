@@ -137,6 +137,7 @@ export interface IBusiness extends Document {
   isActive: boolean;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   trustBadges?: string[];
+  assignedAttributes?: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -306,7 +307,8 @@ const businessSchema = new Schema<IBusiness>(
       enum: ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'],
       default: 'PENDING'
     },
-    trustBadges: [{ type: String }]
+    trustBadges: [{ type: String }],
+    assignedAttributes: [{ type: Schema.Types.ObjectId, ref: 'Attribute' }]
   },
   { timestamps: true }
 );

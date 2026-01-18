@@ -7,6 +7,8 @@ export type UserRole =
   | "BUSINESS_MANAGER"
   | "BUSINESS_STAFF"
   | "SELLER_OWNER"
+  | "SELLER_MANAGER"
+  | "SELLER_STAFF"
   | "INFLUENCER"
   | "DELIVERY_PARTNER"
   | "CUSTOMER";
@@ -89,6 +91,8 @@ const userSchema = new Schema<IUser>(
         "BUSINESS_MANAGER",
         "BUSINESS_STAFF",
         "SELLER_OWNER",
+        "SELLER_MANAGER",
+        "SELLER_STAFF",
         "INFLUENCER",
         "DELIVERY_PARTNER",
         "CUSTOMER",

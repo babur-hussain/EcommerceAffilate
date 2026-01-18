@@ -26,10 +26,10 @@ export const approveSponsorship = async (sponsorshipId: string): Promise<ISponso
   // Notify the product owner that the sponsorship is approved
   const product = await Product.findById(sponsorship.productId).select('businessId title');
   if (product?.businessId) {
-    const business = await Business.findById(product.businessId).select('ownerUserId');
-    if (business?.ownerUserId) {
+    const business = await Business.findById(product.businessId).select('userId');
+    if (business?.userId) {
       await createNotification(
-        business.ownerUserId.toString(),
+        business.userId.toString(),
         'SPONSORSHIP',
         'Sponsorship approved',
         `Your sponsorship for ${product.title ?? 'a product'} has been approved.`

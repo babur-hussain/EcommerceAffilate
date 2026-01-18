@@ -134,8 +134,8 @@ export const verifyFirebaseToken = async (
     // Check for Bearer token format
     if (!authHeader.startsWith("Bearer ")) {
       logger.error(
-        "❌ Invalid authorization header format:",
-        authHeader.substring(0, 20)
+        { header: authHeader.substring(0, 20) },
+        "❌ Invalid authorization header format:"
       );
       res
         .status(401)

@@ -10,8 +10,6 @@ export interface IOffer extends Document {
     isActive: boolean;
     startDate: Date;
     endDate: Date;
-    createdAt: Date;
-    endDate: Date;
     order: number;
     createdAt: Date;
     updatedAt: Date;

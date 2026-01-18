@@ -108,11 +108,11 @@ router.post(
         isActive: true,
       });
 
-      logger.info("Brand created successfully", {
+      logger.info({
         brandId: brand._id,
         businessId: mongoUser.businessId,
         name: brand.name,
-      });
+      }, "Brand created successfully");
 
       console.log(`✅ Brand created: ${brand._id}`);
       res.status(201).json(brand);
@@ -159,7 +159,7 @@ router.get(
       if (!brand) return res.status(404).json({ error: "Brand not found" });
 
       // Check ownership
-      if (brand.businessId.toString() !== mongoUser.businessId) {
+      if (brand.businessId.toString() !== mongoUser.businessId.toString()) {
         return res.status(403).json({ error: "Forbidden" });
       }
 
@@ -202,7 +202,7 @@ router.put(
       if (!brand) return res.status(404).json({ error: "Brand not found" });
 
       // Check ownership
-      if (brand.businessId.toString() !== mongoUser.businessId) {
+      if (brand.businessId.toString() !== mongoUser.businessId.toString()) {
         return res.status(403).json({ error: "Forbidden" });
       }
 
@@ -259,7 +259,7 @@ router.patch(
       if (!brand) return res.status(404).json({ error: "Brand not found" });
 
       // Check ownership
-      if (brand.businessId.toString() !== mongoUser.businessId) {
+      if (brand.businessId.toString() !== mongoUser.businessId.toString()) {
         return res.status(403).json({ error: "Forbidden" });
       }
 
@@ -295,7 +295,7 @@ router.get(
           .json({ error: "No business associated with this account" });
       }
 
-      const products = await getBrandProducts(mongoUser.businessId);
+      const products = await getBrandProducts(mongoUser.businessId.toString());
       res.json(products);
     } catch (error: any) {
       res.status(500).json({
@@ -325,7 +325,7 @@ router.get(
           .json({ error: "No business associated with this account" });
       }
 
-      const sponsorships = await getBrandSponsorships(mongoUser.businessId);
+      const sponsorships = await getBrandSponsorships(mongoUser.businessId.toString());
       // Filter out populated docs where product didn't match owner
       const filtered = sponsorships.filter((s) => (s as any).productId);
       res.json(filtered);

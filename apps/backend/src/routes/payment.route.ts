@@ -10,7 +10,7 @@ const router = Router();
 // Create payment order for an existing order
 router.post('/payments/create', requireCustomer, async (req: Request, res: Response) => {
   try {
-    const { orderId, provider } = req.body as { orderId?: string; provider?: 'RAZORPAY' | 'CASHFREE' };
+    const { orderId, provider } = req.body as { orderId?: string; provider?: 'RAZORPAY' | 'PAYTM' };
 
     if (!orderId || !provider) {
       return res.status(400).json({ error: 'orderId and provider are required' });

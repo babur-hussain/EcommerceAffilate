@@ -6,19 +6,19 @@
 
 import mongoose from 'mongoose';
 import { User, UserRole } from '../models/user.model';
-import { config } from '../config/env';
+import { env as config } from '../config/env';
 
 const validRoles: UserRole[] = ['ADMIN', 'SELLER_OWNER', 'SELLER_MANAGER', 'SELLER_STAFF', 'INFLUENCER', 'CUSTOMER'];
 
 async function setUserRole(email: string, role: UserRole) {
   try {
-    await mongoose.connect(config.mongoUri);
+    await mongoose.connect(config.MONGODB_URI);
     console.log('✓ Connected to MongoDB');
 
     const normalizedEmail = email.toLowerCase().trim();
-    
+
     let user = await User.findOne({ email: normalizedEmail });
-    
+
     if (!user) {
       console.log(`User ${email} not found. Creating new user...`);
       user = await User.create({

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import Category from '../models/category.model';
-import { config } from '../config/env';
+import { env as config } from '../config/env';
 
 const categories = [
   {
@@ -98,7 +98,7 @@ const categories = [
 async function seedCategories() {
   try {
     // Connect to MongoDB
-    await mongoose.connect(config.mongoUri);
+    await mongoose.connect(config.MONGODB_URI);
     console.log('✅ Connected to MongoDB');
 
     // Clear existing categories

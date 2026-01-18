@@ -10,7 +10,7 @@ import {
   getTotalCommissionByBusiness,
   getTotalCommissionByInfluencer,
 } from '../services/influencer.service';
-import { User } from '../models/user.model';
+
 
 const router = Router();
 
