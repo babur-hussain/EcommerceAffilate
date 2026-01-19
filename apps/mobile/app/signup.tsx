@@ -35,7 +35,7 @@ export default function SignupScreen() {
             setLoading(true);
             await signUp(email, password, name);
             Alert.alert('Success', 'Account created successfully!', [
-                { text: 'OK', onPress: () => router.replace('/(tabs)') }
+                { text: 'OK', onPress: () => router.replace('/') }
             ]);
         } catch (error: any) {
             Alert.alert('Signup Failed', error.message || 'Failed to create account');
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     header: {
         marginBottom: 32,
         alignItems: 'center',
-        marginTop: 40,
+        marginTop: 20,
     },
     title: {
         fontSize: 32,

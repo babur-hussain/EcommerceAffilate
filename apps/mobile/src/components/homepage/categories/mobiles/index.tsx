@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, Dimensions, TouchableOpacity } from 'react-native';
-import { CachedImage } from '../../../common/CachedImage';
+import { View, Text, StyleSheet, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
+import CategoryPulseLoader from '../../../shared/CategoryPulseLoader';
+import CachedImage from '../../../shared/CachedImage';
 import { useRouter } from 'expo-router';
 import api from '../../../../lib/api';
 import ProductCard from '../../ProductCard';
@@ -112,7 +113,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
             <View style={styles.contentContainer}>
                 {loading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#FF6F00" />
+                        <CategoryPulseLoader />
                     </View>
                 ) : (
                     <>
@@ -122,7 +123,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
                             <View style={styles.topBannersRow}>
                                 <TouchableOpacity style={styles.halfBanner}>
                                     <CachedImage
-                                        uri="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80"
+                                        source={{ uri: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80" }}
                                         style={styles.halfBannerImage}
                                     />
                                     <View style={styles.halfBannerOverlay}>
@@ -132,7 +133,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
 
                                 <TouchableOpacity style={styles.halfBanner}>
                                     <CachedImage
-                                        uri="https://images.unsplash.com/photo-1592286927505-c0d0eb5e8a8c?auto=format&fit=crop&w=600&q=80"
+                                        source={{ uri: "https://images.unsplash.com/photo-1592286927505-c0d0eb5e8a8c?auto=format&fit=crop&w=600&q=80" }}
                                         style={styles.halfBannerImage}
                                     />
                                     <View style={styles.halfBannerOverlay}>
@@ -144,7 +145,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
                             {/* Second Row - Full width Epic Republic Deals */}
                             <TouchableOpacity style={styles.fullBanner}>
                                 <CachedImage
-                                    uri="https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=1200&q=80"
+                                    source={{ uri: "https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=1200&q=80" }}
                                     style={styles.fullBannerImage}
                                 />
                                 <View style={styles.epicDealsOverlay}>
@@ -163,7 +164,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
                             {/* Third Row - Full width iPhone 17 */}
                             <TouchableOpacity style={styles.fullBanner}>
                                 <CachedImage
-                                    uri="https://images.unsplash.com/photo-1592286927505-c0d0eb5a8a8c?auto=format&fit=crop&w=1200&q=80"
+                                    source={{ uri: "https://images.unsplash.com/photo-1592286927505-c0d0eb5a8a8c?auto=format&fit=crop&w=1200&q=80" }}
                                     style={styles.fullBannerImage}
                                 />
                                 <View style={styles.iphoneOverlay}>
@@ -197,7 +198,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
                                     </View>
                                     <View style={styles.festivePriceContent}>
                                         <CachedImage
-                                            uri="https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=400&q=80"
+                                            source={{ uri: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=400&q=80" }}
                                             style={styles.festivePriceImage}
                                         />
                                         <View style={styles.festivePriceInfo}>
@@ -222,7 +223,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
                                             <Text style={styles.lowestPriceProductTitle}>Ai+ Pulse (8|128GB)</Text>
                                             <Text style={styles.lowestPriceProductPrice}>From ₹5,999*</Text>
                                             <CachedImage
-                                                uri="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80"
+                                                source={{ uri: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80" }}
                                                 style={styles.lowestPriceProductImage}
                                             />
                                             <View style={styles.lowestPriceProductBadge}>
@@ -235,7 +236,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
                                             <Text style={styles.lowestPriceProductTitle}>Ai+ Nova</Text>
                                             <Text style={styles.lowestPriceProductPrice}>From ₹6,999*</Text>
                                             <CachedImage
-                                                uri="https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=300&q=80"
+                                                source={{ uri: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=300&q=80" }}
                                                 style={styles.lowestPriceProductImage}
                                             />
                                             <View style={styles.lowestPriceProductBadge}>
@@ -262,7 +263,7 @@ export default function MobilesPage({ staticHeader, renderStickyHeader }: Mobile
                                             <View style={styles.subcategoryIconContainer}>
                                                 {sub.image || sub.icon ? (
                                                     <CachedImage
-                                                        uri={sub.image || sub.icon || ''}
+                                                        source={{ uri: sub.image || sub.icon || '' }}
                                                         style={styles.subcategoryImage}
                                                     />
                                                 ) : (

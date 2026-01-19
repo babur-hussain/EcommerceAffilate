@@ -4,12 +4,20 @@ import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
+import { useWishlist } from '../../context/WishlistContext';
+
 interface ProductImageCarouselProps {
     images: string[];
+    product: {
+        _id: string;
+        title: string;
+        price: number;
+    };
 }
 
-export default function ProductImageCarousel({ images }: ProductImageCarouselProps) {
+export default function ProductImageCarousel({ images, product }: ProductImageCarouselProps) {
     const [activeSlide, setActiveSlide] = useState(0);
+    const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
     const onScroll = (event: any) => {
         const slide = Math.ceil(
@@ -27,8 +35,26 @@ export default function ProductImageCarousel({ images }: ProductImageCarouselPro
         <View style={styles.container}>
             <View style={styles.topActions}>
                 {/* Placeholder for top absolute actions if any, like share/heart */}
-                <TouchableOpacity style={styles.iconButton}>
-                    <Ionicons name="heart-outline" size={24} color="#374151" />
+                <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => {
+                        if (isInWishlist(product._id)) {
+                            removeFromWishlist(product._id);
+                        } else {
+                            addToWishlist({
+                                _id: product._id,
+                                title: product.title,
+                                price: product.price,
+                                images: images
+                            });
+                        }
+                    }}
+                >
+                    <Ionicons
+                        name={isInWishlist(product._id) ? "heart" : "heart-outline"}
+                        size={24}
+                        color={isInWishlist(product._id) ? "#EF4444" : "#374151"}
+                    />
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.iconButton, { marginTop: 12 }]}>
                     <Ionicons name="share-social-outline" size={24} color="#374151" />

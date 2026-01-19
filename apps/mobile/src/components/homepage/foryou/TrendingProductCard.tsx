@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CachedImage from '../../shared/CachedImage';
+import AddToCartButton from '../../shared/AddToCartButton';
 
 export interface TrendingProduct {
     id: string;
@@ -16,6 +17,7 @@ export interface TrendingProduct {
     discount: string;
     weight: string;
     tag?: string;
+    stock: number;
 }
 
 interface TrendingProductCardProps {
@@ -32,19 +34,22 @@ export default function TrendingProductCard({ product, onAdd }: TrendingProductC
         <View style={styles.card}>
             {/* Image Area */}
             <View style={styles.imageContainer}>
-                <TouchableOpacity style={styles.favoriteButton}>
-                    <Ionicons name="heart-outline" size={22} color="#9CA3AF" />
-                </TouchableOpacity>
+
                 {product.image ? (
                     <CachedImage source={product.image} style={styles.image} contentFit="contain" />
                 ) : (
                     <View style={[styles.image, { backgroundColor: '#F3F4F6' }]} />
                 )}
 
-                {/* ADD Button - Overlapping properly */}
-                <TouchableOpacity style={styles.addButton} onPress={onAdd}>
+                {/* ADD Button - Using Shared Component */}
+                <AddToCartButton
+                    productId={product.id}
+                    product={product} // Note: product here is TrendingProduct flavor, verify minimal fields needed usually just _id, name, price, images
+                    stock={product.stock}
+                    style={styles.addButton}
+                >
                     <Text style={styles.addButtonText}>ADD</Text>
-                </TouchableOpacity>
+                </AddToCartButton>
             </View>
 
             {/* Details Area */}
@@ -76,10 +81,12 @@ export default function TrendingProductCard({ product, onAdd }: TrendingProductC
                 </View>
 
                 {/* Delivery Time */}
-                <View style={styles.infoRow}>
-                    <Ionicons name="time" size={12} color="#16A34A" />
-                    <Text style={styles.deliveryText}>{product.deliveryTime}</Text>
-                </View>
+                {product.deliveryTime ? (
+                    <View style={styles.infoRow}>
+                        <Ionicons name="time" size={12} color="#16A34A" />
+                        <Text style={styles.deliveryText}>{product.deliveryTime}</Text>
+                    </View>
+                ) : null}
 
                 {/* Scarcity / Tag */}
                 {product.tag ? (
@@ -139,13 +146,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    favoriteButton: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        zIndex: 10,
-        backgroundColor: 'transparent',
-    },
+
     addButton: {
         position: 'absolute',
         bottom: -12,
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     },
     name: {
         fontSize: 13,
-        fontWeight: '700',
+        fontWeight: '600',
         color: '#1F2937', // Gray 800
         lineHeight: 18,
         marginBottom: 6,
@@ -214,7 +215,7 @@ const styles = StyleSheet.create({
     },
     deliveryText: {
         fontSize: 10,
-        fontWeight: '800',
+        fontWeight: '700',
         color: '#059669', // Emerald 600
         marginLeft: 4,
         letterSpacing: 0.2, // Small caps feel
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
     },
     price: {
         fontSize: 14,
-        fontWeight: '800',
+        fontWeight: '700',
         color: '#1F2937',
         marginRight: 6,
     },

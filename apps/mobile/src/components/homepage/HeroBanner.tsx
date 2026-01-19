@@ -1,49 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Image, NativeSyntheticEvent, NativeScrollEvent, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Image, NativeSyntheticEvent, NativeScrollEvent, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+
 import api from '../../lib/api';
 import CachedImage from '../shared/CachedImage';
 
 const { width } = Dimensions.get('window');
 const BANNER_HEIGHT = 200;
 
-interface BannerData {
-    id: string;
-    title: string;
-    subtitle: string;
-    image: string;
-    backgroundColor: string;
-}
+import { HERO_BANNERS, BannerData } from '../../data/heroBanners';
 
-const FALLBACK_BANNERS: BannerData[] = [
-    {
-        id: '1',
-        title: 'Summer Collection',
-        subtitle: 'Up to 50% Off',
-        image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        backgroundColor: '#4F46E5',
-    },
-    {
-        id: '2',
-        title: 'New Arrivals',
-        subtitle: 'Check out the latest trends',
-        image: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        backgroundColor: '#10B981',
-    },
-    {
-        id: '3',
-        title: 'Exclusive Deals',
-        subtitle: 'Limited time offers',
-        image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        backgroundColor: '#F59E0B',
-    },
-];
+/**
+ * HeroBanner Component
+ * 
+ * Displays a rotating carousel of feature banners at the top of the home screen.
+ * - Auto-scrolls every 5 seconds
+ * - Supports manual swipe
+ * - Clicking a banner navigates to a detailed view
+ * - Fetches configuration from API, falls back to local data if unavailable
+ */
 
 export default function HeroBanner() {
     const [banners, setBanners] = useState<BannerData[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeIndex, setActiveIndex] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);
+    const router = useRouter();
 
     useEffect(() => {
         fetchBanners();
@@ -67,11 +49,11 @@ export default function HeroBanner() {
                 setBanners(mappedBanners);
             } else {
                 // Fallback if no hero banner configured
-                setBanners(FALLBACK_BANNERS);
+                setBanners(HERO_BANNERS);
             }
         } catch (error) {
             console.error('Error fetching banners, using fallback:', error);
-            setBanners(FALLBACK_BANNERS);
+            setBanners(HERO_BANNERS);
         } finally {
             setLoading(false);
         }
@@ -82,7 +64,7 @@ export default function HeroBanner() {
 
         const interval = setInterval(() => {
             if (activeIndex < banners.length - 1) {
-                scrollViewRef.current?.scrollTo({ x: (activeIndex + 1) * width, animated: true });
+                scrollViewRef.current?.scrollTo({ x: (activeIndex + 1) * (width - 32), animated: true });
                 setActiveIndex(activeIndex + 1);
             } else {
                 scrollViewRef.current?.scrollTo({ x: 0, animated: true });
@@ -102,7 +84,7 @@ export default function HeroBanner() {
 
     if (loading) {
         return (
-            <View style={[styles.container, styles.loadingContainer]}>
+            <View style={[styles.mainContainer, styles.loadingContainer]}>
                 <ActivityIndicator size="large" color="#4F46E5" />
             </View>
         );
@@ -111,31 +93,35 @@ export default function HeroBanner() {
     if (banners.length === 0) return null;
 
     return (
-        <View style={styles.container}>
-            <ScrollView
-                ref={scrollViewRef}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-                style={styles.scrollView}
-            >
-                {banners.map((banner) => (
-                    <View key={banner.id} style={styles.slide}>
-                        <CachedImage source={{ uri: banner.image }} style={styles.image} contentFit="cover" />
-                        <LinearGradient
-                            colors={['transparent', 'rgba(0,0,0,0.8)']}
-                            style={styles.gradient}
+        <View style={styles.mainContainer}>
+            <View style={styles.imageContainer}>
+                <ScrollView
+                    ref={scrollViewRef}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                    style={styles.scrollView}
+                >
+                    {banners.map((banner) => (
+                        <TouchableOpacity
+                            key={banner.id}
+                            style={styles.slide}
+                            activeOpacity={0.9}
+                            onPress={() => router.push(`/home/hero-banner/${banner.id}`)}
                         >
-                            <View style={styles.textContainer}>
-                                <Text style={styles.subtitle}>{banner.subtitle}</Text>
-                                <Text style={styles.title}>{banner.title}</Text>
+                            <CachedImage source={{ uri: banner.image }} style={styles.image} contentFit="cover" />
+                            <View style={styles.gradient}>
+                                <View style={styles.textContainer}>
+                                    <Text style={styles.subtitle}>{banner.subtitle}</Text>
+                                    <Text style={styles.title}>{banner.title}</Text>
+                                </View>
                             </View>
-                        </LinearGradient>
-                    </View>
-                ))}
-            </ScrollView>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
             <View style={styles.pagination}>
                 {banners.map((_, index) => (
                     <View
@@ -152,20 +138,25 @@ export default function HeroBanner() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        height: BANNER_HEIGHT,
+    mainContainer: {
         marginBottom: 20,
-        borderRadius: 16,
-        overflow: 'hidden',
         marginHorizontal: 16,
         marginTop: 16,
+    },
+    imageContainer: {
+        height: BANNER_HEIGHT,
+        borderRadius: 16,
+        overflow: 'hidden',
         elevation: 5,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
+        backgroundColor: '#fff',
     },
     loadingContainer: {
+        height: BANNER_HEIGHT,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#f3f4f6',
@@ -207,20 +198,20 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     pagination: {
-        position: 'absolute',
-        bottom: 16,
+        marginTop: 12,
         flexDirection: 'row',
         alignSelf: 'center',
+        justifyContent: 'center',
     },
     paginationDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        width: 12,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: '#D1D5DB',
         marginHorizontal: 4,
     },
     paginationDotActive: {
-        backgroundColor: '#fff',
-        width: 20,
+        backgroundColor: '#F97316',
+        width: 24,
     },
 });

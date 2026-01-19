@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     title: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: '800',
         color: '#BE123C', // Rose 700 / Dark Pinkish Red
         marginBottom: 4,
@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#4B5563', // Gray 600
         fontWeight: '500',
+        lineHeight: 20,
     },
     listContent: {
         paddingHorizontal: 16,

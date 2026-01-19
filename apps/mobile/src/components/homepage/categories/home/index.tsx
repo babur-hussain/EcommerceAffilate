@@ -1,27 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, Dimensions, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import api from '../../../../lib/api';
-import ProductCard from '../../ProductCard';
-import CategoryBannerSlider from '../../CategoryBannerSlider';
-
-const { width } = Dimensions.get('window');
-
-interface Product {
-    _id: string;
-    name: string;
-    price: number;
-    images: string[];
-    category: string;
-}
-
-interface Category {
-    _id: string;
-    name: string;
-    slug: string;
-    image?: string;
-    icon?: string;
-}
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import CategoryPulseLoader from '../../../shared/CategoryPulseLoader';
+import { usePageLayout } from '../../../../hooks/usePageLayout';
+import SectionRenderer from '../../SectionRenderer';
 
 interface HomeCategoryPageProps {
     staticHeader?: React.ReactNode;
@@ -29,56 +10,15 @@ interface HomeCategoryPageProps {
 }
 
 export default function HomeCategoryPage({ staticHeader, renderStickyHeader }: HomeCategoryPageProps) {
-    const router = useRouter();
-    const [products, setProducts] = useState<Product[]>([]);
-    const [banners, setBanners] = useState<string[]>([]);
-    const [subcategories, setSubcategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    // Scroll tracking
-    const [isSticky, setIsSticky] = useState(false);
+    const { layout, loading, refresh } = usePageLayout('home-kitchen');
     const [headerHeight, setHeaderHeight] = useState(0);
+    const [isSticky, setIsSticky] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
-    const categorySlug = 'home-kitchen';
-    const categoryName = 'Home & Kitchen';
-
-    useEffect(() => {
-        fetchCategoryData();
-    }, []);
-
-    const fetchCategoryData = async () => {
-        setLoading(true);
-        try {
-            // 1. Fetch Category Details (for posters/banners)
-            try {
-                const categoryResponse = await api.get(`/api/categories/${categorySlug}`);
-                if (categoryResponse.data && categoryResponse.data.posters && categoryResponse.data.posters.length > 0) {
-                    setBanners(categoryResponse.data.posters);
-                }
-            } catch (e) {
-                console.log(`Category details fetch failed for ${categoryName}`, e);
-            }
-
-            // 2. Fetch Subcategories
-            try {
-                const subcategoriesResponse = await api.get(`/api/categories/${categorySlug}/subcategories`);
-                if (Array.isArray(subcategoriesResponse.data) && subcategoriesResponse.data.length > 0) {
-                    setSubcategories(subcategoriesResponse.data);
-                }
-            } catch (e) {
-                console.log(`Subcategories fetch failed for ${categoryName}`, e);
-            }
-
-            // 3. Fetch Products
-            const productsResponse = await api.get(`/api/products?category=${categorySlug}&limit=10`);
-            const productsData = Array.isArray(productsResponse.data) ? productsResponse.data : (productsResponse.data.products || []);
-            setProducts(productsData);
-
-        } catch (error) {
-            console.error(`Error fetching data for ${categoryName}:`, error);
-        } finally {
-            setLoading(false);
-        }
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await refresh();
+        setRefreshing(false);
     };
 
     const handleScroll = (event: any) => {
@@ -96,6 +36,7 @@ export default function HomeCategoryPage({ staticHeader, renderStickyHeader }: H
             onScroll={handleScroll}
             scrollEventThrottle={16}
             contentContainerStyle={{ flexGrow: 1 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
         >
             <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
                 {staticHeader}
@@ -103,138 +44,17 @@ export default function HomeCategoryPage({ staticHeader, renderStickyHeader }: H
             <View>{renderStickyHeader ? renderStickyHeader(isSticky) : null}</View>
 
             <View style={styles.contentContainer}>
-                {loading ? (
+                {loading && !refreshing ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#FF6F00" />
+                        <CategoryPulseLoader />
                     </View>
                 ) : (
                     <>
-                        {/* 1. Banners Slider */}
-                        <CategoryBannerSlider banners={banners} />
-
-                        {/* 2. Subcategories Grid (Horizontal 2 Rows) */}
-                        {subcategories.length > 0 && (
-                            <View style={styles.subcategoriesSection}>
-                                <ScrollView
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                    contentContainerStyle={styles.horizontalScrollContent}
-                                >
-                                    {Array.from({ length: Math.ceil(subcategories.length / 2) }).map((_, colIndex) => {
-                                        const pair = subcategories.slice(colIndex * 2, colIndex * 2 + 2);
-                                        return (
-                                            <View key={colIndex} style={styles.columnWrapper}>
-                                                {pair.map((sub) => (
-                                                    <TouchableOpacity
-                                                        key={sub._id}
-                                                        style={styles.subcategoryItem}
-                                                        onPress={() => router.push(`/common-category/${sub.slug}`)}
-                                                    >
-                                                        <View style={styles.subcategoryIconContainer}>
-                                                            {sub.image || sub.icon ? (
-                                                                <Image
-                                                                    source={{ uri: sub.image || sub.icon }}
-                                                                    style={styles.subcategoryImage}
-                                                                />
-                                                            ) : (
-                                                                <View style={[styles.subcategoryImage, { backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center' }]}>
-                                                                    <Text style={{ fontSize: 20 }}>🏠</Text>
-                                                                </View>
-                                                            )}
-                                                        </View>
-                                                        <Text style={styles.subcategoryName} numberOfLines={2}>
-                                                            {sub.name}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </View>
-                                        );
-                                    })}
-                                </ScrollView>
-                            </View>
-                        )}
-
-                        {/* NEW SECTIONS */}
-
-                        {/* Kitchen Bestsellers */}
-                        <View style={styles.customSection}>
-                            <TouchableOpacity onPress={() => router.push('/home/collection/kitchen-bestsellers')}>
-                                <View style={styles.sectionHeaderRow}>
-                                    <Text style={styles.sectionTitle}>Kitchen Bestsellers</Text>
-                                    <Text style={styles.seeAllText}>See All ›</Text>
-                                </View>
-                            </TouchableOpacity>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalSectionList}>
-                                {[1, 2, 3, 4].map((i) => (
-                                    <TouchableOpacity key={i} style={styles.horizontalCard}>
-                                        <Image source={{ uri: `https://loremflickr.com/300/300/kitchen,ware?lock=${i}` }} style={styles.horizontalCardImage} />
-                                        <Text style={styles.horizontalCardTitle} numberOfLines={1}>Kitchen Item {i}</Text>
-                                        <Text style={styles.horizontalCardPrice}>Min. 40% Off</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-
-                        {/* Home Decor Trends */}
-                        <View style={styles.customSection}>
-                            <TouchableOpacity onPress={() => router.push('/home/collection/home-decor-trends')}>
-                                <View style={styles.sectionHeaderRow}>
-                                    <Text style={styles.sectionTitle}>Home Decor Trends</Text>
-                                    <Text style={styles.seeAllText}>See All ›</Text>
-                                </View>
-                            </TouchableOpacity>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalSectionList}>
-                                {[1, 2, 3, 4].map((i) => (
-                                    <TouchableOpacity key={i} style={styles.horizontalCard}>
-                                        <Image source={{ uri: `https://loremflickr.com/300/300/decor,home?lock=${i + 10}` }} style={styles.horizontalCardImage} />
-                                        <Text style={styles.horizontalCardTitle} numberOfLines={1}>Decor Item {i}</Text>
-                                        <Text style={styles.horizontalCardPrice}>Trending Now</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-
-                        {/* Furnishing Deals */}
-                        <View style={styles.customSection}>
-                            <TouchableOpacity onPress={() => router.push('/home/collection/furnishing-deals')}>
-                                <View style={styles.sectionHeaderRow}>
-                                    <Text style={styles.sectionTitle}>Furnishing Deals</Text>
-                                    <Text style={styles.seeAllText}>See All ›</Text>
-                                </View>
-                            </TouchableOpacity>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalSectionList}>
-                                {[1, 2, 3, 4].map((i) => (
-                                    <TouchableOpacity key={i} style={styles.horizontalCard}>
-                                        <Image source={{ uri: `https://loremflickr.com/300/300/curtains,rugs?lock=${i + 20}` }} style={styles.horizontalCardImage} />
-                                        <Text style={styles.horizontalCardTitle} numberOfLines={1}>Furnishing {i}</Text>
-                                        <Text style={styles.horizontalCardPrice}>Under $50</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-
-                        {/* 3. Latest Products */}
-                        <View style={styles.productsSection}>
-                            <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>Latest in {categoryName}</Text>
-                            </View>
-
-                            <View style={styles.productsGrid}>
-                                {products.length > 0 ? (
-                                    products.map((product) => (
-                                        <ProductCard
-                                            key={product._id}
-                                            product={product}
-                                            onPress={() => router.push(`/product/${product._id}`)}
-                                        />
-                                    ))
-                                ) : (
-                                    <View style={styles.emptyState}>
-                                        <Text style={styles.emptyText}>No products found</Text>
-                                    </View>
-                                )}
-                            </View>
-                        </View>
+                        {layout?.sections
+                            .sort((a, b) => a.priority - b.priority)
+                            .map((section) => (
+                                <SectionRenderer key={section.id} section={section} />
+                            ))}
                     </>
                 )}
                 <View style={{ position: 'absolute', top: '100%', left: 0, right: 0, height: 1000, backgroundColor: '#F9FAFB' }} />
@@ -253,123 +73,10 @@ const styles = StyleSheet.create({
         flex: 1,
         borderTopLeftRadius: 0,
         borderTopRightRadius: 0,
+        paddingBottom: 20
     },
     loadingContainer: {
         padding: 40,
         alignItems: 'center',
-    },
-    subcategoriesSection: {
-        paddingVertical: 12,
-        backgroundColor: '#FFFFFF',
-    },
-    horizontalScrollContent: {
-        paddingHorizontal: 12,
-    },
-    columnWrapper: {
-        flexDirection: 'column',
-        marginRight: 8,
-    },
-    subcategoryItem: {
-        width: 90,
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    subcategoryIconContainer: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        overflow: 'hidden',
-        backgroundColor: '#fff',
-        marginBottom: 6,
-        borderWidth: 1,
-        borderColor: '#F3F4F6',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
-    },
-    subcategoryImage: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
-    },
-    subcategoryName: {
-        fontSize: 11,
-        color: '#374151',
-        textAlign: 'center',
-        fontWeight: '500',
-        paddingHorizontal: 2,
-    },
-    productsSection: {
-        marginTop: 8,
-    },
-    sectionHeader: {
-        paddingHorizontal: 16,
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#111827',
-    },
-    productsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingBottom: 20,
-    },
-    emptyState: {
-        width: '100%',
-        padding: 40,
-        alignItems: 'center',
-    },
-    emptyText: {
-        color: '#666',
-        fontSize: 16,
-    },
-    // Styles for new sections
-    customSection: {
-        marginTop: 16,
-        backgroundColor: '#fff',
-        paddingVertical: 16,
-    },
-    sectionHeaderRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        marginBottom: 12,
-    },
-    seeAllText: {
-        color: '#3B82F6',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    horizontalSectionList: {
-        paddingHorizontal: 16,
-    },
-    horizontalCard: {
-        width: 140,
-        marginRight: 12,
-    },
-    horizontalCardImage: {
-        width: 140,
-        height: 140,
-        borderRadius: 8,
-        backgroundColor: '#f3f4f6',
-        marginBottom: 8,
-    },
-    horizontalCardTitle: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#1f2937',
-        marginBottom: 4,
-    },
-    horizontalCardPrice: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: '#16a34a',
     },
 });

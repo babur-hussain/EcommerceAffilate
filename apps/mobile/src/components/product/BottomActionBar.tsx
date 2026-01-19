@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface BottomActionBarProps {
     price: number;
@@ -10,8 +11,9 @@ interface BottomActionBarProps {
 }
 
 export default function BottomActionBar({ price, onAddToCart, onBuyNow, onOpenCart }: BottomActionBarProps) {
+    const insets = useSafeAreaInsets();
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) + 12 }]}>
             <TouchableOpacity style={styles.cartButton} onPress={onOpenCart}>
                 <Ionicons name="cart-outline" size={24} color="#374151" />
             </TouchableOpacity>
@@ -36,7 +38,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#E5E7EB',
         alignItems: 'center',
-        paddingBottom: 24, // Safe area
+        // paddingBottom: 24, // Handled dynamically
     },
     cartButton: {
         width: 48,

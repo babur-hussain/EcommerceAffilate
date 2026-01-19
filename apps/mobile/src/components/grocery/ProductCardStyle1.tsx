@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { CachedImage } from '../common/CachedImage';
+import CachedImage from '../shared/CachedImage';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useBasket } from '../../context/BasketContext';
 import * as Haptics from 'expo-haptics';
@@ -40,9 +40,9 @@ export function ProductCardStyle1({ product }: ProductCardStyle1Props) {
             <View style={styles.imageSection}>
                 <View style={styles.imageBackground} />
                 <CachedImage
-                    uri={product.primaryImage || product.image}
+                    source={{ uri: product.primaryImage || product.image }}
                     style={styles.productImage}
-                    resizeMode="contain"
+                    contentFit="contain"
                 />
 
                 {/* Discount Badge - Now inside image section */}

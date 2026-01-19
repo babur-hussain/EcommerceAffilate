@@ -27,8 +27,9 @@ docker push $ECR_URI
 # 2. Deploy to EC2 via SSH
 echo "⚡ Connecting to EC2 to restart application..."
 
-# Securely upload .env file
+# Securely upload .env file and Firebase service account
 scp -i "$PEM_KEY" -o StrictHostKeyChecking=no .env ec2-user@$EC2_IP:~/.env.production
+scp -i "$PEM_KEY" -o StrictHostKeyChecking=no firebase-adminsdk.json ec2-user@$EC2_IP:~/firebase-adminsdk.json
 
 ssh -i "$PEM_KEY" -o StrictHostKeyChecking=no ec2-user@$EC2_IP << EOF
   # Login to ECR on server
@@ -41,12 +42,13 @@ ssh -i "$PEM_KEY" -o StrictHostKeyChecking=no ec2-user@$EC2_IP << EOF
   docker stop $APP_NAME || true
   docker rm $APP_NAME || true
   
-  # Run new container using the uploaded .env file
+  # Run new container using the uploaded .env file AND mounted firebase config
   docker run -d \
     --name $APP_NAME \
     -p 80:4000 \
     --restart unless-stopped \
     --env-file ~/.env.production \
+    -v /home/ec2-user/firebase-adminsdk.json:/app/firebase-adminsdk.json \
     $ECR_URI
 
   echo "✅ Application started on port 80!"

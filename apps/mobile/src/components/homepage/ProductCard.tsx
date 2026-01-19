@@ -1,7 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import CachedImage from '../shared/CachedImage';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { useWishlist } from '../../context/WishlistContext';
+import { useCart } from '../../context/CartContext';
+import * as Haptics from 'expo-haptics';
+import AddToCartButton from '../shared/AddToCartButton';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -13,20 +17,35 @@ interface Product {
     images: string[];
     category: string;
     rating?: number;
+    stock?: number;
 }
 
 interface ProductCardProps {
     product: Product;
     onPress: () => void;
     width?: number;
+    actionButtonType?: 'wishlist' | 'cart';
+    stock?: number;
 }
 
-export default function ProductCard({ product, onPress, width: customWidth }: ProductCardProps) {
+export default function ProductCard({ product, onPress, width: customWidth, actionButtonType = 'wishlist', stock }: ProductCardProps) {
+    const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+    // Use prop stock if provided, otherwise fallback to product.stock or 0
+    const currentStock = stock !== undefined ? stock : (product as any).stock !== undefined ? (product as any).stock : 0;
+
+    // Check if product is globally out of stock
+    const isOutOfStock = currentStock <= 0;
+
     return (
         <TouchableOpacity
-            style={[styles.container, customWidth ? { width: customWidth } : {}]}
-            onPress={onPress}
+            style={[
+                styles.container,
+                customWidth ? { width: customWidth } : {},
+                isOutOfStock && { opacity: 0.6 }
+            ]}
+            onPress={isOutOfStock ? undefined : onPress}
             activeOpacity={0.9}
+            disabled={isOutOfStock}
         >
 
             <View style={styles.imageContainer}>
@@ -35,9 +54,44 @@ export default function ProductCard({ product, onPress, width: customWidth }: Pr
                     style={styles.image}
                     contentFit="cover"
                 />
-                <TouchableOpacity style={styles.favoriteButton}>
-                    <MaterialIcons name="favorite-border" size={20} color="#4F46E5" />
-                </TouchableOpacity>
+                <View style={styles.actionContainer}>
+                    {actionButtonType === 'cart' ? (
+                        <AddToCartButton
+                            productId={product._id}
+                            product={product}
+                            stock={stock}
+                            style={styles.favoriteButton}
+                        />
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.favoriteButton}
+                            onPress={() => {
+                                const inWishlist = isInWishlist(product._id);
+                                if (inWishlist) {
+                                    removeFromWishlist(product._id);
+                                } else {
+                                    addToWishlist({
+                                        _id: product._id,
+                                        title: product.name,
+                                        price: product.price,
+                                        images: product.images
+                                    });
+                                }
+                            }}
+                        >
+                            <MaterialIcons
+                                name={isInWishlist(product._id) ? "favorite" : "favorite-border"}
+                                size={20}
+                                color={isInWishlist(product._id) ? "#EF4444" : "#4F46E5"}
+                            />
+                        </TouchableOpacity>
+                    )}
+                </View>
+                {isOutOfStock && (
+                    <View style={styles.oosContainer}>
+                        <Text style={styles.oosText}>Out of Stock</Text>
+                    </View>
+                )}
             </View>
             <View style={styles.content}>
                 <Text style={styles.category}>{product.category}</Text>
@@ -95,6 +149,12 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
     },
+    actionContainer: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        zIndex: 10
+    },
     content: {
         padding: 12,
     },
@@ -119,7 +179,7 @@ const styles = StyleSheet.create({
     },
     price: {
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: '#4F46E5',
     },
     ratingContainer: {
@@ -136,4 +196,26 @@ const styles = StyleSheet.create({
         color: '#B45309',
         marginLeft: 2,
     },
+    oosContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    oosText: {
+        color: '#DC2626',
+        fontWeight: 'bold',
+        fontSize: 14,
+        transform: [{ rotate: '-15deg' }],
+        borderWidth: 2,
+        borderColor: '#DC2626',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    }
 });

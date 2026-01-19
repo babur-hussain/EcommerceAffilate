@@ -4,8 +4,10 @@ export default {
     slug: 'ecommerceearn-mobile',
     version: '1.0.0',
     orientation: 'portrait',
+    icon: './assets/icon-new.png',
     userInterfaceStyle: 'light',
     splash: {
+      image: './assets/splash-new.jpg',
       backgroundColor: '#6366f1',
       resizeMode: 'contain',
     },
@@ -29,7 +31,10 @@ export default {
       typedRoutes: true,
     },
     extra: {
-      apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.29.240:4000',
+      apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://3.208.16.32',
+      eas: {
+        projectId: "e0b5602c-a326-4d20-a711-e35985e3863c"
+      }
     },
   },
 };

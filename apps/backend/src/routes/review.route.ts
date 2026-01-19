@@ -13,10 +13,11 @@ router.post('/reviews', requireCustomer, async (req: Request, res: Response) => 
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { productId, rating, comment } = req.body as {
+    const { productId, rating, comment, images } = req.body as {
       productId?: string;
       rating?: number;
       comment?: string;
+      images?: string[];
     };
 
     if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
@@ -59,6 +60,7 @@ router.post('/reviews', requireCustomer, async (req: Request, res: Response) => 
             userId: user.id,
             rating,
             comment,
+            images,
           },
         ],
         { session }
@@ -106,7 +108,8 @@ router.get('/reviews/:productId', async (req: Request, res: Response) => {
 
     const reviews = await Review.find({ productId })
       .sort({ createdAt: -1 })
-      .select('userId rating comment createdAt');
+      .populate('userId', 'name profileImage')
+      .select('userId rating comment images createdAt');
 
     res.json(reviews);
   } catch (error: any) {

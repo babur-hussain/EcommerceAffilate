@@ -1,17 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import api from '../../lib/api';
-import HeroBanner from './HeroBanner';
-import ProductCard from './ProductCard';
-
-interface Product {
-    _id: string;
-    name: string;
-    price: number;
-    images: string[];
-    category: string;
-}
+import { usePageLayout } from '../../hooks/usePageLayout';
+import SectionRenderer from './SectionRenderer';
 
 interface ForYouSectionProps {
     staticHeader?: React.ReactNode;
@@ -19,55 +10,29 @@ interface ForYouSectionProps {
 }
 
 import { useAuth } from '../../context/AuthContext';
-import RecentHistorySection from './RecentHistorySection';
-import GrocerySection from './GrocerySection';
-import TrendingNearYou from './foryou/TrendingNearYou';
-import CuratedCollections from './foryou/CuratedCollections';
-import LightningDeals from './foryou/LightningDeals';
-import GrandKitchenSale from './foryou/GrandKitchenSale';
-import FiftyPercentOffZone from './foryou/FiftyPercentOffZone';
-
-// TODO: Replace this with the actual Grocery Category ID from your database
-const GROCERY_CATEGORY_ID = '696686d02c5aacc146652e03';
+import CategoryPulseLoader from '../shared/CategoryPulseLoader';
 
 export default function ForYouSection({ staticHeader, renderStickyHeader }: ForYouSectionProps) {
     const router = useRouter();
     const { user } = useAuth();
-    const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // SDUI Hook
+    const { layout, loading, refresh } = usePageLayout('home');
     const [refreshing, setRefreshing] = useState(false);
 
-    // Scroll tracking
+    // Scroll tracking for sticky header
     const [isSticky, setIsSticky] = useState(false);
     const [headerHeight, setHeaderHeight] = useState(0);
 
-    useEffect(() => {
-        fetchFeaturedProducts();
-    }, []);
-
-    const fetchFeaturedProducts = async () => {
-        try {
-            const response = await api.get('/api/products?limit=6');
-            const products = Array.isArray(response.data) ? response.data : (response.data.products || []);
-            setFeaturedProducts(products);
-        } catch (error) {
-            console.error('Error fetching products:', error);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
-
-    const onRefresh = () => {
+    const onRefresh = async () => {
         setRefreshing(true);
-        fetchFeaturedProducts();
+        await refresh();
+        setRefreshing(false);
     };
 
     const handleScroll = (event: any) => {
         const scrollY = event.nativeEvent.contentOffset.y;
         if (headerHeight > 0) {
-            // Check if we passed the static header
-            // Adding a small buffer (e.g., 10px) to prevent flickering near the edge
             setIsSticky(scrollY > headerHeight - 10);
         }
     };
@@ -88,55 +53,23 @@ export default function ForYouSection({ staticHeader, renderStickyHeader }: ForY
                 {staticHeader}
             </View>
             <View>{renderStickyHeader ? renderStickyHeader(isSticky) : null}</View>
-            <View style={{ backgroundColor: '#F9FAFB', flex: 1 }}>
-                <HeroBanner />
 
-                {/* User's Recent History Section */}
-                <RecentHistorySection userName={user?.name ? user.name.split(' ')[0] : 'User'} />
-
-                {/* Popular Grocery Section */}
-                <GrocerySection categoryId={GROCERY_CATEGORY_ID} />
-
-                {/* Trending Near You Section */}
-                <TrendingNearYou />
-
-                {/* Curated Collections (Style, Intimacy, Travel) */}
-                <CuratedCollections />
-
-                {/* Lightning Deals Section */}
-                <LightningDeals />
-
-                {/* Grand Kitchen Sale */}
-                <GrandKitchenSale />
-
-                {/* 50% Off Zone */}
-                <FiftyPercentOffZone />
-
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Featured Products</Text>
-                    <TouchableOpacity>
-                        <Text style={styles.seeAll}>See All</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {loading ? (
+            <View style={{ backgroundColor: '#F9FAFB', flex: 1, paddingBottom: 100 }}>
+                {loading && !layout ? (
                     <View style={styles.loadingContainer}>
-                        <Text>Loading products...</Text>
+                        <CategoryPulseLoader />
                     </View>
                 ) : (
-                    <View style={styles.productsGrid}>
-                        {featuredProducts.map((product) => (
-                            <ProductCard
-                                key={product._id}
-                                product={product}
-                                onPress={() => router.push(`/product/${product._id}`)}
-                            />
-                        ))}
-                    </View>
+                    layout?.sections?.map((section) => (
+                        <SectionRenderer
+                            key={section.id}
+                            section={section}
+                            user={user}
+                        />
+                    ))
                 )}
 
-                {/* Bottom overscroll cover */}
-                <View style={{ position: 'absolute', top: '100%', left: 0, right: 0, height: 1000, backgroundColor: '#F9FAFB' }} />
+                {/* Bottom spacer already included via paddingBottom, removing absolute spacer */}
             </View>
         </ScrollView>
     );
@@ -155,9 +88,10 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '800',
         color: '#111827',
+        letterSpacing: -0.5,
     },
     seeAll: {
         fontSize: 14,

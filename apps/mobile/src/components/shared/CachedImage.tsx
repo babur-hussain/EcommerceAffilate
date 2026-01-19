@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Image, ImageStyle, StyleProp, View, StyleSheet, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { ImageStyle, StyleProp, View, StyleSheet } from 'react-native';
 import { Image as ExpoImage, ImageContentFit } from 'expo-image';
 
 interface CachedImageProps {
@@ -21,8 +21,6 @@ export default function CachedImage({
     placeholder,
     cachePolicy = 'memory-disk' // Default to aggressive caching
 }: CachedImageProps) {
-    const [isLoading, setIsLoading] = useState(true);
-
     // Normalize source
     const imageSource = typeof source === 'string' ? { uri: source } : source;
 
@@ -34,17 +32,8 @@ export default function CachedImage({
                 contentFit={contentFit}
                 placeholder={placeholder}
                 cachePolicy={cachePolicy}
-                transition={200} // Smooth fade in
-                onLoadStart={() => setIsLoading(true)}
-                onLoad={() => setIsLoading(false)}
-                onError={() => setIsLoading(false)}
+                transition={300} // Smooth fade in
             />
-            {isLoading && !placeholder && (
-                <View style={[StyleSheet.absoluteFill, styles.loaderContainer]}>
-                    {/* Optional: Add a lightweight loader or simply a subtle background */}
-                    <ActivityIndicator size="small" color="#E5E7EB" />
-                </View>
-            )}
         </View>
     );
 }

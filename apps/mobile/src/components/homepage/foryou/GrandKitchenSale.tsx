@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 32,
-        fontWeight: '900',
+        fontWeight: '800',
         color: '#0F3443',
         letterSpacing: -1,
         lineHeight: 36,

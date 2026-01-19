@@ -31,6 +31,7 @@ const navigation = [
   { name: "Steal Deals", href: "/admin/offers", icon: Percent },
   { name: "Delivery Rules", href: "/admin/delivery-rules", icon: TrendingUp },
   { name: "Reports", href: "/admin/reports", icon: FileText },
+  { name: "Layout Manager", href: "/admin/homepage", icon: LayoutDashboard },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -63,9 +64,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200">
+      <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col">
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary-600 to-purple-600 rounded-lg">
             <Shield className="h-6 w-6 text-white" />
           </div>
@@ -76,7 +77,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation */}
-        <nav className="px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -95,8 +96,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+        {/* User Profile - No longer absolute, just the last flex item */}
+        <div className="p-4 border-t border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-shrink-0 w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-sm">

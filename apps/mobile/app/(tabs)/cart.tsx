@@ -14,7 +14,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '../../src/context/CartContext';
 import { useBasket } from '../../src/context/BasketContext';
 import { useAuth } from '../../src/context/AuthContext';
@@ -259,6 +259,7 @@ const GroceryCartView = ({ items, updateQuantity, basketTotal }: any) => {
 export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // Shopping Cart Context
   const {
@@ -461,7 +462,7 @@ export default function CartScreen() {
       {/* Footer Logic (Dynamic based on Tab) */}
       {items.length > 0 && (
         activeTab === 'shopping' ? (
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: 16 + insets.bottom }]}>
             <View style={styles.footerTotal}>
               <Text style={styles.footerOldPrice}>₹{(Math.round(total * 1.05)).toLocaleString()}</Text>
               <Text style={styles.footerCurrentPrice}>₹{total.toLocaleString()}</Text>
@@ -472,7 +473,7 @@ export default function CartScreen() {
           </View>
         ) : (
           // Grocery Footer
-          <View style={styles.checkoutBar}>
+          <View style={[styles.checkoutBar, { paddingBottom: 16 + insets.bottom }]}>
             <View>
               <Text style={styles.checkoutTotalLabel}>Total</Text>
               <Text style={styles.checkoutTotalValue}>₹{total + 2}</Text>

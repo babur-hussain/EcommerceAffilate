@@ -117,12 +117,12 @@ export default function ProfileScreen() {
                 <MaterialIcons name="chevron-right" size={16} color="#6B7280" />
               </TouchableOpacity>
             </View>
-            <View style={styles.coinPill}>
+            <TouchableOpacity style={styles.coinPill} onPress={() => router.push('/wallet')}>
               <View style={styles.coinIconWrapper}>
                 <Ionicons name="flash" size={12} color="#F59E0B" />
               </View>
               <Text style={styles.coinText}>{(user as any).coins || 0}</Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
 
@@ -133,16 +133,16 @@ export default function ProfileScreen() {
               <Ionicons name="cube-outline" size={24} color="#2874F0" />
               <Text style={styles.gridLabel}>Orders</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/(tabs)/profile' as any /* Placeholder for wishlist route */)}>
-              {/* Note: In a real app, route to dedicated wishlist page */}
+            <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/wishlist')}>
+
               <Ionicons name="heart-outline" size={24} color="#2874F0" />
               <Text style={styles.gridLabel}>Wishlist</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.gridRow}>
-            <TouchableOpacity style={styles.gridItem}>
-              <Ionicons name="gift-outline" size={24} color="#2874F0" />
-              <Text style={styles.gridLabel}>Coupons</Text>
+            <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/wallet')}>
+              <Ionicons name="wallet-outline" size={24} color="#2874F0" />
+              <Text style={styles.gridLabel}>Wallet</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.gridItem}>
               <Ionicons name="headset-outline" size={24} color="#2874F0" />

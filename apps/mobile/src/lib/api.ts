@@ -5,14 +5,21 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 
 const getBaseUrl = () => {
-  // Check for EXPO_PUBLIC_API_URL or fallback to dynamic host
-  const configuredUrl = process.env.EXPO_PUBLIC_API_URL;
-  if (configuredUrl) return configuredUrl;
+  // Hardcoded for Production (AWS EC2)
+  // return 'http://3.208.16.32';
 
+  // Check for EXPO_PUBLIC_API_URL
+  // const configuredUrl = process.env.EXPO_PUBLIC_API_URL;
+  // if (configuredUrl) return configuredUrl;
+
+  // Use Expo's hostUri to determine local IP (works for Expo Go and builds if configured)
   const hostUri = Constants.expoConfig?.hostUri;
   if (!hostUri) {
-    // Fallback to localhost if no hostUri (e.g. simulator)
-    return 'http://192.168.29.193:4000';
+    // Fallback to localhost/emulator specific IPs or a specific local IP if needed
+    // For Android Emulator: 10.0.2.2
+    // For iOS Simulator: localhost
+    // return 'http://192.168.29.193:4000'; // Default to last known local IP or update as needed
+    return 'http://192.168.29.193:4000'; // Current Local IP
   }
 
   // Use the same IP as the Expo Bundler

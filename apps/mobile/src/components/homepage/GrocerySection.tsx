@@ -19,6 +19,7 @@ interface Product {
     images: string[];
     category: string;
     rating?: number;
+    stock: number;
 }
 
 interface GrocerySectionProps {
@@ -50,8 +51,11 @@ export default function GrocerySection({ categoryId = 'DUMMY_GROCERY_ID' }: Groc
             productsData = productsData.map((product: any) => ({
                 ...product,
                 name: product.title || product.name,
-                category: 'Grocery'
+                category: 'Grocery',
+                stock: product.stock !== undefined ? Number(product.stock) : 0
             }));
+
+            console.log("Grocery Products Debug:", productsData.map((p: any) => `${p.name}: stock=${p.stock} (${typeof p.stock})`));
 
             setProducts(productsData.slice(0, 6));
         } catch (error) {
@@ -88,6 +92,7 @@ export default function GrocerySection({ categoryId = 'DUMMY_GROCERY_ID' }: Groc
                             product={product}
                             onPress={() => router.push(`/product/${product._id}`)}
                             width={CARD_WIDTH}
+                            actionButtonType="cart"
                         />
                     </View>
                 ))}
@@ -115,11 +120,12 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     title: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '800',
         color: '#1F2937',
         flex: 1,
         marginRight: 8,
+        letterSpacing: -0.5,
     },
     arrowButton: {
         backgroundColor: '#1F2937', // Black/Dark Gray

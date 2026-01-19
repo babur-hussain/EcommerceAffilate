@@ -191,25 +191,25 @@ const styles = StyleSheet.create({
     },
     titlePercent: {
         fontSize: 42,
-        fontWeight: '900',
+        fontWeight: '800',
         color: '#2563EB', // Blue 600
-        fontStyle: 'italic',
         includeFontPadding: false,
+        fontStyle: 'italic',
     },
     titleOff: {
         fontSize: 14,
-        fontWeight: '900',
+        fontWeight: '800',
         color: '#2563EB',
-        fontStyle: 'italic',
         marginBottom: -4,
         marginLeft: 2,
+        fontStyle: 'italic',
     },
     titleZone: {
         fontSize: 14,
-        fontWeight: '900',
+        fontWeight: '800',
         color: '#3B82F6', // Lighter blue
-        fontStyle: 'italic',
         marginLeft: 2,
+        fontStyle: 'italic',
     },
     subtitle: {
         fontSize: 13,

@@ -1,7 +1,7 @@
 // Standard product card - used for basic sections
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { CachedImage } from '../../../../common/CachedImage';
+import CachedImage from '../../../../shared/CachedImage';
 import { CardProps } from '../types';
 
 const { width } = Dimensions.get('window');
@@ -11,7 +11,7 @@ export default function StandardCard({ product, theme, onPress }: CardProps) {
     return (
         <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
             <View style={styles.imageWrapper}>
-                <CachedImage uri={product.images[0]} style={styles.productImage} />
+                <CachedImage source={{ uri: product.images[0] }} style={styles.productImage} />
             </View>
             <View style={styles.cardContent}>
                 <Text style={styles.brandName} numberOfLines={1}>{product.brand}</Text>

@@ -25,9 +25,10 @@ export type CardVariant =
     | 'shoe-fest'
     | 'beauty-standard' // New variant for beauty if needed
     | 'k-beauty'        // Specific variants for beauty
-    | 'launch-party';
+    | 'launch-party'
+    | 'banner-slider';
 
-export type SectionLayout = 'grid' | 'list' | 'masonry' | 'showcase' | 'kids-hub';
+export type SectionLayout = 'grid' | 'list' | 'masonry' | 'showcase' | 'kids-hub' | 'banner';
 
 export interface HubSectionItem {
     id: string;

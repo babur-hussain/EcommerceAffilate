@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -18,12 +18,19 @@ import DeliveryInfo from '../../src/components/product/DeliveryInfo';
 import ProductHighlights from '../../src/components/product/ProductHighlights';
 import RichContent from '../../src/components/product/RichContent';
 
+import Link from 'expo-router/link';
+import { FontAwesome } from '@expo/vector-icons';
+import ReviewsList from '../../src/components/reviews/ReviewsList';
+import AddReviewModal from '../../src/components/reviews/AddReviewModal';
+
 import BottomActionBar from '../../src/components/product/BottomActionBar';
 import LastChancePopup from '../../src/components/product/LastChancePopup';
 
 interface Product {
   _id: string;
   title: string;
+  rating?: number;
+  ratingCount?: number;
   price: number;
   images: string[];
   description?: string;
@@ -67,6 +74,8 @@ export default function ProductDetailScreen() {
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const [isUpsellVisible, setUpsellVisible] = useState(false);
+  const [isReviewModalVisible, setReviewModalVisible] = useState(false);
+  const [refreshReviews, setRefreshReviews] = useState(0);
 
   useEffect(() => {
     if (id) fetchProduct();
@@ -173,7 +182,14 @@ export default function ProductDetailScreen() {
           </View>
 
           {/* 2. Image Carousel */}
-          <ProductImageCarousel images={images} />
+          <ProductImageCarousel
+            images={images}
+            product={{
+              _id: product._id,
+              title: product.title,
+              price: product.price
+            }}
+          />
 
           {/* 3. Variants - Hidden as we don't have variant data */}
           {/* <VariantSelector /> */}
@@ -214,7 +230,32 @@ export default function ProductDetailScreen() {
           {/* 8. Highlights */}
           <ProductHighlights description={product.description} />
 
-          {/* 9. Rich Content (Display Banner, Videos) */}
+          {/* 9. Reviews Section */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.reviewHeader}>
+              <Text style={styles.sectionTitle}>Customer Reviews</Text>
+              {product.ratingCount !== undefined && product.ratingCount > 0 && (
+                <View style={styles.ratingBadge}>
+                  <Text style={styles.ratingText}>{product.rating?.toFixed(1)}</Text>
+                  <FontAwesome name="star" size={12} color="#fff" style={{ marginLeft: 2 }} />
+                </View>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={styles.writeReviewBtn}
+              onPress={() => setReviewModalVisible(true)}
+            >
+              <Text style={styles.writeReviewText}>Write a Review</Text>
+            </TouchableOpacity>
+
+            <ReviewsList
+              productId={product._id}
+              refreshTrigger={refreshReviews}
+            />
+          </View>
+
+          {/* 10. Rich Content (Display Banner, Videos) */}
           <RichContent />
 
           {/* Spacer for bottom bar */}
@@ -239,6 +280,16 @@ export default function ProductDetailScreen() {
         onContinue={(selectedIds) => proceedToCheckout(selectedIds)}
         offers={product?.lastChanceOffers || []}
       />
+
+      <AddReviewModal
+        isVisible={isReviewModalVisible}
+        onClose={() => setReviewModalVisible(false)}
+        onSubmit={() => {
+          setRefreshReviews(prev => prev + 1);
+          fetchProduct(); // optimize: just update rating locally if possible
+        }}
+        productId={product?._id || ''}
+      />
     </SafeAreaView>
   );
 }
@@ -260,5 +311,48 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sectionContainer: {
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    marginBottom: 8,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginRight: 8,
+  },
+  ratingBadge: {
+    backgroundColor: '#388E3C',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  ratingText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  writeReviewBtn: {
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#2874F0',
+    paddingVertical: 8,
+    borderRadius: 4,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  writeReviewText: {
+    color: '#2874F0',
+    fontWeight: '600',
   },
 });

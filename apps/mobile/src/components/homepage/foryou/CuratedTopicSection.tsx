@@ -8,6 +8,7 @@ export interface CuratedItem {
     name: string;
     image: any;
     bgColor?: string; // Optional custom bg for item circle
+    onPress?: () => void;
 }
 
 interface CuratedTopicSectionProps {
@@ -37,7 +38,12 @@ export default function CuratedTopicSection({
 
             <View style={styles.grid}>
                 {items.map((item, index) => (
-                    <TouchableOpacity key={index} style={styles.itemContainer}>
+                    <TouchableOpacity
+                        key={index}
+                        style={styles.itemContainer}
+                        onPress={item.onPress}
+                        activeOpacity={0.7}
+                    >
                         <View style={[styles.imageWrapper, { backgroundColor: item.bgColor || '#F3F4F6' }]}>
                             <Image source={item.image} style={styles.itemImage} resizeMode="contain" />
                         </View>
@@ -72,13 +78,13 @@ const styles = StyleSheet.create({
         fontWeight: '800', // Extra bold
         color: '#1F2937',
         marginBottom: 4,
-        letterSpacing: -0.3,
+        letterSpacing: -0.5,
     },
     subtitle: {
         fontSize: 14,
         color: '#6B7280',
         lineHeight: 20,
-        fontWeight: '400',
+        fontWeight: '500',
     },
     headerImage: {
         width: 80,

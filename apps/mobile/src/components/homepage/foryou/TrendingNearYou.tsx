@@ -2,83 +2,89 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ImageBackground, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import TrendingProductCard, { TrendingProduct } from './TrendingProductCard';
+import { useUserLocation } from '../../../hooks/useUserLocation';
 import api from '../../../lib/api';
 import CachedImage from '../../shared/CachedImage';
 
-// Hardcoded visual overrides to match the design
-const VISUAL_OVERRIDES = [
-    {
-        weight: '250 ml',
-        deliveryTime: '9 MINS',
-        timeLeft: 'Only 4 left',
-        reviews: 1153,
-        rating: 4.8
-    },
-    {
-        weight: '1 unit',
-        deliveryTime: '9 MINS',
-        tag: 'No Cost EMI Offer',
-        timeLeft: 'Only 1 left',
-        reviews: 298,
-        rating: 4.2
-    },
-    {
-        weight: '60 g  All Skin Types',
-        deliveryTime: '9 MINS',
-        timeLeft: 'Only 1 left',
-        discount: '11% OFF',
-        reviews: 1074,
-        rating: 4.5
-    },
-    {
-        weight: '150 ml',
-        deliveryTime: '15 MINS',
-        reviews: 850,
-        rating: 4.0
-    },
-    {
-        weight: '500 g',
-        deliveryTime: 'NEXT DAY',
-        tag: 'Best Seller',
-        reviews: 2300,
-        rating: 4.9
-    },
-    {
-        weight: '1 pack',
-        deliveryTime: '2 DAYS',
-        reviews: 120,
-        rating: 3.8
-    }
-];
+
 
 export default function TrendingNearYou() {
     const [products, setProducts] = useState<TrendingProduct[]>([]);
     const [loading, setLoading] = useState(true);
+    const { address: locationAddress, fetchLocation } = useUserLocation();
+    const [pincode, setPincode] = useState<string | null>(null);
 
     useEffect(() => {
+        if (locationAddress?.postalCode) {
+            setPincode(locationAddress.postalCode);
+        } else {
+            // Trigger fetch if not available
+            fetchLocation();
+        }
+    }, [locationAddress]);
+
+    useEffect(() => {
+        // Refetch when pincode is available or initially
         fetchTrendingProducts();
-    }, []);
+    }, [pincode]);
 
     const fetchTrendingProducts = async () => {
         try {
-            const response = await api.get('/api/products?limit=6');
+            const params: any = { sort: 'most_viewed', limit: 10 };
+            if (pincode) {
+                params.pincode = pincode;
+            }
+
+            const response = await api.get('/api/products', { params });
             const fetchedProducts = Array.isArray(response.data) ? response.data : (response.data.products || []);
 
-            // Merge fetched data with modifiers
-            const mergedProducts = fetchedProducts.slice(0, 6).map((item: any, index: number) => {
-                const overrides = VISUAL_OVERRIDES[index] || {};
+            // Map real data to UI model
+            const mappedProducts = fetchedProducts.map((item: any) => {
+                // Calculate Discount
+                let discountLabel = '';
+                if (item.mrp && item.mrp > item.price) {
+                    const off = Math.round(((item.mrp - item.price) / item.mrp) * 100);
+                    if (off > 5) discountLabel = `${off}% OFF`;
+                }
+
+                // Delivery Time (Strict: Only show if Minutes or Hours)
+                let deliveryTime = '';
+                if (pincode && item.deliveryEstimate) {
+                    const est = item.deliveryEstimate.toLowerCase();
+                    if (est.includes('min') || est.includes('hour')) {
+                        deliveryTime = item.deliveryEstimate;
+                    }
+                }
+
+                // Stock urgency label
+                let timeLeft = '';
+                if (item.stock < 10 && item.stock > 0) {
+                    timeLeft = `Only ${item.stock} left`;
+                }
+
+                // Tag derived from data
+                let tag = undefined;
+                if (item.rating > 4.5) tag = 'Best Seller';
+                if (item.offers && item.offers.length > 0) tag = 'Offer Available';
+
                 return {
                     id: item._id,
-                    name: item.name,
-                    image: item.images && item.images.length > 0 ? { uri: item.images[0] } : null,
+                    name: item.name || item.title,
+                    image: item.images && item.images.length > 0 ? { uri: item.images[0] } : (item.image ? { uri: item.image } : null),
                     price: item.price,
-                    mrp: item.mrp || Math.round(item.price * 1.2), // Dummy MRP logic if missing
-                    discount: overrides.discount || (item.mrp && item.price ? `${Math.round(((item.mrp - item.price) / item.mrp) * 100)}% OFF` : ''),
-                    ...overrides,
+                    mrp: item.mrp || undefined,
+                    discount: discountLabel,
+                    weight: item.netWeight || item.weight || '1 unit', // Backend field might be 'netWeight'
+                    deliveryTime,
+                    timeLeft,
+                    reviews: item.ratingCount || 0,
+                    rating: item.rating || 0,
+                    tag,
+                    stock: item.stock
                 };
             });
 
-            setProducts(mergedProducts);
+            setProducts(mappedProducts);
         } catch (error) {
             console.error('Error fetching trending products:', error);
         } finally {
@@ -87,7 +93,11 @@ export default function TrendingNearYou() {
     };
 
     const renderItem = ({ item }: { item: TrendingProduct }) => (
-        <TrendingProductCard product={item} onAdd={() => console.log('Add', item.name)} />
+        <TrendingProductCard product={item} onAdd={() => {
+            // Placeholder: The card itself handles Add to Cart internally if it uses AddToCartButton
+            // But TrendingProductCard might not use it yet.
+            // checking TrendingProductCard implementation next.
+        }} />
     );
 
     if (loading || products.length === 0) return null; // Or a loading skeleton
@@ -163,17 +173,18 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     title: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: '800',
         color: '#0D9488', // Teal 600
         marginBottom: 4,
-        fontFamily: 'System', // Ensure boldest weight
+        letterSpacing: -0.5,
     },
     subtitle: {
-        fontSize: 13,
+        fontSize: 14,
         color: '#115E59', // Teal 800
         fontWeight: '500',
         opacity: 0.9,
+        lineHeight: 20,
     },
     listContent: {
         paddingHorizontal: 16,

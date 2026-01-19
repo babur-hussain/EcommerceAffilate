@@ -1,14 +1,31 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
-import { CachedImage } from '../common/CachedImage';
+import CachedImage from '../shared/CachedImage';
+
+import { useRouter } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
-interface CategoryBannerSliderProps {
-    banners: string[];
+interface Banner {
+    imageUrl: string;
+    actionUrl?: string;
 }
 
+interface CategoryBannerSliderProps {
+    banners: (string | Banner)[];
+}
+
+const normalizeUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('/category/')) {
+        return url.replace('/category/', '/common-category/');
+    }
+    return url;
+};
+
 export default function CategoryBannerSlider({ banners }: CategoryBannerSliderProps) {
+    const router = useRouter();
     const [activeBannerIndex, setActiveBannerIndex] = useState(0);
     const bannerScrollViewRef = useRef<ScrollView>(null);
 
@@ -52,13 +69,23 @@ export default function CategoryBannerSlider({ banners }: CategoryBannerSliderPr
                 scrollEventThrottle={16}
                 style={styles.bannerContainer}
             >
-                {banners.map((banner, index) => (
-                    <CachedImage
-                        key={index}
-                        uri={banner}
-                        style={styles.bannerImage}
-                    />
-                ))}
+                {banners.map((banner, index) => {
+                    const imageUrl = typeof banner === 'string' ? banner : banner.imageUrl;
+                    const actionUrl = typeof banner === 'string' ? undefined : banner.actionUrl;
+
+                    return (
+                        <TouchableOpacity
+                            key={index}
+                            activeOpacity={actionUrl ? 0.9 : 1}
+                            onPress={() => actionUrl && router.push(normalizeUrl(actionUrl) as any)}
+                        >
+                            <CachedImage
+                                source={{ uri: imageUrl }}
+                                style={styles.bannerImage}
+                            />
+                        </TouchableOpacity>
+                    );
+                })}
             </ScrollView>
             {/* Pagination Dots */}
             <View style={styles.paginationDots}>

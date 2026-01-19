@@ -13,22 +13,22 @@ const RECENT_ITEMS: RecentItem[] = [
     {
         id: '1',
         label: 'Mobiles',
-        image: 'https://rukminim2.flixcart.com/image/312/312/xif0q/mobile/3/5/l/-original-imaghx9qmgqsk9s4.jpeg?q=70',
+        image: 'https://res.cloudinary.com/deljcbcvu/image/upload/v1768755562/1_ibbaod.webp',
     },
     {
         id: '2',
         label: 'Blankets',
-        image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/blanket/z/n/e/soft-warm-blanket-for-winter-double-bed-mink-blanket-for-heavy-original-imah7xz6h7z6z5zz.jpeg?q=70',
+        image: 'https://res.cloudinary.com/deljcbcvu/image/upload/v1768755563/2_ny7exx.webp',
     },
     {
         id: '3',
         label: "Men's Casual Shoes",
-        image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/shoe/1/8/p/-original-imaghvb7kkpy73vn.jpeg?q=70',
+        image: 'https://res.cloudinary.com/deljcbcvu/image/upload/v1768755563/3_vps8qm.webp',
     },
     {
         id: '4',
         label: 'T-Shirts',
-        image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/t-shirt/t/e/0/l-st-theboys-black-smartees-original-imagnqszzzzyuzru.jpeg?q=70',
+        image: 'https://res.cloudinary.com/deljcbcvu/image/upload/v1768755563/4_qd8fza.webp',
     },
 ];
 
@@ -105,12 +105,12 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
     },
     title: {
-        fontSize: 18,
-        fontWeight: '700', // Bolder
+        fontSize: 20,
+        fontWeight: '800', // Bolder
         color: '#1B5E20', // Dark green text
         marginLeft: 16,
         marginBottom: 16,
-        letterSpacing: 0.3,
+        letterSpacing: -0.5,
     },
     scrollContent: {
         paddingHorizontal: 16, // Match title margin

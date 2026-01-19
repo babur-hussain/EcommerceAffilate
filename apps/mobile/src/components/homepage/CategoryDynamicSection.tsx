@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, Dimension
 import { useRouter } from 'expo-router';
 import api from '../../lib/api';
 import ProductCard from './ProductCard';
+import CategoryPulseLoader from '../shared/CategoryPulseLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -101,7 +102,7 @@ export default function CategoryDynamicSection({ categoryName, staticHeader, ren
 
                 {loading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#FF6F00" />
+                        <CategoryPulseLoader />
                     </View>
                 ) : (
                     <View style={styles.productsGrid}>

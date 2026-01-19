@@ -12,6 +12,7 @@ import { requireBrand, requireAuth } from "../middlewares/rbac";
 import { requireProductOwnership } from "../utils/ownership";
 import { buildOptimizedVariants, resolvePrimaryImage } from "../utils/image";
 import { getCategoryMeta } from "../utils/categoryMeta";
+import { estimateDeliveryTime } from "../utils/delivery";
 
 const router = Router();
 
@@ -427,7 +428,7 @@ router.get("/products/:id", async (req: Request, res: Response) => {
 // GET /api/products - Get all active products
 router.get("/products", async (req: Request, res: Response) => {
   try {
-    const { category, limit, search } = req.query;
+    const { category, limit, search, pincode } = req.query;
 
     const filter: any = { isActive: true };
     if (category) {
@@ -438,10 +439,52 @@ router.get("/products", async (req: Request, res: Response) => {
       filter.title = { $regex: search, $options: 'i' };
     }
 
+    // Generic filtering for direct matches
+    const { brand, subCategory, minPrice, maxPrice } = req.query;
+    if (brand) {
+      filter.brand = brand;
+    }
+    if (subCategory) {
+      filter.subCategory = subCategory;
+    }
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
     const maxLimit = parseInt(limit as string) || 0;
 
     // Create query with filter
     const query = Product.find(filter).lean();
+
+    // Sorting Logic
+    const sortParam = (req.query.sort as string) || 'popularity';
+    let sort: any = {};
+
+    switch (sortParam) {
+      case 'trending':
+        sort = { popularityScore: -1, views: -1 };
+        break;
+      case 'most_viewed':
+        sort = { views: -1 };
+        break;
+      case 'top_rated':
+        sort = { rating: -1, ratingCount: -1 };
+        break;
+      case 'newest':
+        sort = { createdAt: -1 };
+        break;
+      case 'price_low':
+        sort = { price: 1 };
+        break;
+      case 'price_high':
+        sort = { price: -1 };
+        break;
+      default:
+        sort = { popularityScore: -1 }; // Default to popularity/trending
+    }
+    query.sort(sort);
 
     // Apply limit if specified
     if (maxLimit > 0) {
@@ -464,6 +507,22 @@ router.get("/products", async (req: Request, res: Response) => {
 
     const formatted = products.map((p) => {
       const primaryImageResolved = resolvePrimaryImage(p);
+
+      let deliveryEstimate = null;
+      if (pincode) {
+        // Determine origin
+        let origin = '110001'; // Default warehouse Delhi
+        if (p.pickupLocation) {
+          origin = p.pickupLocation;
+        } else if (p.businessId && (p.businessId as any).addresses) {
+          const biz = p.businessId as any;
+          origin = biz.addresses?.operational?.pincode
+            || biz.addresses?.registered?.pincode
+            || '110001';
+        }
+        deliveryEstimate = estimateDeliveryTime(origin, String(pincode));
+      }
+
       return {
         ...p,
         primaryImage: primaryImageResolved,
@@ -473,6 +532,7 @@ router.get("/products", async (req: Request, res: Response) => {
         seoKeywords: p.metaKeywords || [],
         categoryMeta: getCategoryMeta(p.category),
         categoryDetails: categoryMap[p.category],
+        deliveryEstimate // Attach estimated time
       };
     });
 

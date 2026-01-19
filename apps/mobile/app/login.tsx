@@ -27,7 +27,7 @@ export default function LoginScreen() {
       if (router.canDismiss()) {
         router.dismiss();
       } else {
-        router.replace('/(tabs)');
+        router.replace('/');
       }
     } catch (error: any) {
       Alert.alert('Login Failed', 'Invalid email or password');
@@ -40,7 +40,7 @@ export default function LoginScreen() {
     if (router.canDismiss()) {
       router.dismiss();
     } else {
-      router.replace('/(tabs)');
+      router.replace('/');
     }
   }
 
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2874F0',
     paddingHorizontal: 16,
     paddingBottom: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 10,
+    paddingTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },

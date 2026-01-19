@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Dimensions, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,6 +62,7 @@ export default function CheckoutScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const productId = params.productId as string;
+    const insets = useSafeAreaInsets();
     const selectedOffersParam = params.selectedOffers as string;
     const source = params.source as string;
     const isCartCheckout = source === 'cart';
@@ -427,7 +428,7 @@ export default function CheckoutScreen() {
     // Render Payment Section for Step 3
     if (currentStep === 3) {
         return (
-            <SafeAreaView style={styles.safeArea} edges={['top']}>
+            <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
                 <StatusBar style="dark" />
                 <Stack.Screen options={{ headerShown: false }} />
                 <PaymentSection
@@ -774,7 +775,7 @@ export default function CheckoutScreen() {
                 </ScrollView>
 
                 {/* Bottom Bar */}
-                <View style={styles.bottomBar}>
+                <View style={[styles.bottomBar, { paddingBottom: 16 + insets.bottom }]}>
                     <View style={styles.totalSection}>
                         <Text style={styles.totalStrike}>₹{(mrp || 0).toLocaleString()}</Text>
                         <Text style={styles.totalAmount}>₹{total.toLocaleString()}</Text>

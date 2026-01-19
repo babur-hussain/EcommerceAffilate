@@ -11,7 +11,7 @@ router.get('/wishlist', requireCustomer, async (req: Request, res: Response) => 
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    let wishlist = await Wishlist.findOne({ userId: user.id });
+    let wishlist = await Wishlist.findOne({ userId: user.id }).populate('productIds');
     if (!wishlist) {
       wishlist = await Wishlist.create({ userId: user.id, productIds: [] });
     }

@@ -1,90 +1,77 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Image, Dimensions, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import api from '../../../../lib/api';
-import ProductCard from '../../ProductCard';
-import CategoryBannerSlider from '../../CategoryBannerSlider';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import CategoryPulseLoader from '../../../shared/CategoryPulseLoader';
+import SectionRenderer from '../../SectionRenderer';
+import { Section } from '../../../../hooks/usePageLayout';
 
 const { width } = Dimensions.get('window');
-
-interface Product {
-    _id: string;
-    name: string;
-    price: number;
-    images: string[];
-    category: string;
-}
-
-interface Category {
-    _id: string;
-    name: string;
-    slug: string;
-    image?: string;
-    icon?: string;
-}
 
 interface ElectronicsPageProps {
     staticHeader?: React.ReactNode;
     renderStickyHeader?: (isSticky: boolean) => React.ReactNode;
 }
 
+// Local layout definition for Electronics
+// This mocks what the API would return for /api/layout/electronics
+const ELECTRONICS_LAYOUT: { sections: Section[] } = {
+    sections: [
+        {
+            id: 'elec_banners',
+            type: 'electronics_banners',
+            priority: 10,
+            content: {
+                banners: [
+                    {
+                        imageUrl: 'https://images.unsplash.com/photo-1498049860654-af1a5c5668ba?auto=format&fit=crop&w=1200&q=80',
+                        actionUrl: '/category/laptops-electronics'
+                    },
+                    {
+                        imageUrl: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1200&q=80',
+                        actionUrl: '/category/smartphones-electronics'
+                    },
+                    {
+                        imageUrl: 'https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?auto=format&fit=crop&w=1200&q=80',
+                        actionUrl: '/category/desktop-pcs-electronics'
+                    }
+                ]
+            }
+        },
+        {
+            id: 'elec_subcats',
+            type: 'electronics_subcategories',
+            priority: 20,
+            content: {
+                // Use the generic endpoint or specific logic
+                // The ElectronicsSubcategories component uses dataSource if provided
+                dataSource: {
+                    endpoint: '/api/categories/695ff7de3f61939001a0637c/subcategories',
+                    params: {}
+                }
+            }
+        },
+        {
+            id: 'elec_latest_products',
+            type: 'electronics_product_grid', // Maps to DynamicProductGrid/HomeProductGrid via SectionRenderer
+            title: 'Latest in Electronics',
+            priority: 30,
+            content: {
+                dataSource: {
+                    endpoint: '/api/products',
+                    params: { category: '695ff7de3f61939001a0637c', limit: 10 }
+                }
+            }
+        }
+    ]
+};
+
 export default function ElectronicsPage({ staticHeader, renderStickyHeader }: ElectronicsPageProps) {
-    const router = useRouter();
-    const [products, setProducts] = useState<Product[]>([]);
-    const [banners, setBanners] = useState<string[]>([]);
-    const [subcategories, setSubcategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
+    // For now, use local static layout. Ideally use usePageLayout('electronics')
+    const layout = ELECTRONICS_LAYOUT;
+    const loading = false;
 
     // Scroll tracking
     const [isSticky, setIsSticky] = useState(false);
     const [headerHeight, setHeaderHeight] = useState(0);
-
-    const categoryId = '695ff7de3f61939001a0637c';
-    const categoryName = 'Electronics';
-
-    useEffect(() => {
-        fetchCategoryData();
-    }, []);
-
-    const fetchCategoryData = async () => {
-        setLoading(true);
-        try {
-            // 1. Fetch Category Details (for posters/banners)
-            try {
-                const categoryResponse = await api.get(`/api/categories/${categoryId}`);
-                if (categoryResponse.data && categoryResponse.data.posters && categoryResponse.data.posters.length > 0) {
-                    setBanners(categoryResponse.data.posters);
-                }
-            } catch (e) {
-                console.log(`Category details fetch failed for ${categoryName}`, e);
-            }
-
-            // 2. Fetch Subcategories
-            try {
-                const subcategoriesResponse = await api.get(`/api/categories/${categoryId}/subcategories`);
-                if (Array.isArray(subcategoriesResponse.data) && subcategoriesResponse.data.length > 0) {
-                    setSubcategories(subcategoriesResponse.data);
-                } else {
-                    const fallbackResponse = await api.get(`/api/categories?parentCategory=${categoryId}`);
-                    if (Array.isArray(fallbackResponse.data)) {
-                        setSubcategories(fallbackResponse.data);
-                    }
-                }
-            } catch (e) {
-                console.log(`Subcategories fetch failed for ${categoryName}`, e);
-            }
-
-            // 3. Fetch Products
-            const productsResponse = await api.get(`/api/products?category=${categoryId}&limit=10`);
-            const productsData = Array.isArray(productsResponse.data) ? productsResponse.data : (productsResponse.data.products || []);
-            setProducts(productsData);
-
-        } catch (error) {
-            console.error(`Error fetching data for ${categoryName}:`, error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleScroll = (event: any) => {
         const scrollY = event.nativeEvent.contentOffset.y;
@@ -92,6 +79,19 @@ export default function ElectronicsPage({ staticHeader, renderStickyHeader }: El
             setIsSticky(scrollY > headerHeight - 10);
         }
     };
+
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+                    {staticHeader}
+                </View>
+                <View style={styles.contentContainer}>
+                    <CategoryPulseLoader />
+                </View>
+            </View>
+        );
+    }
 
     return (
         <ScrollView
@@ -108,70 +108,9 @@ export default function ElectronicsPage({ staticHeader, renderStickyHeader }: El
             <View>{renderStickyHeader ? renderStickyHeader(isSticky) : null}</View>
 
             <View style={styles.contentContainer}>
-                {loading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#FF6F00" />
-                    </View>
-                ) : (
-                    <>
-                        {/* 1. Banners Slider */}
-                        <CategoryBannerSlider banners={banners} />
-
-                        {/* 2. Subcategories Grid */}
-                        {subcategories.length > 0 && (
-                            <View style={styles.subcategoriesSection}>
-                                <View style={styles.subcategoriesGrid}>
-                                    {subcategories.map((sub) => (
-                                        <TouchableOpacity
-                                            key={sub._id}
-                                            style={styles.subcategoryItem}
-                                            onPress={() => router.push(`/common-category/${sub.slug}`)}
-                                        >
-                                            <View style={styles.subcategoryIconContainer}>
-                                                {sub.image || sub.icon ? (
-                                                    <Image
-                                                        source={{ uri: sub.image || sub.icon }}
-                                                        style={styles.subcategoryImage}
-                                                    />
-                                                ) : (
-                                                    <View style={[styles.subcategoryImage, { backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center' }]}>
-                                                        <Text style={{ fontSize: 20 }}>💻</Text>
-                                                    </View>
-                                                )}
-                                            </View>
-                                            <Text style={styles.subcategoryName} numberOfLines={2}>
-                                                {sub.name}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            </View>
-                        )}
-
-                        {/* 3. Latest Products */}
-                        <View style={styles.productsSection}>
-                            <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>Latest in {categoryName}</Text>
-                            </View>
-
-                            <View style={styles.productsGrid}>
-                                {products.length > 0 ? (
-                                    products.map((product) => (
-                                        <ProductCard
-                                            key={product._id}
-                                            product={product}
-                                            onPress={() => router.push(`/product/${product._id}`)}
-                                        />
-                                    ))
-                                ) : (
-                                    <View style={styles.emptyState}>
-                                        <Text style={styles.emptyText}>No products found</Text>
-                                    </View>
-                                )}
-                            </View>
-                        </View>
-                    </>
-                )}
+                {layout.sections.map((section) => (
+                    <SectionRenderer key={section.id} section={section} />
+                ))}
                 <View style={{ position: 'absolute', top: '100%', left: 0, right: 0, height: 1000, backgroundColor: '#F9FAFB' }} />
             </View>
         </ScrollView>
@@ -262,4 +201,10 @@ const styles = StyleSheet.create({
         color: '#666',
         fontSize: 16,
     },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    }
 });

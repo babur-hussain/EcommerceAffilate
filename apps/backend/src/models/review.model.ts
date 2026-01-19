@@ -5,6 +5,7 @@ export interface IReview extends Document {
   userId: mongoose.Types.ObjectId;
   rating: number;
   comment?: string;
+  images?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +31,10 @@ const reviewSchema = new Schema<IReview>(
     comment: {
       type: String,
       trim: true,
+    },
+    images: {
+      type: [String],
+      default: [],
     },
   },
   {

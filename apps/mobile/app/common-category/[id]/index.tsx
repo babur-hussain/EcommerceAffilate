@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Dimensions, TextInput, FlatList, Alert, Modal } from 'react-native';
+import CategoryPulseLoader from '../../../src/components/shared/CategoryPulseLoader';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { MaterialIcons, Ionicons, FontAwesome, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -511,7 +512,9 @@ export default function CategoryPage() {
                 {renderFilters()}
 
                 {loading ? (
-                    <ActivityIndicator size="large" color="#FF6B00" style={{ marginTop: 50 }} />
+                    <View style={{ marginTop: 50, alignItems: 'center' }}>
+                        <CategoryPulseLoader />
+                    </View>
                 ) : (
                     <FlatList
                         data={products}

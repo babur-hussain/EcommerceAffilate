@@ -74,10 +74,35 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const addToCart = async (productId: string, quantity = 1, productDetails?: any) => {
+        const previousCart = cart;
+
+        // 1. Optimistic Update
+        if (cart) {
+            const existingItemIndex = cart.items.findIndex(
+                (item) => (typeof item.productId === 'string' ? item.productId : item.productId._id) === productId
+            );
+
+            let newItems = [...cart.items];
+            if (existingItemIndex > -1) {
+                newItems[existingItemIndex] = {
+                    ...newItems[existingItemIndex],
+                    quantity: newItems[existingItemIndex].quantity + quantity
+                };
+            } else {
+                // For optimistic add, we need minimal product details to show in UI immediately if possible
+                // If productDetails isn't passed, this might duplicate if we just push { productId, quantity }
+                // and the UI expects populated data. However, for the cart counter, it works.
+                // ideally productDetails should be passed from ProductCard.
+                const productData = productDetails || { _id: productId };
+                newItems.push({ productId: productData, quantity });
+            }
+            setCart({ ...cart, items: newItems });
+        }
+
         try {
             if (user) {
-                await api.post('/api/cart/add', { productId, quantity });
-                await refreshCart();
+                const response = await api.post('/api/cart/add', { productId, quantity });
+                setCart(response.data);
             } else {
                 const currentCart = cart || { items: [] };
                 const existingItemIndex = currentCart.items.findIndex(
@@ -88,7 +113,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (existingItemIndex > -1) {
                     newItems[existingItemIndex].quantity += quantity;
                 } else {
-                    // Store full product details for guest cart if provided
                     const productData = productDetails || { _id: productId };
                     newItems.push({ productId: productData, quantity });
                 }
@@ -96,6 +120,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         } catch (error) {
             console.error('Error adding to cart:', error);
+            // Revert on failure
+            setCart(previousCart);
             throw error;
         }
     };
@@ -103,8 +129,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const removeFromCart = async (productId: string) => {
         try {
             if (user) {
-                await api.post('/api/cart/remove', { productId });
-                await refreshCart();
+                const response = await api.post('/api/cart/remove', { productId });
+                setCart(response.data);
             } else {
                 if (!cart) return;
                 const newItems = cart.items.filter(
@@ -119,10 +145,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const updateQuantity = async (productId: string, quantity: number) => {
+        const previousCart = cart; // Backup current state
+
+        // 1. Optimistic Update: Update local state immediately
+        if (cart) {
+            const newItems = cart.items.map((item) => {
+                const id = typeof item.productId === 'string' ? item.productId : item.productId._id;
+                if (id === productId) {
+                    return { ...item, quantity };
+                }
+                return item;
+            });
+            setCart({ ...cart, items: newItems });
+        }
+
         try {
             if (user) {
-                await api.post('/api/cart/update', { productId, quantity });
-                await refreshCart();
+                // 2. Perform API call
+                const response = await api.post('/api/cart/update', { productId, quantity });
+
+                // 3. Update with authoritative server response (no global loading spinner)
+                setCart(response.data);
             } else {
                 if (!cart) return;
                 const newItems = cart.items.map((item) => {
@@ -136,6 +179,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         } catch (error) {
             console.error('Error updating quantity:', error);
+            // 4. Revert state on failure
+            setCart(previousCart);
             throw error;
         }
     };
@@ -143,8 +188,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const clearCart = async () => {
         try {
             if (user) {
-                await api.post('/api/cart/clear');
-                await refreshCart();
+                const response = await api.post('/api/cart/clear');
+                setCart(response.data);
             } else {
                 await saveLocalCart({ items: [] });
             }

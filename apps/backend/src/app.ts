@@ -29,8 +29,12 @@ import businessRouter from "./routes/business.route";
 import businessUsersRouter from "./routes/business.users.route";
 import uploadRouter from "./routes/upload.route";
 import meRouter from "./routes/me.route";
-import homepageRouter from "./routes/homepage.route";
-import adminHomepageRouter from "./routes/admin.homepage.route";
+import pageRouter from "./routes/page.route";
+import adminPageRouter from "./routes/admin.page.route";
+
+// ... existing code ...
+
+
 import categoryRouter from "./routes/category.route";
 import adminCategoryRouter from "./routes/admin.category.route";
 import adminAttributeRouter from "./routes/admin.attribute.route";
@@ -40,6 +44,7 @@ import superAdminRouter from "./routes/super-admin.route";
 import offerRouter from "./routes/offer.route";
 import deliveryRuleRouter from "./routes/deliveryRule.route";
 import deliveryRouter from "./routes/delivery.route";
+import walletRouter from "./routes/wallet.route";
 import partnerRouter from "./routes/partner.route";
 import { requestLogger } from "./middlewares/requestLogger";
 import { logger, loggerWithContext } from "./utils/logger";
@@ -143,9 +148,10 @@ app.use("/api", businessUsersRouter);
 app.use("/api", uploadRouter);
 app.use("/api", influencerRouter);
 app.use("/api", influencersRouter);
+app.use("/api", walletRouter);
 app.use("/api", meRouter);
-app.use("/api", homepageRouter);
-app.use("/api", adminHomepageRouter);
+app.use("/api", pageRouter);
+app.use("/api", adminPageRouter);
 app.use("/api", categoryRouter);
 app.use("/api", attributeRouter);
 app.use("/api", superAdminRouter);

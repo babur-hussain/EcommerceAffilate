@@ -8,8 +8,12 @@ const router = express.Router();
 router.get('/categories', async (req, res) => {
   try {
     console.log('🔍 Fetching categories...');
-    const { parentCategory } = req.query;
+    const { parentCategory, group } = req.query;
     const query: any = { isActive: true };
+
+    if (group) {
+      query.group = group;
+    }
 
     if (parentCategory) {
       if (mongoose.Types.ObjectId.isValid(parentCategory as string)) {
@@ -71,12 +75,18 @@ router.get('/categories/:idOrSlug', async (req, res) => {
 });
 
 // Get subcategories by parent category slug
-router.get('/categories/:slug/subcategories', async (req, res) => {
+router.get('/categories/:idOrSlug/subcategories', async (req, res) => {
   try {
-    const parentCategory = await Category.findOne({
-      slug: req.params.slug,
-      isActive: true,
-    });
+    const { idOrSlug } = req.params;
+    let query: any = { isActive: true };
+
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      query = { _id: idOrSlug, isActive: true };
+    } else {
+      query = { slug: idOrSlug, isActive: true };
+    }
+
+    const parentCategory = await Category.findOne(query);
 
     if (!parentCategory) {
       return res.status(404).json({ error: 'Parent category not found' });

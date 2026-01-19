@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import api from '../../../lib/api';
 import ProductCard from '../ProductCard';
 import CategoryBannerSlider from '../CategoryBannerSlider';
+import CategoryPulseLoader from '../../shared/CategoryPulseLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -129,7 +130,7 @@ export default function GenericCategoryPage({ categorySlug, categoryName, catego
             <View style={styles.contentContainer}>
                 {loading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#FF6F00" />
+                        <CategoryPulseLoader />
                     </View>
                 ) : (
                     <>
