@@ -28,6 +28,8 @@ export interface BackendUser {
   role: UserRole;
   businessId?: string;
   accountType?: string; // 'new' or 'convert' - from Firebase custom claims
+  name?: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -74,11 +76,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
-      } catch (_) {}
+      } catch (_) { }
+      setError(null); // Clear any previous errors on successful refresh
       return token;
     } catch (err) {
       console.error("Failed to refresh token:", err);
-      setError("Session expired. Please login again.");
+      // Don't set error message here - let the calling code handle it gracefully
+      // This prevents false "session expired" messages when network is slow
       return null;
     }
   };
@@ -179,7 +183,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ token }),
             });
-          } catch (_) {}
+          } catch (_) { }
 
           // Fetch backend user info
           await fetchBackendUser(token);
@@ -227,7 +231,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clear server cookie
       try {
         await fetch("/api/auth/logout", { method: "POST" });
-      } catch (_) {}
+      } catch (_) { }
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }

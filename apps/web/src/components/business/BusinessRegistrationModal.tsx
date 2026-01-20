@@ -11,14 +11,14 @@ interface BusinessFormData {
   accountType: AccountType;
   existingEmail?: string;
   existingOtp?: string;
-  
+
   // Step 2: Business Info
   legalBusinessName: string;
   tradeName: string;
   businessType: string;
   natureOfBusiness: string;
   yearEstablished: string;
-  
+
   // Step 3: Owner Details
   ownerFullName: string;
   designation: string;
@@ -29,7 +29,7 @@ interface BusinessFormData {
   govIdType: string;
   govIdNumber: string;
   idProofFile?: File;
-  
+
   // Step 4: Address
   registeredAddress: string;
   registeredAddressLine2: string;
@@ -40,7 +40,7 @@ interface BusinessFormData {
   pincode: string;
   sameAsRegistered: boolean;
   operationalAddress?: string;
-  
+
   // Step 5: Tax & Legal
   gstin: string;
   gstType: string;
@@ -50,13 +50,13 @@ interface BusinessFormData {
   cin?: string;
   shopCertFile?: File;
   udyamNumber?: string;
-  
+
   // Step 6: Bank & Settlement
   bankAccountName: string;
   bankName: string;
   accountNumber: string;
   ifscCode: string;
-  accountType: string;
+  bankAccountType: string;
   chequeFile?: File;
   settlementCycle: string;
 }
@@ -104,7 +104,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
     bankName: '',
     accountNumber: '',
     ifscCode: '',
-    accountType: 'Savings',
+    bankAccountType: 'Savings',
     settlementCycle: 'Weekly',
   });
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +117,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
     } else {
       document.body.style.overflow = '';
     }
-    
+
     return () => {
       document.body.style.overflow = '';
     };
@@ -144,7 +144,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    
+
     try {
       if (!firebaseUser) {
         throw new Error('Not logged in. Please log in first.');
@@ -167,12 +167,12 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
         businessType: formData.businessType,
         panNumber: formData.panNumber,
         gstin: formData.gstin,
-        businessDescription: formData.businessDescription,
+        businessDescription: formData.natureOfBusiness, // Map natureOfBusiness to businessDescription
         city: formData.city,
         state: formData.state,
-        postalCode: formData.postalCode,
-        businessAddress: formData.businessAddress,
-        accountHolderName: formData.accountHolderName,
+        postalCode: formData.pincode, // Map pincode to postalCode
+        businessAddress: formData.registeredAddress, // Map registeredAddress to businessAddress
+        accountHolderName: formData.bankAccountName, // Map bankAccountName to accountHolderName
         accountNumber: formData.accountNumber,
         ifscCode: formData.ifscCode,
         bankName: formData.bankName,
@@ -203,7 +203,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
 
       const result = await response.json();
       console.log('✅ Business account created:', result);
-      
+
       // Close modal and refresh page to update user role
       onClose();
       window.location.reload();
@@ -221,7 +221,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
         return (
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Account Type & Conversion</h3>
-            
+
             <div className="space-y-3">
               <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-blue-50" >
                 <input
@@ -275,7 +275,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
         return (
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Business Information</h3>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-800">Legal Business Name</label>
               <input
@@ -356,7 +356,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
         return (
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Owner / Authorized Person Details</h3>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-800">Full Name</label>
               <input
@@ -480,7 +480,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
         return (
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Business Address Details</h3>
-            
+
             <div className="p-3 bg-slate-50 rounded-lg">
               <h4 className="font-medium mb-3 text-gray-800">Registered Address</h4>
               <div>
@@ -586,7 +586,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
         return (
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Tax & Legal Information</h3>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-800">GSTIN Number</label>
               <input
@@ -674,7 +674,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
         return (
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Bank & Payment Settlement Details</h3>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-800">Bank Account Holder Name</label>
               <input
@@ -726,8 +726,8 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-800">Account Type</label>
               <select
-                name="accountType"
-                value={formData.accountType}
+                name="bankAccountType"
+                value={formData.bankAccountType}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-slate-500 outline-none text-slate-900 placeholder:text-slate-400"
               >

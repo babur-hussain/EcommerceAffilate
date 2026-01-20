@@ -1,198 +1,149 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
-import Header from "@/components/header/Header";
-import CategoryNav from "@/components/header/CategoryNav";
-import Footer from "@/components/footer/Footer";
-import ProductGrid from "@/components/product/ProductGrid";
-import { BackendProduct } from "@/types/product";
+import Link from "next/link";
+import FilterSidebar from "@/components/search/FilterSidebar";
+import SearchResultCard from "@/components/search/SearchResultCard";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
 
+type Product = {
+  _id: string;
+  title: string;
+  slug: string;
+  price: number;
+  mrp?: number;
+  primaryImage: string;
+  brand: string;
+  rating?: number;
+};
+
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
-  const [products, setProducts] = useState<BackendProduct[]>([]);
+
+  const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
   useEffect(() => {
-    const fetchResults = async () => {
-      if (!query.trim()) {
-        setProducts([]);
-        setLoading(false);
-        return;
-      }
-
+    async function fetchResults() {
       setLoading(true);
-      setError(false);
-
       try {
+        // Fetch products with search query
+        // The backend supports ?search=... which regex matches title
         const res = await fetch(
-          `${API_BASE}/ranking/search?q=${encodeURIComponent(query.trim())}`
+          `${API_BASE}/products?search=${encodeURIComponent(query)}`
         );
-
-        if (!res.ok) {
-          setError(true);
-          setProducts([]);
-          return;
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data);
         }
-
-        const data = (await res.json()) as BackendProduct[];
-        setProducts(data);
-      } catch (err) {
-        console.error("Search error:", err);
-        setError(true);
-        setProducts([]);
+      } catch (error) {
+        console.error("Error fetching search results:", error);
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchResults();
+    if (query) {
+      fetchResults();
+    } else {
+      // If no query, maybe fetch some defaults or nothing
+      fetchResults(); // Backend handles empty search by returning all active (filtered by limit if set, but we want all for now or paginated)
+    }
   }, [query]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <CategoryNav />
-
-      <main className="max-w-300 mx-auto px-6 py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-gray-600">
-          <Link href="/" className="hover:text-blue-600">
+    <div className="bg-white text-slate-900 font-display min-h-screen">
+      <main className="w-full max-w-[1440px] mx-auto px-4 md:px-10 py-6">
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-2 mb-6 text-sm">
+          <Link href="/" className="text-slate-500 hover:text-primary flex items-center gap-1">
+            <span className="material-symbols-outlined text-base">home</span>
             Home
           </Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-900">Search</span>
-        </nav>
+          <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
+          <span className="text-slate-900 font-semibold">Search Results</span>
+        </div>
 
-        {/* Loading State */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
-            <p className="text-gray-600">Searching for products...</p>
-          </div>
-        ) : query.trim() ? (
-          <>
-            {/* Search Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Search results for &quot;{query}&quot;
-              </h1>
-              <p className="text-sm text-gray-600">
-                {products.length}{" "}
-                {products.length === 1 ? "product" : "products"} found
+        {/* Page Title and Sort */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+              {loading ? "Searching..." : `${results.length} items found`}
+            </h1>
+            {query && (
+              <p className="text-slate-500 mt-1 italic">
+                Showing results for "{query}"
               </p>
-            </div>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-slate-900 text-sm font-semibold whitespace-nowrap">Sort By</p>
+            <select className="rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-10 text-sm focus:ring-primary focus:border-primary outline-none text-slate-700">
+              <option>Recommended</option>
+              <option>Price: Low to High</option>
+              <option>Price: High to Low</option>
+              <option>Newest Arrivals</option>
+            </select>
+          </div>
+        </div>
 
-            <div className="border-t border-gray-200 mb-8"></div>
+        <div className="flex gap-8">
+          {/* Side Filter Bar */}
+          <FilterSidebar />
 
-            {/* Error State */}
-            {error ? (
-              <div className="text-center py-16">
-                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg
-                    className="w-10 h-10 text-red-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Unable to load search results
-                </h2>
-                <p className="text-gray-600 mb-1">Please try again later</p>
-                <p className="text-sm text-gray-500">
-                  The search service is temporarily unavailable.
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-6 inline-block bg-blue-600 text-white px-6 py-2.5 rounded-md font-semibold hover:bg-blue-700 transition"
-                >
-                  Retry
-                </button>
+          {/* Results Grid */}
+          <div className="flex-1">
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-slate-50 rounded-xl h-[400px] animate-pulse" />
+                ))}
               </div>
-            ) : products.length > 0 ? (
-              <ProductGrid products={products} />
             ) : (
-              <div className="text-center py-16">
-                <div className="mb-8">
-                  <svg
-                    className="w-24 h-24 mx-auto text-gray-300 mb-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    No products found
-                  </h2>
-                  <p className="text-gray-600 mb-1">
-                    We couldn&apos;t find any products matching &quot;{query}
-                    &quot;
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Try searching with different keywords
-                  </p>
-                </div>
-                <Link
-                  href="/"
-                  className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-md font-semibold hover:bg-blue-700 transition"
-                >
-                  Back to Home
-                </Link>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
+                {results.map(product => (
+                  <SearchResultCard key={product._id} product={product} />
+                ))}
               </div>
             )}
-          </>
-        ) : (
-          <div className="text-center py-16">
-            <svg
-              className="w-24 h-24 mx-auto text-gray-300 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Enter a search term
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Use the search bar above to find products
-            </p>
-            <Link
-              href="/"
-              className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-md font-semibold hover:bg-blue-700 transition"
-            >
-              Back to Home
-            </Link>
-          </div>
-        )}
-      </main>
 
-      <Footer />
+            {/* Pagination Mockup if results > 0 */}
+            {!loading && results.length > 0 && (
+              <div className="mt-12 flex flex-col items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-primary hover:text-white hover:border-primary transition-all text-slate-600">
+                    <span className="material-symbols-outlined">chevron_left</span>
+                  </button>
+                  <button className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white font-bold">1</button>
+                  <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-primary/10 transition-all font-bold text-slate-600">2</button>
+                  <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-primary/10 transition-all font-bold text-slate-600">3</button>
+                  <span className="px-2 font-bold text-slate-400">...</span>
+                  <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-primary hover:text-white hover:border-primary transition-all text-slate-600">
+                    <span className="material-symbols-outlined">chevron_right</span>
+                  </button>
+                </div>
+                <p className="text-sm text-slate-500">Showing 1-{results.length > 12 ? 12 : results.length} of {results.length} items</p>
+              </div>
+            )}
+
+            {!loading && results.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300">
+                  <span className="material-symbols-outlined text-5xl">search_off</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">No results found</h3>
+                <p className="text-slate-500 max-w-md mx-auto">
+                  We couldn't find any products matching "{query}". Try checking for typos or using different keywords.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

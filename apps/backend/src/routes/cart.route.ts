@@ -2,7 +2,9 @@ import { Router, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { Cart } from '../models/cart.model';
 import { Product } from '../models/product.model';
+import { Address } from '../models/address.model';
 import { requireCustomer } from '../middlewares/rbac';
+import { estimateDeliveryTime } from '../utils/delivery';
 
 const router = Router();
 
@@ -11,9 +13,60 @@ router.get('/cart', requireCustomer, async (req: Request, res: Response) => {
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    let cart = await Cart.findOne({ userId: user.id }).populate('items.productId');
+    let cart = await Cart.findOne({ userId: user.id })
+      .populate({
+        path: 'items.productId',
+        populate: {
+          path: 'businessId',
+          select: 'addresses'
+        }
+      })
+      .lean();
+
     if (!cart) {
-      cart = await Cart.create({ userId: user.id, items: [] });
+      // Create new cart if not exists (using Model to create)
+      const newCart = await Cart.create({ userId: user.id, items: [] });
+      return res.json(newCart);
+    }
+
+    // Fetch user's delivery address for estimation
+    // Try to find default, otherwise first available
+    const address = await Address.findOne({ userId: user.id })
+      .sort({ isDefault: -1, updatedAt: -1 })
+      .lean();
+
+    const destinationPincode = address?.pincode;
+
+    // Calculate delivery estimates for each item
+    if (cart.items && cart.items.length > 0) {
+      cart.items = cart.items.map((item: any) => {
+        if (item.productId && typeof item.productId === 'object') {
+          const product = item.productId;
+
+          let deliveryEstimate = null;
+          if (destinationPincode) {
+            // Determine origin
+            let origin = '110001'; // Default warehouse Delhi
+            if (product.pickupLocation) {
+              origin = product.pickupLocation;
+            } else if (product.businessId && (product.businessId as any).addresses) {
+              const biz = product.businessId as any;
+              origin = biz.addresses?.operational?.pincode
+                || biz.addresses?.registered?.pincode
+                || '110001';
+            }
+
+            deliveryEstimate = estimateDeliveryTime(origin, String(destinationPincode));
+          }
+
+          // Attach to product
+          item.productId = {
+            ...product,
+            deliveryEstimate
+          };
+        }
+        return item;
+      });
     }
 
     res.json(cart);

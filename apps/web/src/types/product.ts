@@ -17,4 +17,16 @@ export interface BackendProduct {
   popularityScore?: number;
   createdAt?: string;
   updatedAt?: string;
+  primaryImage: string;
+  mrp?: number;
+  description?: string;
+  sellerName?: string;
+  keyFeatures?: string[];
+  attributes?: { key: string; value: string }[];
+  deliveryEstimate?: string;
+  categoryDetails?: {
+    _id: string;
+    name: string;
+    parentCategory?: string;
+  };
 }

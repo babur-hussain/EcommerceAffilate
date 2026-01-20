@@ -1,209 +1,295 @@
-import Header from "@/components/header/Header";
-import CategoryNav from "@/components/header/CategoryNav";
-import MainBanner from "@/components/banner/MainBanner";
-import PromoSlider from "@/components/homepage/PromoSlider";
-import TrendingProductSlider from "@/components/homepage/TrendingProductSlider";
-import SponsoredBanner from "@/components/homepage/SponsoredBanner";
-import CategoryDealsGrid from "@/components/homepage/CategoryDealsGrid";
-import FashionBanner from "@/components/homepage/FashionBanner";
-import ProductRow from "@/components/product/ProductRow";
-import Footer from "@/components/footer/Footer";
+import Link from "next/link";
+import HeroSlider from "@/components/home/HeroSlider";
+import HomeCategoryList from "@/components/home/HomeCategoryList";
+import GlobalSearch from "@/components/search/GlobalSearch";
 
-export const dynamic = "force-dynamic";
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
-
-// Backend API Product type
-interface BackendProduct {
-  _id: string;
-  title: string;
-  slug: string;
-  price: number;
-  category: string;
-  brand?: string;
-  image: string;
-  images: string[];
-  rating: number;
-  ratingCount: number;
-  isActive: boolean;
-  isSponsored: boolean;
-  sponsoredScore: number;
-  popularityScore: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Homepage payload types
-type SectionType =
-  | "HERO_BANNER"
-  | "PRODUCT_CAROUSEL"
-  | "CATEGORY_GRID"
-  | "SPONSORED_CAROUSEL"
-  | "TEXT_BANNER";
-interface HomepageSectionBase {
-  type: SectionType;
-  title?: string;
-  subtitle?: string;
-}
-interface ProductSection extends HomepageSectionBase {
-  items?: BackendProduct[];
-}
-interface TextSection extends HomepageSectionBase {
-  config?: Record<string, any>;
-}
-interface HomepagePayload {
-  version: number;
-  sections: (ProductSection | TextSection)[];
-}
-
-// Fetch homepage sections from backend (public)
-async function getHomepage(): Promise<HomepagePayload> {
-  try {
-    const res = await fetch(`${API_BASE}/homepage`, { cache: "no-store" });
-    if (res.ok) {
-      const payload: HomepagePayload = await res.json();
-      if (payload.sections?.length) {
-        return payload;
-      }
-    }
-
-    // Fallback: synthesize a single carousel from ranked products
-    const ranked = await fetch(`${API_BASE}/ranking/homepage`, {
-      cache: "no-store",
-    });
-    if (ranked.ok) {
-      const items: BackendProduct[] = await ranked.json();
-      if (items.length) {
-        return {
-          version: 0,
-          sections: [
-            { type: "PRODUCT_CAROUSEL", title: "Recommended for You", items },
-          ],
-        };
-      }
-    }
-
-    // Final fallback: plain products
-    const products = await fetch(`${API_BASE}/products`, { cache: "no-store" });
-    if (products.ok) {
-      const items: BackendProduct[] = await products.json();
-      if (items.length) {
-        return {
-          version: 0,
-          sections: [{ type: "PRODUCT_CAROUSEL", title: "Products", items }],
-        };
-      }
-    }
-
-    return { version: 0, sections: [] };
-  } catch (error) {
-    console.error("Error fetching homepage:", error);
-    return { version: 0, sections: [] };
-  }
-}
-
-export default async function Home() {
-  const data = await getHomepage();
-  const sections = data.sections ?? [];
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header />
+    <div className="bg-white text-slate-900 font-display antialiased overflow-x-hidden">
 
-      {/* Category Navigation */}
-      <CategoryNav />
 
-      {/* Promo Slider */}
-      <div className="max-w-300 mx-auto px-6 pt-6">
-        <PromoSlider />
-      </div>
+      {/* Main Content */}
+      <main className="flex flex-col w-full">
+        {/* Categories List */}
+        <HomeCategoryList />
 
-      {/* Trending Products + Sponsored Banner Section */}
-      <div className="max-w-300 mx-auto px-6 py-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Left: Trending Products (75% width) */}
-          <div className="lg:w-3/4">
-            <TrendingProductSlider />
+        {/* Hero Section */}
+        <section className="relative w-full pt-1 pb-2 px-6">
+          <div className="max-w-[1440px] mx-auto">
+            <HeroSlider />
           </div>
+        </section>
 
-          {/* Right: Sponsored Banner (25% width) */}
-          <div className="lg:w-1/4 min-h-[400px]">
-            <SponsoredBanner />
-          </div>
-        </div>
-      </div>
 
-      {/* Category Deals + Fashion Banner Section */}
-      <div className="max-w-300 mx-auto px-6 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Category Deals Grid (70% width) */}
-          <div className="lg:w-[70%]">
-            <CategoryDealsGrid />
-          </div>
 
-          {/* Right: Fashion Banner (30% width) */}
-          <div className="lg:w-[30%]">
-            <FashionBanner />
-          </div>
-        </div>
-      </div>
 
-      {/* Render Sections */}
-      <main className="max-w-300 mx-auto px-6 py-8">
-        {sections.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">Nothing to show yet</p>
-            <p className="text-gray-500 text-sm mt-2">
-              Please check back later
-            </p>
-          </div>
-        ) : (
-          sections.map((s, idx) => {
-            switch (s.type) {
-              case "HERO_BANNER":
-                return (
-                  <div key={`sec-${idx}`} className="mb-8">
-                    <MainBanner />
+        {/* Groceries Section */}
+        <section className="py-16 px-6 bg-linear-to-b from-transparent to-surface-light/50">
+          <div className="max-w-[1440px] mx-auto">
+            {/* Section Header */}
+            <div className="flex items-end justify-between mb-10 px-2">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-primary font-bold text-sm tracking-widest uppercase">
+                  <span className="material-symbols-outlined text-lg">
+                    bolt
+                  </span>
+                  <span>Rapid Delivery</span>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
+                  Groceries in Minutes
+                </h2>
+              </div>
+              <Link
+                href="#"
+                className="hidden md:flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-primary transition-colors"
+              >
+                View all
+                <span className="material-symbols-outlined text-[18px]">
+                  arrow_forward
+                </span>
+              </Link>
+            </div>
+            {/* Product Scroll Container */}
+            <div className="relative group/slider">
+              {/* Scroll Controls (Visual Only) */}
+              <button className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-20 size-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-900 opacity-0 group-hover/slider:opacity-100 transition-opacity disabled:opacity-50">
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
+              <button className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-20 size-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-900 opacity-0 group-hover/slider:opacity-100 transition-opacity">
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+              {/* Cards Track */}
+              <div className="flex gap-6 overflow-x-auto pb-12 hide-scrollbar snap-x snap-mandatory px-2">
+                {/* Product Card 1 */}
+                <div className="min-w-[280px] md:min-w-[320px] snap-center">
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-soft transition-all duration-300 group h-full flex flex-col">
+                    <div className="relative aspect-4/3 bg-surface-light rounded-xl mb-4 overflow-hidden">
+                      <div className="absolute top-3 left-3 z-10 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">
+                        ORGANIC
+                      </div>
+                      <div
+                        className="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                        data-alt="Fresh organic avocados on a light surface"
+                        style={{
+                          backgroundImage:
+                            "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAINoYsNiRcHZlS6FrsAh1uQrX9mbb-FVksbSeFfPjOBw-6v2qK8UjAKptSf9hi5P7bR-V7ENw13OnHyc3WZRZ77XJ-7jdjkemhQgLIY5P2wOAAIu__RHCePq_ByoNPhgE-2xPT0gsI4-Q6Wp4nQddb6DJdnqyclPN-TmQB10wkaTDoho9AyzZ9mNh8xHy-kFe5yhrTmAPW79aOtVl8tiTXhV-FxCPsaySRV4xLYN3ZX9-bMfiTaFk1t6X-KPCwOpkS5FwUAhCG3E4i')",
+                        }}
+                      />
+                      <button className="absolute bottom-3 right-3 size-10 bg-white rounded-full flex items-center justify-center shadow-md text-slate-400 hover:text-red-500 transition-colors">
+                        <span className="material-symbols-outlined text-[20px] fill-0 hover:fill-1">
+                          favorite
+                        </span>
+                      </button>
+                    </div>
+                    <div className="flex flex-col flex-1">
+                      <h3 className="text-lg font-bold text-slate-900 leading-tight mb-1">
+                        Hass Avocados
+                      </h3>
+                      <p className="text-sm text-slate-500 mb-4">
+                        Pack of 2 • 500g
+                      </p>
+                      <div className="mt-auto flex items-center justify-between">
+                        <span className="text-xl font-bold text-slate-900">
+                          ₹4.50
+                        </span>
+                        <button className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-sky-500 active:scale-95 transition-all flex items-center gap-2">
+                          Add
+                          <span className="material-symbols-outlined text-[16px]">
+                            add
+                          </span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                );
-              case "TEXT_BANNER":
-                return (
-                  <div
-                    key={`sec-${idx}`}
-                    className="mb-8 bg-white rounded-lg shadow p-6"
-                  >
-                    {s.title && (
-                      <h2 className="text-xl font-semibold mb-1">{s.title}</h2>
-                    )}
-                    {"subtitle" in s && s.subtitle && (
-                      <p className="text-gray-600">{s.subtitle}</p>
-                    )}
+                </div>
+                {/* Product Card 2 */}
+                <div className="min-w-[280px] md:min-w-[320px] snap-center">
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-soft transition-all duration-300 group h-full flex flex-col">
+                    <div className="relative aspect-4/3 bg-surface-light rounded-xl mb-4 overflow-hidden">
+                      <div
+                        className="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                        data-alt="Carton of fresh almond milk"
+                        style={{
+                          backgroundImage:
+                            "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDLF1e6PQ6kY7LElgSZOpw5ba2TIOMydMFBIdMwqxvKjWEvaS15mGfkPhPhsExrrO8RKBYkZKXfQAZPYREj-K9E3iDwF3DKBTJp3L1zOFt4NBfDWFmYNvdF4fPR3_W4ljT9hTJuIB5I0cpZYiXCNaGh0LM7_uRcSCFrTCu9DJyp0K4k7dQz7YOStQnOgjV3TihrjMv2HHwzItPqpDOTG6NDO48pIBYZ3gTYmG7C7b1SmYEl0MprHZA-F-b3wWcoAN9L7K_o1ec13z76')",
+                        }}
+                      />
+                      <button className="absolute bottom-3 right-3 size-10 bg-white rounded-full flex items-center justify-center shadow-md text-slate-400 hover:text-red-500 transition-colors">
+                        <span className="material-symbols-outlined text-[20px] fill-0 hover:fill-1">
+                          favorite
+                        </span>
+                      </button>
+                    </div>
+                    <div className="flex flex-col flex-1">
+                      <h3 className="text-lg font-bold text-slate-900 leading-tight mb-1">
+                        Almond Milk
+                      </h3>
+                      <p className="text-sm text-slate-500 mb-4">
+                        Unsweetened • 1L
+                      </p>
+                      <div className="mt-auto flex items-center justify-between">
+                        <span className="text-xl font-bold text-slate-900">
+                          ₹3.20
+                        </span>
+                        <button className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-sky-500 active:scale-95 transition-all flex items-center gap-2">
+                          Add
+                          <span className="material-symbols-outlined text-[16px]">
+                            add
+                          </span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                );
-              case "PRODUCT_CAROUSEL":
-              case "SPONSORED_CAROUSEL":
-              case "CATEGORY_GRID": {
-                const items = (s as ProductSection).items ?? [];
-                return (
-                  <div key={`sec-${idx}`} className="mb-8">
-                    <ProductRow
-                      title={s.title ?? "Products"}
-                      products={items}
-                    />
+                </div>
+                {/* Product Card 3 */}
+                <div className="min-w-[280px] md:min-w-[320px] snap-center">
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-soft transition-all duration-300 group h-full flex flex-col">
+                    <div className="relative aspect-4/3 bg-surface-light rounded-xl mb-4 overflow-hidden">
+                      <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-slate-900 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">
+                        BESTSELLER
+                      </div>
+                      <div
+                        className="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                        data-alt="Fresh sourdough bread on a wooden board"
+                        style={{
+                          backgroundImage:
+                            "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCXEqRUdaHVHuNz_RRLWwjjgJEbiUWKF7UIRA5W-sE0LDJ8xevro_YtApRrZ9BxGDuSak0HkD-tt2oPZj36PK-XZ92nsCfnGNIQR79dh5r-f2flMwptAA8cCN8-eATm_Lkgvx2QTB0aDCtFwC5jkLX2y3x6Z6RtOrDWBat74wpzvX0jUEiLM0dOOFQiA3uF2MkbtVVmwKNKO8KRa1RNPN4oGgmIAjgmuSZu50whS5vW51DcdtR0U43XR26BTVMoMC8EBEMAYru_-eTU')",
+                        }}
+                      />
+                      <button className="absolute bottom-3 right-3 size-10 bg-white rounded-full flex items-center justify-center shadow-md text-slate-400 hover:text-red-500 transition-colors">
+                        <span className="material-symbols-outlined text-[20px] fill-0 hover:fill-1">
+                          favorite
+                        </span>
+                      </button>
+                    </div>
+                    <div className="flex flex-col flex-1">
+                      <h3 className="text-lg font-bold text-slate-900 leading-tight mb-1">
+                        Artisan Sourdough
+                      </h3>
+                      <p className="text-sm text-slate-500 mb-4">
+                        Freshly Baked • 750g
+                      </p>
+                      <div className="mt-auto flex items-center justify-between">
+                        <span className="text-xl font-bold text-slate-900">
+                          ₹6.00
+                        </span>
+                        <button className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-sky-500 active:scale-95 transition-all flex items-center gap-2">
+                          Add
+                          <span className="material-symbols-outlined text-[16px]">
+                            add
+                          </span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                );
-              }
-              default:
-                return null;
-            }
-          })
-        )}
+                </div>
+                {/* Product Card 4 */}
+                <div className="min-w-[280px] md:min-w-[320px] snap-center">
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-soft transition-all duration-300 group h-full flex flex-col">
+                    <div className="relative aspect-4/3 bg-surface-light rounded-xl mb-4 overflow-hidden">
+                      <div
+                        className="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                        data-alt="Carton of fresh organic eggs"
+                        style={{
+                          backgroundImage:
+                            "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCwJBLq7Ui6xKsIGUWAbTguE4uUv0jJL_tiIrFoWAymcLJGH3xcgGw--ss8plfEhkOIfgQIHIYQS3QmDvvGKWsA14G69gwsF0Yc3IaurwzGF8-Cl7E-rOGJzePF9NmqMajGeyNs7ftzyF9IY-K_kLMbAZvPbUCe543IdiUx3k-xrpL67X-GaEMwkvfDI0iO5BOTC8iQ7GVCw8dgEu19tV1qzbbeBUf57i4Hi6TZz-qh_zyxmN4wOMuUYhn0z1XUa7Ik5yhGPSqMppPW')",
+                        }}
+                      />
+                      <button className="absolute bottom-3 right-3 size-10 bg-white rounded-full flex items-center justify-center shadow-md text-slate-400 hover:text-red-500 transition-colors">
+                        <span className="material-symbols-outlined text-[20px] fill-0 hover:fill-1">
+                          favorite
+                        </span>
+                      </button>
+                    </div>
+                    <div className="flex flex-col flex-1">
+                      <h3 className="text-lg font-bold text-slate-900 leading-tight mb-1">
+                        Free Range Eggs
+                      </h3>
+                      <p className="text-sm text-slate-500 mb-4">
+                        Large • 12 Pack
+                      </p>
+                      <div className="mt-auto flex items-center justify-between">
+                        <span className="text-xl font-bold text-slate-900">
+                          ₹5.00
+                        </span>
+                        <button className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-sky-500 active:scale-95 transition-all flex items-center gap-2">
+                          Add
+                          <span className="material-symbols-outlined text-[16px]">
+                            add
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Collections Grid */}
+        <section className="py-16 px-6">
+          <div className="max-w-[1440px] mx-auto">
+            <h2 className="text-3xl font-bold text-slate-900 mb-8">
+              Curated For You
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Collection 1 */}
+              <div className="group relative h-[400px] rounded-2xl overflow-hidden cursor-pointer">
+                <div
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                  data-alt="Modern smartphone next to headphones on a dark surface"
+                  style={{
+                    backgroundImage:
+                      "url('https://lh3.googleusercontent.com/aida-public/AB6AXuC4f-Ge1a6h0vsiHY7OHoYNqOOCNmoshZnVjSzvK-fEFm37QMFOE87AXvH0jH0U491PYkZwI_LENzNCMIHVQJiSc_WJdmfCq0gHmDWxdKkfsKwzI0hS8TB4seXzAOnMdLsHw2ryaBmMmVmhneRUELGencLgzemTgJozuzL7Pbr7BCr6R4n1nOw420weu5KHZanh7MdvoFN5ZVjLMcxdLoofGmgkkKWiSJAvqBdAIAGGfkJ0NN7D6faNkiW3CTb_U9T9dPMUVShf-_hT')",
+                  }}
+                ></div>
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 p-8">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Tech Essentials
+                  </h3>
+                  <p className="text-slate-300 mb-4">
+                    Upgrade your daily drivers.
+                  </p>
+                  <span className="text-primary font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                    Shop Electronics{" "}
+                    <span className="material-symbols-outlined text-[16px]">
+                      arrow_forward
+                    </span>
+                  </span>
+                </div>
+              </div>
+              {/* Collection 2 */}
+              <div className="group relative h-[400px] rounded-2xl overflow-hidden cursor-pointer lg:col-span-2">
+                <div
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                  data-alt="Modern minimalist living room with designer furniture"
+                  style={{
+                    backgroundImage:
+                      "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCMoeOdEw8k4sBNtufBicmOzGNus8BtBV--T0MIaTmHA-v9DorMbnX8YbwpSpZVw77DFehAY2Lgw7Xa9AL5QjmOaxoR_ArJvJlP1vrqKtw6j2LgQKmaCnIezkr45tSsWTmqy8oZjDMqryX4-f0ytFoP8i_1tpdaUwOjY1kIkaT5dRbnBolExM5RqxWitAmVxfWOhyJ0iic8Zedj2W1nzfCqGstLD1T1wb4l-j63RdXd_H1tonD5UrzbYf8_cZFXE5jMNLhd9Camdzf4')",
+                  }}
+                ></div>
+                <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 p-8">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Minimalist Home
+                  </h3>
+                  <p className="text-slate-300 mb-4">
+                    Furniture designed for modern living.
+                  </p>
+                  <span className="text-primary font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                    Discover Home{" "}
+                    <span className="material-symbols-outlined text-[16px]">
+                      arrow_forward
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }

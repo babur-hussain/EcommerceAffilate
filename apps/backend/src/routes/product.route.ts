@@ -361,6 +361,46 @@ router.get("/products/public/random", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/products/suggestions - Get search suggestions
+router.get("/products/suggestions", async (req: Request, res: Response) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || typeof query !== "string" || query.length < 2) {
+      return res.json([]);
+    }
+
+    const regex = new RegExp(query, "i");
+
+    // Find products matching title or brand
+    const suggestions = await Product.find({
+      isActive: true,
+      $or: [{ title: regex }, { brand: regex }, { category: regex }],
+    })
+      .select("title slug price primaryImage brand category")
+      .limit(6)
+      .lean();
+
+    // Map to simplified format
+    const formatted = suggestions.map((p) => ({
+      _id: p._id,
+      title: p.title,
+      slug: p.slug,
+      price: p.price,
+      brand: p.brand,
+      image: p.primaryImage,
+      type: "product",
+    }));
+
+    res.json(formatted);
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Failed to fetch suggestions",
+      message: error.message,
+    });
+  }
+});
+
 // GET /api/products/:id - Get single product by ID
 router.get("/products/:id", async (req: Request, res: Response) => {
   try {
@@ -378,7 +418,10 @@ router.get("/products/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    const categoryDoc = await Category.findOne({ name: product.category }).lean();
+    let categoryDoc = await Category.findOne({ name: product.category }).lean();
+    if (!categoryDoc && mongoose.Types.ObjectId.isValid(product.category)) {
+      categoryDoc = await Category.findById(product.category).lean();
+    }
 
     // Fetch Trust Badges
     // Determine if trustBadges contains IDs (strings) or objects

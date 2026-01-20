@@ -15,14 +15,23 @@ interface Category {
   order: number;
 }
 
-export default function CategoryNav() {
+interface CategoryNavProps {
+  parentCategoryId?: string;
+}
+
+export default function CategoryNav({ parentCategoryId }: CategoryNavProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await fetch(`${API_BASE}/categories`);
+        // Fetch subcategories if parentCategoryId provided, otherwise fetch all
+        const url = parentCategoryId
+          ? `${API_BASE}/categories?parentCategory=${parentCategoryId}`
+          : `${API_BASE}/categories`;
+
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           // Sort by order field
@@ -38,7 +47,7 @@ export default function CategoryNav() {
       }
     }
     fetchCategories();
-  }, []);
+  }, [parentCategoryId]);
 
   if (loading) {
     return (

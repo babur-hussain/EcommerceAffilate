@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+// import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'; // Removed for web compat
+import LocationMap from '../../src/components/shared/LocationMap';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../src/lib/api';
@@ -19,7 +20,7 @@ export default function AddAddressScreen() {
     const { user } = useAuth();
     const { fetchLocation, address: gpsAddress, location, loading: gpsLoading } = useUserLocation();
 
-    const mapRef = useRef<MapView>(null);
+    const mapRef = useRef<any>(null);
     const currentRegion = useRef<any>(null);
 
     const [step, setStep] = useState<Step>('MAP_SELECT');
@@ -195,10 +196,9 @@ export default function AddAddressScreen() {
 
                 {/* Google Map */}
                 <View style={styles.mapContainer}>
-                    <MapView
+                    <LocationMap
                         ref={mapRef}
                         style={styles.map}
-                        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                         initialRegion={{
                             latitude: location?.coords.latitude || 37.78825,
                             longitude: location?.coords.longitude || -122.4324,

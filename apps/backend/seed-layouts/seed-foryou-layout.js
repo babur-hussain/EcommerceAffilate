@@ -1,6 +1,9 @@
 const { MongoClient } = require("mongodb");
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 
+// Hardcoded IDs to ensure consistency across seeds and frontend
+const GROCERY_CATEGORY_ID = '695f88c75f463eeb3c42e764'; // Example hardcoded ID for consistency
+
 const forYouLayout = {
     pageSlug: 'home',
     name: 'Home Page (For You)',

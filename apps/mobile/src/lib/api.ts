@@ -95,7 +95,9 @@ api.interceptors.response.use(
       (!error.response || error.response.status !== 401);
 
     if (shouldTryCache) {
-      console.log('⚠️ Request failed. Attempting to fetch from device cache for:', error.config.url);
+      console.log(`⚠️ Request failed (${error.message}). Attempting to fetch from device cache for:`, error.config.url);
+      if (error.code) console.log(`👉 Error Code: ${error.code}`);
+      if (error.response) console.log(`👉 Response Status: ${error.response.status}`);
 
       try {
         const key = getCacheKey(error.config.url, error.config.params);

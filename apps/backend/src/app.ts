@@ -63,6 +63,7 @@ const corsOptions = {
       "http://localhost:3003", // Super Admin Panel
       "http://192.168.29.193:3000", // Previous IP
       "http://192.168.29.240:3000", // Current IP
+      "http://192.168.29.193:3003", // Super Admin on LAN
     ]
     : true, // Allow all origins in development
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],

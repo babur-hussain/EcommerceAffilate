@@ -1,8 +1,19 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-// @ts-ignore
-import { initializeAuth, getReactNativePersistence, getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
+import {
+  initializeAuth,
+  getAuth,
+  GoogleAuthProvider,
+  Auth,
+  browserLocalPersistence
+} from 'firebase/auth';
+import * as firebaseAuth from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-url-polyfill/auto';
+import { Platform } from 'react-native';
+
+// Extract getReactNativePersistence safely to avoid type errors in web contexts
+// @ts-ignore
+const getReactNativePersistence = (firebaseAuth as any).getReactNativePersistence;
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyCCq6s1VXf3C5QOib9ddv2EfuVAjoyHttk",
@@ -24,15 +35,17 @@ if (!getApps().length) {
 
 // Initialize Firebase Auth with persistence
 let auth: Auth;
+const persistence = Platform.OS === 'web'
+  ? browserLocalPersistence
+  : getReactNativePersistence(ReactNativeAsyncStorage);
+
 try {
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-  });
+  auth = initializeAuth(app, { persistence });
 } catch (e) {
   auth = getAuth(app);
   // If auth already initialized (e.g. fast refresh), ensure persistence is set
   // This prevents losing auth state on reload/restart in some edge cases
-  auth.setPersistence(getReactNativePersistence(ReactNativeAsyncStorage)).catch((err) => {
+  auth.setPersistence(persistence).catch((err) => {
     console.warn("Failed to set persistence on existing auth instance", err);
   });
 }

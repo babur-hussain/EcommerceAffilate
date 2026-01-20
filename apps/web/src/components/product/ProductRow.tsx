@@ -1,18 +1,5 @@
 import ProductCard from "./ProductCard";
-
-// Backend product type
-interface BackendProduct {
-  _id: string;
-  title: string;
-  slug: string;
-  price: number;
-  category: string;
-  brand?: string;
-  image: string;
-  images: string[];
-  rating: number;
-  isSponsored: boolean;
-}
+import { BackendProduct } from "@/types/product";
 
 interface ProductRowProps {
   title: string;
@@ -32,7 +19,7 @@ export default function ProductRow({ title, products }: ProductRowProps) {
           View All →
         </button>
       </div>
-      
+
       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
         {products.map((product) => (
           <ProductCard key={product._id} product={product} />

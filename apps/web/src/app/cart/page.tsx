@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import Header from "@/components/header/Header";
-import CategoryNav from "@/components/header/CategoryNav";
+
 import Footer from "@/components/footer/Footer";
 import { useAuth } from "@/context/AuthContext";
 
@@ -32,13 +31,41 @@ interface CartWithProducts extends CartItem {
 
 export default function CartPage() {
   const router = useRouter();
-  const { backendUser, loading: authLoading, idToken } = useAuth();
+  const { backendUser, loading: authLoading, idToken, refreshToken } = useAuth();
   const [cartItems, setCartItems] = useState<CartWithProducts[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingItems, setProcessingItems] = useState<Set<string>>(
     new Set()
   );
+
+  // Helper function to make authenticated API calls with automatic token refresh
+  const fetchWithAuth = useCallback(async (url: string, options: RequestInit = {}, retryCount = 0): Promise<Response> => {
+    const token = idToken;
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // If 401 and we haven't retried yet, refresh token and retry
+    if (response.status === 401 && retryCount < 1) {
+      console.log("🔄 Token expired, attempting refresh...");
+      const newToken = await refreshToken();
+      if (newToken) {
+        console.log("✅ Token refreshed, retrying request...");
+        return fetchWithAuth(url, options, retryCount + 1);
+      }
+    }
+
+    return response;
+  }, [idToken, refreshToken]);
 
   // Fetch cart and products in a single call
   useEffect(() => {
@@ -52,16 +79,21 @@ export default function CartPage() {
         setLoading(true);
         setError(null);
 
-        // Fetch cart - backend already populates products
-        const cartRes = await fetch(`${API_BASE}/cart`, {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-        });
+        // Fetch cart with retry on 401
+        const cartRes = await fetchWithAuth(`${API_BASE}/cart`);
 
         if (!cartRes.ok) {
-          if (cartRes.status === 403 || cartRes.status === 401) {
-            throw new Error("Session expired. Please login again.");
+          if (cartRes.status === 403) {
+            // User forbidden - but don't auto-logout, just show error
+            setError("Access denied. Please try again.");
+            setCartItems([]);
+            return;
+          }
+          if (cartRes.status === 401) {
+            // Token refresh failed - show friendly message, don't force logout
+            setError("Please refresh the page to continue.");
+            setCartItems([]);
+            return;
           }
           throw new Error("Failed to load cart");
         }
@@ -76,10 +108,8 @@ export default function CartPage() {
         }
 
         // Backend returns populated products, so we just need to transform the data
-        // The productId field contains the full product object when populated
         const transformedItems: CartWithProducts[] = cartData.items
-          .map((item: any) => {
-            // Check if productId is populated (object) or just an ID (string)
+          .map((item: any): CartWithProducts | null => {
             const product = typeof item.productId === 'object' ? item.productId : null;
 
             if (!product) {
@@ -87,7 +117,6 @@ export default function CartPage() {
               return null;
             }
 
-            // Transform to match our interface
             return {
               productId: product._id,
               quantity: item.quantity,
@@ -101,20 +130,24 @@ export default function CartPage() {
               },
             };
           })
-          .filter((item): item is CartWithProducts => item !== null);
+          .filter((item: CartWithProducts | null): item is CartWithProducts => item !== null);
 
         console.log('📦 Transformed cart items:', transformedItems);
         setCartItems(transformedItems);
+        setError(null); // Clear any previous errors on success
       } catch (err) {
         console.error("Error loading cart:", err);
-        setError(err instanceof Error ? err.message : "Failed to load cart");
+        // Only show error for actual failures, not auth issues
+        if (err instanceof Error && !err.message.includes("token")) {
+          setError(err.message || "Failed to load cart. Please try again.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchCartWithProducts();
-  }, [backendUser, idToken]);
+  }, [backendUser, idToken, fetchWithAuth]);
 
   // Handle quantity update
   const handleUpdateQuantity = async (
@@ -199,9 +232,9 @@ export default function CartPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <Header />
-        <CategoryNav />
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
+
+
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -214,9 +247,9 @@ export default function CartPage() {
 
   if (!backendUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <Header />
-        <CategoryNav />
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
+
+
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-md mx-auto">
             <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
@@ -270,16 +303,15 @@ export default function CartPage() {
   const total = subtotal + shipping + tax;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <Header />
-      <CategoryNav />
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
+
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Error Banner */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
             <svg
-              className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0"
+              className="w-5 h-5 text-red-600 mt-0.5 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -437,7 +469,7 @@ export default function CartPage() {
 
                 <button
                   onClick={() => router.push("/checkout")}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg mb-4"
+                  className="w-full bg-linear-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg mb-4"
                 >
                   Proceed to Checkout
                 </button>
@@ -528,7 +560,7 @@ function CartItem({
         {/* Product Image */}
         <Link
           href={`/product/${item.product._id}`}
-          className="relative w-24 h-24 lg:w-32 lg:h-32 flex-shrink-0 rounded-lg overflow-hidden group"
+          className="relative w-24 h-24 lg:w-32 lg:h-32 shrink-0 rounded-lg overflow-hidden group"
         >
           <Image
             src={item.product.image}
@@ -613,7 +645,7 @@ function CartItem({
                     />
                   </svg>
                 </button>
-                <div className="px-4 py-2 text-sm font-semibold border-l-2 border-r-2 border-gray-200 min-w-[3rem] text-center bg-gray-50">
+                <div className="px-4 py-2 text-sm font-semibold border-l-2 border-r-2 border-gray-200 min-w-12 text-center bg-gray-50">
                   {isProcessing ? (
                     <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
                   ) : (

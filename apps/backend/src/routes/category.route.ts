@@ -16,7 +16,9 @@ router.get('/categories', async (req, res) => {
     }
 
     if (parentCategory) {
-      if (mongoose.Types.ObjectId.isValid(parentCategory as string)) {
+      if (parentCategory === 'null') {
+        query.parentCategory = null;
+      } else if (mongoose.Types.ObjectId.isValid(parentCategory as string)) {
         query.parentCategory = parentCategory;
       } else {
         // If not a valid ObjectId, try finding the parent category by name
@@ -50,6 +52,7 @@ router.get('/categories', async (req, res) => {
 router.get('/categories/:idOrSlug', async (req, res) => {
   try {
     const { idOrSlug } = req.params;
+    console.log(`🔍 [API] Fetching category details for: ${idOrSlug}`);
     let query: any = { isActive: true };
 
     if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
