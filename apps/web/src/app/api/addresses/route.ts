@@ -1,15 +1,25 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:4000/api';
+// Server-side API routes need the full backend URL
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Get Authorization header from request (priority) or fall back to cookie
+    const headersList = await headers();
+    let token = headersList.get('Authorization')?.replace('Bearer ', '');
 
-    const res = await fetch(`${API_BASE}/addresses`, {
+    if (!token) {
+      const cookieStore = await cookies();
+      token = cookieStore.get('auth_token')?.value;
+    }
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const res = await fetch(`${BACKEND_URL}/api/addresses`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     });
@@ -20,19 +30,29 @@ export async function GET() {
       return NextResponse.json({ error }, { status: res.status });
     }
     return NextResponse.json(data);
-  } catch {
+  } catch (e) {
+    console.error('Addresses GET proxy error:', e);
     return NextResponse.json({ error: 'Failed to fetch addresses' }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Get Authorization header from request (priority) or fall back to cookie
+    const headersList = await headers();
+    let token = headersList.get('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      const cookieStore = await cookies();
+      token = cookieStore.get('auth_token')?.value;
+    }
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const body = await req.json().catch(() => ({}));
-    const res = await fetch(`${API_BASE}/addresses`, {
+    const res = await fetch(`${BACKEND_URL}/api/addresses`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -48,7 +68,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error }, { status: res.status });
     }
     return NextResponse.json(data);
-  } catch {
+  } catch (e) {
+    console.error('Addresses POST proxy error:', e);
     return NextResponse.json({ error: 'Failed to create address' }, { status: 500 });
   }
 }
