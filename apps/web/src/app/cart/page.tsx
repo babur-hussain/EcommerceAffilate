@@ -176,7 +176,9 @@ export default function CartPage() {
           )
         );
       } else {
-        setError("Failed to update quantity");
+        const errData = await res.json().catch(() => ({}));
+        console.error("Cart update failed:", errData);
+        setError(errData.error || "Failed to update quantity");
         setTimeout(() => setError(null), 3000);
       }
     } catch (err) {

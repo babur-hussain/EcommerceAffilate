@@ -174,11 +174,13 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
 
     const cart = await Cart.findOne({ userId: user.id });
     if (!cart) {
+      console.log('❌ Cart not found');
       return res.status(404).json({ error: 'Cart not found' });
     }
 
     const item = cart.items.find((i) => i.productId.toString() === productId);
     if (!item) {
+      console.log(`❌ Item not found in cart. Existing items: ${cart.items.map(i => i.productId.toString()).join(', ')}`);
       return res.status(404).json({ error: 'Item not found in cart' });
     }
 
@@ -186,11 +188,13 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
       '_id stock'
     );
     if (!product) {
+      console.log('❌ Product not found or inactive');
       return res.status(400).json({ error: 'Product not found or inactive' });
     }
 
     const qty2 = quantity as number;
     if (qty2 > product.stock) {
+      console.log(`❌ Insufficient stock. Req: ${qty2}, Stock: ${product.stock}`);
       return res.status(400).json({ error: 'Insufficient stock for requested quantity' });
     }
 
@@ -200,6 +204,7 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
     await cart.populate('items.productId');
     res.json(cart);
   } catch (error: any) {
+    console.error('❌ Cart Update Error:', error);
     res.status(500).json({ error: 'Failed to update cart item', message: error.message });
   }
 });
