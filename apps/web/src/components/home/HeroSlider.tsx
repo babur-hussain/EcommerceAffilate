@@ -33,8 +33,7 @@ const slides = [
 export default function HeroSlider() {
     return (
         <div
-            className="relative w-full overflow-hidden rounded-[10px]"
-            style={{ aspectRatio: '4/1' }}
+            className="relative w-full overflow-hidden rounded-[10px] aspect-4/3 md:aspect-4/1"
         >
             <Swiper
                 modules={[Autoplay, Pagination, EffectFade]}

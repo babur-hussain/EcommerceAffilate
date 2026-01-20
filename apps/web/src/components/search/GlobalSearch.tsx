@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useDebounce } from "@/hooks/useDebounce";
 
-const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE || "http://localhost:4000/api";
+const API_BASE = "/api";
 
 type Suggestion = {
     _id: string;

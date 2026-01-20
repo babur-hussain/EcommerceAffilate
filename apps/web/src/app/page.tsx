@@ -14,7 +14,7 @@ export default function Home() {
         <HomeCategoryList />
 
         {/* Hero Section */}
-        <section className="relative w-full pt-1 pb-2 px-6">
+        <section className="relative w-full pt-1 pb-2 px-3 md:px-6">
           <div className="max-w-[1440px] mx-auto">
             <HeroSlider />
           </div>
@@ -24,7 +24,7 @@ export default function Home() {
 
 
         {/* Groceries Section */}
-        <section className="py-16 px-6 bg-linear-to-b from-transparent to-surface-light/50">
+        <section className="py-8 md:py-16 px-4 md:px-6 bg-linear-to-b from-transparent to-surface-light/50">
           <div className="max-w-[1440px] mx-auto">
             {/* Section Header */}
             <div className="flex items-end justify-between mb-10 px-2">
@@ -61,7 +61,7 @@ export default function Home() {
               {/* Cards Track */}
               <div className="flex gap-6 overflow-x-auto pb-12 hide-scrollbar snap-x snap-mandatory px-2">
                 {/* Product Card 1 */}
-                <div className="min-w-[280px] md:min-w-[320px] snap-center">
+                <div className="min-w-[220px] md:min-w-[320px] snap-center">
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-soft transition-all duration-300 group h-full flex flex-col">
                     <div className="relative aspect-4/3 bg-surface-light rounded-xl mb-4 overflow-hidden">
                       <div className="absolute top-3 left-3 z-10 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">
@@ -103,7 +103,7 @@ export default function Home() {
                   </div>
                 </div>
                 {/* Product Card 2 */}
-                <div className="min-w-[280px] md:min-w-[320px] snap-center">
+                <div className="min-w-[220px] md:min-w-[320px] snap-center">
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-soft transition-all duration-300 group h-full flex flex-col">
                     <div className="relative aspect-4/3 bg-surface-light rounded-xl mb-4 overflow-hidden">
                       <div
@@ -142,7 +142,7 @@ export default function Home() {
                   </div>
                 </div>
                 {/* Product Card 3 */}
-                <div className="min-w-[280px] md:min-w-[320px] snap-center">
+                <div className="min-w-[220px] md:min-w-[320px] snap-center">
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-soft transition-all duration-300 group h-full flex flex-col">
                     <div className="relative aspect-4/3 bg-surface-light rounded-xl mb-4 overflow-hidden">
                       <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-slate-900 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">
@@ -184,7 +184,7 @@ export default function Home() {
                   </div>
                 </div>
                 {/* Product Card 4 */}
-                <div className="min-w-[280px] md:min-w-[320px] snap-center">
+                <div className="min-w-[220px] md:min-w-[320px] snap-center">
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-soft transition-all duration-300 group h-full flex flex-col">
                     <div className="relative aspect-4/3 bg-surface-light rounded-xl mb-4 overflow-hidden">
                       <div
@@ -228,14 +228,14 @@ export default function Home() {
         </section>
 
         {/* Featured Collections Grid */}
-        <section className="py-16 px-6">
+        <section className="py-8 md:py-16 px-4 md:px-6">
           <div className="max-w-[1440px] mx-auto">
             <h2 className="text-3xl font-bold text-slate-900 mb-8">
               Curated For You
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Collection 1 */}
-              <div className="group relative h-[400px] rounded-2xl overflow-hidden cursor-pointer">
+              <div className="group relative h-[260px] md:h-[400px] rounded-2xl overflow-hidden cursor-pointer">
                 <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                   data-alt="Modern smartphone next to headphones on a dark surface"
@@ -261,7 +261,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Collection 2 */}
-              <div className="group relative h-[400px] rounded-2xl overflow-hidden cursor-pointer lg:col-span-2">
+              <div className="group relative h-[260px] md:h-[400px] rounded-2xl overflow-hidden cursor-pointer lg:col-span-2">
                 <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                   data-alt="Modern minimalist living room with designer furniture"

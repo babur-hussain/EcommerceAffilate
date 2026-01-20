@@ -7,6 +7,7 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   signInWithPopup,
+  signInWithRedirect,
   ConfirmationResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -79,13 +80,27 @@ export default function AuthModal({
     setError(null);
     setLoading(true);
     try {
+      // Check for mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        // Use redirect for mobile to avoid popup blocking/issues
+        await signInWithRedirect(auth, googleProvider);
+        // The page will redirect, so no need to close modal or set loading false immediately
+        return;
+      }
+
       await signInWithPopup(auth, googleProvider);
       onClose();
     } catch (err: any) {
       console.error(err);
       setError("Google sign-in failed.");
-    } finally {
       setLoading(false);
+    } finally {
+      // Only stop loading if not redirecting (or if error occurred)
+      if (!(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))) {
+        setLoading(false);
+      }
     }
   };
 
@@ -161,7 +176,7 @@ export default function AuthModal({
   if (!open || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center isolate">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center isolate">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
@@ -172,7 +187,7 @@ export default function AuthModal({
       {/* Modal Container */}
       <div className="relative w-full max-w-[480px] p-4 flex items-center justify-center pointer-events-none">
         {/* Card - Pointer events auto */}
-        <div className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden pointer-events-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+        <div className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden pointer-events-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 max-h-[85vh] overflow-y-auto">
 
           {/* Close Button */}
           <button
@@ -182,11 +197,11 @@ export default function AuthModal({
             <span className="material-symbols-outlined text-xl">close</span>
           </button>
 
-          <div className="p-8 sm:p-10">
+          <div className="p-6 sm:p-10">
             {/* Headline Text */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <h1 className="text-neutral-900 tracking-tight text-3xl font-extrabold leading-tight mb-2">
-                {mode === "login" ? "Welcome Back" : "Join PremiumShop"}
+                {mode === "login" ? "Welcome Back" : "Join Startup Betul"}
               </h1>
               <p className="text-neutral-500 text-sm font-medium leading-relaxed">
                 {mode === "login"
@@ -196,11 +211,11 @@ export default function AuthModal({
             </div>
 
             {/* Social Login */}
-            <div className="space-y-4 mb-8">
+            <div className="space-y-4 mb-6">
               <button
                 onClick={handleGoogleLogin}
                 type="button"
-                className="w-full flex cursor-pointer items-center justify-center rounded-xl h-12 px-5 bg-white border border-neutral-200 text-neutral-800 gap-3 text-base font-semibold transition-all hover:bg-neutral-50 active:scale-[0.98]"
+                className="w-full flex cursor-pointer items-center justify-center rounded-xl h-14 px-5 bg-white border border-neutral-200 text-neutral-800 gap-3 text-base font-semibold transition-all hover:bg-neutral-50 active:scale-[0.98]"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
@@ -213,7 +228,7 @@ export default function AuthModal({
             </div>
 
             {/* Divider */}
-            <div className="relative mb-8">
+            <div className="relative mb-6">
               <div aria-hidden="true" className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-neutral-100"></div>
               </div>
@@ -233,7 +248,7 @@ export default function AuthModal({
                     <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                       <label className="text-xs font-bold uppercase tracking-widest text-neutral-500 ml-1" htmlFor="fullName">Full Name</label>
                       <input
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl h-12 px-4 text-neutral-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-neutral-400"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl h-14 px-4 text-base text-neutral-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-neutral-400"
                         id="fullName"
                         type="text"
                         placeholder="John Doe"
@@ -247,7 +262,7 @@ export default function AuthModal({
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-widest text-neutral-500 ml-1" htmlFor="email">Email Address</label>
                     <input
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl h-12 px-4 text-neutral-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-neutral-400"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl h-14 px-4 text-base text-neutral-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-neutral-400"
                       id="email"
                       type="email"
                       placeholder="name@example.com"
@@ -267,7 +282,7 @@ export default function AuthModal({
                       )}
                     </div>
                     <input
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl h-12 px-4 text-neutral-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-neutral-400"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl h-14 px-4 text-base text-neutral-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-neutral-400"
                       id="password"
                       type="password"
                       placeholder="••••••••"
@@ -282,7 +297,7 @@ export default function AuthModal({
                     <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                       <label className="text-xs font-bold uppercase tracking-widest text-neutral-500 ml-1" htmlFor="confirmPassword">Confirm Password</label>
                       <input
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl h-12 px-4 text-neutral-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-neutral-400"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl h-14 px-4 text-base text-neutral-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-neutral-400"
                         id="confirmPassword"
                         type="password"
                         placeholder="••••••••"
@@ -310,7 +325,7 @@ export default function AuthModal({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex cursor-pointer items-center justify-center rounded-xl h-12 px-6 bg-primary text-white text-base font-bold tracking-wide shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none"
+                  className="w-full flex cursor-pointer items-center justify-center rounded-xl h-14 px-6 bg-primary text-white text-lg font-bold tracking-wide shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none"
                 >
                   {loading ? (
                     <div className="flex items-center gap-2">
@@ -324,7 +339,7 @@ export default function AuthModal({
               </div>
             </form>
 
-            <div className="mt-8 text-center bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+            <div className="mt-6 text-center bg-neutral-50 rounded-xl p-4 border border-neutral-100">
               <p className="text-neutral-500 text-sm font-medium">
                 {mode === "login" ? "Don't have an account?" : "Already have an account?"}
                 <button

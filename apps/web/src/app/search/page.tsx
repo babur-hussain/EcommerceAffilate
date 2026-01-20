@@ -6,8 +6,7 @@ import Link from "next/link";
 import FilterSidebar from "@/components/search/FilterSidebar";
 import SearchResultCard from "@/components/search/SearchResultCard";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+const API_BASE = "/api";
 
 type Product = {
   _id: string;

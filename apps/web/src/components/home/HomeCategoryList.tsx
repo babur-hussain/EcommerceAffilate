@@ -66,7 +66,7 @@ export default function HomeCategoryList() {
     return (
         <section className="w-full bg-white border-b border-slate-100">
             <div className="max-w-[1440px] mx-auto px-4 py-4">
-                <div className="flex items-center gap-8 overflow-x-auto scrollbar-hide pb-2">
+                <div className="flex items-center gap-4 md:gap-8 overflow-x-auto scrollbar-hide pb-2">
                     {categories.map((category) => {
                         const isImageUrl = category.icon && (
                             category.icon.startsWith('http://') ||

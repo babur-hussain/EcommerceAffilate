@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import OrderDetailClient from '@/components/order/OrderDetailClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,8 +39,7 @@ interface OrderItem {
 
 async function getOrder(id: string): Promise<OrderItem | null> {
     const cookieStore = await cookies();
-    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
-    if (!token) return null;
+    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value || '';
 
     try {
         const res = await fetch(`${API_BASE}/orders/${id}`, {
@@ -83,10 +83,13 @@ export default async function OrderDetailsPage(props: PageProps) {
         notFound();
     }
 
-    const { bg, text, label } = getStatusStyles(order.status);
-    const isDelivered = order.status === 'DELIVERED';
-    const isShipped = order.status === 'SHIPPED';
-    const progressWidth = isDelivered ? '100%' : isShipped ? '75%' : '25%';
+    const cookieStore = await cookies();
+    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value || '';
+
+    // const { bg, text, label } = getStatusStyles(order.status);
+    // const isDelivered = order.status === 'DELIVERED';
+    // const isShipped = order.status === 'SHIPPED';
+    // const progressWidth = isDelivered ? '100%' : isShipped ? '75%' : '25%';
 
     return (
         <div className="min-h-screen bg-[#f6f8f8] text-[#0f181a] font-sans pb-20">
@@ -132,45 +135,8 @@ export default async function OrderDetailsPage(props: PageProps) {
 
                 {/* Main Content */}
                 <section className="flex-1 flex flex-col gap-8 min-w-0">
-                    {/* Header */}
-                    <div className="flex flex-col gap-2">
-                        <div className="flex flex-wrap justify-between items-end gap-4">
-                            <div>
-                                <h1 className="text-3xl font-black tracking-tight text-[#0f181a]">Order Details</h1>
-                                <p className="text-[#538893] mt-1">Order #{order._id.toUpperCase()} • Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
-                            </div>
-                            <div className={`${bg} ${text} px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide border border-transparent`}>
-                                {label}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Tracking Status */}
-                    <div className="bg-white p-8 rounded-xl border border-[#e8f0f2] shadow-sm">
-                        <div className="relative mb-4">
-                            <div className="flex justify-between mb-2">
-                                <span className="text-xs font-bold text-[#22a8c3]">Confirmed</span>
-                                <span className={`text-xs font-bold ${order.status !== 'PROCESSING' ? 'text-[#22a8c3]' : 'text-[#538893]'}`}>Preparing</span>
-                                <span className={`text-xs font-bold ${['SHIPPED', 'DELIVERED'].includes(order.status) ? 'text-[#22a8c3]' : 'text-[#538893]'}`}>Shipped</span>
-                                <span className={`text-xs font-bold ${order.status === 'DELIVERED' ? 'text-[#22a8c3]' : 'text-[#538893]'}`}>Delivered</span>
-                            </div>
-                            <div className="h-3 w-full bg-[#e8f0f2] rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-[#22a8c3] rounded-full relative transition-all duration-1000"
-                                    style={{ width: progressWidth }}
-                                >
-                                    <div className="absolute right-0 top-0 h-full w-2 bg-white/30 animate-pulse"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <p className="text-sm text-[#538893] text-center">
-                            {isDelivered
-                                ? "Your package has been delivered."
-                                : isShipped
-                                    ? "Your order is on the way."
-                                    : "We are preparing your order."}
-                        </p>
-                    </div>
+                    {/* Client Side Order Tracker (Header Badge + Progress Bar) */}
+                    <OrderDetailClient initialOrder={order} apiBase={API_BASE} token={token} />
 
                     {/* Order Items & Summary Grid */}
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
