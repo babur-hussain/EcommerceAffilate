@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:4000/api';
+// Server-side fetch needs full backend URL
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
 const AUTH_COOKIE_NAME = 'auth_token';
 
 type OrderItem = {
@@ -32,8 +33,8 @@ async function getOrderAndProducts(orderId: string): Promise<{ order: Order | nu
   if (!token) return { order: null, products: [] };
 
   const [ordersRes, productsRes] = await Promise.all([
-    fetch(`${API_BASE}/orders/mine`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
-    fetch(`${API_BASE}/products`, { cache: 'no-store' }),
+    fetch(`${BACKEND_URL}/api/orders/mine`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
+    fetch(`${BACKEND_URL}/api/products`, { cache: 'no-store' }),
   ]);
 
   const orders: Order[] = ordersRes.ok ? await ordersRes.json() : [];

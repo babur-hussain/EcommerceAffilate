@@ -4,7 +4,8 @@ import ActiveOrderTracker from '@/components/order/ActiveOrderTracker';
 
 export const dynamic = 'force-dynamic';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:4000/api';
+// Server-side fetch needs full backend URL
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
 const AUTH_COOKIE_NAME = 'auth_token';
 
 interface OrderItem {
@@ -19,7 +20,7 @@ async function getMyOrders(): Promise<OrderItem[]> {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
   if (!token) return [];
-  const res = await fetch(`${API_BASE}/orders/mine`, {
+  const res = await fetch(`${BACKEND_URL}/api/orders/mine`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
   });
@@ -125,7 +126,7 @@ export default async function AccountOrdersPage() {
           {/* Active Order Tracker (Client Component) */}
           <ActiveOrderTracker
             initialOrder={activeOrder}
-            apiBase={API_BASE}
+            apiBase="/api"
             token={token}
           />
 
