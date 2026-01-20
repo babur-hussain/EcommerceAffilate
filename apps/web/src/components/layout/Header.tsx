@@ -113,8 +113,8 @@ export default function Header() {
                                 {/* Dropdown Menu */}
                                 {profileOpen && (
                                     <>
-                                        {/* Overlay for mobile to close on click outside */}
-                                        <div className="fixed inset-0 z-40 bg-black/5 md:hidden" onClick={() => setProfileOpen(false)} />
+                                        {/* Overlay to close on click outside - works on mobile and desktop */}
+                                        <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setProfileOpen(false)} />
 
                                         <div className="absolute top-full right-0 mt-3 w-72 bg-white rounded-2xl shadow-xl ring-1 ring-slate-900/5 py-2 z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200 overflow-hidden text-left">
                                             {/* User Info Header */}
@@ -135,25 +135,44 @@ export default function Header() {
 
                                             {/* Navigation Links */}
                                             <div className="py-2">
-                                                <Link href="/account" className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group">
+                                                <Link
+                                                    href="/account"
+                                                    onClick={() => setProfileOpen(false)}
+                                                    className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
+                                                >
                                                     <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">person</span>
                                                     My Profile
                                                 </Link>
-                                                <Link href="/account/orders" className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group">
+                                                <Link
+                                                    href="/account/orders"
+                                                    onClick={() => setProfileOpen(false)}
+                                                    className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
+                                                >
                                                     <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">package_2</span>
                                                     My Orders
                                                 </Link>
-                                                <Link href="/account/wishlist" className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group">
+                                                <Link
+                                                    href="/account/wishlist"
+                                                    onClick={() => setProfileOpen(false)}
+                                                    className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
+                                                >
                                                     <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">favorite</span>
                                                     My Wishlist
                                                 </Link>
-                                                <Link href="/account/addresses" className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group">
+                                                <Link
+                                                    href="/account/addresses"
+                                                    onClick={() => setProfileOpen(false)}
+                                                    className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
+                                                >
                                                     <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">location_on</span>
                                                     Addresses
                                                 </Link>
                                                 {!isBusiness && (
                                                     <button
-                                                        onClick={() => setBusinessRegisterOpen(true)}
+                                                        onClick={() => {
+                                                            setProfileOpen(false);
+                                                            setBusinessRegisterOpen(true);
+                                                        }}
                                                         className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group text-left"
                                                     >
                                                         <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">storefront</span>
@@ -168,6 +187,7 @@ export default function Header() {
                                                     {isBusiness && (
                                                         <Link
                                                             href="/business"
+                                                            onClick={() => setProfileOpen(false)}
                                                             className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
                                                         >
                                                             <span className="material-symbols-outlined">storefront</span>
@@ -177,6 +197,7 @@ export default function Header() {
                                                     {isInfluencer && (
                                                         <Link
                                                             href="/influencer"
+                                                            onClick={() => setProfileOpen(false)}
                                                             className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-fuchsia-600 hover:bg-fuchsia-50 transition-colors"
                                                         >
                                                             <span className="material-symbols-outlined">campaign</span>
