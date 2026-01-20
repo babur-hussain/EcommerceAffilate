@@ -140,24 +140,26 @@ router.post('/cart/remove', requireCustomer, async (req: Request, res: Response)
       return res.status(400).json({ error: 'Invalid productId' });
     }
 
-    const cart = await Cart.findOne({ userId: user.id });
+    // Atomic removal using $pull
+    const cart = await Cart.findOneAndUpdate(
+      { userId: user.id },
+      { $pull: { items: { productId: new mongoose.Types.ObjectId(productId) } } },
+      { new: true }
+    ).populate({
+      path: 'items.productId',
+      populate: {
+        path: 'businessId',
+        select: 'addresses'
+      }
+    });
+
     if (!cart) {
       return res.status(404).json({ error: 'Cart not found' });
     }
-    // Auto-cleanup ghost items
-    cart.items = cart.items.filter((item) => item && item.productId);
 
-    const originalLength = cart.items.length;
-    cart.items = cart.items.filter((item) => item.productId && item.productId.toString() !== productId);
-
-    if (cart.items.length === originalLength) {
-      return res.status(404).json({ error: 'Item not found in cart' });
-    }
-
-    await cart.save();
-    await cart.populate('items.productId');
     res.json(cart);
   } catch (error: any) {
+    console.error('❌ Cart Remove Error:', error);
     res.status(500).json({ error: 'Failed to remove from cart', message: error.message });
   }
 });
@@ -177,20 +179,6 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
       return res.status(400).json({ error: 'Quantity must be an integer >= 1' });
     }
 
-    const cart = await Cart.findOne({ userId: user.id });
-    if (!cart) {
-      console.log('❌ Cart not found');
-      return res.status(404).json({ error: 'Cart not found' });
-    }
-    // Auto-cleanup ghost items
-    cart.items = cart.items.filter((item) => item && item.productId);
-
-    const item = cart.items.find((i) => i.productId && i.productId.toString() === productId);
-    if (!item) {
-      console.log(`❌ Item not found in cart. Existing items: ${cart.items.map(i => i.productId?.toString()).join(', ')}`);
-      return res.status(404).json({ error: 'Item not found in cart' });
-    }
-
     const product = await Product.findOne({ _id: productId, isActive: true }).select(
       '_id stock'
     );
@@ -205,10 +193,29 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
       return res.status(400).json({ error: 'Insufficient stock for requested quantity' });
     }
 
-    item.quantity = qty2;
+    // Atomic update using positional operator $
+    const cart = await Cart.findOneAndUpdate(
+      { userId: user.id, 'items.productId': new mongoose.Types.ObjectId(productId) },
+      { $set: { 'items.$.quantity': qty2 } },
+      { new: true }
+    ).populate({
+      path: 'items.productId',
+      populate: {
+        path: 'businessId',
+        select: 'addresses'
+      }
+    });
 
-    await cart.save();
-    await cart.populate('items.productId');
+    if (!cart) {
+      // If not found, maybe item is not in cart or cart doesn't exist?
+      // Let's check if cart exists at all
+      const existingCart = await Cart.findOne({ userId: user.id });
+      if (!existingCart) {
+        return res.status(404).json({ error: 'Cart not found' });
+      }
+      return res.status(404).json({ error: 'Item not found in cart' });
+    }
+
     res.json(cart);
   } catch (error: any) {
     console.error('❌ Cart Update Error:', error);
