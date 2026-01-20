@@ -108,7 +108,7 @@ export default async function OrderConfirmationPage({ params }: { params: { id: 
 
             <div className="mt-4 flex items-center justify-between border-t pt-4">
               <div className="text-base font-medium text-gray-900">Total</div>
-              <div className="text-base font-semibold text-gray-900">${order.totalAmount.toFixed(2)}</div>
+              <div className="text-base font-semibold text-gray-900">₹{order.totalAmount.toFixed(2)}</div>
             </div>
 
             <div className="mt-6 flex gap-4">

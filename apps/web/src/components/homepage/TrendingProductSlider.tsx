@@ -30,8 +30,7 @@ interface Product {
   description?: string;
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
 export default function TrendingProductSlider() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -90,9 +89,9 @@ export default function TrendingProductSlider() {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 shadow-lg">
+      <div className="bg-linear-to-br from-orange-50 to-red-50 rounded-xl p-6 shadow-lg">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
+          <h2 className="text-2xl font-bold bg-linear-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
             <span className="text-3xl">🔥</span>
             <span>Top Trending Products</span>
           </h2>
@@ -125,18 +124,18 @@ export default function TrendingProductSlider() {
 
   return (
     <div
-      className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 md:p-6 shadow-lg relative overflow-hidden"
+      className="bg-linear-to-br from-orange-50 to-red-50 rounded-xl p-4 md:p-6 shadow-lg relative overflow-hidden"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-orange-200/30 rounded-full blur-3xl -z-0"></div>
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-200/30 rounded-full blur-3xl -z-0"></div>
+      <div className="absolute top-0 right-0 w-64 h-64 bg-orange-200/30 rounded-full blur-3xl z-0"></div>
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-200/30 rounded-full blur-3xl z-0"></div>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
+          <h2 className="text-xl md:text-2xl font-bold bg-linear-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
             <span className="text-3xl">🔥</span>
             <span>Top Trending Products</span>
           </h2>
@@ -196,8 +195,8 @@ export default function TrendingProductSlider() {
         {visibleProducts.map((product, idx) => {
           const discountPercent = product.salePrice
             ? Math.round(
-                ((product.price - product.salePrice) / product.price) * 100
-              )
+              ((product.price - product.salePrice) / product.price) * 100
+            )
             : 0;
           const savings = product.salePrice
             ? product.price - product.salePrice
@@ -210,7 +209,7 @@ export default function TrendingProductSlider() {
               className="group bg-white border-2 border-transparent hover:border-orange-400 rounded-xl p-3 md:p-4 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
             >
               {/* Image Container */}
-              <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100">
+              <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-linear-to-br from-gray-50 to-gray-100">
                 <Image
                   src={product.image}
                   alt={product.title}
@@ -221,7 +220,7 @@ export default function TrendingProductSlider() {
                 {/* Badges */}
                 <div className="absolute top-2 left-2 right-2 flex justify-between items-start">
                   {discountPercent > 0 && (
-                    <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
+                    <span className="bg-linear-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
                       <svg
                         className="w-3 h-3"
                         fill="currentColor"
@@ -273,7 +272,7 @@ export default function TrendingProductSlider() {
                 )}
 
                 {/* Title */}
-                <h3 className="text-sm md:text-base font-semibold text-gray-800 line-clamp-2 min-h-[2.5rem] group-hover:text-orange-600 transition-colors">
+                <h3 className="text-sm md:text-base font-semibold text-gray-800 line-clamp-2 min-h-10 group-hover:text-orange-600 transition-colors">
                   {product.title}
                 </h3>
 
@@ -345,11 +344,10 @@ export default function TrendingProductSlider() {
                 setCurrentIndex(idx * itemsPerView);
                 setIsAutoPlaying(false);
               }}
-              className={`h-2 rounded-full transition-all ${
-                Math.floor(currentIndex / itemsPerView) === idx
-                  ? "w-8 bg-gradient-to-r from-orange-500 to-red-500 shadow-md"
-                  : "w-2 bg-gray-300 hover:bg-orange-300"
-              }`}
+              className={`h-2 rounded-full transition-all ${Math.floor(currentIndex / itemsPerView) === idx
+                ? "w-8 bg-linear-to-r from-orange-500 to-red-500 shadow-md"
+                : "w-2 bg-gray-300 hover:bg-orange-300"
+                }`}
               aria-label={`Go to page ${idx + 1}`}
             />
           )

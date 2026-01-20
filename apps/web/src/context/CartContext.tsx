@@ -10,7 +10,7 @@ import React, {
 import { useAuth } from "./AuthContext";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+  process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
 interface CartItem {
   productId: string;

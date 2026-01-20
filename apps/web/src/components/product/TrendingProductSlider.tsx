@@ -28,8 +28,7 @@ interface Product {
   discount?: number;
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
 export default function TrendingProductSlider() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -158,8 +157,8 @@ export default function TrendingProductSlider() {
         {visibleProducts.map((product) => {
           const discountPercent = product.salePrice
             ? Math.round(
-                ((product.price - product.salePrice) / product.price) * 100
-              )
+              ((product.price - product.salePrice) / product.price) * 100
+            )
             : 0;
 
           return (
@@ -184,7 +183,7 @@ export default function TrendingProductSlider() {
               </div>
 
               {/* Title */}
-              <h3 className="text-sm font-semibold mb-1 line-clamp-2 min-h-[2.5rem]">
+              <h3 className="font-bold text-slate-800 leading-tight line-clamp-2 min-h-10 group-hover:text-primary transition-colors">
                 {product.title}
               </h3>
 
@@ -223,11 +222,10 @@ export default function TrendingProductSlider() {
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx * itemsPerView)}
-              className={`h-2 rounded-full transition-all ${
-                Math.floor(currentIndex / itemsPerView) === idx
-                  ? "w-6 bg-blue-600"
-                  : "w-2 bg-gray-300 hover:bg-gray-400"
-              }`}
+              className={`h-2 rounded-full transition-all ${Math.floor(currentIndex / itemsPerView) === idx
+                ? "w-6 bg-blue-600"
+                : "w-2 bg-gray-300 hover:bg-gray-400"
+                }`}
               aria-label={`Go to page ${idx + 1}`}
             />
           )

@@ -49,6 +49,10 @@ export const env = {
       isProduction: process.env.PAYTM_ENV === 'PROD',
     },
   },
+  shiprocket: {
+    email: process.env.SHIPROCKET_EMAIL || '',
+    password: process.env.SHIPROCKET_PASSWORD || '',
+  },
   ads: {
     clickCost: numberFromEnv('CLICK_COST', isProduction ? 5 : 1),
     impressionCost: numberFromEnv('IMPRESSION_COST', isProduction ? 1 : 0),

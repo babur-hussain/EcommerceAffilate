@@ -80,12 +80,12 @@ export default function InfluencerDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard
                   title="Total Earnings"
-                  value={`$${stats.totalEarnings.toLocaleString()}`}
+                  value={`₹${stats.totalEarnings.toLocaleString()}`}
                   icon={DollarSign}
                 />
                 <StatCard
                   title="Pending Payouts"
-                  value={`$${stats.pendingPayouts.toLocaleString()}`}
+                  value={`₹${stats.pendingPayouts.toLocaleString()}`}
                   icon={DollarSign}
                 />
                 <StatCard

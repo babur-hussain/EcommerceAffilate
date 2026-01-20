@@ -24,8 +24,7 @@ import AffiliateButton from "@/components/affiliate/AffiliateButton";
 
 // const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+const API_BASE = "/api";
 
 interface ProductPageProps {
   params: Promise<{

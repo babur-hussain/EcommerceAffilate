@@ -1,6 +1,6 @@
 import { getAuth } from 'firebase/auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api';
 
 /**
  * Fetch helper that automatically includes Firebase ID token in Authorization header

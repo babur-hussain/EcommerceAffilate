@@ -32,10 +32,10 @@ interface Category {
   slug: string;
   image?: string;
   description?: string;
+  gradient?: string;
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
 export default function CategoryDealsGrid() {
   const [categories, setCategories] = useState<{ [key: string]: Category[] }>(
@@ -176,10 +176,10 @@ export default function CategoryDealsGrid() {
                           src={category.image}
                           alt={category.name}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          className={`absolute inset-0 bg-linear-to-br ${category.gradient} opacity-10 group-hover:opacity-20 transition-opacity duration-300`}
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                        <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200">
                           <svg
                             className="w-16 h-16 text-gray-400"
                             fill="none"

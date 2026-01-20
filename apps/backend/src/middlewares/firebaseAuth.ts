@@ -40,11 +40,17 @@ const attachUserContext = async (req: Request, decodedToken: any) => {
   const normalizedEmail = decodedToken.email?.toLowerCase().trim();
 
   let user = await User.findOne({ firebaseUid: decodedToken.uid });
-  if (!user && normalizedEmail) {
+  if (user) {
+    logger.info({ userId: user._id }, "✅ User found by firebaseUid");
+  } else if (normalizedEmail) {
+    logger.info({ email: normalizedEmail }, "🔍 User not found by firebaseUid, checking email");
     user = await User.findOne({ email: normalizedEmail });
+    if (user) logger.info({ userId: user._id }, "✅ User found by email");
   }
 
   if (!user) {
+    logger.info("---------- CREATING NEW USER ----------");
+    logger.info({ uid: decodedToken.uid, email: normalizedEmail }, "👤 Creating new user...");
     // Use role from custom claims if available, otherwise default to CUSTOMER
     // Map legacy role names to valid enum values
     let role = decodedToken.role || "CUSTOMER";
@@ -56,17 +62,51 @@ const attachUserContext = async (req: Request, decodedToken: any) => {
     };
     role = roleMapping[role] || role;
 
-    user = await User.create({
-      uid: decodedToken.uid,
-      email: normalizedEmail,
-      name: decodedToken.name,
-      profileImage: decodedToken.picture,
-      firebaseUid: decodedToken.uid,
-      role: role,
-      isActive: true,
-    });
+    // Ensure email is present
+    const finalEmail = normalizedEmail || `${decodedToken.uid}@noemail.com`;
+
+    try {
+      user = await User.create({
+        uid: decodedToken.uid,
+        email: finalEmail,
+        name: decodedToken.name || "User",
+        profileImage: decodedToken.picture,
+        firebaseUid: decodedToken.uid,
+        role: role,
+        isActive: true,
+      });
+      logger.info({ newUserId: user._id }, "🎉 User CREATED successfully");
+    } catch (createError: any) {
+      logger.error({ error: createError, validationErrors: createError.errors }, "❌ Failed to create user in Mongo");
+
+      // If duplicate key error (E11000), try to find the conflicting user
+      if (createError.code === 11000) {
+        logger.warn("⚠️ Duplicate key error, attempting to recover...");
+        // Use any found user to proceed
+        user = await User.findOne({
+          $or: [
+            { uid: decodedToken.uid },
+            { email: finalEmail },
+            { firebaseUid: decodedToken.uid }
+          ]
+        });
+        if (user) {
+          logger.info({ userId: user._id }, "✅ Recovered existing user from conflict");
+          // Update firebaseUid if needed
+          if (!user.firebaseUid) {
+            user.firebaseUid = decodedToken.uid;
+            await user.save();
+          }
+        } else {
+          throw createError;
+        }
+      } else {
+        throw createError;
+      }
+    }
   } else {
     // Update existing user fields if missing
+    logger.info("🔄 Checking for user updates...");
     let updated = false;
     if (!user.firebaseUid) {
       user.firebaseUid = decodedToken.uid;

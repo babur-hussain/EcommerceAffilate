@@ -1,7 +1,18 @@
-import React, { useState } from 'react';
-import { X, MapPin, Phone, Mail, Package, Truck, CreditCard, CheckCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, MapPin, Phone, Mail, Package, Truck, CreditCard, CheckCircle, Clock, FileText, DollarSign, RefreshCw } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
+
+interface CourierRate {
+    courier_company_id: number;
+    courier_name: string;
+    rate: number;
+    etd: string;
+    estimated_delivery_days: number;
+    cod: number;
+    rating: number;
+    is_recommended_courier?: boolean;
+}
 
 interface OrderItem {
     productId: {
@@ -45,6 +56,16 @@ interface Order {
     paymentStatus?: string;
     paymentProvider?: string;
     createdAt: string;
+    shippingMethod?: 'INTERNAL' | 'SHIPROCKET';
+    shiprocket?: {
+        orderId: number;
+        shipmentId: number;
+        awbCode?: string;
+        courierName?: string;
+        labelUrl?: string;
+        pickupScheduled?: boolean;
+        actualShippingCost?: number;
+    };
 }
 
 interface OrderDetailsModalProps {
@@ -55,6 +76,33 @@ interface OrderDetailsModalProps {
 export default function OrderDetailsModal({ order: initialOrder, onClose }: OrderDetailsModalProps) {
     const [order, setOrder] = useState(initialOrder);
     const [loading, setLoading] = useState(false);
+    const [ratesLoading, setRatesLoading] = useState(false);
+    const [estimatedRates, setEstimatedRates] = useState<CourierRate[]>([]);
+    const [selectedCourier, setSelectedCourier] = useState<CourierRate | null>(null);
+
+    // Fetch shipping rates when modal opens for Shiprocket orders
+    useEffect(() => {
+        if (order.shippingMethod === 'SHIPROCKET' && !order.shiprocket?.orderId) {
+            fetchRates();
+        }
+    }, [order._id]);
+
+    const fetchRates = async () => {
+        try {
+            setRatesLoading(true);
+            const res = await apiClient.get<any>(`/api/orders/${order._id}/shiprocket/rates`);
+            const couriers = res.data.data?.available_courier_companies || [];
+            setEstimatedRates(couriers);
+            // Auto-select recommended or cheapest
+            const recommended = couriers.find((c: CourierRate) => c.is_recommended_courier) || couriers[0];
+            setSelectedCourier(recommended);
+        } catch (e: any) {
+            console.error('Failed to fetch rates:', e);
+            toast.error(e.response?.data?.error || 'Failed to fetch shipping rates');
+        } finally {
+            setRatesLoading(false);
+        }
+    };
 
     const updateStatus = async (newStatus: string, newDeliveryStatus?: string) => {
         try {
@@ -114,32 +162,225 @@ export default function OrderDetailsModal({ order: initialOrder, onClose }: Orde
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
 
                     {/* Action Bar */}
-                    <div className="flex flex-wrap items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="text-sm font-medium text-gray-700 mr-auto">Actions:</span>
+                    <div className="flex flex-col gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <span className="text-sm font-medium text-gray-700 mr-auto">Actions:</span>
 
-                        {order.status === 'CREATED' && (
-                            <button
-                                onClick={() => updateStatus('PROCESSING')}
-                                disabled={loading}
-                                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                            >
-                                <CheckCircle className="w-4 h-4" /> Accept Order
-                            </button>
-                        )}
+                            {order.status === 'CREATED' && (
+                                <button
+                                    onClick={() => updateStatus('PROCESSING')}
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    <CheckCircle className="w-4 h-4" /> Accept Order
+                                </button>
+                            )}
 
-                        {order.status === 'PROCESSING' && (
-                            <button
-                                onClick={() => updateStatus('SHIPPED', 'PENDING_PICKUP')}
-                                disabled={loading}
-                                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
-                            >
-                                <Package className="w-4 h-4" /> Mark Ready for Pickup
-                            </button>
-                        )}
+                            {/* Standard Process for Internal Or Non-Shiprocket */}
+                            {order.status === 'PROCESSING' && order.shippingMethod !== 'SHIPROCKET' && (
+                                <button
+                                    onClick={() => updateStatus('SHIPPED', 'PENDING_PICKUP')}
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    <Package className="w-4 h-4" /> Mark Ready for Pickup
+                                </button>
+                            )}
 
-                        {order.status === 'SHIPPED' && (
-                            <div className="flex items-center gap-2 text-sm text-indigo-600 font-medium px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100">
-                                <Clock className="w-4 h-4" /> Waiting for Pickup
+                            {order.status === 'SHIPPED' && order.shippingMethod !== 'SHIPROCKET' && (
+                                <div className="flex items-center gap-2 text-sm text-indigo-600 font-medium px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100">
+                                    <Clock className="w-4 h-4" /> Waiting for Pickup
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Shiprocket Actions */}
+                        {order.shippingMethod === 'SHIPROCKET' && (
+                            <div className="pt-3 border-t border-gray-200">
+                                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Shiprocket Fulfillment</h4>
+                                <div className="flex flex-wrap gap-3">
+
+                                    {/* Estimated Rates Display */}
+                                    {!order.shiprocket?.orderId && (
+                                        <div className="w-full space-y-3">
+                                            {/* Rates Section */}
+                                            <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h5 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+                                                        <DollarSign className="w-4 h-4" /> Shipping Rates
+                                                    </h5>
+                                                    <button
+                                                        onClick={fetchRates}
+                                                        disabled={ratesLoading}
+                                                        className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                    >
+                                                        <RefreshCw className={`w-3 h-3 ${ratesLoading ? 'animate-spin' : ''}`} />
+                                                        Refresh
+                                                    </button>
+                                                </div>
+
+                                                {ratesLoading ? (
+                                                    <div className="flex items-center gap-2 text-sm text-blue-600">
+                                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                                        Fetching rates...
+                                                    </div>
+                                                ) : estimatedRates.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                        {/* Selected Courier Display */}
+                                                        {selectedCourier && (
+                                                            <div className="p-2 bg-white border-2 border-blue-400 rounded-lg">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div>
+                                                                        <span className="font-semibold text-gray-900">
+                                                                            {selectedCourier.courier_name}
+                                                                        </span>
+                                                                        {selectedCourier.is_recommended_courier && (
+                                                                            <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded">
+                                                                                Recommended
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <span className="text-lg font-bold text-blue-600">
+                                                                        ₹{selectedCourier.rate}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                    Delivery: {selectedCourier.etd || `${selectedCourier.estimated_delivery_days} days`}
+                                                                    {selectedCourier.rating > 0 && ` • Rating: ${selectedCourier.rating}/5`}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Other Couriers (collapsed) */}
+                                                        {estimatedRates.length > 1 && (
+                                                            <details className="text-xs">
+                                                                <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
+                                                                    View {estimatedRates.length - 1} more options
+                                                                </summary>
+                                                                <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                                                                    {estimatedRates
+                                                                        .filter(c => c.courier_company_id !== selectedCourier?.courier_company_id)
+                                                                        .map(courier => (
+                                                                            <button
+                                                                                key={courier.courier_company_id}
+                                                                                onClick={() => setSelectedCourier(courier)}
+                                                                                className="w-full p-2 text-left bg-gray-50 hover:bg-blue-50 rounded border border-gray-200 hover:border-blue-300 transition"
+                                                                            >
+                                                                                <div className="flex justify-between">
+                                                                                    <span className="font-medium text-gray-800">{courier.courier_name}</span>
+                                                                                    <span className="font-semibold text-gray-900">₹{courier.rate}</span>
+                                                                                </div>
+                                                                                <div className="text-gray-500">
+                                                                                    {courier.etd || `${courier.estimated_delivery_days} days`}
+                                                                                </div>
+                                                                            </button>
+                                                                        ))}
+                                                                </div>
+                                                            </details>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm text-gray-500">No rates available. Click refresh to try again.</p>
+                                                )}
+                                            </div>
+
+                                            {/* Ship Button */}
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        setLoading(true);
+                                                        const res = await apiClient.post<Order>(`/api/orders/${order._id}/shiprocket/create`);
+                                                        setOrder(res.data);
+                                                        toast.success('Order created in Shiprocket!');
+                                                    } catch (e: any) {
+                                                        toast.error(e.response?.data?.error || 'Failed to create Shiprocket order');
+                                                    } finally {
+                                                        setLoading(false);
+                                                    }
+                                                }}
+                                                disabled={loading || estimatedRates.length === 0}
+                                                className="w-full px-4 py-3 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                                            >
+                                                {loading ? (
+                                                    <><RefreshCw className="w-4 h-4 animate-spin" /> Creating Order...</>
+                                                ) : (
+                                                    <><Truck className="w-4 h-4" /> Ship via Shiprocket {selectedCourier && `(₹${selectedCourier.rate})`}</>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* 2. Generate AWB */}
+                                    {order.shiprocket?.shipmentId && !order.shiprocket?.awbCode && (
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    setLoading(true);
+                                                    const res = await apiClient.post<Order>(`/api/orders/${order._id}/shiprocket/awb`, { courierId: 1 }); // Mock courier ID
+                                                    setOrder(res.data);
+                                                    toast.success('AWB Assigned');
+                                                } catch (e: any) {
+                                                    toast.error(e.response?.data?.error || 'Failed to assign AWB');
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                            disabled={loading}
+                                            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            <FileText className="w-4 h-4" /> Generate AWB
+                                        </button>
+                                    )}
+
+                                    {/* 3. Request Pickup */}
+                                    {order.shiprocket?.awbCode && !order.shiprocket?.pickupScheduled && (
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    setLoading(true);
+                                                    const res = await apiClient.post<Order>(`/api/orders/${order._id}/shiprocket/pickup`);
+                                                    setOrder(res.data);
+                                                    toast.success('Pickup Scheduled');
+                                                } catch (e: any) {
+                                                    toast.error(e.response?.data?.error || 'Failed to schedule pickup');
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                            disabled={loading}
+                                            className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            <Truck className="w-4 h-4" /> Request Pickup
+                                        </button>
+                                    )}
+
+                                    {/* 4. Download Label */}
+                                    {order.shiprocket?.pickupScheduled && (
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    setLoading(true);
+                                                    const res = await apiClient.get<{ url: string }>(`/api/orders/${order._id}/shiprocket/label`);
+                                                    window.open(res.data.url, '_blank');
+                                                } catch (e: any) {
+                                                    toast.error(e.response?.data?.error || 'Failed to get label');
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                            disabled={loading}
+                                            className="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-900 disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            <FileText className="w-4 h-4" /> Download Label
+                                        </button>
+                                    )}
+
+                                    {order.shiprocket?.actualShippingCost && (
+                                        <div className="px-3 py-2 bg-orange-50 text-orange-700 text-sm font-medium rounded border border-orange-100 flex items-center gap-2">
+                                            <span>Est. Cost: ₹{order.shiprocket.actualShippingCost}</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -165,10 +406,30 @@ export default function OrderDetailsModal({ order: initialOrder, onClose }: Orde
                         <div className="flex flex-col">
                             <span className="text-xs text-gray-500 mb-1">Payment</span>
                             <div className="flex items-center gap-2">
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${order.paymentStatus === 'SUCCESS' ? 'text-green-600 bg-green-50' : 'text-yellow-600 bg-yellow-50'}`}>
-                                    {order.paymentStatus || 'PENDING'}
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${['SUCCESS', 'PAID', 'COMPLETED', 'captured'].includes(order.paymentStatus || '')
+                                        ? 'text-green-600 bg-green-50'
+                                        : ['FAILED', 'CANCELLED', 'REFUNDED'].includes(order.paymentStatus || '')
+                                            ? 'text-red-600 bg-red-50'
+                                            : 'text-yellow-600 bg-yellow-50'
+                                    }`}>
+                                    {order.paymentStatus === 'captured' ? 'PAID' :
+                                        order.paymentStatus === 'SUCCESS' ? 'PAID' :
+                                            order.paymentStatus || 'PENDING'}
                                 </span>
-                                <span className="text-xs text-gray-400">via {order.paymentProvider || 'Unknown'}</span>
+                                {order.paymentProvider && (
+                                    <span className="text-xs text-gray-400">via {order.paymentProvider.toUpperCase()}</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 mb-1">Shipping Method</span>
+                            <div className="flex items-center gap-2">
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${order.shippingMethod === 'INTERNAL' ? 'text-teal-700 bg-teal-50 border border-teal-100' : 'text-orange-700 bg-orange-50 border border-orange-100'}`}>
+                                    {order.shippingMethod === 'INTERNAL' ? 'Internal Delivery' : 'Shiprocket'}
+                                </span>
                             </div>
                         </div>
                     </div>

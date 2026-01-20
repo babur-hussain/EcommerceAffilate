@@ -240,7 +240,7 @@ export const verifyPayment = async (
     success = payload?.success === true;
   }
 
-  order.paymentStatus = success ? 'SUCCESS' : 'FAILED';
+  order.paymentStatus = success ? 'PAID' : 'FAILED';
   if (success) {
     order.status = 'PAID';
     // Increment coupon usage only when payment succeeds

@@ -8,8 +8,7 @@ import Image from "next/image";
 import Footer from "@/components/footer/Footer";
 import { useAuth } from "@/context/AuthContext";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
 interface Product {
   _id: string;

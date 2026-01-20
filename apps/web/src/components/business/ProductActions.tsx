@@ -12,6 +12,7 @@ export function CreateProduct({ role, brands, onCreated }: { role: Role; brands:
   const [category, setCategory] = useState('');
   const [image, setImage] = useState('');
   const [stock, setStock] = useState<number | ''>('');
+  const [isCodAvailable, setIsCodAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,8 +30,9 @@ export function CreateProduct({ role, brands, onCreated }: { role: Role; brands:
         category: category.trim(),
         image: image.trim(),
         stock: typeof stock === 'number' ? stock : Number(stock) || 0,
+        isCodAvailable,
       });
-      setTitle(''); setPrice(''); setCategory(''); setImage(''); setStock('');
+      setTitle(''); setPrice(''); setCategory(''); setImage(''); setStock(''); setIsCodAvailable(true);
       onCreated?.();
     } catch (err: any) {
       setError(err?.message || 'Failed to create product');
@@ -52,6 +54,17 @@ export function CreateProduct({ role, brands, onCreated }: { role: Role; brands:
         <input className="border rounded px-3 py-2 text-sm w-40" placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
         <input className="border rounded px-3 py-2 text-sm w-64" placeholder="Image URL" value={image} onChange={(e) => setImage(e.target.value)} />
         <input type="number" className="border rounded px-3 py-2 text-sm w-28" placeholder="Stock" value={stock} onChange={(e) => setStock(e.target.value === '' ? '' : Number(e.target.value))} />
+
+        <label className="flex items-center gap-2 border rounded px-3 py-2 text-sm cursor-pointer bg-white">
+          <input
+            type="checkbox"
+            checked={isCodAvailable}
+            onChange={(e) => setIsCodAvailable(e.target.checked)}
+            className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+          />
+          <span className="text-gray-700 font-medium">COD</span>
+        </label>
+
         <button type="submit" disabled={loading || !title || !price || !category || !image || !brandId}
           className="inline-flex items-center px-3 py-2 rounded bg-gray-900 text-white text-sm disabled:opacity-50">
           {loading ? 'Creating...' : 'Create Product'}
@@ -70,6 +83,7 @@ export function EditProduct({ role, product, onUpdated }: { role: Role; product:
   const [category, setCategory] = useState(product.category || '');
   const [image, setImage] = useState(product.primaryImage || product.image || '');
   const [stock, setStock] = useState<number | ''>(product.stock ?? '');
+  const [isCodAvailable, setIsCodAvailable] = useState<boolean>(product.isCodAvailable !== false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,6 +100,7 @@ export function EditProduct({ role, product, onUpdated }: { role: Role; product:
         category: category.trim(),
         image: image.trim(),
         stock: typeof stock === 'number' ? stock : Number(stock) || 0,
+        isCodAvailable,
       });
       setOpen(false);
       onUpdated?.();
@@ -107,6 +122,15 @@ export function EditProduct({ role, product, onUpdated }: { role: Role; product:
             <input className="border rounded px-2 py-1 text-sm" placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
             <input className="border rounded px-2 py-1 text-sm" placeholder="Image URL" value={image} onChange={(e) => setImage(e.target.value)} />
             <input type="number" className="border rounded px-2 py-1 text-sm" placeholder="Stock" value={stock} onChange={(e) => setStock(e.target.value === '' ? '' : Number(e.target.value))} />
+            <label className="flex items-center gap-2 border rounded px-2 py-1 text-sm cursor-pointer bg-white">
+              <input
+                type="checkbox"
+                checked={isCodAvailable}
+                onChange={(e) => setIsCodAvailable(e.target.checked)}
+                className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+              />
+              <span className="text-gray-700 font-medium">COD Available</span>
+            </label>
           </div>
           <div className="flex items-center gap-2">
             <button type="submit" disabled={loading} className="px-3 py-1.5 text-sm rounded bg-gray-900 text-white disabled:opacity-50">{loading ? 'Saving...' : 'Save'}</button>

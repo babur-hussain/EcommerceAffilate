@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { FileText, Package, Clock, CheckCircle, AlertCircle, Settings, Volume2, Play, Bell, BellOff, StopCircle } from 'lucide-react';
+import { FileText, Package, Clock, CheckCircle, AlertCircle, Settings, Volume2, Play, Bell, BellOff, StopCircle, Truck } from 'lucide-react';
 import OrderDetailsModal from '@/components/seller/OrderDetailsModal';
 import { apiClient } from '@/lib/api';
 import { ALARM_SOUNDS, getAlarmSettings, setAlarmSettings } from '@/lib/alarmSettings';
@@ -38,7 +38,9 @@ interface Order {
   deliveryStatus?: string;
   paymentStatus?: string;
   paymentProvider?: string;
+
   createdAt: string;
+  shippingMethod?: 'INTERNAL' | 'SHIPROCKET';
   items: OrderItem[];
   shippingAddress?: {
     name: string;
@@ -51,6 +53,15 @@ interface Order {
     country: string;
   };
   shippingCharges?: number;
+  shiprocket?: {
+    orderId: number;
+    shipmentId: number;
+    awbCode?: string;
+    courierName?: string;
+    labelUrl?: string;
+    pickupScheduled?: boolean;
+    actualShippingCost?: number;
+  };
 }
 
 export default function OrdersPage() {
@@ -436,6 +447,13 @@ export default function OrdersPage() {
                                 {order.deliveryStatus.replace(/_/g, ' ')}
                               </span>
                             )}
+                            {/* Shipping Method Badge */}
+                            <span className={`text-[10px] uppercase tracking-wider font-semibold pl-1 ${order.shippingMethod === 'SHIPROCKET'
+                                ? 'text-orange-600'
+                                : 'text-teal-600'
+                              }`}>
+                              {order.shippingMethod === 'SHIPROCKET' ? '🚀 Shiprocket' : '🏠 Internal'}
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -450,17 +468,29 @@ export default function OrdersPage() {
                               </button>
                             )}
 
-                            {order.status === 'PROCESSING' && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); updateStatus(order._id, 'SHIPPED', 'PENDING_PICKUP'); }}
-                                className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1.5"
-                              >
-                                <Package className="w-3.5 h-3.5" />
-                                Ready
-                              </button>
+                            {/* Shiprocket Ship Button - Show for Shiprocket orders that need shipping */}
+                            {order.shippingMethod === 'SHIPROCKET' &&
+                              ['PROCESSING', 'SHIPPED'].includes(order.status) &&
+                              !order.shiprocket?.pickupScheduled && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}
+                                  className="px-3 py-1.5 bg-orange-600 text-white text-xs font-medium rounded hover:bg-orange-700 transition-colors shadow-sm flex items-center gap-1.5"
+                                  title="Open Shiprocket shipping options"
+                                >
+                                  <Truck className="w-3.5 h-3.5" />
+                                  Ship
+                                </button>
+                              )}
+
+                            {/* Show Shiprocket Status */}
+                            {order.shippingMethod === 'SHIPROCKET' && order.shiprocket?.awbCode && (
+                              <span className="text-xs text-orange-600 font-medium flex items-center gap-1.5 px-2 py-1 bg-orange-50 rounded" title={`AWB: ${order.shiprocket.awbCode}`}>
+                                <Truck className="w-3.5 h-3.5" />
+                                {order.shiprocket.pickupScheduled ? 'Pickup Scheduled' : 'AWB Ready'}
+                              </span>
                             )}
 
-                            {order.status === 'SHIPPED' && order.deliveryStatus === 'PENDING_PICKUP' && (
+                            {order.status === 'SHIPPED' && order.deliveryStatus === 'PENDING_PICKUP' && order.shippingMethod !== 'SHIPROCKET' && (
                               <span className="text-xs text-indigo-600 font-medium flex items-center gap-1.5 px-2 py-1 bg-indigo-50 rounded">
                                 <Clock className="w-3.5 h-3.5" /> Waiting Pickup
                               </span>

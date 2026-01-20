@@ -1,5 +1,5 @@
 const AUTH_COOKIE_NAME = 'auth_token';
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:4000/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
 
 const decodeBase64 = (input: string) => {
   const normalized = input.replace(/-/g, '+').replace(/_/g, '/');

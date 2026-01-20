@@ -45,11 +45,22 @@ export interface IOrder extends Document {
   refundAmount?: number;
   paymentProvider?: 'RAZORPAY' | 'PAYTM' | 'CASHFREE' | 'COD';
   paymentOrderId?: string;
-  paymentStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
+  paymentStatus?: 'PENDING' | 'SUCCESS' | 'PAID' | 'FAILED';
   createdAt: Date;
   updatedAt: Date;
   deliveryPartnerId?: mongoose.Types.ObjectId;
   deliveryStatus?: 'PENDING_PICKUP' | 'SEARCHING_FOR_PARTNER' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'FAILED';
+  shippingMethod: 'INTERNAL' | 'SHIPROCKET';
+  shippingDistance?: number;
+  shiprocket?: {
+    orderId: number;
+    shipmentId: number;
+    awbCode?: string;
+    courierName?: string;
+    labelUrl?: string;
+    pickupScheduled?: boolean;
+    actualShippingCost?: number;
+  };
 }
 
 const orderItemSchema = new Schema<IOrderItem>(
@@ -148,7 +159,7 @@ const orderSchema = new Schema<IOrder>(
     },
     paymentStatus: {
       type: String,
-      enum: ['PENDING', 'SUCCESS', 'FAILED'],
+      enum: ['PENDING', 'SUCCESS', 'PAID', 'FAILED'],
       default: 'PENDING',
     },
     deliveryPartnerId: {
@@ -160,6 +171,29 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       enum: ['PENDING_PICKUP', 'SEARCHING_FOR_PARTNER', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FAILED'],
       default: 'PENDING_PICKUP',
+    },
+    shippingMethod: {
+      type: String,
+      enum: ['INTERNAL', 'SHIPROCKET'],
+      default: 'SHIPROCKET',
+    },
+    shippingDistance: {
+      type: Number,
+    },
+    shiprocket: {
+      orderId: { type: Number },
+      shipmentId: { type: Number },
+      awbCode: { type: String },
+      courierName: { type: String },
+      courierId: { type: Number },
+      labelUrl: { type: String },
+      manifestUrl: { type: String },
+      invoiceUrl: { type: String },
+      pickupScheduled: { type: Boolean, default: false },
+      pickupToken: { type: String },
+      actualShippingCost: { type: Number },
+      status: { type: String },
+      trackingUrl: { type: String },
     },
   },
   {

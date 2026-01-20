@@ -513,14 +513,16 @@ router.patch(
 
       console.log(`✅ Order ${id} status updated to ${status} by business ${authUser.businessId}`);
 
-      // Trigger Dispatch System if status is SHIPPED (Waiting Pickup)
-      if (status === 'SHIPPED') {
+      // Trigger Dispatch System if status is SHIPPED AND using INTERNAL shipping
+      // SHIPROCKET orders are handled by Shiprocket courier, not our delivery partners
+      if (status === 'SHIPPED' && order.shippingMethod === 'INTERNAL') {
+        console.log(`📦 Triggering INTERNAL dispatch for order ${id}`);
         const { DispatchService } = await import("../services/dispatch.service");
-        // Run properly in background, don't await strictly if you want fast response, 
-        // but awaiting ensures errors are caught in logs.
         DispatchService.startDispatch(id).catch(err => {
           console.error("Failed to trigger dispatch:", err);
         });
+      } else if (status === 'SHIPPED' && order.shippingMethod === 'SHIPROCKET') {
+        console.log(`🚀 Order ${id} uses SHIPROCKET - use Shiprocket panel to ship`);
       }
 
       res.json({ success: true, order });

@@ -179,7 +179,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
       };
 
       // Call backend API with Firebase auth token
-      const backendUrl = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000/api';
+      const backendUrl = process.env.NEXT_PUBLIC_API_BASE || '/api';
       console.log('📤 Sending POST to:', `${backendUrl}/business/register`);
       console.log('📦 Authorization header:', `Bearer ${idToken?.substring(0, 50)}...`);
 

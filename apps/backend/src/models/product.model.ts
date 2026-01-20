@@ -37,6 +37,7 @@ export interface IProduct extends Document {
   saleEndDate?: Date;
   protectPromiseFee?: number;
   shippingCharges?: number;
+  isCodAvailable?: boolean;
   processingTime?: {
     value: number;
     unit: 'hours' | 'days';
@@ -76,6 +77,12 @@ export interface IProduct extends Document {
     name: string;
     amount: number;
   }[];
+  weight?: number;
+  dimensions?: {
+    length: number;
+    breadth: number;
+    height: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -201,6 +208,10 @@ const productSchema = new Schema<IProduct>(
       default: 0,
       min: 0
     },
+    isCodAvailable: {
+      type: Boolean,
+      default: true
+    },
     processingTime: {
       value: { type: Number, default: 1 },
       unit: { type: String, enum: ['hours', 'days'], default: 'days' }
@@ -273,6 +284,15 @@ const productSchema = new Schema<IProduct>(
         required: true
       }
     }],
+    weight: {
+      type: Number,
+      default: 0.5 // Default 500g
+    },
+    dimensions: {
+      length: { type: Number, default: 10 },
+      breadth: { type: Number, default: 10 },
+      height: { type: Number, default: 10 }
+    },
     trustBadges: [{ type: String }],
   },
   {
@@ -283,7 +303,7 @@ const productSchema = new Schema<IProduct>(
 );
 
 // Pre-save hook to auto-generate slug if not provided
-productSchema.pre('save', function (next) {
+productSchema.pre('save', function (this: IProduct, next) {
   if (!this.slug || this.isModified('title')) {
     this.slug = generateSlug(this.title);
   }
@@ -297,7 +317,7 @@ productSchema.pre('save', function (next) {
 });
 
 // Pre-create middleware to auto-generate slug
-productSchema.pre('validate', function (next) {
+productSchema.pre('validate', function (this: IProduct, next) {
   if (!this.slug) {
     this.slug = generateSlug(this.title);
   }

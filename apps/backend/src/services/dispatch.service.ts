@@ -48,9 +48,14 @@ export class DispatchService {
         const order = await Order.findById(orderId).populate('items.productId');
         if (!order) return;
 
-        // TODO: proper location lookup. For now, we'll assume a dummy logic or system-wide search.
-        // In a real app, we'd lookup the Business address coordinates.
-        // Let's assume we treat the Dispatch as "Global" if no location logic is perfect yet.
+        // CRITICAL: Only dispatch for INTERNAL shipping orders
+        // SHIPROCKET orders are handled by Shiprocket, not our delivery partners
+        if (order.shippingMethod === 'SHIPROCKET') {
+            console.log(`⚠️ Order ${orderId} uses SHIPROCKET - skipping internal dispatch`);
+            return;
+        }
+
+        console.log(`📦 Dispatch for INTERNAL order: ${orderId}`);
 
         // 3. Find Candidates
         const candidates = await this.findNearestPartners([0, 0]); // TODO: pass actual coordinates
@@ -185,15 +190,19 @@ export class DispatchService {
      * Catch-up: Find orders that are SHIPPED but have no active DeliveryRequest
      */
     private static async processPendingOrders() {
-        // Find orders status=SHIPPED
+        // Find orders status=SHIPPED that use INTERNAL shipping
+        // SHIPROCKET orders are handled by Shiprocket courier, not our dispatch
         // We also need to exclude orders that already have a PENDING request
         // This is a bit expensive, but robust for MVP.
         const pendingOrders = await Order.find({
             status: 'SHIPPED',
-            deliveryStatus: { $ne: 'DELIVERED' }
+            deliveryStatus: { $ne: 'DELIVERED' },
+            shippingMethod: 'INTERNAL'  // Only process INTERNAL shipping
         }).limit(20);
 
-        console.log(`🔍 Catch-up: Found ${pendingOrders.length} pending SHIPPED orders.`);
+        if (pendingOrders.length > 0) {
+            console.log(`🔍 Catch-up: Found ${pendingOrders.length} pending SHIPPED orders (INTERNAL only).`);
+        }
 
         for (const order of pendingOrders) {
             // Check if there is an active request

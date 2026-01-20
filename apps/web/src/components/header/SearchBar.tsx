@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
 interface SearchProduct {
   _id: string;
@@ -210,7 +209,7 @@ export default function SearchBar() {
                       className={`flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition ${index === selectedIndex ? "bg-blue-50" : ""
                         }`}
                     >
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                         <Image
                           src={getProductImage(product)}
                           alt={product.title}

@@ -84,9 +84,10 @@ export default function AuthModal({
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // Use redirect for mobile to avoid popup blocking/issues
-        await signInWithRedirect(auth, googleProvider);
-        // The page will redirect, so no need to close modal or set loading false immediately
+        // DEBUG: Force popup to debug redirect issues
+        // alert("Attempting Mobile Login via Popup...");
+        await signInWithPopup(auth, googleProvider);
+        onClose();
         return;
       }
 

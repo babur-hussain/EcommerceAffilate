@@ -17,9 +17,7 @@ interface Address {
 
 async function getAddresses(token: string): Promise<Address[]> {
   try {
-    const API_BASE =
-      process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
-    const res = await fetch(`${API_BASE}/addresses`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || "/api"}/addresses`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });

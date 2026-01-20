@@ -24,7 +24,7 @@ export default function CategoryManager({ initialCategories, token }: CategoryMa
     const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:4000/api';
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api';
 
     const handleEdit = (category: Category) => {
         setEditingCategory({ ...category });

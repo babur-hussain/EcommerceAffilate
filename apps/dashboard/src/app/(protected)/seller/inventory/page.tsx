@@ -34,7 +34,7 @@ export default function InventoryPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get("/api/products/seller/my-products");
+      const response = await apiClient.get<Product[]>("/api/products/seller/my-products");
       const allProducts = response.data;
 
       setProducts(allProducts);
@@ -242,7 +242,7 @@ export default function InventoryPage() {
                           {product.category}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${product.price.toFixed(2)}
+                          ₹{product.price.toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                           {product.stock} units

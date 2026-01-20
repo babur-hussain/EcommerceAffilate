@@ -13,6 +13,8 @@ import { InfluencerAttribution } from '../models/influencerAttribution.model';
 import { Business } from '../models/business.model';
 import { admin } from '../config/firebaseAdmin';
 import { createPaymentOrder, verifyPayment } from '../services/payment.service';
+import { calculateHaversineDistance, geocodePincode } from '../utils/geo';
+
 
 const router = Router();
 
@@ -135,6 +137,96 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
 
         const payableAmount = Math.max(0, totalAmount - discountAmount);
 
+
+
+        // --- Shipping Method Calculation (CRITICAL) ---
+        // Default to INTERNAL for local delivery, SHIPROCKET for long distance
+        // INTERNAL = distance <= 20km, SHIPROCKET = distance > 20km
+        let shippingMethod: 'INTERNAL' | 'SHIPROCKET' = 'INTERNAL'; // Default to INTERNAL if we can't calculate
+        let shippingDistance: number | undefined = undefined;
+
+        console.log('[Order Shipping] Starting distance calculation...');
+        console.log('[Order Shipping] Customer pincode:', address.pincode);
+
+        try {
+          // 1. Get seller/business origin coordinates
+          const firstProduct = products[0];
+          let originLat: number | null = null;
+          let originLng: number | null = null;
+          let originPincode: string | null = null;
+
+          // Try product's pickup location coordinates first
+          if (firstProduct.pickupLocationCoordinates?.lat && firstProduct.pickupLocationCoordinates?.lng) {
+            originLat = firstProduct.pickupLocationCoordinates.lat;
+            originLng = firstProduct.pickupLocationCoordinates.lng;
+            console.log('[Order Shipping] Using product pickup coordinates:', originLat, originLng);
+          } else {
+            // Fallback to Business Address pincode
+            const business = await Business.findById(firstProduct.businessId).select('addresses').session(session);
+            if (business) {
+              originPincode = business.addresses?.operational?.pincode || business.addresses?.registered?.pincode || null;
+              console.log('[Order Shipping] Business pincode:', originPincode);
+
+              if (originPincode) {
+                const coords = await geocodePincode(originPincode);
+                if (coords) {
+                  originLat = coords.lat;
+                  originLng = coords.lng;
+                  console.log('[Order Shipping] Geocoded business pincode to:', originLat, originLng);
+                } else {
+                  console.warn('[Order Shipping] Failed to geocode business pincode:', originPincode);
+                }
+              }
+            }
+          }
+
+          // 2. Get customer destination coordinates
+          let destLat: number | null = null;
+          let destLng: number | null = null;
+
+          if (address.pincode) {
+            const coords = await geocodePincode(address.pincode);
+            if (coords) {
+              destLat = coords.lat;
+              destLng = coords.lng;
+              console.log('[Order Shipping] Geocoded customer pincode to:', destLat, destLng);
+            } else {
+              console.warn('[Order Shipping] Failed to geocode customer pincode:', address.pincode);
+            }
+          }
+
+          // 3. Calculate distance and determine shipping method
+          if (originLat !== null && originLng !== null && destLat !== null && destLng !== null) {
+            const distance = calculateHaversineDistance(originLat, originLng, destLat, destLng);
+            shippingDistance = Math.round(distance * 100) / 100; // Round to 2 decimal places
+
+            // CRITICAL: Distance threshold is 20km
+            // <= 20km = INTERNAL (own delivery partners)
+            // > 20km = SHIPROCKET (courier service)
+            if (distance <= 20) {
+              shippingMethod = 'INTERNAL';
+              console.log(`[Order Shipping] ✅ Distance: ${shippingDistance}km (<= 20km) => INTERNAL DELIVERY`);
+            } else {
+              shippingMethod = 'SHIPROCKET';
+              console.log(`[Order Shipping] ✅ Distance: ${shippingDistance}km (> 20km) => SHIPROCKET`);
+            }
+          } else {
+            // Cannot calculate distance - default to INTERNAL for safety (local first approach)
+            // This ensures nearby customers don't get routed to expensive courier
+            shippingMethod = 'INTERNAL';
+            console.warn('[Order Shipping] ⚠️ Could not calculate distance. Origin coords:', originLat, originLng, '| Dest coords:', destLat, destLng);
+            console.warn('[Order Shipping] ⚠️ Defaulting to INTERNAL shipping method');
+          }
+
+        } catch (shippingError) {
+          console.error('[Order Shipping] ❌ Error calculating shipping method:', shippingError);
+          // Default to INTERNAL on error (fail-safe for local delivery)
+          shippingMethod = 'INTERNAL';
+          console.warn('[Order Shipping] ⚠️ Defaulting to INTERNAL due to error');
+        }
+
+        console.log(`[Order Shipping] FINAL METHOD: ${shippingMethod}, DISTANCE: ${shippingDistance ?? 'unknown'}km`);
+
         for (const item of orderItems) {
           const updateResult = await Product.updateOne(
             { _id: item.productId, stock: { $gte: item.quantity } },
@@ -170,8 +262,11 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
               influencerCode: influencerCode ? influencerCode.toUpperCase() : undefined,
               discountAmount,
               payableAmount,
+
               status: 'CREATED',
               paymentProvider: paymentMethod === 'COD' ? 'COD' : undefined,
+              shippingMethod,
+              shippingDistance,
             },
           ],
           { session }

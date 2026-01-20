@@ -11,6 +11,7 @@ import {
   User as FirebaseUser,
   onAuthStateChanged,
   signOut,
+  getRedirectResult,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -63,35 +64,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load cached user on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("auth_user");
+      if (cached) {
+        try {
+          setBackendUser(JSON.parse(cached));
+        } catch (e) {
+          localStorage.removeItem("auth_user");
+        }
+      }
+    }
+  }, []);
+
+  // Update cache whenever backendUser changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (backendUser) {
+        localStorage.setItem("auth_user", JSON.stringify(backendUser));
+      } else if (firebaseUser === null) {
+        // Only clear cache if explicitly logged out (firebaseUser null)
+        localStorage.removeItem("auth_user");
+      }
+    }
+  }, [backendUser, firebaseUser]);
+
   // Refresh ID token
   const refreshToken = async (): Promise<string | null> => {
     try {
-      if (!firebaseUser) return null;
-      const token = await firebaseUser.getIdToken(true);
+      if (!auth.currentUser) return null;
+      const token = await auth.currentUser.getIdToken(true);
       setIdToken(token);
-      // Sync server cookie for SSR/middleware
-      try {
-        await fetch("/api/auth/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-      } catch (_) { }
-      setError(null); // Clear any previous errors on successful refresh
+      // Sync server cookie for SSR/middleware silently
+      fetch("/api/auth/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      }).catch(() => { }); // Ignore sync errors
       return token;
     } catch (err) {
-      console.error("Failed to refresh token:", err);
-      // Don't set error message here - let the calling code handle it gracefully
-      // This prevents false "session expired" messages when network is slow
+      console.warn("Failed to refresh token:", err);
       return null;
     }
   };
 
-  // Fetch backend user info
-  const fetchBackendUser = async (token: string) => {
+  // Fetch backend user info with retries
+  const fetchBackendUser = async (token: string, retryCount = 0) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:4000/api"}/me`,
+        `${process.env.NEXT_PUBLIC_API_BASE || "/api"}/me`,
         {
           method: "GET",
           headers: {
@@ -102,101 +124,107 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       );
 
       if (!response.ok) {
+        // Handle Token Expiry (401)
         if (response.status === 401) {
-          // Token expired, try refresh once
-          const refreshed = await refreshToken();
-          if (refreshed) {
-            return fetchBackendUser(refreshed);
+          if (retryCount < 2) {
+            console.log("Token expired, attempting refresh...");
+            const refreshed = await refreshToken();
+            if (refreshed) {
+              return fetchBackendUser(refreshed, retryCount + 1);
+            }
           }
-          // If refresh fails, clear everything
-          setFirebaseUser(null);
-          setIdToken(null);
-          setBackendUser(null);
-          setError(null);
-          return;
-        }
-        if (response.status === 403) {
-          // User forbidden or inactive - sign them out completely
-          console.warn("User forbidden or inactive, logging out");
-          await signOut(auth);
-          setFirebaseUser(null);
-          setIdToken(null);
-          setBackendUser(null);
-          setError(null);
-          return;
-        }
-        throw new Error(`Failed to fetch user: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.user) {
-        if (
-          data.user.isActive === false ||
-          data.user.businessActive === false
-        ) {
+          // If refresh fails or retries exhausted, only then log out
+          console.error("Authentication failed permanently.");
           await handleLogout();
           return;
         }
 
-        // Get custom claims from Firebase token to read accountType
-        let accountType = data.user.accountType;
-        if (!accountType && firebaseUser) {
-          try {
-            const tokenResult = await firebaseUser.getIdTokenResult();
-            accountType = tokenResult.claims.accountType;
-          } catch (e) {
-            console.error("Error reading custom claims:", e);
-          }
+        // Handle Banned/Inactive (403)
+        if (response.status === 403) {
+          console.warn("User forbidden, logging out.");
+          await handleLogout();
+          return;
         }
 
+        // For 500s or other errors, DO NOT LOG OUT.
+        // Keep the existing (cached) user if available.
+        console.error(`Backend error: ${response.status}. Keeping cached session.`);
+        // We throw here so the catch block handles "graceful degradation"
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.user) {
+        // Check active status
+        if (data.user.isActive === false || data.user.businessActive === false) {
+          await handleLogout();
+          return;
+        }
+
+        // Get custom claims
+        let accountType = data.user.accountType;
+        if (!accountType && auth.currentUser) {
+          try {
+            const tokenResult = await auth.currentUser.getIdTokenResult();
+            accountType = tokenResult.claims.accountType;
+          } catch (e) { }
+        }
+
+        // Success - Update State
         setBackendUser({
           id: data.user.id || data.user._id,
           email: data.user.email,
           role: data.user.role,
           businessId: data.user.businessId,
-          accountType: accountType, // Include accountType from Firebase custom claims
+          accountType: accountType,
+          name: data.user.name,
+          phone: data.user.phone
         });
         setError(null);
       }
     } catch (err) {
       console.error("Error fetching backend user:", err);
-      // Gracefully degrade on network failures
-      setError("Unable to reach backend. Retrying shortly.");
-      setBackendUser(null);
+      // NETWORK ERROR: Do NOT log out.
+      // If we have a cached user, we are fine.
+      if (!backendUser) {
+        setError("Offline mode / Network error");
+      }
+      // If we have backendUser, we just stay "logged in" with stale data.
     }
   };
 
   // Listen to Firebase auth state changes
   useEffect(() => {
+    // DEBUG: Version Check (Removed to reduce noise)
+    // alert("SYSTEM CHECK: v3 (Redirect Debug)");
+
+    // Check for redirect errors (Mobile)
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) alert(`Redirect Success: ${result.user.email}`);
+      })
+      .catch((error) => {
+        alert(`Redirect Error: ${error.code} - ${error.message}`);
+      });
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         setLoading(true);
         if (user) {
-          // User is signed in
-          const token = await user.getIdToken();
           setFirebaseUser(user);
+          const token = await user.getIdToken();
           setIdToken(token);
-          // Sync server cookie on sign-in
-          try {
-            await fetch("/api/auth/sync", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token }),
-            });
-          } catch (_) { }
 
-          // Fetch backend user info
+          // Initial fetch
           await fetchBackendUser(token);
         } else {
-          // User is signed out
+          // Explicit logout from Firebase
           setFirebaseUser(null);
           setIdToken(null);
           setBackendUser(null);
-          setError(null);
         }
       } catch (err) {
         console.error("Auth state change error:", err);
-        setError(err instanceof Error ? err.message : "Authentication error");
       } finally {
         setLoading(false);
       }
@@ -205,18 +233,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // Refresh token every 50 minutes (ID tokens expire in 1 hour)
+  // Silent Token Refresh Loop (Every 45 mins)
   useEffect(() => {
     if (!firebaseUser) return;
-
-    const interval = setInterval(() => {
-      refreshToken().then((token) => {
-        if (token) {
-          fetchBackendUser(token);
-        }
-      });
-    }, 50 * 60 * 1000);
-
+    const interval = setInterval(async () => {
+      const token = await refreshToken();
+      if (token) fetchBackendUser(token);
+    }, 45 * 60 * 1000);
     return () => clearInterval(interval);
   }, [firebaseUser]);
 
@@ -224,20 +247,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       await signOut(auth);
+      // Clears state via onAuthStateChanged listener
+      // Also manually clear to be instant
       setFirebaseUser(null);
-      setIdToken(null);
       setBackendUser(null);
-      setError(null);
-      // Clear server cookie
-      try {
-        await fetch("/api/auth/logout", { method: "POST" });
-      } catch (_) { }
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+      localStorage.removeItem("auth_user");
+
+      await fetch("/api/auth/logout", { method: "POST" }).catch(() => { });
+      if (typeof window !== "undefined") window.location.href = "/login";
     } catch (err) {
       console.error("Logout error:", err);
-      setError(err instanceof Error ? err.message : "Failed to logout");
     } finally {
       setLoading(false);
     }

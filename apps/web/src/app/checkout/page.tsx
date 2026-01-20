@@ -11,6 +11,8 @@ import Image from "next/image";
 import Footer from "@/components/footer/Footer";
 import { getStoredAffiliateCode, clearStoredAffiliateCode } from "@/hooks/useAffiliateTracking";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
+
 declare global {
   interface Window {
     Razorpay: any;
@@ -29,9 +31,25 @@ function loadRazorpayScript() {
   });
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:4000/api";
+// Haversine Distance Calculator (Returns distance in KM)
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
+function deg2rad(deg: number): number {
+  return deg * (Math.PI / 180);
+}
+
+// ... (interfaces)
+// ... (interfaces)
 interface Product {
   _id: string;
   title: string;
@@ -41,6 +59,8 @@ interface Product {
   description?: string;
   brand?: string;
   deliveryEstimate?: string;
+  pickupLocationCoordinates?: { lat: number; lng: number };
+  isCodAvailable?: boolean;
 }
 
 interface CartItemWithProduct {
@@ -60,60 +80,77 @@ interface Address {
   pincode: string;
   country: string;
   isDefault: boolean;
+  coordinates?: { lat: number; lng: number };
 }
 
 // Helper to calculate max delivery time from cart items
-function calculateOrderDelivery(items: CartItemWithProduct[]): string {
-  console.log("🚚 Calculating Delivery for items:", items.length);
-
+function calculateOrderDelivery(
+  items: CartItemWithProduct[],
+  userCoordinates: { lat: number; lng: number } | null | undefined
+): { text: string; minutes: number } {
   if (!items || items.length === 0) {
-    console.log("🚚 No items, returning default: 10-15 mins");
-    return "10-15 mins";
+    return { text: "10-15 mins", minutes: 15 };
   }
 
   let maxMinutes = 0;
   let worstCaseString = "10-15 mins";
 
   for (const item of items) {
-    const rawEstimate = item.product.deliveryEstimate;
-    console.log(`🚚 Item: ${item.product.title}, Estimate: ${rawEstimate}`);
+    let minutes = 15; // Default fallback
 
-    const estimate = rawEstimate?.toLowerCase();
-    if (!estimate) continue;
+    // Priority: Coordinate based calculation (Live Instant Accurate)
+    if (userCoordinates && item.product.pickupLocationCoordinates) {
+      const distKm = calculateDistance(
+        userCoordinates.lat,
+        userCoordinates.lng,
+        item.product.pickupLocationCoordinates.lat,
+        item.product.pickupLocationCoordinates.lng
+      );
 
-    // Normalize to upper bound minutes
-    let minutes = 0;
-
-    // Check for "days"
-    if (estimate.includes("day")) {
-      const parts = estimate.match(/(\d+)/g);
-      // If "2-3 days", take 3. If "1 day", take 1.
-      const days = parts ? parseInt(parts[parts.length - 1]) : 1;
-      minutes = days * 24 * 60;
-    } else if (estimate.includes("hour") || estimate.includes("hr")) {
-      const parts = estimate.match(/(\d+)/g);
-      const hours = parts ? parseInt(parts[parts.length - 1]) : 1;
-      minutes = hours * 60;
+      // Assumption: 20 km/h average speed for local delivery
+      // Prep time: 10 mins
+      // Buffer: 5 mins
+      const travelMinutes = (distKm / 20) * 60;
+      minutes = Math.ceil(travelMinutes + 15);
+      worstCaseString = `${minutes} - ${minutes + 5} mins`; // Dynamic string range
     } else {
-      // Assume minutes (e.g. "10-15 mins", "45 mins")
-      const parts = estimate.match(/(\d+)/g);
-      if (parts) {
-        minutes = parseInt(parts[parts.length - 1]);
+      // Fallback: Static estimate parsing
+      const rawEstimate = item.product.deliveryEstimate;
+      const estimate = rawEstimate?.toLowerCase();
+
+      if (estimate) {
+        if (estimate.includes("day")) {
+          const parts = estimate.match(/(\d+)/g);
+          const days = parts ? parseInt(parts[parts.length - 1]) : 1;
+          minutes = days * 24 * 60;
+        } else if (estimate.includes("hour") || estimate.includes("hr")) {
+          const parts = estimate.match(/(\d+)/g);
+          const hours = parts ? parseInt(parts[parts.length - 1]) : 1;
+          minutes = hours * 60;
+        } else {
+          const parts = estimate.match(/(\d+)/g);
+          if (parts) {
+            minutes = parseInt(parts[parts.length - 1]);
+          }
+        }
+        if (minutes > 0) worstCaseString = rawEstimate || "10-15 mins";
       }
     }
 
-    console.log(`🚚 Parsed minutes: ${minutes}`);
-
-    if (minutes > 0 && minutes > maxMinutes) {
+    if (minutes > maxMinutes) {
       maxMinutes = minutes;
-      worstCaseString = rawEstimate || "10-15 mins";
+      if (!userCoordinates || !item.product.pickupLocationCoordinates) {
+        // Only overwrite string if we used the fallback method for this item
+        // OR if this is the longest duration item found so far
+        worstCaseString = item.product.deliveryEstimate || "10-15 mins";
+      }
     }
   }
 
-  console.log(`🚚 Final Max Minutes: ${maxMinutes}, Result: ${worstCaseString}`);
-  // If we found a valid estimate (non-zero), use it.
-  // Otherwise default to 10-15 mins.
-  return maxMinutes > 0 ? worstCaseString : "10-15 mins";
+  return {
+    text: maxMinutes > 0 ? worstCaseString : "10-15 mins",
+    minutes: maxMinutes > 0 ? maxMinutes : 15
+  };
 }
 
 export default function CheckoutPage() {
@@ -148,7 +185,18 @@ export default function CheckoutPage() {
   const [addressFormLoading, setAddressFormLoading] = useState(false);
   const [addressFormError, setAddressFormError] = useState<string | null>(null);
   const [fetchingLocation, setFetchingLocation] = useState(false);
-  const [addressForm, setAddressForm] = useState({
+  const [addressForm, setAddressForm] = useState<{
+    name: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+    isDefault: boolean;
+    coordinates?: { lat: number; lng: number };
+  }>({
     name: "",
     phone: "",
     addressLine1: "",
@@ -212,6 +260,7 @@ export default function CheckoutPage() {
                   description: product.description,
                   brand: product.brand,
                   deliveryEstimate: product.deliveryEstimate,
+                  pickupLocationCoordinates: product.pickupLocationCoordinates
                 },
               };
             })
@@ -318,6 +367,7 @@ export default function CheckoutPage() {
         pincode: address.pincode,
         country: address.country,
         isDefault: address.isDefault,
+        coordinates: address.coordinates
       });
     } else {
       resetAddressForm();
@@ -343,6 +393,13 @@ export default function CheckoutPage() {
 
   // Fetch user's current location and reverse geocode it
   const handleFetchLocation = async () => {
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      const msg = "Location Access requires a secure connection (HTTPS). It will not work on 'http://' (except localhost).";
+      alert(msg); // Alert specifically for mobile testing awareness
+      setAddressFormError(msg);
+      return;
+    }
+
     if (!navigator.geolocation) {
       setAddressFormError("Geolocation is not supported by your browser");
       return;
@@ -355,7 +412,7 @@ export default function CheckoutPage() {
       const position = await new Promise<GeolocationPosition>(
         (resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: false,
+            enableHighAccuracy: true, // Request high accuracy for better ETA
             timeout: 30000,
             maximumAge: 0,
           });
@@ -415,7 +472,7 @@ export default function CheckoutPage() {
         addressLine2 = address.neighbourhood;
       }
 
-      // Update form with fetched data
+      // Update form with fetched data including COORDINATES
       setAddressForm((prev) => ({
         ...prev,
         addressLine1:
@@ -424,6 +481,7 @@ export default function CheckoutPage() {
         state: state || prev.state,
         pincode: pincode || prev.pincode,
         addressLine2,
+        coordinates: { lat: latitude, lng: longitude } // Store coordinates!
       }));
 
       setAddressFormError(null);
@@ -502,6 +560,42 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Forward Geocoding: If coordinates are missing (Manual Entry), fetch them
+      let finalCoordinates = addressForm.coordinates;
+
+      if (!finalCoordinates || (!finalCoordinates.lat && !finalCoordinates.lng)) {
+        try {
+          const query = `${addressForm.addressLine1}, ${addressForm.city}, ${addressForm.state}, ${addressForm.pincode}, ${addressForm.country}`;
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
+            headers: { "Accept-Language": "en" }
+          });
+          const geoData = await geoRes.json();
+
+          if (geoData && geoData.length > 0) {
+            finalCoordinates = {
+              lat: parseFloat(geoData[0].lat),
+              lng: parseFloat(geoData[0].lon)
+            };
+            console.log("📍 Forward Geocoding Success:", finalCoordinates);
+          }
+        } catch (geoErr) {
+          console.warn("Values forward geocoding failed:", geoErr);
+          // Fallback to Pincode only if full address fails
+          try {
+            const pinRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&postalcode=${addressForm.pincode}&country=India&limit=1`);
+            const pinData = await pinRes.json();
+            if (pinData && pinData.length > 0) {
+              finalCoordinates = {
+                lat: parseFloat(pinData[0].lat),
+                lng: parseFloat(pinData[0].lon)
+              };
+            }
+          } catch (_) { }
+        }
+      }
+
+      const payload = { ...addressForm, coordinates: finalCoordinates };
+
       const url = editingAddressId
         ? `${API_BASE}/addresses/${editingAddressId}`
         : `${API_BASE}/addresses`;
@@ -512,7 +606,7 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(addressForm),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -742,6 +836,11 @@ export default function CheckoutPage() {
   const discount = appliedCoupon ? appliedCoupon.discount : 0;
   const total = subtotal + shippingFee + tax - discount;
 
+  // Check if COD is available for ALL items
+  const isCodAvailableForOrder = cartItems.every(
+    (item) => item.product.isCodAvailable !== false
+  );
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-surface-light flex flex-col items-center justify-center">
@@ -794,8 +893,22 @@ export default function CheckoutPage() {
                   <div className="w-3 h-3 bg-green-500 rounded-full pulse-glow"></div>
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#1a3a1f] dark:text-[#a3cfab]">Delivering in {calculateOrderDelivery(cartItems)}</h3>
-                  <p className="text-sm text-[#3a5a3f] dark:text-[#7ba983]">Your items are ready for rapid dispatch.</p>
+                  <h3 className="font-bold text-[#1a3a1f] dark:text-[#a3cfab]">
+                    {(() => {
+                      const selectedAddress = addresses.find(a => a._id === selectedAddressId);
+                      const { minutes, text } = calculateOrderDelivery(cartItems, selectedAddress?.coordinates);
+
+                      // If address is selected, show explicit time
+                      if (selectedAddressId && minutes < 1440) { // Less than 24 hours
+                        const arrivalTime = new Date(Date.now() + minutes * 60000);
+                        return `Arriving by ${arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                      }
+                      return `Delivering in ${text}`;
+                    })()}
+                  </h3>
+                  <p className="text-sm text-[#3a5a3f] dark:text-[#7ba983]">
+                    {selectedAddressId ? "Fast delivery to your doorstep." : "Your items are ready for rapid dispatch."}
+                  </p>
                 </div>
               </div>
               <span className="material-symbols-outlined text-green-500">bolt</span>
@@ -945,7 +1058,7 @@ export default function CheckoutPage() {
                       <h3 className="text-lg font-bold">Payment Method</h3>
                       {selectedPaymentMethod && (
                         <p className="text-sm text-gray-500">
-                          {selectedPaymentMethod === "RAZORPAY" ? "Online Payment" : selectedPaymentMethod}
+                          {selectedPaymentMethod === "RAZORPAY" ? "Online Payment" : "Cash on Delivery"}
                         </p>
                       )}
                     </div>
@@ -957,23 +1070,72 @@ export default function CheckoutPage() {
 
                 {currentStep === 2 && (
                   <div className="p-6 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[
-                        { value: "RAZORPAY", label: "Pay Online", sub: "Card, UPI, Netbanking", icon: "credit_card" },
-                        { value: "COD", label: "Cash on Delivery", sub: "Pay at doorstep", icon: "payments" }
-                      ].map((method) => (
-                        <div
-                          key={method.value}
-                          onClick={() => setSelectedPaymentMethod(method.value)}
-                          className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${selectedPaymentMethod === method.value ? 'border-primary bg-primary/5' : 'border-gray-100'}`}
-                        >
-                          {selectedPaymentMethod === method.value && <div className="absolute top-3 right-3 text-primary"><span className="material-symbols-outlined">check_circle</span></div>}
-                          <span className="material-symbols-outlined text-3xl mb-3 text-gray-700">{method.icon}</span>
-                          <h4 className="font-bold text-gray-900">{method.label}</h4>
-                          <p className="text-xs text-gray-500">{method.sub}</p>
+                    <div className="space-y-4">
+                      {/* Online Payment Option */}
+                      <label
+                        className={`block p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedPaymentMethod === 'RAZORPAY'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-100 hover:border-gray-200'
+                          }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="radio"
+                            name="payment"
+                            value="RAZORPAY"
+                            checked={selectedPaymentMethod === 'RAZORPAY'}
+                            onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                            className="hidden"
+                          />
+                          <span className="material-symbols-outlined text-3xl text-gray-700">credit_card</span>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-bold text-gray-900">Pay Online</h4>
+                              {selectedPaymentMethod === 'RAZORPAY' && <div className="text-primary"><span className="material-symbols-outlined">check_circle</span></div>}
+                            </div>
+                            <p className="text-xs text-gray-500">Card, UPI, Netbanking</p>
+                          </div>
                         </div>
-                      ))}
+                      </label>
+
+                      {/* Cash on Delivery Option */}
+                      <label
+                        className={`block p-4 rounded-xl border-2 transition-all ${!isCodAvailableForOrder
+                          ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                          : selectedPaymentMethod === 'COD'
+                            ? 'border-primary bg-primary/5 cursor-pointer'
+                            : 'border-gray-100 hover:border-gray-200 cursor-pointer'
+                          }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="radio"
+                            name="payment"
+                            value="COD"
+                            checked={selectedPaymentMethod === 'COD'}
+                            onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                            disabled={!isCodAvailableForOrder}
+                            className="hidden"
+                          />
+                          <span className="material-symbols-outlined text-3xl text-gray-700">payments</span>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div className="flex flex-col">
+                                <h4 className="font-bold text-gray-900">Cash on Delivery</h4>
+                                {!isCodAvailableForOrder && (
+                                  <span className="text-xs text-red-500 font-medium mt-1">
+                                    Not available for some items in cart
+                                  </span>
+                                )}
+                              </div>
+                              {selectedPaymentMethod === 'COD' && <div className="text-primary"><span className="material-symbols-outlined">check_circle</span></div>}
+                            </div>
+                            <p className="text-xs text-gray-500">Pay at doorstep</p>
+                          </div>
+                        </div>
+                      </label>
                     </div>
+
                     <div className="pt-6 flex justify-end">
                       <button onClick={() => setCurrentStep(3)} className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:brightness-110 shadow-lg shadow-primary/20 transition-all">
                         Continue to Review
