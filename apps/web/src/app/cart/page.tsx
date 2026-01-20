@@ -7,6 +7,7 @@ import Image from "next/image";
 
 import Footer from "@/components/footer/Footer";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
@@ -31,6 +32,7 @@ interface CartWithProducts extends CartItem {
 export default function CartPage() {
   const router = useRouter();
   const { backendUser, loading: authLoading, idToken, refreshToken } = useAuth();
+  const { refreshCart } = useCart();
   const [cartItems, setCartItems] = useState<CartWithProducts[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,10 +177,12 @@ export default function CartPage() {
               : item
           )
         );
+        // Sync cart count in Header
+        refreshCart();
       } else {
         const errData = await res.json().catch(() => ({}));
-        console.error("Cart update failed:", errData);
-        setError(errData.error || "Failed to update quantity");
+        console.error(`Cart update failed: ${res.status} ${res.statusText}`, errData);
+        setError(errData.error || `Request failed: ${res.status} ${res.statusText}`);
         setTimeout(() => setError(null), 3000);
       }
     } catch (err) {
@@ -214,6 +218,8 @@ export default function CartPage() {
         setCartItems((prev) =>
           prev.filter((item) => item.productId !== productId)
         );
+        // Sync cart count in Header
+        refreshCart();
       } else {
         setError("Failed to remove item");
         setTimeout(() => setError(null), 3000);

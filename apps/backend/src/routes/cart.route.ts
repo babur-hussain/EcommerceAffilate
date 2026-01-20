@@ -1,268 +1,387 @@
 import { Router, Request, Response } from 'express';
-import mongoose from 'mongoose';
-import { Cart } from '../models/cart.model';
-import { Product } from '../models/product.model';
-import { Address } from '../models/address.model';
 import { requireCustomer } from '../middlewares/rbac';
-import { estimateDeliveryTime } from '../utils/delivery';
+import * as cartService from '../services/cart.service';
+import mongoose from 'mongoose';
 
 const router = Router();
 
+// ==========================================
+// 🛒 CART API ROUTES
+// ==========================================
+
+/**
+ * GET /cart
+ * Get the current user's cart with populated product details
+ */
 router.get('/cart', requireCustomer, async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user as { id?: string } | undefined;
-    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = (req as any).user?.id;
 
-    let cart = await Cart.findOne({ userId: user.id })
-      .populate({
-        path: 'items.productId',
-        populate: {
-          path: 'businessId',
-          select: 'addresses'
-        }
-      })
-      .lean();
-
-    if (!cart) {
-      // Create new cart if not exists (using Model to create)
-      const newCart = await Cart.create({ userId: user.id, items: [] });
-      return res.json(newCart);
-    }
-
-    // Fetch user's delivery address for estimation
-    // Try to find default, otherwise first available
-    const address = await Address.findOne({ userId: user.id })
-      .sort({ isDefault: -1, updatedAt: -1 })
-      .lean();
-
-    const destinationPincode = address?.pincode;
-
-    // Calculate delivery estimates for each item
-    if (cart.items && cart.items.length > 0) {
-      cart.items = cart.items.map((item: any) => {
-        if (item.productId && typeof item.productId === 'object') {
-          const product = item.productId;
-
-          let deliveryEstimate = null;
-          if (destinationPincode) {
-            // Determine origin
-            let origin = '110001'; // Default warehouse Delhi
-            if (product.pickupLocation) {
-              origin = product.pickupLocation;
-            } else if (product.businessId && (product.businessId as any).addresses) {
-              const biz = product.businessId as any;
-              origin = biz.addresses?.operational?.pincode
-                || biz.addresses?.registered?.pincode
-                || '110001';
-            }
-
-            deliveryEstimate = estimateDeliveryTime(origin, String(destinationPincode));
-          }
-
-          // Attach to product
-          item.productId = {
-            ...product,
-            deliveryEstimate
-          };
-        }
-        return item;
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User not authenticated',
+        code: 'UNAUTHORIZED',
       });
     }
 
-    res.json(cart);
+    const result = await cartService.getCart(userId);
+
+    if (!result.success) {
+      return res.status(500).json({
+        error: result.error,
+        code: result.code,
+      });
+    }
+
+    return res.json(result.cart);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to fetch cart', message: error.message });
+    console.error('GET /cart error:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
   }
 });
 
+/**
+ * POST /cart/add
+ * Add an item to the cart
+ * Body: { productId: string, quantity?: number }
+ */
 router.post('/cart/add', requireCustomer, async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user as { id?: string } | undefined;
-    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = (req as any).user?.id;
 
-    const { productId, quantity } = req.body as { productId?: string; quantity?: number };
-
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ error: 'Invalid productId' });
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User not authenticated',
+        code: 'UNAUTHORIZED',
+      });
     }
 
-    if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1) {
-      return res.status(400).json({ error: 'Quantity must be an integer >= 1' });
+    const { productId, quantity = 1 } = req.body;
+
+    // Validate productId is provided
+    if (!productId) {
+      return res.status(400).json({
+        error: 'Product ID is required',
+        code: 'MISSING_PRODUCT_ID',
+      });
     }
 
-    const product = await Product.findOne({ _id: productId, isActive: true }).select(
-      '_id stock'
-    );
-    if (!product) {
-      return res.status(400).json({ error: 'Product not found or inactive' });
+    // Validate productId format
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({
+        error: 'Invalid product ID format',
+        code: 'INVALID_PRODUCT_ID',
+      });
     }
 
-    let cart = await Cart.findOne({ userId: user.id });
-    if (!cart) {
-      cart = new Cart({ userId: user.id, items: [] });
-    } else {
-      // Auto-cleanup ghost items
-      cart.items = cart.items.filter((item) => item && item.productId);
+    // Validate quantity
+    const qty = parseInt(quantity, 10);
+    if (isNaN(qty) || qty < 1) {
+      return res.status(400).json({
+        error: 'Quantity must be a positive integer',
+        code: 'INVALID_QUANTITY',
+      });
     }
 
-    const existingItem = cart.items.find((item) => item.productId.toString() === productId);
-
-    const qty = quantity as number;
-    if (existingItem) {
-      const desiredQty = existingItem.quantity + qty;
-      if (desiredQty > product.stock) {
-        return res.status(400).json({ error: 'Insufficient stock for requested quantity' });
-      }
-      existingItem.quantity = desiredQty;
-    } else {
-      if (qty > product.stock) {
-        return res.status(400).json({ error: 'Insufficient stock for requested quantity' });
-      }
-      cart.items.push({ productId: new mongoose.Types.ObjectId(productId), quantity: qty });
+    if (qty > 99) {
+      return res.status(400).json({
+        error: 'Maximum quantity per item is 99',
+        code: 'QUANTITY_EXCEEDED',
+      });
     }
 
-    await cart.save();
-    await cart.populate('items.productId');
-    res.json(cart);
+    const result = await cartService.addToCart(userId, productId, qty);
+
+    if (!result.success) {
+      const statusCode = result.code === 'PRODUCT_NOT_FOUND' ? 404 :
+        result.code === 'OUT_OF_STOCK' || result.code === 'PRODUCT_UNAVAILABLE' ? 400 : 500;
+
+      return res.status(statusCode).json({
+        error: result.error,
+        code: result.code,
+        details: result.details,
+      });
+    }
+
+    // Include warning in response if quantity was adjusted
+    const response: any = result.cart;
+    if (result.details?.warning) {
+      response.warning = result.details.warning;
+    }
+
+    return res.json(response);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to add to cart', message: error.message });
-  }
-});
-
-router.post('/cart/remove', requireCustomer, async (req: Request, res: Response) => {
-  try {
-    const user = (req as any).user as { id?: string } | undefined;
-    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
-
-    const { productId } = req.body as { productId?: string };
-
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ error: 'Invalid productId' });
-    }
-
-    let cart = await Cart.findOne({ userId: user.id });
-    if (!cart) {
-      return res.status(404).json({ error: 'Cart not found' });
-    }
-
-    // 1. Sanitize cart (remove ghost items)
-    const initialItemCount = cart.items.length;
-    cart.items = cart.items.filter(item => item && item.productId);
-    if (cart.items.length !== initialItemCount) {
-      console.log(`🧹 cleaned up ${initialItemCount - cart.items.length} ghost items`);
-    }
-
-    // 2. Remove item
-    const originalLength = cart.items.length;
-    cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
-
-    if (cart.items.length === originalLength) {
-      return res.status(404).json({ error: 'Item not found in cart' });
-    }
-
-    // 3. Save (persists cleanup)
-    await cart.save();
-    await cart.populate({
-      path: 'items.productId',
-      populate: {
-        path: 'businessId',
-        select: 'addresses'
-      }
+    console.error('POST /cart/add error:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
     });
-
-    res.json(cart);
-  } catch (error: any) {
-    console.error('❌ Cart Remove Error:', error);
-    res.status(500).json({ error: 'Failed to remove from cart', message: error.message });
   }
 });
 
+/**
+ * POST /cart/update
+ * Update the quantity of a cart item
+ * Body: { productId: string, quantity: number }
+ */
 router.post('/cart/update', requireCustomer, async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user as { id?: string } | undefined;
-    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = (req as any).user?.id;
+    console.log('🔧 CART UPDATE - userId:', userId, 'body:', JSON.stringify(req.body));
 
-    const { productId, quantity } = req.body as { productId?: string; quantity?: number };
-
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ error: 'Invalid productId' });
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User not authenticated',
+        code: 'UNAUTHORIZED',
+      });
     }
 
-    if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1) {
-      return res.status(400).json({ error: 'Quantity must be an integer >= 1' });
+    const { productId, quantity } = req.body;
+
+    // Validate productId is provided
+    if (!productId) {
+      return res.status(400).json({
+        error: 'Product ID is required',
+        code: 'MISSING_PRODUCT_ID',
+      });
     }
 
-    let cart = await Cart.findOne({ userId: user.id });
-    if (!cart) {
-      console.log('❌ Cart not found');
-      return res.status(404).json({ error: 'Cart not found' });
+    // Validate productId format
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({
+        error: 'Invalid product ID format',
+        code: 'INVALID_PRODUCT_ID',
+      });
     }
 
-    // 1. Sanitize cart (remove ghost items)
-    const initialItemCount = cart.items.length;
-    cart.items = cart.items.filter(item => item && item.productId);
-    if (cart.items.length !== initialItemCount) {
-      console.log(`🧹 cleaned up ${initialItemCount - cart.items.length} ghost items`);
+    // Validate quantity
+    if (quantity === undefined || quantity === null) {
+      return res.status(400).json({
+        error: 'Quantity is required',
+        code: 'MISSING_QUANTITY',
+      });
     }
 
-    // 2. Find target item
-    const itemIndex = cart.items.findIndex((i) => i.productId.toString() === productId);
-
-    if (itemIndex === -1) {
-      console.log(`❌ Item not found in cart. Existing items: ${cart.items.map(i => i.productId.toString()).join(', ')}`);
-      return res.status(404).json({ error: 'Item not found in cart' });
+    const qty = parseInt(quantity, 10);
+    if (isNaN(qty) || qty < 0) {
+      return res.status(400).json({
+        error: 'Quantity must be a non-negative integer',
+        code: 'INVALID_QUANTITY',
+      });
     }
 
-    const product = await Product.findOne({ _id: productId, isActive: true }).select(
-      '_id stock'
-    );
-    if (!product) {
-      console.log('❌ Product not found or inactive');
-      return res.status(400).json({ error: 'Product not found or inactive' });
+    if (qty > 99) {
+      return res.status(400).json({
+        error: 'Maximum quantity per item is 99',
+        code: 'QUANTITY_EXCEEDED',
+      });
     }
 
-    const qty2 = quantity as number;
-    if (qty2 > product.stock) {
-      console.log(`❌ Insufficient stock. Req: ${qty2}, Stock: ${product.stock}`);
-      return res.status(400).json({ error: 'Insufficient stock for requested quantity' });
+    console.log('🔧 CART UPDATE - Calling service with userId:', userId, 'productId:', productId, 'qty:', qty);
+    const result = await cartService.updateCartItemQuantity(userId, productId, qty);
+    console.log('🔧 CART UPDATE - Service result:', JSON.stringify(result, null, 2));
+
+    if (!result.success) {
+      const statusCode =
+        result.code === 'CART_NOT_FOUND' || result.code === 'ITEM_NOT_IN_CART' ? 404 :
+          result.code === 'PRODUCT_UNAVAILABLE' ? 400 : 500;
+
+      return res.status(statusCode).json({
+        error: result.error,
+        code: result.code,
+        details: result.details,
+      });
     }
 
-    // 3. Update item
-    cart.items[itemIndex].quantity = qty2;
+    // Include warning in response if quantity was adjusted
+    const response: any = result.cart;
+    if (result.details?.warning) {
+      response.warning = result.details.warning;
+    }
 
-    // 4. Save (triggers validation and persists cleanup)
-    await cart.save();
-    await cart.populate({
-      path: 'items.productId',
-      populate: {
-        path: 'businessId',
-        select: 'addresses'
-      }
-    });
-
-    res.json(cart);
+    return res.json(response);
   } catch (error: any) {
-    console.error('❌ Cart Update Error:', error);
-    res.status(500).json({ error: 'Failed to update cart item', message: error.message });
+    console.error('POST /cart/update error:', error.message, error.stack);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
   }
 });
 
-router.post('/cart/clear', requireCustomer, async (req: Request, res: Response) => {
+/**
+ * POST /cart/remove
+ * Remove an item from the cart
+ * Body: { productId: string }
+ */
+router.post('/cart/remove', requireCustomer, async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user as { id?: string } | undefined;
-    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = (req as any).user?.id;
 
-    let cart = await Cart.findOne({ userId: user.id });
-    if (!cart) {
-      cart = await Cart.create({ userId: user.id, items: [] });
-    } else {
-      cart.items = [];
-      await cart.save();
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User not authenticated',
+        code: 'UNAUTHORIZED',
+      });
     }
 
-    res.json(cart);
+    const { productId } = req.body;
+
+    // Validate productId is provided
+    if (!productId) {
+      return res.status(400).json({
+        error: 'Product ID is required',
+        code: 'MISSING_PRODUCT_ID',
+      });
+    }
+
+    // Validate productId format
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({
+        error: 'Invalid product ID format',
+        code: 'INVALID_PRODUCT_ID',
+      });
+    }
+
+    const result = await cartService.removeFromCart(userId, productId);
+
+    if (!result.success) {
+      return res.status(500).json({
+        error: result.error,
+        code: result.code,
+      });
+    }
+
+    return res.json(result.cart);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to clear cart', message: error.message });
+    console.error('POST /cart/remove error:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
+  }
+});
+
+/**
+ * POST /cart/clear
+ * Clear all items from the cart
+ */
+router.post('/cart/clear', requireCustomer, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User not authenticated',
+        code: 'UNAUTHORIZED',
+      });
+    }
+
+    const result = await cartService.clearCart(userId);
+
+    if (!result.success) {
+      return res.status(500).json({
+        error: result.error,
+        code: result.code,
+      });
+    }
+
+    return res.json(result.cart);
+  } catch (error: any) {
+    console.error('POST /cart/clear error:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
+  }
+});
+
+/**
+ * POST /cart/sync
+ * Sync guest cart to user cart after login
+ * Body: { items: [{ productId: string, quantity: number }] }
+ */
+router.post('/cart/sync', requireCustomer, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User not authenticated',
+        code: 'UNAUTHORIZED',
+      });
+    }
+
+    const { items } = req.body;
+
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({
+        error: 'Items array is required',
+        code: 'MISSING_ITEMS',
+      });
+    }
+
+    const result = await cartService.syncGuestCart(userId, items);
+
+    if (!result.success) {
+      return res.status(500).json({
+        error: result.error,
+        code: result.code,
+      });
+    }
+
+    return res.json(result.cart);
+  } catch (error: any) {
+    console.error('POST /cart/sync error:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
+  }
+});
+
+/**
+ * POST /cart/validate
+ * Validate cart for checkout (re-check stock, remove unavailable items)
+ */
+router.post('/cart/validate', requireCustomer, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User not authenticated',
+        code: 'UNAUTHORIZED',
+      });
+    }
+
+    const result = await cartService.validateCartForCheckout(userId);
+
+    if (!result.success) {
+      const statusCode = result.code === 'EMPTY_CART' || result.code === 'NO_VALID_ITEMS' ? 400 : 500;
+
+      return res.status(statusCode).json({
+        error: result.error,
+        code: result.code,
+        details: result.details,
+      });
+    }
+
+    const response: any = result.cart;
+    if (result.details?.warnings) {
+      response.warnings = result.details.warnings;
+    }
+
+    return res.json(response);
+  } catch (error: any) {
+    console.error('POST /cart/validate error:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
   }
 });
 
