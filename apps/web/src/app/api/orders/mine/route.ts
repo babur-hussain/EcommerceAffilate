@@ -1,0 +1,37 @@
+import { NextResponse } from 'next/server';
+import { cookies, headers } from 'next/headers';
+
+// Server-side API routes need the full backend URL
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+
+export async function GET(req: Request) {
+    try {
+        // Get Authorization header from request (priority) or fall back to cookie
+        const headersList = await headers();
+        let token = headersList.get('Authorization')?.replace('Bearer ', '');
+
+        if (!token) {
+            const cookieStore = await cookies();
+            token = cookieStore.get('auth_token')?.value;
+        }
+
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const res = await fetch(`${BACKEND_URL}/api/orders/mine`, {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+            const error = data?.error || 'Failed to fetch orders';
+            return NextResponse.json({ error }, { status: res.status });
+        }
+        return NextResponse.json(data);
+    } catch (e) {
+        console.error('Orders mine proxy error:', e);
+        return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
+    }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -9,13 +9,22 @@ function PaymentSuccessInner() {
   const router = useRouter();
   const orderId = search.get('orderId');
   const [countdown, setCountdown] = useState(3);
+  const hasRedirected = useRef(false);
 
+  // Handle redirect separately from countdown state
+  useEffect(() => {
+    if (countdown <= 0 && !hasRedirected.current) {
+      hasRedirected.current = true;
+      router.push('/account/orders');
+    }
+  }, [countdown, router]);
+
+  // Countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push('/account/orders'); // Redirect to orders page
           return 0;
         }
         return prev - 1;
@@ -23,7 +32,7 @@ function PaymentSuccessInner() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [router]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
