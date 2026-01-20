@@ -30,15 +30,16 @@ export const createInfluencerAttribution = async (
     throw new Error('Order not found');
   }
 
-  // Find influencer by code (using email as code for now)
+  // Find influencer by referral code
   const influencer = await User.findOne({
-    email: influencerCode.toLowerCase(),
+    referralCode: influencerCode.toUpperCase(),
     role: 'INFLUENCER',
     isActive: true,
   }).select('_id businessId');
 
   if (!influencer) {
     // Invalid influencer code - silently fail, no attribution
+    console.warn(`[InfluencerAttribution] Invalid referral code: ${influencerCode}`);
     return null;
   }
 

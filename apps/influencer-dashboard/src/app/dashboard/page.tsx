@@ -18,7 +18,7 @@ import {
   CheckCircle,
   Sparkles,
 } from "lucide-react";
-import { DashboardMetrics, TopProduct, ClicksOverTime } from "@/types";
+import { DashboardMetrics, TopProduct, ClicksOverTime, Attribution } from "@/types";
 import {
   LineChart,
   Line,
@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [clicksData, setClicksData] = useState<ClicksOverTime[]>([]);
+  const [commissions, setCommissions] = useState<Attribution[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
   const [copiedCode, setCopiedCode] = useState(false);
@@ -44,27 +45,38 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
-    // Auto-refresh every 60 seconds
+    // Auto-refresh every 10 seconds for live feel
     const interval = setInterval(() => {
       fetchDashboardData(true);
-    }, 60000);
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // Live timer update every second
+  const [secondsAgo, setSecondsAgo] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsAgo(Math.floor((new Date().getTime() - lastUpdated.getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lastUpdated]);
 
   const fetchDashboardData = async (showRefreshIndicator = false) => {
     try {
       if (showRefreshIndicator) {
         setIsRefreshing(true);
       }
-      const [metricsRes, productsRes, clicksRes] = await Promise.all([
+      const [metricsRes, productsRes, clicksRes, attributionsRes] = await Promise.all([
         api.get("/api/influencers/metrics"),
         api.get("/api/influencers/top-products"),
         api.get("/api/influencers/clicks-over-time?days=30"),
+        api.get("/api/influencers/attributions?status=all&limit=10"),
       ]);
 
       setMetrics(metricsRes.data);
       setTopProducts(productsRes.data);
       setClicksData(clicksRes.data);
+      setCommissions(attributionsRes.data);
       setLastUpdated(new Date());
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -100,7 +112,8 @@ export default function DashboardPage() {
     );
   }
 
-  const currentMetrics = metrics?.[period] || {
+  const metricKey = period === "week" ? "thisWeek" : period === "month" ? "thisMonth" : "today";
+  const currentMetrics = metrics?.[metricKey] || {
     clicks: 0,
     conversions: 0,
     earnings: 0,
@@ -181,11 +194,7 @@ export default function DashboardPage() {
               )}
               {!isRefreshing && (
                 <span className="text-gray-400">
-                  Updated{" "}
-                  {Math.floor(
-                    (new Date().getTime() - lastUpdated.getTime()) / 1000
-                  )}
-                  s ago
+                  Updated {secondsAgo}s ago
                 </span>
               )}
             </div>
@@ -209,31 +218,28 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setPeriod("today")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              period === "today"
-                ? "bg-primary-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${period === "today"
+              ? "bg-primary-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
           >
             Today
           </button>
           <button
             onClick={() => setPeriod("week")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              period === "week"
-                ? "bg-primary-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${period === "week"
+              ? "bg-primary-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
           >
             This Week
           </button>
           <button
             onClick={() => setPeriod("month")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              period === "month"
-                ? "bg-primary-600 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${period === "month"
+              ? "bg-primary-600 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
           >
             This Month
           </button>
@@ -244,23 +250,21 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Earnings"
-          value={formatCurrency(currentMetrics.earnings)}
+          value={formatCurrency(allTimeMetrics.totalEarnings)}
           icon={<DollarSign className="h-6 w-6 text-primary-600" />}
           subtitle={`${formatCurrency(allTimeMetrics.pendingEarnings)} pending`}
         />
         <StatCard
           title="Clicks"
-          value={formatNumber(currentMetrics.clicks)}
+          value={formatNumber(allTimeMetrics.totalClicks)}
           icon={<MousePointerClick className="h-6 w-6 text-blue-600" />}
-          subtitle={`${formatNumber(allTimeMetrics.totalClicks)} all-time`}
+          subtitle={`${formatNumber(currentMetrics.clicks)} ${period}`}
         />
         <StatCard
           title="Conversions"
-          value={formatNumber(currentMetrics.conversions)}
+          value={formatNumber(allTimeMetrics.totalConversions)}
           icon={<ShoppingCart className="h-6 w-6 text-green-600" />}
-          subtitle={`${formatPercentage(
-            allTimeMetrics.conversionRate
-          )} conversion rate`}
+          subtitle={`${formatPercentage(allTimeMetrics.conversionRate)} conversion rate`}
         />
         <StatCard
           title="Avg Order Value"
@@ -385,6 +389,83 @@ export default function DashboardPage() {
             </div>
             <ArrowUpRight className="h-5 w-5 text-gray-400 ml-auto" />
           </a>
+        </div>
+      </div>
+
+      {/* Recent Commissions Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Recent Commissions
+          </h3>
+          <span className="text-xs text-gray-500">
+            {commissions.length} entries
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 text-gray-700 font-medium uppercase text-xs">
+              <tr>
+                <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4">Product</th>
+                <th className="px-6 py-4">Order Value</th>
+                <th className="px-6 py-4">Commission</th>
+                <th className="px-6 py-4">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {commissions.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    No commission history yet. Share your referral code to start earning!
+                  </td>
+                </tr>
+              ) : (
+                commissions.map((comm) => (
+                  <tr key={comm._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                      {new Date(comm.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      {comm.product ? (
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={comm.product.images?.[0] || "/placeholder.png"}
+                            alt={comm.product.name}
+                            className="w-8 h-8 rounded object-cover bg-gray-100"
+                          />
+                          <span className="font-medium text-gray-900 truncate max-w-[200px]">
+                            {comm.product.name}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {comm.orderAmount ? formatCurrency(comm.orderAmount) : "-"}
+                    </td>
+                    <td className="px-6 py-4 text-green-600 font-bold">
+                      {formatCurrency(comm.commissionAmount || 0)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize
+                        ${comm.status === "paid"
+                            ? "bg-green-100 text-green-800"
+                            : comm.status === "conversion"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                      >
+                        {comm.status === "click" ? "Pending" : comm.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

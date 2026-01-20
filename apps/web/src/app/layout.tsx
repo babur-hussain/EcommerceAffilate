@@ -3,6 +3,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import "./globals.css";
 import Header from "@/components/layout/Header";
+import AffiliateTracker from "@/components/common/AffiliateTracker";
 
 export const metadata: Metadata = {
   title: "Startup Betul - Modern E-commerce",
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         <AuthProvider>
           <CartProvider>
+            <AffiliateTracker />
             <Header />
             {children}
           </CartProvider>
