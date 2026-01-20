@@ -7,11 +7,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import AuthModal from "@/components/auth/AuthModal";
 import BusinessRegisterForm from "@/components/business/BusinessRegisterForm";
+import CartPopup from "@/components/cart/CartPopup";
 
 export default function Header() {
     const [authOpen, setAuthOpen] = useState(false);
     const [authMode, setAuthMode] = useState<"login" | "signup">("login");
     const [profileOpen, setProfileOpen] = useState(false);
+    const [cartOpen, setCartOpen] = useState(false);
     const [businessRegisterOpen, setBusinessRegisterOpen] = useState(false);
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
@@ -78,22 +80,37 @@ export default function Header() {
                         </Link>
 
                         {/* Cart */}
-                        <Link href="/cart" className="relative flex items-center justify-center size-10 bg-slate-900 text-white rounded-full shadow-lg hover:bg-primary transition-colors group">
-                            <span className="material-symbols-outlined text-[20px]">
-                                shopping_cart
-                            </span>
-                            {cartCount > 0 && (
-                                <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white">
-                                    {cartCount}
+                        <div className="relative" onMouseLeave={() => setCartOpen(false)}>
+                            <button
+                                onClick={() => setCartOpen(!cartOpen)}
+                                onMouseEnter={() => setCartOpen(true)}
+                                className="relative flex items-center justify-center size-10 bg-slate-900 text-white rounded-full shadow-lg hover:bg-primary transition-colors group"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">
+                                    shopping_cart
                                 </span>
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Cart Popup */}
+                            {cartOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40 bg-transparent md:hidden" onClick={() => setCartOpen(false)} />
+                                    <CartPopup onClose={() => setCartOpen(false)} />
+                                </>
                             )}
-                        </Link>
+                        </div>
 
                         {/* Account / Login Section */}
                         {isLoggedIn ? (
-                            <div className="relative">
+                            <div className="relative" onMouseLeave={() => setProfileOpen(false)}>
                                 <button
                                     onClick={() => setProfileOpen(!profileOpen)}
+                                    onMouseEnter={() => setProfileOpen(true)}
                                     className="flex flex-col items-center gap-1 group text-slate-500 hover:text-slate-900 transition-colors"
                                 >
                                     <div className="size-8 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200 group-hover:border-primary/50 transition-colors overflow-hidden">
