@@ -177,7 +177,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   pagination={{ clickable: true }}
                   thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
                   modules={[Navigation, Pagination, Thumbs, Autoplay]}
-                  onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+                  onSlideChange={(swiper: SwiperType) => setActiveIndex(swiper.activeIndex)}
                   className="rounded-xl bg-white shadow-sm overflow-hidden aspect-4/5"
                 >
                   {[product.primaryImage, ...(product.images || [])].map((img, idx) => (
