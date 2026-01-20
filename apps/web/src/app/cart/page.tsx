@@ -623,54 +623,72 @@ function CartItem({
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
             {/* Quantity Controls */}
-            <div className="flex items-center">
-              <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => handleQuantityChange(quantity - 1)}
-                  disabled={isProcessing || quantity <= 1}
-                  className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center">
+                <div className={`flex items-center border-2 rounded-lg overflow-hidden ${quantity > item.product.stock ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
+                  <button
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    disabled={isProcessing || quantity <= 1}
+                    className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M20 12H4"
-                    />
-                  </svg>
-                </button>
-                <div className="px-4 py-2 text-sm font-semibold border-l-2 border-r-2 border-gray-200 min-w-12 text-center bg-gray-50">
-                  {isProcessing ? (
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  ) : (
-                    quantity
-                  )}
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 12H4"
+                      />
+                    </svg>
+                  </button>
+                  <div className={`px-4 py-2 text-sm font-semibold border-l-2 border-r-2 min-w-12 text-center ${quantity > item.product.stock ? 'border-red-300 text-red-700' : 'border-gray-200 bg-gray-50'}`}>
+                    {isProcessing ? (
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    ) : (
+                      quantity
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleQuantityChange(quantity + 1)}
+                    disabled={isProcessing || quantity >= item.product.stock}
+                    className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={isProcessing || quantity >= item.product.stock}
-                  className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                </button>
               </div>
+
+              {/* Excessive Quantity Warning & Fix */}
+              {quantity > item.product.stock && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-bold text-red-600">
+                    Max avail: {item.product.stock}
+                  </span>
+                  <button
+                    onClick={() => onUpdateQuantity(item.productId, item.product.stock)}
+                    disabled={isProcessing}
+                    className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition-colors font-medium text-left w-fit"
+                  >
+                    Fix Quantity
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Price */}
