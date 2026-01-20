@@ -100,6 +100,9 @@ router.post('/cart/add', requireCustomer, async (req: Request, res: Response) =>
     let cart = await Cart.findOne({ userId: user.id });
     if (!cart) {
       cart = new Cart({ userId: user.id, items: [] });
+    } else {
+      // Auto-cleanup ghost items
+      cart.items = cart.items.filter((item) => item.productId);
     }
 
     const existingItem = cart.items.find((item) => item.productId.toString() === productId);
@@ -141,9 +144,11 @@ router.post('/cart/remove', requireCustomer, async (req: Request, res: Response)
     if (!cart) {
       return res.status(404).json({ error: 'Cart not found' });
     }
+    // Auto-cleanup ghost items
+    cart.items = cart.items.filter((item) => item.productId);
 
     const originalLength = cart.items.length;
-    cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
+    cart.items = cart.items.filter((item) => item.productId && item.productId.toString() !== productId);
 
     if (cart.items.length === originalLength) {
       return res.status(404).json({ error: 'Item not found in cart' });
@@ -177,6 +182,8 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
       console.log('❌ Cart not found');
       return res.status(404).json({ error: 'Cart not found' });
     }
+    // Auto-cleanup ghost items
+    cart.items = cart.items.filter((item) => item.productId);
 
     const item = cart.items.find((i) => i.productId && i.productId.toString() === productId);
     if (!item) {
