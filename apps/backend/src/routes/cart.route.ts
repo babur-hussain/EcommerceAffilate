@@ -178,9 +178,9 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
       return res.status(404).json({ error: 'Cart not found' });
     }
 
-    const item = cart.items.find((i) => i.productId.toString() === productId);
+    const item = cart.items.find((i) => i.productId && i.productId.toString() === productId);
     if (!item) {
-      console.log(`❌ Item not found in cart. Existing items: ${cart.items.map(i => i.productId.toString()).join(', ')}`);
+      console.log(`❌ Item not found in cart. Existing items: ${cart.items.map(i => i.productId?.toString()).join(', ')}`);
       return res.status(404).json({ error: 'Item not found in cart' });
     }
 
