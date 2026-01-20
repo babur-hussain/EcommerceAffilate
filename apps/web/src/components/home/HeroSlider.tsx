@@ -44,7 +44,7 @@ export default function HeroSlider() {
                 }}
                 pagination={{
                     clickable: true,
-                    renderBullet: (index, className) => {
+                    renderBullet: (index: number, className: string) => {
                         return `<span class="${className}" style="width: 24px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.5); opacity: 1;"></span>`;
                     },
                 }}
