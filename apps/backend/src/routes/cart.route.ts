@@ -140,22 +140,35 @@ router.post('/cart/remove', requireCustomer, async (req: Request, res: Response)
       return res.status(400).json({ error: 'Invalid productId' });
     }
 
-    // Atomic removal using $pull
-    const cart = await Cart.findOneAndUpdate(
-      { userId: user.id },
-      { $pull: { items: { productId: new mongoose.Types.ObjectId(productId) } } },
-      { new: true }
-    ).populate({
+    let cart = await Cart.findOne({ userId: user.id });
+    if (!cart) {
+      return res.status(404).json({ error: 'Cart not found' });
+    }
+
+    // 1. Sanitize cart (remove ghost items)
+    const initialItemCount = cart.items.length;
+    cart.items = cart.items.filter(item => item && item.productId);
+    if (cart.items.length !== initialItemCount) {
+      console.log(`🧹 cleaned up ${initialItemCount - cart.items.length} ghost items`);
+    }
+
+    // 2. Remove item
+    const originalLength = cart.items.length;
+    cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
+
+    if (cart.items.length === originalLength) {
+      return res.status(404).json({ error: 'Item not found in cart' });
+    }
+
+    // 3. Save (persists cleanup)
+    await cart.save();
+    await cart.populate({
       path: 'items.productId',
       populate: {
         path: 'businessId',
         select: 'addresses'
       }
     });
-
-    if (!cart) {
-      return res.status(404).json({ error: 'Cart not found' });
-    }
 
     res.json(cart);
   } catch (error: any) {
@@ -179,6 +192,27 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
       return res.status(400).json({ error: 'Quantity must be an integer >= 1' });
     }
 
+    let cart = await Cart.findOne({ userId: user.id });
+    if (!cart) {
+      console.log('❌ Cart not found');
+      return res.status(404).json({ error: 'Cart not found' });
+    }
+
+    // 1. Sanitize cart (remove ghost items)
+    const initialItemCount = cart.items.length;
+    cart.items = cart.items.filter(item => item && item.productId);
+    if (cart.items.length !== initialItemCount) {
+      console.log(`🧹 cleaned up ${initialItemCount - cart.items.length} ghost items`);
+    }
+
+    // 2. Find target item
+    const itemIndex = cart.items.findIndex((i) => i.productId.toString() === productId);
+
+    if (itemIndex === -1) {
+      console.log(`❌ Item not found in cart. Existing items: ${cart.items.map(i => i.productId.toString()).join(', ')}`);
+      return res.status(404).json({ error: 'Item not found in cart' });
+    }
+
     const product = await Product.findOne({ _id: productId, isActive: true }).select(
       '_id stock'
     );
@@ -193,28 +227,18 @@ router.post('/cart/update', requireCustomer, async (req: Request, res: Response)
       return res.status(400).json({ error: 'Insufficient stock for requested quantity' });
     }
 
-    // Atomic update using positional operator $
-    const cart = await Cart.findOneAndUpdate(
-      { userId: user.id, 'items.productId': new mongoose.Types.ObjectId(productId) },
-      { $set: { 'items.$.quantity': qty2 } },
-      { new: true }
-    ).populate({
+    // 3. Update item
+    cart.items[itemIndex].quantity = qty2;
+
+    // 4. Save (triggers validation and persists cleanup)
+    await cart.save();
+    await cart.populate({
       path: 'items.productId',
       populate: {
         path: 'businessId',
         select: 'addresses'
       }
     });
-
-    if (!cart) {
-      // If not found, maybe item is not in cart or cart doesn't exist?
-      // Let's check if cart exists at all
-      const existingCart = await Cart.findOne({ userId: user.id });
-      if (!existingCart) {
-        return res.status(404).json({ error: 'Cart not found' });
-      }
-      return res.status(404).json({ error: 'Item not found in cart' });
-    }
 
     res.json(cart);
   } catch (error: any) {
