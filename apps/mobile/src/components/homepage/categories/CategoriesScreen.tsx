@@ -20,6 +20,7 @@ interface Category {
     icon?: string;
     parentCategory?: string | null;
     group?: string;
+    subCategoryGroupOrder?: string[];
 }
 
 const FOR_YOU_ID = 'for-you-special-id';
@@ -30,6 +31,7 @@ export default function CategoriesScreen() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>(FOR_YOU_ID);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         fetchCategories();
@@ -178,31 +180,94 @@ export default function CategoriesScreen() {
                                         return acc;
                                     }, {} as Record<string, Category[]>);
 
-                                    return Object.entries(groupedSubcategories).map(([groupName, items]) => (
-                                        <View key={groupName} style={styles.groupSection}>
-                                            {/* Group Header */}
-                                            <Text style={styles.groupHeader}>{groupName}</Text>
+                                    // Sort groups based on parent's preference
+                                    const selectedCategory = categories.find(c => c._id === selectedCategoryId);
+                                    const groupOrder = selectedCategory?.subCategoryGroupOrder || [];
 
-                                            {/* Subcategory Grid for this group */}
-                                            <View style={styles.subCategoryGrid}>
-                                                {items.map((sub) => (
-                                                    <TouchableOpacity
-                                                        key={sub._id}
-                                                        style={styles.subCategoryItem}
-                                                        onPress={() => router.push(`/common-category/${sub.slug}`)}
-                                                    >
-                                                        <View style={styles.subCategoryImageContainer}>
-                                                            <Image
-                                                                source={{ uri: sub.image || sub.icon || 'https://via.placeholder.com/100' }}
-                                                                style={styles.subCategoryImage}
-                                                            />
-                                                        </View>
-                                                        <Text style={styles.subCategoryName} numberOfLines={2}>{sub.name}</Text>
-                                                    </TouchableOpacity>
-                                                ))}
+                                    const sortedGroups = Object.entries(groupedSubcategories).sort(([groupA], [groupB]) => {
+                                        // "Other" always goes last
+                                        if (groupA === 'Other') return 1;
+                                        if (groupB === 'Other') return -1;
+
+                                        const indexA = groupOrder.indexOf(groupA);
+                                        const indexB = groupOrder.indexOf(groupB);
+
+                                        // If both are in the defined order, sort by index
+                                        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+                                        // If only A is in order, it comes first
+                                        if (indexA !== -1) return -1;
+
+                                        // If only B is in order, it comes first
+                                        if (indexB !== -1) return 1;
+
+                                        // Otherwise sort alphabetically
+                                        return groupA.localeCompare(groupB);
+                                    });
+
+                                    const toggleGroup = (groupName: string) => {
+                                        setExpandedGroups(prev => ({
+                                            ...prev,
+                                            [groupName]: !prev[groupName]
+                                        }));
+                                    };
+
+                                    return sortedGroups.map(([groupName, items]) => {
+                                        const isExpanded = expandedGroups[groupName];
+                                        const shouldTruncate = items.length > 7 && !isExpanded;
+                                        const displayItems = shouldTruncate ? items.slice(0, 7) : items;
+
+                                        return (
+                                            <View key={groupName} style={styles.groupSection}>
+                                                {/* Group Header */}
+                                                <Text style={styles.groupHeader}>{groupName}</Text>
+
+                                                {/* Subcategory Grid for this group */}
+                                                <View style={styles.subCategoryGrid}>
+                                                    {displayItems.map((sub) => (
+                                                        <TouchableOpacity
+                                                            key={sub._id}
+                                                            style={styles.subCategoryItem}
+                                                            onPress={() => router.push(`/common-category/${sub.slug}`)}
+                                                        >
+                                                            <View style={styles.subCategoryImageContainer}>
+                                                                <Image
+                                                                    source={{ uri: sub.image || sub.icon || 'https://via.placeholder.com/100' }}
+                                                                    style={styles.subCategoryImage}
+                                                                />
+                                                            </View>
+                                                            <Text style={styles.subCategoryName} numberOfLines={2}>{sub.name}</Text>
+                                                        </TouchableOpacity>
+                                                    ))}
+
+                                                    {/* View All Button */}
+                                                    {shouldTruncate && (
+                                                        <TouchableOpacity
+                                                            style={styles.subCategoryItem}
+                                                            onPress={() => toggleGroup(groupName)}
+                                                        >
+                                                            <View style={[styles.subCategoryImageContainer, styles.viewAllContainer]}>
+                                                                <Feather name="arrow-down" size={30} color="#3B82F6" />
+                                                            </View>
+                                                            <Text style={styles.subCategoryName}>View All</Text>
+                                                        </TouchableOpacity>
+                                                    )}
+
+                                                    {isExpanded && items.length > 7 && (
+                                                        <TouchableOpacity
+                                                            style={styles.subCategoryItem}
+                                                            onPress={() => toggleGroup(groupName)}
+                                                        >
+                                                            <View style={[styles.subCategoryImageContainer, styles.viewAllContainer]}>
+                                                                <Feather name="arrow-up" size={30} color="#3B82F6" />
+                                                            </View>
+                                                            <Text style={styles.subCategoryName}>Show Less</Text>
+                                                        </TouchableOpacity>
+                                                    )}
+                                                </View>
                                             </View>
-                                        </View>
-                                    ));
+                                        );
+                                    });
                                 })() : (
                                     <View style={styles.emptySubContainer}>
                                         <Text style={styles.emptySubText}>No subcategories found.</Text>
@@ -606,5 +671,9 @@ const styles = StyleSheet.create({
     exploreBtnText: {
         color: '#fff',
         fontWeight: '600',
+    },
+    viewAllContainer: {
+        backgroundColor: '#EFF6FF',
+        borderColor: '#DBEAFE',
     }
 });

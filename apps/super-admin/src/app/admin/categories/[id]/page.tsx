@@ -19,6 +19,7 @@ import {
     GripVertical,
     Copy,
     Check,
+    RefreshCw, // Add refresh icon for normalize
 } from "lucide-react";
 import Link from "next/link";
 
@@ -70,6 +71,7 @@ export default function CategoryDetailsPage() {
     const [isGroupOrderModalOpen, setIsGroupOrderModalOpen] = useState(false);
     const [groupOrder, setGroupOrder] = useState<string[]>([]);
     const [savingOrder, setSavingOrder] = useState(false);
+    const [normalizing, setNormalizing] = useState(false);
 
     // Subcategory form
     const [isSubModalOpen, setIsSubModalOpen] = useState(false);
@@ -83,6 +85,62 @@ export default function CategoryDetailsPage() {
     });
     const [submitting, setSubmitting] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [uploadingSubs, setUploadingSubs] = useState<Set<string>>(new Set());
+
+    // Drag and Drop Handlers for Subcategories
+    const handleSubIconDrop = async (e: React.DragEvent<HTMLDivElement>, subId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const file = e.dataTransfer.files?.[0];
+        if (!file || !file.type.startsWith('image/')) {
+            toast.error("Please drop an image file");
+            return;
+        }
+
+        try {
+            setUploadingSubs(prev => new Set(prev).add(subId));
+
+            // 1. Upload Image
+            const fd = new FormData();
+            fd.append('image', file);
+            const uploadRes = await api.post('/api/upload/image', fd, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const imageUrl = uploadRes.data.imageUrl;
+
+            // 2. Update Subcategory
+            await api.put(`/api/super-admin/categories/${subId}`, { image: imageUrl });
+
+            // 3. Update Local State
+            setSubcategories(prev => prev.map(sub =>
+                sub._id === subId ? { ...sub, image: imageUrl } : sub
+            ));
+
+            toast.success("Icon updated successfully");
+        } catch (error) {
+            console.error("Upload failed:", error);
+            toast.error("Failed to upload icon");
+        } finally {
+            setUploadingSubs(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(subId);
+                return newSet;
+            });
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.add('ring-2', 'ring-primary-500', 'ring-offset-2');
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.remove('ring-2', 'ring-primary-500', 'ring-offset-2');
+    };
 
     // Attribute Management State
     const [assignedAttributes, setAssignedAttributes] = useState<CategoryAttribute[]>([]);
@@ -185,6 +243,51 @@ export default function CategoryDetailsPage() {
         setGroupOrder(newOrder);
     };
 
+    const handleNormalizeOrders = async () => {
+        if (!confirm("This will reset order numbers for all subcategories to start from 1 within each group. Continue?")) return;
+        setNormalizing(true);
+        try {
+            // Group and sort locally first
+            const grouped = subcategories.reduce((acc, sub) => {
+                const group = sub.group || "Uncategorized";
+                if (!acc[group]) acc[group] = [];
+                acc[group].push(sub);
+                return acc;
+            }, {} as GroupedSubcategories);
+
+            const updatePromises: Promise<any>[] = [];
+
+            // Iterate groups and prepare updates
+            Object.values(grouped).forEach(groupItems => {
+                // Sort by current order to preserve relative sequence
+                const sortedItems = [...groupItems].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+                sortedItems.forEach((item, index) => {
+                    const newOrder = index + 1;
+                    if (item.order !== newOrder) {
+                        updatePromises.push(
+                            api.put(`/api/super-admin/categories/${item._id}`, { order: newOrder })
+                        );
+                    }
+                });
+            });
+
+            if (updatePromises.length > 0) {
+                await Promise.all(updatePromises);
+                toast.success(`Normalized ${updatePromises.length} subcategories`);
+                fetchData(true);
+            } else {
+                toast.success("All orders are already normalized");
+            }
+
+        } catch (error) {
+            console.error("Failed to normalize", error);
+            toast.error("Failed to normalize orders");
+        } finally {
+            setNormalizing(false);
+        }
+    };
+
     const handleSubSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
@@ -224,12 +327,30 @@ export default function CategoryDetailsPage() {
 
     const openAddSubModal = (groupName?: string) => {
         setEditingSub(null);
+
+        let nextOrder = 1;
+        if (groupName) {
+            const groupItems = subcategories.filter(s => (s.group || "Uncategorized") === groupName);
+            if (groupItems.length > 0) {
+                const maxOrder = Math.max(...groupItems.map(s => s.order || 0));
+                nextOrder = maxOrder + 1;
+            }
+        } else {
+            // If no group selected (generic add), maybe find max of 'Uncategorized' or just 1?
+            // Let's stick to 1 or try to infer from 'Uncategorized' if that becomes default.
+            const uncategorizedItems = subcategories.filter(s => !s.group || s.group === "Uncategorized");
+            if (uncategorizedItems.length > 0) {
+                const maxOrder = Math.max(...uncategorizedItems.map(s => s.order || 0));
+                nextOrder = maxOrder + 1;
+            }
+        }
+
         setSubFormData({
             name: "",
             group: groupName || "",
             image: "",
             isActive: true,
-            order: 0,
+            order: nextOrder,
         });
         setIsSubModalOpen(true);
     };
@@ -549,6 +670,15 @@ export default function CategoryDetailsPage() {
                     <h2 className="text-lg font-semibold text-gray-900">Subcategories & Groups</h2>
                     <div className="flex items-center gap-2">
                         <button
+                            onClick={handleNormalizeOrders}
+                            disabled={normalizing}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            title="Reset order numbers to start from 1 for each group"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${normalizing ? 'animate-spin' : ''}`} />
+                            Normalize Orders
+                        </button>
+                        <button
                             onClick={() => setIsGroupOrderModalOpen(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                         >
@@ -587,13 +717,23 @@ export default function CategoryDetailsPage() {
                                 <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {items.map(sub => (
                                         <div key={sub._id} className="group relative flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-300 hover:shadow-sm transition-all bg-white">
-                                            <div className="relative group/subimg h-10 w-10 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                {sub.image ? (
+                                            <div
+                                                className="relative group/subimg h-10 w-10 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all"
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onDrop={(e) => {
+                                                    e.currentTarget.classList.remove('ring-2', 'ring-primary-500', 'ring-offset-2');
+                                                    handleSubIconDrop(e, sub._id);
+                                                }}
+                                            >
+                                                {uploadingSubs.has(sub._id) ? (
+                                                    <Loader2 className="h-5 w-5 text-primary-600 animate-spin" />
+                                                ) : sub.image ? (
                                                     <img src={sub.image} alt={sub.name} className="h-full w-full object-cover" />
                                                 ) : (
                                                     <ImageIcon className="h-4 w-4 text-gray-400" />
                                                 )}
-                                                {sub.image && (
+                                                {sub.image && !uploadingSubs.has(sub._id) && (
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
