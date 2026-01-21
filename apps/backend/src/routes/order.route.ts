@@ -63,7 +63,7 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
 
         const productIds = items.map((i) => i.productId);
         const products = await Product.find({ _id: { $in: productIds }, isActive: true })
-          .select('price stock shippingCharges protectPromiseFee lastChanceOffers')
+          .select('price stock shippingCharges protectPromiseFee lastChanceOffers businessId pickupLocationCoordinates')
           .session(session);
 
         if (products.length !== productIds.length) {
@@ -306,10 +306,11 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
         }
       }
 
-      // If COD, notify sellers immediately (since there is no online payment verification)
-      if (paymentMethod === 'COD') {
-        void notifySellers(createdOrder);
-      }
+      // Notify sellers for ALL orders (both COD and prepaid)
+      // Sellers need to be aware of orders immediately to prepare for fulfillment
+      // They can see payment status in the order details
+      console.log(`🔔 [Order] Notifying sellers for order ${createdOrder._id} (payment: ${paymentMethod || 'prepaid'})`);
+      void notifySellers(createdOrder);
     }
   } catch (error: any) {
     if (error?.message === 'INSUFFICIENT_STOCK') {

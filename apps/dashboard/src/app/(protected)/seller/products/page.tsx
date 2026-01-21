@@ -5,15 +5,45 @@ import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { Product } from '@/types';
-import { Plus, Edit, Trash2, Eye, EyeOff, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Package, Clock, CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+
+type FilterType = 'all' | 'active' | 'inactive' | 'pending' | 'approved' | 'rejected';
+
+const getApprovalBadge = (status: string) => {
+  switch (status) {
+    case 'pending':
+      return (
+        <span className="px-2 py-0.5 inline-flex items-center gap-1 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+          <Clock className="h-3 w-3" />
+          Pending Review
+        </span>
+      );
+    case 'approved':
+      return (
+        <span className="px-2 py-0.5 inline-flex items-center gap-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+          <CheckCircle className="h-3 w-3" />
+          Approved
+        </span>
+      );
+    case 'rejected':
+      return (
+        <span className="px-2 py-0.5 inline-flex items-center gap-1 text-xs font-medium rounded-full bg-red-100 text-red-700">
+          <XCircle className="h-3 w-3" />
+          Rejected
+        </span>
+      );
+    default:
+      return null;
+  }
+};
 
 export default function SellerProductsPage() {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [filter, setFilter] = useState<FilterType>('all');
 
   useEffect(() => {
     fetchProducts();
@@ -31,14 +61,21 @@ export default function SellerProductsPage() {
     }
   };
 
-  const toggleProductStatus = async (productId: string, isActive: boolean) => {
+  const toggleProductStatus = async (product: Product, isActive: boolean) => {
+    // Prevent activation of unapproved products
+    if (isActive && product.approvalStatus !== 'approved') {
+      toast.error('Product must be approved before it can be activated');
+      return;
+    }
+
     try {
-      await apiClient.patch(`/api/products/${productId}`, { isActive });
+      await apiClient.patch(`/api/products/${product._id}/status`, { isActive });
       toast.success(`Product ${isActive ? 'activated' : 'deactivated'}`);
       fetchProducts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update product:', error);
-      toast.error('Failed to update product');
+      const message = error.response?.data?.error || 'Failed to update product';
+      toast.error(message);
     }
   };
 
@@ -55,11 +92,29 @@ export default function SellerProductsPage() {
     }
   };
 
+  const resubmitProduct = async (productId: string) => {
+    try {
+      await apiClient.patch(`/api/products/${productId}/resubmit`);
+      toast.success('Product resubmitted for review!');
+      fetchProducts();
+    } catch (error: any) {
+      console.error('Failed to resubmit product:', error);
+      const message = error.response?.data?.error || 'Failed to resubmit product';
+      toast.error(message);
+    }
+  };
+
   const filteredProducts = products.filter((product) => {
     if (filter === 'active') return product.isActive;
     if (filter === 'inactive') return !product.isActive;
+    if (filter === 'pending') return product.approvalStatus === 'pending';
+    if (filter === 'approved') return product.approvalStatus === 'approved';
+    if (filter === 'rejected') return product.approvalStatus === 'rejected';
     return true;
   });
+
+  const pendingCount = products.filter(p => p.approvalStatus === 'pending').length;
+  const rejectedCount = products.filter(p => p.approvalStatus === 'rejected').length;
 
   if (!user) return null;
 
@@ -80,33 +135,73 @@ export default function SellerProductsPage() {
           </Link>
         </div>
 
-        <div className="flex space-x-2">
+        {/* Pending Alert */}
+        {pendingCount > 0 && (
+          <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <p className="text-amber-800">
+              <strong>{pendingCount} product{pendingCount !== 1 ? 's' : ''}</strong> pending review.
+              Products must be approved by admin before they can be made live.
+            </p>
+          </div>
+        )}
+
+        {/* Rejected Alert */}
+        {rejectedCount > 0 && (
+          <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <XCircle className="h-5 w-5 text-red-600" />
+            <p className="text-red-800">
+              <strong>{rejectedCount} product{rejectedCount !== 1 ? 's' : ''}</strong> rejected.
+              Please review and update rejected products to resubmit for approval.
+            </p>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'all'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-primary-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
-            All Products ({products.length})
+            All ({products.length})
+          </button>
+          <button
+            onClick={() => setFilter('pending')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'pending'
+              ? 'bg-amber-600 text-white'
+              : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+              }`}
+          >
+            Pending ({pendingCount})
+          </button>
+          <button
+            onClick={() => setFilter('approved')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'approved'
+              ? 'bg-green-600 text-white'
+              : 'bg-green-50 text-green-700 hover:bg-green-100'
+              }`}
+          >
+            Approved ({products.filter(p => p.approvalStatus === 'approved').length})
+          </button>
+          <button
+            onClick={() => setFilter('rejected')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'rejected'
+              ? 'bg-red-600 text-white'
+              : 'bg-red-50 text-red-700 hover:bg-red-100'
+              }`}
+          >
+            Rejected ({rejectedCount})
           </button>
           <button
             onClick={() => setFilter('active')}
             className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'active'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-primary-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
-            Active ({products.filter(p => p.isActive).length})
-          </button>
-          <button
-            onClick={() => setFilter('inactive')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${filter === 'inactive'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-          >
-            Inactive ({products.filter(p => !p.isActive).length})
+            Live ({products.filter(p => p.isActive).length})
           </button>
         </div>
 
@@ -129,10 +224,10 @@ export default function SellerProductsPage() {
                     Stock
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Approval
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
+                    Status
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -161,6 +256,7 @@ export default function SellerProductsPage() {
                           <div className="text-sm font-medium text-gray-900">
                             {product.name}
                           </div>
+                          <div className="text-xs text-gray-500">{product.category}</div>
                         </div>
                       </div>
                     </td>
@@ -181,26 +277,51 @@ export default function SellerProductsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="space-y-1">
+                        {getApprovalBadge(product.approvalStatus)}
+                        {product.approvalStatus === 'rejected' && product.approvalNote && (
+                          <div className="text-xs text-red-600 max-w-[200px]" title={product.approvalNote}>
+                            <span className="font-medium">Reason:</span> {product.approvalNote}
+                          </div>
+                        )}
+                        {product.approvalStatus === 'rejected' && (
+                          <button
+                            onClick={() => resubmitProduct(product._id)}
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200 transition-colors"
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                            Resubmit for Review
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
                           }`}
                       >
-                        {product.isActive ? 'Active' : 'Inactive'}
+                        {product.isActive ? 'Live' : 'Offline'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {product.category}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
+                        {/* Activate/Deactivate button - disabled for non-approved products */}
                         <button
-                          onClick={() =>
-                            toggleProductStatus(product._id, !product.isActive)
+                          onClick={() => toggleProductStatus(product, !product.isActive)}
+                          disabled={product.approvalStatus !== 'approved'}
+                          className={`${product.approvalStatus !== 'approved'
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          title={
+                            product.approvalStatus !== 'approved'
+                              ? 'Product must be approved first'
+                              : product.isActive
+                                ? 'Deactivate'
+                                : 'Activate'
                           }
-                          className="text-gray-600 hover:text-gray-900"
-                          title={product.isActive ? 'Deactivate' : 'Activate'}
                         >
                           {product.isActive ? (
                             <EyeOff className="h-5 w-5" />
@@ -247,3 +368,4 @@ export default function SellerProductsPage() {
     </ProtectedRoute>
   );
 }
+

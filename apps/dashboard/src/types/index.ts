@@ -43,6 +43,8 @@ export interface Product {
   brandId?: string;
   businessId: string;
   isActive: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvalNote?: string;
   pickupLocation?: string;
   pickupLocationCoordinates?: { lat: number; lng: number };
   createdAt: string;

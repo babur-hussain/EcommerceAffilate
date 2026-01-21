@@ -18,7 +18,7 @@ export default function SponsoredBanner() {
   return (
     <Link
       href={SPONSORED_BANNER.link}
-      className="block h-full bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow group"
+      className="block h-full bg-linear-to-br from-purple-600 to-pink-600 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow group"
     >
       <div className="relative h-full flex flex-col">
         {/* Sponsored Badge */}

@@ -232,9 +232,17 @@ export function SellerAlarm() {
     };
 
     useEffect(() => {
-        if (!firebaseUser) return;
+        if (!firebaseUser) {
+            console.log("🔔 [SellerAlarm] No firebaseUser - listener not started");
+            return;
+        }
 
-        if (user && !['SELLER_OWNER', 'SELLER_MANAGER', 'SELLER_STAFF'].includes(user.role)) return;
+        if (user && !['SELLER_OWNER', 'SELLER_MANAGER', 'SELLER_STAFF'].includes(user.role)) {
+            console.log("🔔 [SellerAlarm] User role not eligible:", user.role);
+            return;
+        }
+
+        console.log("🔔 [SellerAlarm] Setting up listener for sellerUid:", firebaseUser.uid);
 
         const q = query(
             collection(db, 'seller_notifications'),
@@ -244,12 +252,16 @@ export function SellerAlarm() {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
+            console.log(`🔔 [SellerAlarm] Snapshot received. Docs: ${snapshot.docs.length}, Changes: ${snapshot.docChanges().length}, isFirstLoad: ${isFirstLoad.current}`);
+
             if (isFirstLoad.current) {
                 isFirstLoad.current = false;
+                console.log("🔔 [SellerAlarm] First load - skipping existing notifications");
                 return;
             }
 
             snapshot.docChanges().forEach((change) => {
+                console.log(`🔔 [SellerAlarm] Doc change: type=${change.type}, id=${change.doc.id}`);
                 if (change.type === 'added') {
                     console.log("🔔 [SellerAlarm] New notification detected!", change.doc.id);
                     const data = change.doc.data();

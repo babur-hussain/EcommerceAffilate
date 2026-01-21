@@ -28,6 +28,8 @@ export interface IProduct extends Document {
   brandId: mongoose.Types.ObjectId;
   businessId: mongoose.Types.ObjectId;
   isActive: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvalNote?: string;
   isSponsored: boolean;
   sponsoredScore: number;    // Admin-controlled ranking weight
   popularityScore: number;   // System-calculated (sales/views)
@@ -165,7 +167,16 @@ const productSchema = new Schema<IProduct>(
     },
     isActive: {
       type: Boolean,
-      default: true,
+      default: false, // Products start inactive until approved
+    },
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+    approvalNote: {
+      type: String,
+      trim: true,
     },
     isSponsored: {
       type: Boolean,

@@ -18,7 +18,8 @@ import {
   Home,
   Link as LinkIcon,
   DollarSign,
-  Activity
+  Activity,
+  RotateCcw
 } from 'lucide-react';
 
 interface NavItem {
@@ -46,6 +47,7 @@ const navigationConfig: NavItem[] = [
   { name: 'Products', href: '/seller/products', icon: Package, roles: ['SELLER_OWNER', 'SELLER_MANAGER', 'SELLER_STAFF', 'BUSINESS_OWNER', 'BUSINESS_MANAGER', 'BUSINESS_STAFF'] },
   { name: 'Inventory', href: '/seller/inventory', icon: ShoppingBag, roles: ['SELLER_OWNER', 'SELLER_MANAGER', 'SELLER_STAFF', 'BUSINESS_OWNER', 'BUSINESS_MANAGER', 'BUSINESS_STAFF'] },
   { name: 'Orders', href: '/seller/orders', icon: FileText, roles: ['SELLER_OWNER', 'SELLER_MANAGER', 'SELLER_STAFF', 'BUSINESS_OWNER', 'BUSINESS_MANAGER', 'BUSINESS_STAFF'] },
+  { name: 'Returns', href: '/seller/returns', icon: RotateCcw, roles: ['SELLER_OWNER', 'SELLER_MANAGER', 'SELLER_STAFF', 'BUSINESS_OWNER', 'BUSINESS_MANAGER', 'BUSINESS_STAFF'] },
   { name: 'Sponsorships', href: '/seller/sponsorships', icon: Megaphone, roles: ['SELLER_OWNER', 'SELLER_MANAGER', 'BUSINESS_OWNER', 'BUSINESS_MANAGER'] },
   { name: 'Analytics', href: '/seller/analytics', icon: BarChart3, roles: ['SELLER_OWNER', 'SELLER_MANAGER', 'BUSINESS_OWNER', 'BUSINESS_MANAGER'] },
   { name: 'Influencer Impact', href: '/seller/influencers', icon: TrendingUp, roles: ['SELLER_OWNER', 'SELLER_MANAGER', 'BUSINESS_OWNER', 'BUSINESS_MANAGER'] },
@@ -86,8 +88,8 @@ export default function Sidebar({ userRole }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={`flex items-center px-4 py-3 mb-1 rounded-lg transition-colors ${isActive
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }`}
             >
               <Icon className="h-5 w-5 mr-3" />

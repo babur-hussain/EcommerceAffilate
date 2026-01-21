@@ -314,21 +314,28 @@ export default function OrderDetailsModal({ order: initialOrder, onClose }: Orde
                                     {order.shiprocket?.shipmentId && !order.shiprocket?.awbCode && (
                                         <button
                                             onClick={async () => {
+                                                // Validate courier is selected
+                                                if (!selectedCourier) {
+                                                    toast.error('Please select a courier first');
+                                                    return;
+                                                }
                                                 try {
                                                     setLoading(true);
-                                                    const res = await apiClient.post<Order>(`/api/orders/${order._id}/shiprocket/awb`, { courierId: 1 }); // Mock courier ID
+                                                    const res = await apiClient.post<Order>(`/api/orders/${order._id}/shiprocket/awb`, {
+                                                        courier_id: selectedCourier.courier_company_id
+                                                    });
                                                     setOrder(res.data);
-                                                    toast.success('AWB Assigned');
+                                                    toast.success(`AWB Assigned via ${selectedCourier.courier_name}`);
                                                 } catch (e: any) {
                                                     toast.error(e.response?.data?.error || 'Failed to assign AWB');
                                                 } finally {
                                                     setLoading(false);
                                                 }
                                             }}
-                                            disabled={loading}
-                                            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                                            disabled={loading || !selectedCourier}
+                                            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                         >
-                                            <FileText className="w-4 h-4" /> Generate AWB
+                                            <FileText className="w-4 h-4" /> Generate AWB {selectedCourier && `(${selectedCourier.courier_name})`}
                                         </button>
                                     )}
 
@@ -407,10 +414,10 @@ export default function OrderDetailsModal({ order: initialOrder, onClose }: Orde
                             <span className="text-xs text-gray-500 mb-1">Payment</span>
                             <div className="flex items-center gap-2">
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${['SUCCESS', 'PAID', 'COMPLETED', 'captured'].includes(order.paymentStatus || '')
-                                        ? 'text-green-600 bg-green-50'
-                                        : ['FAILED', 'CANCELLED', 'REFUNDED'].includes(order.paymentStatus || '')
-                                            ? 'text-red-600 bg-red-50'
-                                            : 'text-yellow-600 bg-yellow-50'
+                                    ? 'text-green-600 bg-green-50'
+                                    : ['FAILED', 'CANCELLED', 'REFUNDED'].includes(order.paymentStatus || '')
+                                        ? 'text-red-600 bg-red-50'
+                                        : 'text-yellow-600 bg-yellow-50'
                                     }`}>
                                     {order.paymentStatus === 'captured' ? 'PAID' :
                                         order.paymentStatus === 'SUCCESS' ? 'PAID' :

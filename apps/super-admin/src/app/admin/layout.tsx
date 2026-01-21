@@ -18,10 +18,12 @@ import {
   Tags,
   Sliders,
   Percent,
+  ClipboardCheck,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Review Products", href: "/admin/review-products", icon: ClipboardCheck },
   { name: "Sellers", href: "/admin/sellers", icon: Store },
   { name: "Influencers", href: "/admin/influencers", icon: UserCheck },
   { name: "Categories", href: "/admin/categories", icon: Tags },

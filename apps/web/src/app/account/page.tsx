@@ -92,6 +92,22 @@ export default function AccountHome() {
             </div>
           </Link>
 
+          {/* Returns Card */}
+          <Link href="/account/returns" className="group">
+            <div className="h-full bg-white rounded-xl border border-neutral-100 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.08)] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04),0_2px_10px_-2px_rgba(0,0,0,0.02)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span className="material-symbols-outlined text-8xl text-amber-500">assignment_return</span>
+              </div>
+              <div className="relative z-10">
+                <div className="size-12 rounded-full bg-amber-50 flex items-center justify-center mb-6 group-hover:bg-amber-500 transition-colors">
+                  <span className="material-symbols-outlined text-amber-500 group-hover:text-white transition-colors">assignment_return</span>
+                </div>
+                <h2 className="text-xl font-bold text-[#141e1e] mb-2">My Returns</h2>
+                <p className="text-neutral-500 text-sm leading-relaxed">Track your return requests and status.</p>
+              </div>
+            </div>
+          </Link>
+
           {/* Profile Card */}
           <div className="group cursor-pointer">
             <div className="h-full bg-white rounded-xl border border-neutral-100 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.08)] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.04),0_2px_10px_-2px_rgba(0,0,0,0.02)] relative overflow-hidden bg-opacity-60">
@@ -108,7 +124,7 @@ export default function AccountHome() {
           {/* Role Based: Seller Dashboard */}
           {isSeller && (
             <Link href="/business" className="group">
-              <div className="h-full bg-gradient-to-br from-indigo-600 to-blue-700 rounded-xl border border-indigo-500/20 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl shadow-lg relative overflow-hidden text-white">
+              <div className="h-full bg-linear-to-br from-indigo-600 to-blue-700 rounded-xl border border-indigo-500/20 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl shadow-lg relative overflow-hidden text-white">
                 <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-30 transition-opacity">
                   <span className="material-symbols-outlined text-8xl text-white">storefront</span>
                 </div>
@@ -126,7 +142,7 @@ export default function AccountHome() {
           {/* Role Based: Influencer Dashboard */}
           {isInfluencer && (
             <Link href="/influencer" className="group">
-              <div className="h-full bg-gradient-to-br from-fuchsia-600 to-purple-700 rounded-xl border border-fuchsia-500/20 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl shadow-lg relative overflow-hidden text-white">
+              <div className="h-full bg-linear-to-br from-fuchsia-600 to-purple-700 rounded-xl border border-fuchsia-500/20 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl shadow-lg relative overflow-hidden text-white">
                 <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-30 transition-opacity">
                   <span className="material-symbols-outlined text-8xl text-white">campaign</span>
                 </div>

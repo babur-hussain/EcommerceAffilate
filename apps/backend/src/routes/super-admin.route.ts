@@ -637,4 +637,165 @@ router.patch(
   }
 );
 
+// ============ Product Review Workflow ============
+
+// GET /api/super-admin/products/pending - Get all pending products grouped by seller
+router.get(
+  "/super-admin/products/pending",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const pendingProducts = await Product.find({ approvalStatus: "pending" })
+        .populate({
+          path: "businessId",
+          select: "businessIdentity.tradeName businessIdentity.businessType",
+        })
+        .sort({ createdAt: -1 })
+        .lean();
+
+      // Group products by businessId
+      const grouped: Record<string, any> = {};
+      for (const product of pendingProducts) {
+        const bizId = (product.businessId as any)?._id?.toString() || "unknown";
+        if (!grouped[bizId]) {
+          const biz = product.businessId as any;
+          grouped[bizId] = {
+            businessId: bizId,
+            businessName: biz?.businessIdentity?.tradeName || "Unknown Seller",
+            businessType: biz?.businessIdentity?.businessType || "",
+            products: [],
+          };
+        }
+        grouped[bizId].products.push({
+          _id: product._id,
+          title: product.title,
+          slug: product.slug,
+          description: product.description,
+          shortDescription: product.shortDescription,
+          price: product.price,
+          mrp: product.mrp,
+          category: product.category,
+          brand: product.brand,
+          image: product.image,
+          images: product.images,
+          primaryImage: product.primaryImage || product.image,
+          thumbnailImage: product.thumbnailImage,
+          stock: product.stock,
+          lowStockThreshold: product.lowStockThreshold,
+          weight: product.weight,
+          dimensions: product.dimensions,
+          warrantyDetails: product.warrantyDetails,
+          warrantyDuration: product.warrantyDuration,
+          shippingCharges: product.shippingCharges,
+          isCodAvailable: product.isCodAvailable,
+          processingTime: product.processingTime,
+          pickupLocation: product.pickupLocation,
+          protectPromiseFee: product.protectPromiseFee,
+          metaTitle: product.metaTitle,
+          metaDescription: product.metaDescription,
+          metaKeywords: product.metaKeywords,
+          saleStartDate: product.saleStartDate,
+          saleEndDate: product.saleEndDate,
+          offers: product.offers,
+          lastChanceOffers: product.lastChanceOffers,
+          fees: product.fees,
+          trustBadges: product.trustBadges,
+          createdAt: product.createdAt,
+        });
+      }
+
+      const result = Object.values(grouped);
+      res.json({
+        totalPending: pendingProducts.length,
+        sellers: result,
+      });
+    } catch (error: any) {
+      console.error("Error fetching pending products:", error);
+      res.status(500).json({ error: "Failed to fetch pending products" });
+    }
+  }
+);
+
+// PATCH /api/super-admin/products/:id/approve - Approve a product
+router.patch(
+  "/super-admin/products/:id/approve",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      const product = await Product.findById(id);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      product.approvalStatus = "approved";
+      product.approvalNote = undefined;
+      await product.save();
+
+      res.json({
+        message: "Product approved successfully",
+        product: {
+          _id: product._id,
+          title: product.title,
+          approvalStatus: product.approvalStatus,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error approving product:", error);
+      res.status(500).json({ error: "Failed to approve product" });
+    }
+  }
+);
+
+// PATCH /api/super-admin/products/:id/reject - Reject a product with reason
+router.patch(
+  "/super-admin/products/:id/reject",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      if (!reason || typeof reason !== "string") {
+        return res.status(400).json({ error: "Rejection reason is required" });
+      }
+
+      const product = await Product.findById(id);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      product.approvalStatus = "rejected";
+      product.approvalNote = reason;
+      await product.save();
+
+      res.json({
+        message: "Product rejected",
+        product: {
+          _id: product._id,
+          title: product.title,
+          approvalStatus: product.approvalStatus,
+          approvalNote: product.approvalNote,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error rejecting product:", error);
+      res.status(500).json({ error: "Failed to reject product" });
+    }
+  }
+);
+
 export default router;
+

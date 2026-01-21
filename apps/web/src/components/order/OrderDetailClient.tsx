@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 interface OrderDetailClientProps {
-    initialOrder: any; // We can refine the type if needed, but 'any' allows flexibility for now matching the page usage
+    initialOrder: any;
     apiBase: string;
     token: string;
 }
@@ -12,7 +12,6 @@ export default function OrderDetailClient({ initialOrder, apiBase, token }: Orde
     const [order, setOrder] = useState(initialOrder);
 
     useEffect(() => {
-        // Don't poll if order is already completed
         if (!order || ['DELIVERED', 'CANCELLED', 'RETURNED', 'REFUNDED'].includes(order.status)) return;
 
         const intervalId = setInterval(async () => {
@@ -30,84 +29,107 @@ export default function OrderDetailClient({ initialOrder, apiBase, token }: Orde
             } catch (error) {
                 console.error("Failed to poll order update:", error);
             }
-        }, 5000); // Poll every 5 seconds for snappier updates
+        }, 5000);
 
         return () => clearInterval(intervalId);
     }, [order, apiBase, token]);
 
-    const getStatusStyles = (status: string) => {
+    const getStatusInfo = (status: string) => {
         const s = status?.toUpperCase() || '';
         switch (s) {
-            case 'DELIVERED':
-                return { bg: 'bg-green-100', text: 'text-green-700', label: 'Delivered' };
-            case 'PROCESSING':
-                return { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Processing' };
-            case 'SHIPPED':
-                return { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Shipped' };
-            case 'CANCELLED':
-                return { bg: 'bg-red-100', text: 'text-red-700', label: 'Cancelled' };
-            case 'CREATED':
-                return { bg: 'bg-neutral-100', text: 'text-neutral-700', label: 'Ordered' };
-            case 'CREATED':
-                return { bg: 'bg-neutral-100', text: 'text-neutral-700', label: 'Ordered' };
-            default:
-                return { bg: 'bg-neutral-100', text: 'text-neutral-700', label: status || 'Ordered' };
+            case 'DELIVERED': return { color: 'text-green-600', bg: 'bg-green-600', label: 'Delivered', icon: 'check_circle' };
+            case 'PROCESSING': return { color: 'text-amber-600', bg: 'bg-amber-600', label: 'Processing', icon: 'inventory_2' };
+            case 'SHIPPED': return { color: 'text-blue-600', bg: 'bg-blue-600', label: 'Shipped', icon: 'local_shipping' };
+            case 'CANCELLED': return { color: 'text-red-500', bg: 'bg-red-500', label: 'Cancelled', icon: 'cancel' };
+            case 'CREATED': return { color: 'text-neutral-600', bg: 'bg-neutral-600', label: 'Ordered', icon: 'shopping_bag' };
+            case 'RETURNED': return { color: 'text-purple-600', bg: 'bg-purple-600', label: 'Returned', icon: 'assignment_return' };
+            default: return { color: 'text-neutral-600', bg: 'bg-neutral-600', label: status, icon: 'info' };
         }
     };
 
-    const { bg, text, label } = getStatusStyles(order.status);
-    const isDelivered = order.status === 'DELIVERED';
-    const isShipped = order.status === 'SHIPPED';
-    const isProcessing = order.status === 'PROCESSING';
-    const isCreated = order.status === 'CREATED';
+    const currentStatus = getStatusInfo(order.status);
 
-    // Calculate progress width
-    let progressWidth = '5%'; // Default for CREATED
-    if (isDelivered) progressWidth = '100%';
-    else if (isShipped) progressWidth = '75%';
-    else if (isProcessing) progressWidth = '40%';
+    // Stepper Logic
+    const steps = [
+        { key: 'CREATED', label: 'Order Placed', icon: 'shopping_cart' },
+        { key: 'PROCESSING', label: 'Processing', icon: 'inventory' },
+        { key: 'SHIPPED', label: 'On the Way', icon: 'local_shipping' },
+        { key: 'DELIVERED', label: 'Delivered', icon: 'home_pin' }
+    ];
 
-    // Helper to check if a step is active or completed
-    const isStepActive = (step: string) => {
-        const steps = ['CREATED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
-        const currentStepIndex = steps.indexOf(order.status) === -1 ? 0 : steps.indexOf(order.status);
-        const targetStepIndex = steps.indexOf(step);
-        return currentStepIndex >= targetStepIndex;
-    };
+    const currentStepIndex = steps.findIndex(s => s.key === order.status) === -1
+        ? (order.status === 'CREATED' ? 0 : 0) // Default to 0 if unknown, handle specific cases like RETURNED specially if needed
+        : steps.findIndex(s => s.key === order.status);
+
+    // Calculate progress percentage for the bar background
+    const progressPercent = Math.min(100, Math.max(0, (currentStepIndex / (steps.length - 1)) * 100));
 
     return (
-        <>
-            {/* Header Status Badge - Updates dynamically */}
-            <div className={`absolute top-0 right-0 lg:static lg:ml-auto ${bg} ${text} px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide border border-transparent self-start lg:self-end`}>
-                {label}
-            </div>
-
-            {/* Tracking Status Section - Updates dynamically */}
-            <div className="bg-white p-8 rounded-xl border border-[#e8f0f2] shadow-sm w-full mt-8">
-                <div className="relative mb-4">
-                    <div className="flex justify-between mb-2">
-                        <span className="text-xs font-bold text-[#22a8c3]">Confirmed</span>
-                        <span className={`text-xs font-bold ${isStepActive('PROCESSING') ? 'text-[#22a8c3]' : 'text-[#538893]'}`}>Preparing</span>
-                        <span className={`text-xs font-bold ${isStepActive('SHIPPED') ? 'text-[#22a8c3]' : 'text-[#538893]'}`}>Shipped</span>
-                        <span className={`text-xs font-bold ${isStepActive('DELIVERED') ? 'text-[#22a8c3]' : 'text-[#538893]'}`}>Delivered</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden mb-8">
+            <div className="p-6 md:p-8">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+                    <div>
+                        <h2 className="text-2xl font-black text-[#141e1e]">Order Status</h2>
+                        <p className="text-[#538893] text-sm font-medium mt-1">Expected Arrival: <span className="text-[#141e1e] font-bold">{order.deliveryEstimate || 'Calculating...'}</span></p>
                     </div>
-                    <div className="h-3 w-full bg-[#e8f0f2] rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-[#22a8c3] rounded-full relative transition-all duration-1000 ease-in-out"
-                            style={{ width: progressWidth }}
-                        >
-                            <div className="absolute right-0 top-0 h-full w-2 bg-white/30 animate-pulse"></div>
-                        </div>
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm ${currentStatus.bg} bg-opacity-10 ${currentStatus.color}`}>
+                        <span className="material-symbols-outlined text-lg">{currentStatus.icon}</span>
+                        {currentStatus.label}
                     </div>
                 </div>
-                <p className="text-sm text-[#538893] text-center">
-                    {isDelivered
-                        ? "Your package has been delivered."
-                        : isShipped
-                            ? "Your order is on the way."
-                            : "We are preparing your order."}
+
+                {/* Tracking Stepper */}
+                <div className="relative px-4">
+                    {/* Progress Bar Background */}
+                    <div className="absolute top-1/2 left-0 w-full h-1 bg-neutral-100 -translate-y-1/2 z-0 rounded-full"></div>
+
+                    {/* Active Progress Bar */}
+                    <div
+                        className="absolute top-1/2 left-0 h-1 bg-[#22a8c3] -translate-y-1/2 z-0 rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${progressPercent}%` }}
+                    ></div>
+
+                    {/* Steps */}
+                    <div className="relative z-10 flex justify-between w-full">
+                        {steps.map((step, index) => {
+                            const isActive = index <= currentStepIndex;
+                            const isCurrent = index === currentStepIndex;
+
+                            return (
+                                <div key={step.key} className="flex flex-col items-center gap-3 group cursor-default">
+                                    <div
+                                        className={`
+                                            w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border-4 transition-all duration-300
+                                            ${isActive
+                                                ? 'bg-[#22a8c3] border-white shadow-[0_0_0_2px_#22a8c3] text-white'
+                                                : 'bg-white border-neutral-200 text-neutral-300'}
+                                            ${isCurrent ? 'scale-110 shadow-[0_0_0_4px_rgba(34,168,195,0.2)]' : ''}
+                                        `}
+                                    >
+                                        <span className="material-symbols-outlined text-sm md:text-xl">
+                                            {isActive ? 'check' : step.icon}
+                                        </span>
+                                    </div>
+                                    <p className={`text-xs md:text-sm font-bold text-center ${isActive ? 'text-[#141e1e]' : 'text-neutral-400 opacity-60'}`}>
+                                        {step.label}
+                                    </p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            {/* Notification/Message Area */}
+            <div className="bg-[#f8fbfb] px-6 py-4 border-t border-neutral-100 flex items-start gap-3">
+                <span className="material-symbols-outlined text-[#22a8c3] mt-0.5">info</span>
+                <p className="text-sm text-[#538893] leading-relaxed">
+                    {order.status === 'DELIVERED'
+                        ? "Your package has been successfully delivered. We hope you enjoy your purchase!"
+                        : "We'll send you an email update when your order status changes."}
                 </p>
             </div>
-        </>
+        </div>
     );
 }

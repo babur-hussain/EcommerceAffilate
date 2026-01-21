@@ -37,7 +37,7 @@ export default function SearchResultCard({ product }: { product: Product }) {
                     <span className="material-symbols-outlined text-xl">favorite</span>
                 </button>
 
-                <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/60 to-transparent">
+                <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-linear-to-t from-black/60 to-transparent">
                     <button className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 shadow-xl shadow-primary/40">
                         <span className="material-symbols-outlined">add_shopping_cart</span>
                         Quick Add

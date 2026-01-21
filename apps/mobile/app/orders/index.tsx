@@ -131,7 +131,9 @@ export default function MyOrdersScreen() {
                     <Ionicons name="arrow-back" size={24} color="#1F2937" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>My Orders</Text>
-                <View style={{ width: 24 }} />
+                <TouchableOpacity onPress={() => router.push('/orders/returns')} style={styles.returnsButton}>
+                    <Text style={styles.returnsButtonText}>My Returns</Text>
+                </TouchableOpacity>
             </View>
 
             <FlatList
@@ -185,6 +187,17 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#1F2937',
+    },
+    returnsButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        backgroundColor: '#EFF6FF',
+        borderRadius: 16,
+    },
+    returnsButtonText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#2563EB',
     },
     listContent: {
         padding: 16,

@@ -262,6 +262,16 @@ export default function OrderTrackingScreen() {
                             </View>
                         </View>
                     ))}
+
+                    {order.status === 'DELIVERED' && (
+                        <TouchableOpacity
+                            style={styles.returnButton}
+                            onPress={() => router.push(`/orders/return/${order._id}`)}
+                        >
+                            <MaterialIcons name="assignment-return" size={20} color="#2563EB" />
+                            <Text style={styles.returnButtonText}>Return / Exchange Items</Text>
+                        </TouchableOpacity>
+                    )}
                 </Animated.View>
 
                 {/* Payment Summary */}
@@ -577,5 +587,22 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: '600',
         fontSize: 16,
+    },
+    returnButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 16,
+        paddingVertical: 12,
+        backgroundColor: '#EFF6FF',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#BFDBFE',
+        gap: 8,
+    },
+    returnButtonText: {
+        color: '#2563EB',
+        fontWeight: '600',
+        fontSize: 14,
     },
 });

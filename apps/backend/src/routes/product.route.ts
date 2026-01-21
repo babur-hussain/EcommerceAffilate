@@ -291,20 +291,71 @@ router.patch(
         return res.status(400).json({ error: "isActive must be a boolean" });
       }
 
-      const updated = await Product.findByIdAndUpdate(
-        id,
-        { isActive },
-        { new: true }
-      );
-      if (!updated) {
+      // Check if product exists and is approved before allowing activation
+      const product = await Product.findById(id);
+      if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
 
+      // Only allow activation if product is approved
+      if (isActive && product.approvalStatus !== "approved") {
+        return res.status(403).json({
+          error: "Product must be approved before it can be activated",
+          approvalStatus: product.approvalStatus,
+        });
+      }
+
+      product.isActive = isActive;
+      await product.save();
+
       clearCacheByPrefix(RANKING_CACHE_PREFIX);
-      res.json(updated);
+      res.json(product);
     } catch (error: any) {
       res.status(500).json({
         error: "Failed to update product status",
+        message: error.message,
+      });
+    }
+  }
+);
+
+// PATCH /api/products/:id/resubmit - Resubmit rejected product for review
+router.patch(
+  "/products/:id/resubmit",
+  requireBrand,
+  requireProductOwnership(),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const product = await Product.findById(id);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      // Only allow resubmit if product was rejected
+      if (product.approvalStatus !== "rejected") {
+        return res.status(400).json({
+          error: "Only rejected products can be resubmitted for review",
+          approvalStatus: product.approvalStatus,
+        });
+      }
+
+      product.approvalStatus = "pending";
+      product.approvalNote = undefined;
+      await product.save();
+
+      res.json({
+        message: "Product resubmitted for review",
+        product: {
+          _id: product._id,
+          title: product.title,
+          approvalStatus: product.approvalStatus,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: "Failed to resubmit product",
         message: error.message,
       });
     }

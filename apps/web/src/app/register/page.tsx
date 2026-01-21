@@ -40,7 +40,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#d4eef6] via-[#c8e8f2] to-[#9dd4e6] flex items-center justify-center px-4 py-12 overflow-hidden">
+    <div className="relative min-h-screen bg-linear-to-b from-[#d4eef6] via-[#c8e8f2] to-[#9dd4e6] flex items-center justify-center px-4 py-12 overflow-hidden">
       {/* Decorative blurred shapes */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -left-32 top-1/4 h-96 w-96 bg-[#a8dff0]/60 blur-[100px] rounded-full" />
@@ -110,7 +110,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-2 w-44 rounded-full bg-gradient-to-r from-[#20b5e8] to-[#1a8fc9] text-white py-3 font-semibold text-xs tracking-widest uppercase shadow-[0_8px_25px_rgba(32,181,232,0.4)] hover:shadow-[0_12px_35px_rgba(32,181,232,0.5)] hover:translate-y-[-1px] active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                className="mt-2 w-44 rounded-full bg-linear-to-r from-[#20b5e8] to-[#1a8fc9] text-white py-3 font-semibold text-xs tracking-widest uppercase shadow-[0_8px_25px_rgba(32,181,232,0.4)] hover:shadow-[0_12px_35px_rgba(32,181,232,0.5)] hover:-translate-y-px active:translate-y-0 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
                 {loading ? 'Creating...' : 'Sign Up'}
               </button>

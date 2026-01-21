@@ -77,6 +77,10 @@ export default async function AccountOrdersPage() {
                 <span className="material-symbols-outlined filled">package_2</span>
                 <span>Orders</span>
               </Link>
+              <Link href="/account/returns" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f6f8f8] text-[#538893] transition-all">
+                <span className="material-symbols-outlined">assignment_return</span>
+                <span>My Returns</span>
+              </Link>
               <Link href="/account/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f6f8f8] text-[#538893] transition-all">
                 <span className="material-symbols-outlined">person</span>
                 <span>Profile</span>

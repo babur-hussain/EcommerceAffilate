@@ -18,7 +18,7 @@ export default function FashionBanner() {
   return (
     <Link
       href={FASHION_BANNER.link}
-      className="block h-[calc(100%)] max-h-[545px] bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-50 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group"
+      className="block h-[calc(100%)] max-h-[545px] bg-linear-to-br from-orange-100 via-amber-50 to-yellow-50 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group"
     >
       <div className="relative h-full flex flex-col">
         {/* Content Section */}

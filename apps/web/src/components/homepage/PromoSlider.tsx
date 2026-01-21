@@ -68,7 +68,7 @@ export default function PromoSlider() {
 
   return (
     <div
-      className="relative w-full h-[200px] md:h-[280px] overflow-hidden rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400"
+      className="relative w-full h-[200px] md:h-[280px] overflow-hidden rounded-xl bg-linear-to-r from-blue-500 to-cyan-400"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
     >

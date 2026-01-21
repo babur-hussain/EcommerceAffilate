@@ -4,14 +4,10 @@ import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 
-const getBaseUrl = () => {
-  // Hardcoded for Production (AWS EC2)
-  // return 'http://3.208.16.32';
 
-  // Check for EXPO_PUBLIC_API_URL
-  // const configuredUrl = process.env.EXPO_PUBLIC_API_URL;
-  // if (configuredUrl) return configuredUrl;
+const LIVE_URL = 'http://3.208.16.32';
 
+const getLocalUrl = () => {
   // Use Expo's hostUri to determine local IP (works for Expo Go and builds if configured)
   const hostUri = Constants.expoConfig?.hostUri;
   if (!hostUri) {
@@ -27,11 +23,15 @@ const getBaseUrl = () => {
   return `http://${ip}:4000`;
 };
 
-const API_URL = getBaseUrl();
-console.log('🚀 API_URL configured as:', API_URL);
+const LOCAL_URL = getLocalUrl();
+
+// Default to Local URL initially
+let currentBaseUrl = LOCAL_URL;
+
+console.log('🚀 Initial API_URL configured as:', currentBaseUrl);
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: currentBaseUrl,
   timeout: 10000, // 10 second timeout
   headers: {
     'Content-Type': 'application/json',
@@ -52,6 +52,9 @@ const getCacheKey = (url: string, params: any) => {
 // Request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
+    // Ensure we are using the current base URL
+    config.baseURL = currentBaseUrl;
+
     const token = await AsyncStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -77,7 +80,23 @@ api.interceptors.response.use(
     }
     return response;
   },
-  async (error) => {
+  async (error: any) => {
+    const originalRequest = error.config;
+
+    // Handle Network Errors (Connection Refused, Timeout, etc.)
+    if (!error.response && error.message === 'Network Error' && currentBaseUrl === LOCAL_URL && !originalRequest._retry) {
+      console.warn('⚠️ Local API unreachable. Switching to LIVE URL...');
+
+      originalRequest._retry = true;
+      currentBaseUrl = LIVE_URL;
+      api.defaults.baseURL = LIVE_URL;
+      originalRequest.baseURL = LIVE_URL;
+
+      console.log('🚀 API_URL switched to:', currentBaseUrl);
+
+      return api(originalRequest);
+    }
+
     // Check network status
     const netInfo = await NetInfo.fetch();
     const isOffline = !netInfo.isConnected || !netInfo.isInternetReachable;
