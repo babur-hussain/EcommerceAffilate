@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions, Text } from 'react-native';
 import CategoryPulseLoader from '../../../shared/CategoryPulseLoader';
 import SectionRenderer from '../../SectionRenderer';
-import { Section } from '../../../../hooks/usePageLayout';
+import { Section, usePageLayout } from '../../../../hooks/usePageLayout';
 
 const { width } = Dimensions.get('window');
 
@@ -65,9 +65,8 @@ const ELECTRONICS_LAYOUT: { sections: Section[] } = {
 };
 
 export default function ElectronicsPage({ staticHeader, renderStickyHeader }: ElectronicsPageProps) {
-    // For now, use local static layout. Ideally use usePageLayout('electronics')
-    const layout = ELECTRONICS_LAYOUT;
-    const loading = false;
+    // Use dynamic layout from API
+    const { layout, loading } = usePageLayout('electronics');
 
     // Scroll tracking
     const [isSticky, setIsSticky] = useState(false);
@@ -88,6 +87,20 @@ export default function ElectronicsPage({ staticHeader, renderStickyHeader }: El
                 </View>
                 <View style={styles.contentContainer}>
                     <CategoryPulseLoader />
+                </View>
+            </View>
+        );
+    }
+
+    // Fallback if layout fetch fails but not loading (should be handled by usePageLayout default, but safety check)
+    if (!layout || !layout.sections) {
+        return (
+            <View style={styles.container}>
+                <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+                    {staticHeader}
+                </View>
+                <View style={styles.contentContainer}>
+                    <Text style={{ padding: 20, textAlign: 'center' }}>No layout configuration found for Electronics.</Text>
                 </View>
             </View>
         );

@@ -1,0 +1,100 @@
+{
+    "pageSlug": "flash_sale",
+    "name": "Flash Sale Luxury",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "flash_header",
+            "type": "flash_header",
+            "priority": 10,
+            "content": {
+                "title_top": "FLASH",
+                "title_bottom": "SALE",
+                "subtitle": "Limited Time Offer",
+                "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBD9I71hcr64vOA_XB6CUmWOCZY7Hy7_ARDqaqW-uJIaWiQ_EeQk3MBBgUw6HLsqY1XEpzRcjMQ5eBj6qcjYfGdfOCOR7glVW1vvM9up_wPmFXBHvLpeEyx0d_JElr28A2Vu-TAPImkAM-VZEnpEGDL9eJPmb4-vvgFeFI4InonWP3kUtcVr1M0ICZ6EHqYi04a04OFM1nZoEj2d1z9oJbycMgcUUJoIM-yRrdoWEb4o6TJvyQsVGqaNs7KHxclPVaG-8V4ThkbRDfp",
+                "discount_text": {
+                    "prefix": "UP TO",
+                    "value": "50%",
+                    "suffix": "DISCOUNT"
+                }
+            }
+        },
+
+
+        {
+            "id": "flash_categories",
+            "type": "flash_categories",
+            "priority": 20,
+            "content": {
+                "items": [
+                    "Chronograph",
+                    "Automatic",
+                    "Gold",
+                    "Sports"
+                ]
+            }
+        },
+        {
+            "id": "flash_countdown",
+            "type": "flash_countdown",
+            "priority": 30,
+            "content": {
+                "end_time": "04:12:45"
+            }
+        },
+        {
+            "id": "flash_grid",
+            "type": "flash_grid",
+            "priority": 40,
+            "content": {
+                "title": "Featured Deals",
+                "items": [
+                    {
+                        "id": "prod_oyster_silver",
+                        "title": "Oyster Perpetual Silver",
+                        "subtitle": "Automatic, 41mm",
+                        "price": "$5,100",
+                        "original_price": "$8,500",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCGlfMSUQlZdcPKE-8mNNy2pXcSAuVU7prDDB2CIR2t0CsKm-h8XvgHSro4r9ZE3kKE1EZiWDfHgEUrsbJ0lmxOafa44j-UhDLOl0oI1CIEuvR2RIxfIlRLYytFakedc_rDgCFeS_5dfIuvcbxZnLkUV9YunBpoPFM0lEaQfYl0ai2-ttlykXpX8CBt-Pn3kpR4khMbk3rXo9HMjF0WtZZKG5WCHERu1TFy0BX8Ku6Un5l4Rz-lQEOBv2z8cY_etd7bQPjmPVu7hjHc",
+                        "badge_text": "-40%"
+                    },
+                    {
+                        "id": "prod_royal_oak_gold",
+                        "title": "Royal Oak Gold Leather",
+                        "subtitle": "Mechanical, 39mm",
+                        "price": "$9,000",
+                        "original_price": "$12,000",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBzAHgN5Z5aq7rKH6jJn4LdSeiZvnoA1Y74C6lHMKUsgi8DlQXXpII0j_izfoFPn4IZc28BCh3rtBob3DiP0IgrdTKj-cEonF1-J9GdmqgWBObvl5o89OG9h6cyzhCpVfc4lbOJ2FOw_5T9E5wAUbQOkNOCEWaQN1TPIEgPsEzZ1Q8qTmKxavlzZyCwRyFgMVdO1E95k0fB7zBpmikd1xf5cO9iGq4KJ1yLOYAIU3VEJRhEiaEfdYwJr4fd-WveN7mD1LfZqPZxZ0Ys",
+                        "badge_text": "-25%"
+                    },
+                    {
+                        "id": "prod_cosmograph_black",
+                        "title": "Cosmograph Black Dial",
+                        "subtitle": "Chronograph, Steel",
+                        "price": "$12,000",
+                        "original_price": "$24,000",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCllc5_JUgN8gnyYzBoJQCZVRfjJTV_iJN3bBNpLDy4MsAcFhmKDW55RrKwlB0YY6zxYLgkVcsbZKlIYjZW7SdclPhmh6_QPTI49MT-alJgMjg9aB2I6kdT6wg0J7UcUVUKE9p83GokaJv6meYqy5li5RIjAnM7ETJ6rXS36ee-l_ZenDVi61ix_eO8eiJH5Eqa3AtImXYXlumUr9JvK6_jR6NiQsnSzc9XTM5V4RmviqokB5SbrH75ZE64DMsGTYl5uM4uF4oVq54z",
+                        "badge_text": "-50%"
+                    },
+                    {
+                        "id": "prod_nautilus_blue",
+                        "title": "Nautilus Blue Horizon",
+                        "subtitle": "Stainless Steel",
+                        "price": "$28,500",
+                        "original_price": "$32,000",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDNK-HkUkBZDX2EJnyPSjbeRvEbTPNebYkB7Y5RtEWmZTTtOi0ShoAmh6_VAEV8p3ccsLviCLw92MtA1tsy71f5fPrZUu5qSFAYI51r51-7X-tUatWw5PZDKRP_6KLn6Rx0-lvItZtNkrbAzq8lsfr4907rkzB512Hqa1SWTKji1Wf7L06kud__jhDX6EBT6EODaKt2NhvOKCwUUd8S-0d27I5ql--8jHLp9wKInqlt_L62MG_-XGvgX2unkFPY5_CJIC-9KZEEwHtM"
+                    }
+                ]
+            }
+        },
+
+
+        
+        {
+            "id": "flash_bottom_nav",
+            "type": "flash_bottom_nav",
+            "priority": 50,
+            "content": {}
+        }
+    ]
+}

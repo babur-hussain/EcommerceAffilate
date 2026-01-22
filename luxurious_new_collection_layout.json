@@ -1,0 +1,76 @@
+{
+    "pageSlug": "luxurious_new_collection",
+    "name": "Luxurious New Collection",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "lux_header",
+            "type": "lux_header",
+            "priority": 10,
+            "content": {
+                "title_top": "NEW",
+                "title_bottom": "COLLECTION",
+                "subtitle": "The luxurious cosmetics now for everyone.",
+                "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuB6PH3bjhsnGXf-GgDSuQ1jJbCI3Wad51MAtOqWqbF84nrLC3JOyMsLhBDnJO_hsba8Ma_wlYaLKoSy4VKUgFjPmVvbs0yHx41K-_j58rROHQn3RJuxXuy3x3GwBM6aJnz2lT2nnXD5ZSXaalhric9BTYwwLAho48hjzUJhk64DpJKX6eXmMIwzZ-pwfifkbCSomW9Hu4XEHbiTUImQkSFOKUu6_bWnHA7GCLdUOb9tKtrlzTwut_3BI0owDlA7ao1oKA6acCEZ6MDN"
+            }
+        },
+        {
+            "id": "lux_tabs",
+            "type": "lux_tabs",
+            "priority": 20,
+            "content": {
+                "tabs": [
+                    "All",
+                    "Skin Care",
+                    "Make Up",
+                    "Sets"
+                ]
+            }
+        },
+        {
+            "id": "lux_grid",
+            "type": "lux_grid",
+            "priority": 30,
+            "content": {
+                "items": [
+                    {
+                        "id": "prod_rose_radiance",
+                        "title": "Rose Radiance Serum",
+                        "subtitle": "Hydrating Glow",
+                        "price": "$42.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCjvnrOToB8T8eKpY6oy6FBHioTlCDhGF7nQNlawD8qFkJRzTw7d3H3HICgYh7SrUjPEfc5YGiH_T7lCtwJUmEmsXCKOw0iXP8II6rHGXhmv6KYNHVABliwSa4PiouBE4ui3pj8St-nkIqRXR7EcRizc9TF--kdhizqAIJB-YdJS1KBAVyQDldqa3qmWHWAdSFElhyOkESVbCFnBLJPq7sn5nbHmsc4IO03lYi6tngSuLNXsPSLgZ3nusB1U7nSJ4Q1lnlxo-wchE9b",
+                        "badge": "NEW"
+                    },
+                    {
+                        "id": "prod_velvet_cream",
+                        "title": "Velvet Hand Cream",
+                        "subtitle": "Softening Formula",
+                        "price": "$24.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDgJLZizsUR6TuPW9yUOGeWRtzT2noRWPyaVAhKIVebOoMuS_-ZGR8FrEnxF8su6llo_z3FqAfBbTzZ30rao-ggsdmDT77RSkfa7xVtyG7DDL4jGhs2t76NqZ1XauFjgflj0S33rusTvBGeqNp_YEmw783_X_8kfwq1J1nRh24T29XrTYQF-kHtn1WD0fLWKS0wXv4loU7DwJSziSTMykzZBGXzLyguws0AIBGOZb0PgN2DP3K1SdYzsfC_u8k6ekm06AkDp5iFdoTW"
+                    },
+                    {
+                        "id": "prod_daily_spf",
+                        "title": "Daily Defense SPF",
+                        "subtitle": "Broad Spectrum",
+                        "price": "$36.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuB4WcmF2Cv6K_nAchPvMSVtgBigs1Lm9fbM3wHt9u1O8gIZ_g0qWI3qRIjySQLs0V2WTb3pwbBzJF_E2MzqYROtz9KgYagMoojssBaijPw78NEncaBR522A5Yw6KGcUgbd3reNHBnTIn0X61AuKj4ep1b4D3cIzGf73Maee3hZQWkhkiK5sA6oZayYrmj50JGY0OTXTDPwdYKLgi_11g8GXt6vpLZGtOIIQ6kqu1EcVOyvZ_nYfS4DWWP8ZSFWDEF9A_bj3P5PQbxK4"
+                    },
+                    {
+                        "id": "prod_silk_tint",
+                        "title": "Silk Lip Tint",
+                        "subtitle": "Mauve Shade",
+                        "price": "$18.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCTGLxGMwWOBUXJFKcwQbQjlvmHf-8Z8ZARX92KFeHXi9pHU_9gmq_i1A-T3YeO0cRwhBqRQ_uhJMFNowDhNvd-_hV9xkuAh7zBfGOv7TDejTgw097Qx70Ot1R_mYAIwcCfuvkok2qlyw9z27DgigK0UeH6fGkCg_VPEZxsgbFae6OtinqeL4r1GXvboXpJtL7ym-ejVJlSpF2fAfN8GOlL7iux-lSyaPS1X5n-pRPH-hhYOj_PkKf6Ej7WxQ9uC5s-97ViKm8XgEqE",
+                        "badge": "SALE"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "lux_bottom_nav",
+            "type": "lux_bottom_nav",
+            "priority": 40,
+            "content": {}
+        }
+    ]
+}

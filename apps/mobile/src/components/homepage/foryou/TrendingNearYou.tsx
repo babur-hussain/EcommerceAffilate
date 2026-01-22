@@ -8,7 +8,7 @@ import CachedImage from '../../shared/CachedImage';
 
 
 
-export default function TrendingNearYou() {
+export default function TrendingNearYou({ limit = 10, productIds = [] }: { limit?: number, productIds?: string[] }) {
     const [products, setProducts] = useState<TrendingProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const { address: locationAddress, fetchLocation } = useUserLocation();
@@ -24,22 +24,37 @@ export default function TrendingNearYou() {
     }, [locationAddress]);
 
     useEffect(() => {
-        // Refetch when pincode is available or initially
+        // Refetch when pincode is available or initially, or when config changes
         fetchTrendingProducts();
-    }, [pincode]);
+    }, [pincode, limit, productIds]);
 
     const fetchTrendingProducts = async () => {
         try {
-            const params: any = { sort: 'most_viewed', limit: 10 };
-            if (pincode) {
-                params.pincode = pincode;
+            let fetchedProducts = [];
+
+            if (productIds && productIds.length > 0) {
+                // Specific IDs requested
+                const response = await api.get('/api/products', { params: { ids: productIds.join(',') } });
+                const uniqueFetchedProducts = Array.isArray(response.data) ? response.data : (response.data.products || []);
+
+                // Map over the ORIGINAL productIds list to preserve order and duplicates
+                const productMap = new Map(uniqueFetchedProducts.map((p: any) => [p._id, p]));
+                fetchedProducts = productIds.map(id => productMap.get(id)).filter(p => p !== undefined);
+            } else {
+                // Default trending logic
+                const params: any = { sort: 'most_viewed', limit: limit };
+                if (pincode) {
+                    params.pincode = pincode;
+                }
+                const response = await api.get('/api/products', { params });
+                fetchedProducts = Array.isArray(response.data) ? response.data : (response.data.products || []);
             }
 
-            const response = await api.get('/api/products', { params });
-            const fetchedProducts = Array.isArray(response.data) ? response.data : (response.data.products || []);
+            // Determine display limit: if productIds are set, show all of them (ignoring numeric limit), else use limit
+            const displayLimit = productIds && productIds.length > 0 ? productIds.length : limit;
 
             // Map real data to UI model
-            const mappedProducts = fetchedProducts.map((item: any) => {
+            const mappedProducts = fetchedProducts.slice(0, displayLimit).map((item: any, index: number) => {
                 // Calculate Discount
                 let discountLabel = '';
                 if (item.mrp && item.mrp > item.price) {
@@ -67,8 +82,11 @@ export default function TrendingNearYou() {
                 if (item.rating > 4.5) tag = 'Best Seller';
                 if (item.offers && item.offers.length > 0) tag = 'Offer Available';
 
+                // Unique key for duplicates
+                const uniqueKey = `${item._id}-${index}`;
+
                 return {
-                    id: item._id,
+                    id: uniqueKey, // Use unique composite key
                     name: item.name || item.title,
                     image: item.images && item.images.length > 0 ? { uri: item.images[0] } : (item.image ? { uri: item.image } : null),
                     price: item.price,

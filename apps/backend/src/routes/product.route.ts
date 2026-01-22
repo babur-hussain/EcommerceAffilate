@@ -522,9 +522,18 @@ router.get("/products/:id", async (req: Request, res: Response) => {
 // GET /api/products - Get all active products
 router.get("/products", async (req: Request, res: Response) => {
   try {
-    const { category, limit, search, pincode } = req.query;
+    const { category, limit, search, pincode, ids } = req.query;
 
     const filter: any = { isActive: true };
+
+    // Support filtering by specific IDs (comma separated or array)
+    if (ids) {
+      const idArray = (ids as string).split(',').map(id => id.trim()).filter(id => mongoose.Types.ObjectId.isValid(id));
+      if (idArray.length > 0) {
+        filter._id = { $in: idArray };
+      }
+    }
+
     if (category) {
       filter.category = category;
     }

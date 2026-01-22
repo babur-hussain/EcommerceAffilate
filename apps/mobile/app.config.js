@@ -26,14 +26,23 @@ export default {
       usesCleartextTraffic: true,
     },
     scheme: 'ecommerceearn',
-    plugins: ['expo-router'],
+    plugins: [
+      'expo-router',
+      [
+        'expo-image-picker',
+        {
+          photosPermission: "The app accesses your photos to let you share them with your friends.",
+          cameraPermission: "The app accesses your camera to let you take photos."
+        }
+      ]
+    ],
     experiments: {
       typedRoutes: true,
     },
     extra: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://3.208.16.32',
       eas: {
-        projectId: "e0b5602c-a326-4d20-a711-e35985e3863c"
+        projectId: "027676fe-d483-4386-9821-9e5962de72c1"
       }
     },
   },

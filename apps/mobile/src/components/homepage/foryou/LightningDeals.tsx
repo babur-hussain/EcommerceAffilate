@@ -76,24 +76,49 @@ interface VisualOverride {
     discount?: string;
 }
 
-export default function LightningDeals() {
+export default function LightningDeals({ limit = 6, productIds = [] }: { limit?: number, productIds?: string[] }) {
     const [products, setProducts] = useState<LightningDealProduct[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchDealProducts();
-    }, []);
+    }, [limit, productIds]); // Re-fetch if limit or IDs change
 
     const fetchDealProducts = async () => {
         try {
-            // Fetching slightly different products or same endpoint, for demo using same
-            const response = await api.get('/api/products?limit=6&skip=6');
-            const fetchedProducts = Array.isArray(response.data) ? response.data : (response.data.products || []);
+            let fetchedProducts = [];
 
-            const mergedProducts = fetchedProducts.slice(0, 6).map((item: any, index: number) => {
+            // If specific IDs are provided, try to fetch them (assuming backend supports filtering or we fetch all and filter)
+            // Ideally backend should support `ids` param. If not, we might need a new endpoint or loop.
+            // For now, let's assume we can pass IDs to the products endpoint or we just use the default fetch if IDs are empty.
+
+            if (productIds && productIds.length > 0) {
+                // Try fetching specific products. 
+                // Note: If backend doesn't support ?ids=..., we might need to adjust.
+
+                // Let's assume standard filtering:
+                const response = await api.get('/api/products', { params: { ids: productIds.join(',') } });
+                const uniqueFetchedProducts = Array.isArray(response.data) ? response.data : (response.data.products || []);
+
+                // Map over the ORIGINAL productIds list to preserve order and duplicates
+                // Create a map for quick lookup
+                const productMap = new Map(uniqueFetchedProducts.map((p: any) => [p._id, p]));
+
+                fetchedProducts = productIds.map(id => productMap.get(id)).filter(p => p !== undefined);
+            } else {
+                const response = await api.get(`/api/products?limit=${limit}&skip=6`);
+                fetchedProducts = Array.isArray(response.data) ? response.data : (response.data.products || []);
+            }
+
+            // If specific products are requested, satisfy the user's requirement to "show as much id's i feed"
+            // effectively overriding the numeric limit if it's smaller than the list of IDs.
+            const displayLimit = productIds && productIds.length > 0 ? productIds.length : limit;
+
+            const mergedProducts = fetchedProducts.slice(0, displayLimit).map((item: any, index: number) => {
                 const overrides: VisualOverride = DEAL_OVERRIDES[index] || {};
+                const uniqueKey = `${item._id}-${index}`; // Unique key for duplicates
                 return {
-                    id: item._id,
+                    id: uniqueKey,
                     name: item.name,
                     image: item.images && item.images.length > 0 ? { uri: item.images[0] } : null,
                     price: item.price,

@@ -50,7 +50,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "http://192.168.29.193:4000"
+      "apiUrl": "http://3.208.16.32/api"
     }
   }
 }

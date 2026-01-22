@@ -1,0 +1,91 @@
+{
+    "pageSlug": "cosmetic_sale",
+    "name": "Cosmetic Sale",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "cosmetic_header",
+            "type": "cosmetic_header",
+            "priority": 10,
+            "content": {
+                "title_top": "COSMETIC",
+                "title_bottom": "SALE",
+                "subtitle": "Experience the essence of purity with our exclusive summer collection.",
+                "button_text": "SHOP NOW",
+                "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuADI5suqb3_-FyDld_V6OcXgLAZBRi7vumVamnqWXYnyHvdr-PgVKy67XfBQu-fLwOm0VFyV7fj6joH-mNphh6V9dwQDP_DIvQhFCS-Mdbtutuhen__RjJCXgtvZu3OJ56_aYhiYWIYkQwMef8knO-xXbItkviQeYNhkZYL8MbNOGx8nsPCgy7zxLIZjFNMdUnLYCWDxG_SHEN3lbKmuaGMe6BdIUbXTAZbfrLslPsFHWZokn-PPZZrV4SWUeafGq4qiYDxnjXF7vjy",
+                "badge_text_top": "Up To",
+                "badge_text_center": "50%",
+                "badge_text_bottom": "OFF"
+            }
+        },
+        {
+            "id": "cosmetic_categories",
+            "type": "cosmetic_categories",
+            "priority": 20,
+            "content": {
+                "tabs": [
+                    "All",
+                    "Face",
+                    "Body",
+                    "Sets",
+                    "Hair"
+                ]
+            }
+        },
+        {
+            "id": "cosmetic_grid",
+            "type": "cosmetic_grid",
+            "priority": 30,
+            "content": {
+                "items": [
+                    {
+                        "id": "prod_hydra_serum",
+                        "title": "Hydra Serum",
+                        "subtitle": "Deep hydration for glowing skin.",
+                        "price": "$45",
+                        "original_price": "$56",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAoQq-Xr11GKJRD7UmmHtyK_00QgnC3TKDdgCCNHKq_XT5S1G3Y6vKmQEAUhBnB09h1_VRmz6Q86gnO9vnegNQmKBxl1qng9Dtfb94KWWLdN7D37iorDRTNfUmEv7fYZ7XJOVdY7vkwQmKJH6RdQVusN9S39WWCnLdaOZ5j4-eGQjpOAJzZtLySK40lMCqpe1H-CIW9FZwqRvuOYOtT2lmnYSu6XKGBuYUj18QlAxpgDF2RnyzQJeED3oqwq7I6HcWFaKD05Q_74ce_",
+                        "badge": "-20%"
+                    },
+                    {
+                        "id": "prod_pure_clay",
+                        "title": "Pure Clay",
+                        "subtitle": "Detoxifying daily cleanser.",
+                        "price": "$32",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuC-ir_nUU4Hv3_4FnO1ZlfmQ81H_BFSq0rwy70Qsf06JFOPPgwDKXFRfPJUlN8b7AmpZp1MDiZJOsd4SvelO8-ml6oULS-7TRJzDC762Chj-dcPExKp-eJ3lLbnJAxMSjPoHOLLbImqI51qBx3M4ruWa-KQs9xtP6KPqNwc97ggUjjiAX3V8bwSaIeoJpbO8_p_vgFx8rk3IGvNmsY8l1slaIZkupTyDDAf7jc6tcxuMhBb-tlYdrWChR8TeKjqM0o52p5FRswZCWHb"
+                    },
+                    {
+                        "id": "prod_botanic_mist",
+                        "title": "Botanic Mist",
+                        "subtitle": "Refreshing rose water spray.",
+                        "price": "$28",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCqtjl3ArByijDmH8yThr5WwhebRmIueqtrTM4KwAki0iN3ec5FuNfwfU7pRVj1gJcGEk6mFaJFWUoKzygruxdqvP4LFaUqn9LNRQcM-pX1bstFLqMXIPg9qjrW34vKOY84w5pRh_gGjqZMdGZEsnhZSDB1n0uk0yo7QYDXTmoQKomqfWTUihrvIzdgpo5Xm--kH4NSl4DusIFD42GUmOSkTOVq9PiEYvEj64mhyafDNbCUeCwA1OEQ_sKxoKW30kK4lur-WxX85QJe",
+                        "badge": "NEW"
+                    },
+                    {
+                        "id": "prod_night_repair",
+                        "title": "Night Repair",
+                        "subtitle": "Intensive overnight recovery.",
+                        "price": "$65",
+                        "original_price": "$80",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCiWAXPyJwRhfkbMceHoy_YEo6RiBKzT3lQ6xq_I5lCm6Sp6uLIdWTZ5cIxT-9rQ497sy0PeG2yie86DRSDMSE-rjkOSI0YCWH6Odrv4zk3XSzNWi8nP1XYC1veMv8aYjyowhuPSH8NJq_J998X-cgIIAWS3XpCcnB0ismJ7qjBbl35F-bVdB9MbBdXDLfvjIyhxzl8eeMgD9Cgg4YTA3bZYJbJRMYBLcT8hSYrTuwuuMsmsoRfdSuiNmQv8-VWiEYDri2pf2qVgFZq",
+                        "badge": "HOT",
+                        "badge_bg": "#F43F5E"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "cosmetic_join_club",
+            "type": "cosmetic_join_club",
+            "priority": 40,
+            "content": {}
+        },
+        {
+            "id": "cosmetic_bottom_nav",
+            "type": "cosmetic_bottom_nav",
+            "priority": 50,
+            "content": {}
+        }
+    ]
+}

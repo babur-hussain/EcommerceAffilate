@@ -1,0 +1,128 @@
+{
+    "pageSlug": "luxury_fashion_sale",
+    "name": "Luxury Fashion Sale",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "luxe_header",
+            "type": "luxe_header",
+            "priority": 10,
+            "content": {
+                "logo_text": "LUXE."
+            }
+        },
+
+
+        {
+            "id": "luxe_hero",
+            "type": "luxe_hero",
+            "priority": 20,
+            "content": {
+                "main_text": "FASHION",
+                "sub_text": "Sale",
+                "special_offer_text": "Special Offer",
+                "discount_text": "Up to 50% Off",
+                "button_text": "Shop Now",
+                "images": {
+                    "left": "https://lh3.googleusercontent.com/aida-public/AB6AXuCHzybBE4_pgdu9vxNnxzoVYB1kxoH9oCKNW_mnYItgjFe535qbSPhoOhyRMYsgI0vDzGGFW2DxKv2_JQgqGQaRVp-B5oytb5sjERHoLEx9jS67FG14qvIg5V8Of3U_hGSIZSivvJNH1K5VB_qh5yDH1I2BbTpVS1_xOTfUpGtoHMOs0YDHM27SkNyIxRF3o1vXensiK3SJWE5j2B0S-mmV0mbmxnG82vifpKezSAGeJwT6D4eF70E5PNVJN8yLX239pM8CSQAsEXof",
+                    "right": "https://lh3.googleusercontent.com/aida-public/AB6AXuBG-mwPPCOCP-htcbNnvI9HVjBWdNkMEBnCg7_OauOxcXK4TJjS5G0HvD2sLBitkLIDiXLnrWE8am3dwCb6IgKg1auhoCFzkJPCl6eeg7-t2drT0E0yP6gEs9TdWcP9Hd-03qqOQSKGjAmk7eGSkCmNS28ro3jHfbChbc_A-B5j9trJ4IhlmwR067HKwEi12ycLYU2XeN-jQJ-6fpBYIDE-KerYGAjHXV_yFEBP-vErkmLgIe7_08Uf3W71cfopaajAXNeRQ5RdwiTr"
+                }
+            }
+        },
+
+
+        {
+            "id": "luxe_tabs",
+            "type": "luxe_tabs",
+            "priority": 30,
+            "content": {
+                "tabs": [
+                    "All",
+                    "Dresses",
+                    "Accessories",
+                    "Shoes",
+                    "Bags"
+                ]
+            }
+        },
+
+
+        {
+            "id": "luxe_grid",
+            "type": "luxe_grid",
+            "priority": 40,
+            "content": {
+                "items": [
+                    {
+                        "type": "product",
+                        "id": "prod_noir_gown",
+                        "title": "Noir Evening Gown",
+                        "brand": "Saint Laurent",
+                        "price": "$1,250",
+                        "original_price": "$2,500",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAqvr9mJWXyCI9SFqnG7VTxxXoYK6GX94MqxN1cswT4mNy5m3dh79-aiAegXD17rU2D9OpPkrfBHNQDPe2s4Or5EtLiv_hengBOlNAGWohk0pS4J_d1RhKve50RGhIIw2Dd2yToYb3siSpe8XRHzyXYPaLZQ47Jp2w1XRWeKZJzMEaVa82LZ7YJP9FDZKOJ_YyNkQJYVZ86E1hELpNAb1r51W0-XVvhPx7LefM9DI3KfNIOe6MPgmQrdRH4SKQ6mhyHUaJp4tOT6jm7",
+                        "badge_text": "-50%"
+                    },
+                    {
+                        "type": "product",
+                        "id": "prod_oversized_shades",
+                        "title": "Oversized Shades",
+                        "brand": "Prada",
+                        "price": "$320",
+                        "original_price": "$450",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAfg9TZrZxlvI6-HtzI_05yaN3jEbfm6hGw3CTfeOz-O65WUmfdSG684m_ldLWIL-DD1FI5c_0VGWIeWa_mcbC35SEsuXkO3i4K80vrxtCCNkAMZVT3yEg38wy90dID-m3iibLYDM-Ls_D7aSv7U8p8xz05MksS07rI-h5TuXsB9u5zjjHyzglkbmpfc5dufnPIkmZo7FpFONFiWDtLBGSTXtyShWQeR3L9c17j-8xvxA2sxFiglCPSGqsyx7ObKoU8MWUmfzWBbL_7",
+                        "badge_text": "-30%"
+                    },
+                    {
+                        "type": "product",
+                        "id": "prod_signature_tote",
+                        "title": "Signature Tote",
+                        "brand": "Celine",
+                        "price": "$2,100",
+                        "original_price": "$3,500",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuC_qtD4U9gUpH3d9iGjY7AaA78Hf8nM0xh0WVelPLEMNuYjydAq-npa6956-FLfCZT-vOhEsWvxF0IqJ3WSTE3RzZyLHKRfFu5t1mihSZMUm9Skqv22BkKDgJi4YHhPLMBO6P6F29Xsk1DoVMEnAOO1NxRFWWDn3GULH8zSiTp48EJEODc3VAByoHuK0rd82LF1AL0rEHBs91j9ef5HXE4rfmpECsUqba-k6dYe5pLDnliNFI-O56YvInxbu2MR_NNROCWhbKCHl7OU",
+                        "badge_text": "-40%"
+                    },
+                    {
+                        "type": "product",
+                        "id": "prod_silk_headscarf",
+                        "title": "Silk Headscarf",
+                        "brand": "Hermes",
+                        "price": "$280",
+                        "original_price": "$560",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDSJeM-lqBwH9mBKM2Q6E1lQJ6wwJtq0LrwmrIdMTQuMWBPcBfPy6mvnYhiIoTfCishi3y6_vbpH_RQPsTMZfQ9ziz-1InL9fnP41A2OAUSTvFyEqIwVPec-qk_wICT-RY6LnLxO_tHPrMikse46D92nlRAcvkknapM3EofgYXpmfFLF_1v1iqhRRXcibxkDXGYg6jzn5wKUEdeQCmzTjuqo85XhszYhxWi0vi3pCSGwZI_b8h1xaFG5Iv-zTcCRjt5DHgC4LYcAVJq",
+                        "badge_text": "-50%"
+                    },
+                    {
+                        "type": "promo_block",
+                        "block_title": "Limited Edition",
+                        "block_desc": "Discover exclusive runway pieces available only for 24 hours.",
+                        "block_button": "View Collection"
+                    },
+                    {
+                        "type": "product",
+                        "id": "prod_stiletto_pumps",
+                        "title": "Stiletto Pumps",
+                        "brand": "Jimmy Choo",
+                        "price": "$650",
+                        "original_price": "$895",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCwOH5BsFUlQSD_OMEziUP2SM5SKbaY2jZtrdg1gBqC31hiTAMC5aSBjPtf6crjGqivXVEE3LJqAKtvej9y7CtVtm9VWkZPDi4AamJp3ujnpujIosYHoyrWkSHkZcn6e0KOhdLTon4hLlYQDc5OtD9PrY0DXFzDJsiYwMVybbkG59MhTIJJ_U7iwNtNDgUMgnoQm8tFJ5SsK1q1mTes8begLUAsOiYNoDpIE5okywXtFHtIMhDtOy5tVO9UiRs6gYLES_K-3_5hxcvA"
+                    },
+                    {
+                        "type": "product",
+                        "id": "prod_speed_trainer",
+                        "title": "Speed Trainer",
+                        "brand": "Balenciaga",
+                        "price": "$780",
+                        "original_price": "$1,050",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAVBK7ZFa91h2xGKTKNay1EiFWZyH2-VEv8CKoTYxljS-LPQzr8i3LxH49IcRMQPmElA6AYjO6-w3IT7y6CS--7W0oVDg30ZlCcfPBc2eRCU0cLUWH78bIOMLPI3Q3oE5CCyDtHF6XuOJWDYBALWsF4mw9P7qeDWeHJgmObAF6igrUpx2s972iCjX7PiESvk1Bf1aDH4MMfemOSpBIGjPJk9r9q9CKezWJGBSKn0YdbjN7J4ZwPWMYu7GaZlnbHGnEcVMn0WhH9qI2p",
+                        "badge_text": "-25%"
+                    }
+                ]
+            }
+        }
+
+
+        
+    ]
+}

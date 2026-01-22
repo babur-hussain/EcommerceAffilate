@@ -4,7 +4,6 @@ import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 
-
 const LIVE_URL = 'http://3.208.16.32';
 
 const getLocalUrl = () => {
@@ -14,8 +13,8 @@ const getLocalUrl = () => {
     // Fallback to localhost/emulator specific IPs or a specific local IP if needed
     // For Android Emulator: 10.0.2.2
     // For iOS Simulator: localhost
-    // return 'http://192.168.29.193:4000'; // Default to last known local IP or update as needed
-    return 'http://192.168.29.193:4000'; // Current Local IP
+    // For iOS Simulator: localhost
+    return 'http://localhost:4000'; // Default fallback for Simulator
   }
 
   // Use the same IP as the Expo Bundler
@@ -25,18 +24,43 @@ const getLocalUrl = () => {
 
 const LOCAL_URL = getLocalUrl();
 
-// Default to Local URL initially
+// Default to Local URL initially, but we will check health
 let currentBaseUrl = LOCAL_URL;
+let isLive = false;
 
-console.log('🚀 Initial API_URL configured as:', currentBaseUrl);
+console.log('🚀 Initializing API with Default Local URL:', currentBaseUrl);
 
 const api = axios.create({
   baseURL: currentBaseUrl,
-  timeout: 10000, // 10 second timeout
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Function to check which server to use
+const initializeApi = async () => {
+  try {
+    console.log(`Checking connection to LOCAL: ${LOCAL_URL}/health...`);
+    // Create a temporary instance to avoid interceptors for this check
+    const checkApi = axios.create({ timeout: 2000 });
+    await checkApi.get(`${LOCAL_URL}/health`);
+
+    currentBaseUrl = LOCAL_URL;
+    isLive = false;
+    api.defaults.baseURL = LOCAL_URL;
+    console.log('✅ Connected to Local Server:', LOCAL_URL);
+  } catch (error) {
+    console.log('⚠️ Local Server unreachable. Switching to LIVE URL.');
+    currentBaseUrl = LIVE_URL;
+    isLive = true;
+    api.defaults.baseURL = LIVE_URL;
+    console.log('✅ Connected to Live Server:', LIVE_URL);
+  }
+};
+
+// Start initialization
+initializeApi();
 
 // Cache key generator with sorted keys for determinism
 const getCacheKey = (url: string, params: any) => {
@@ -52,8 +76,10 @@ const getCacheKey = (url: string, params: any) => {
 // Request interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
-    // Ensure we are using the current base URL
-    config.baseURL = currentBaseUrl;
+    // Ensure we are using the current base URL if not already set specifically
+    if (!config.baseURL || config.baseURL === LOCAL_URL || config.baseURL === LIVE_URL) {
+      config.baseURL = currentBaseUrl;
+    }
 
     const token = await AsyncStorage.getItem('authToken');
     if (token) {
@@ -83,17 +109,21 @@ api.interceptors.response.use(
   async (error: any) => {
     const originalRequest = error.config;
 
-    // Handle Network Errors (Connection Refused, Timeout, etc.)
-    if (!error.response && error.message === 'Network Error' && currentBaseUrl === LOCAL_URL && !originalRequest._retry) {
-      console.warn('⚠️ Local API unreachable. Switching to LIVE URL...');
+    // Handle Network Errors (Connection Refused, Timeout, etc.) - Fallback logic
+    if (!error.response && error.message === 'Network Error' && !isLive && !originalRequest._retry) {
+      console.warn('⚠️ Local API died/unreachable during request. Switching to LIVE URL fallback...');
 
       originalRequest._retry = true;
+
+      // Switch Global State
       currentBaseUrl = LIVE_URL;
+      isLive = true;
       api.defaults.baseURL = LIVE_URL;
+
+      // Update this request
       originalRequest.baseURL = LIVE_URL;
 
       console.log('🚀 API_URL switched to:', currentBaseUrl);
-
       return api(originalRequest);
     }
 
@@ -115,8 +145,6 @@ api.interceptors.response.use(
 
     if (shouldTryCache) {
       console.log(`⚠️ Request failed (${error.message}). Attempting to fetch from device cache for:`, error.config.url);
-      if (error.code) console.log(`👉 Error Code: ${error.code}`);
-      if (error.response) console.log(`👉 Response Status: ${error.response.status}`);
 
       try {
         const key = getCacheKey(error.config.url, error.config.params);
@@ -138,10 +166,6 @@ api.interceptors.response.use(
       } catch (e) {
         console.error('Failed to retrieve cached response from device', e);
       }
-
-      console.warn('❌ Request failed/timed out and no cache available in device.');
-    } else if (error.message === 'Network Error') {
-      console.warn('❌ Network Error - Cannot reach server');
     }
 
     if (error.response?.status === 401) {

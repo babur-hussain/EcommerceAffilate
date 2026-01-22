@@ -313,8 +313,8 @@ export default function LayoutManager() {
                                 key={section.id}
                                 onClick={() => setSelectedSectionId(section.id)}
                                 className={`p-3 rounded-lg border cursor-pointer transition-all group ${selectedSectionId === section.id
-                                        ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500'
-                                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                    ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                     }`}
                             >
                                 <div className="flex justify-between items-center">
@@ -413,7 +413,7 @@ export default function LayoutManager() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Page Slug (ID)</label>
                                 <input
                                     type="text"
-                                    className="w-full border rounded p-2"
+                                    className="w-full border rounded p-2 text-gray-900"
                                     placeholder="e.g. category-fashion"
                                     value={newPageData.slug}
                                     onChange={(e) => setNewPageData({ ...newPageData, slug: e.target.value })}
@@ -424,7 +424,7 @@ export default function LayoutManager() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
                                 <input
                                     type="text"
-                                    className="w-full border rounded p-2"
+                                    className="w-full border rounded p-2 text-gray-900"
                                     placeholder="e.g. Fashion Landing Page"
                                     value={newPageData.name}
                                     onChange={(e) => setNewPageData({ ...newPageData, name: e.target.value })}
@@ -433,7 +433,7 @@ export default function LayoutManager() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                                 <textarea
-                                    className="w-full border rounded p-2"
+                                    className="w-full border rounded p-2 text-gray-900"
                                     rows={3}
                                     value={newPageData.description}
                                     onChange={(e) => setNewPageData({ ...newPageData, description: e.target.value })}

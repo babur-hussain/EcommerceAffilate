@@ -1,0 +1,131 @@
+{
+    "pageSlug": "new_collection_shop",
+    "name": "New Collection Shop",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "aesthete_header",
+            "type": "aesthete_header",
+            "priority": 10,
+            "content": {
+                "logo_text": "AESTHETE",
+                "hero_title": "New Collection",
+                "button_text": "Shop Now",
+                "stories": [
+                    {
+                        "id": "story_1",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBwX8MagRzKKrc1tayMEqTx94hTRCyPx3aieJi9AaGBLyR9bYZaeT2EGnvlX3Sm1SOamo938SqB20NrtBmJEhm0yds4AZPKsMpOW_SnLwtcF8ENEZkwG78LuKBS5qwpoR5w2-wDwothjnPyMM69jgJvkqhPy1It4IpucKnmMlTqef7NW_Cz6QhtpCjjTZ7572jcKaIwCEL245eodIIIKTuOChbUhxj6SvP_tdaNLZbZOVbM7DCcKYQJpSW9sRMeTmJ17qZb-8hAyT-S"
+                    },
+                    {
+                        "id": "story_2",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCMuLDrJUx6dFrKf8T6z_iHS4yxfL8BY0xv-3SZ-_0oxARvMFCJWIRtLX_QixIzVKegviHEGC-490r0_lTTeJOMR6RXxOIDA4VoJDz40LvBcq6Fn7t5NVfyB9-5CORhcex_U_3qldYr_cOdGzssAc0m5jfJMEVcvrGsFv5U94Uh5YI5I2wfDetAZFaZzmJlejt9UtHEH-CD1VMocxt_Cs2pt3g4d1Zs08-rXd5zSz2aBpQmvlUs1vvH4Lk6vpjeUHmEYMW1jxU6pK-X"
+                    },
+                    {
+                        "id": "story_3",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCUgK67sYyrpxyXiIljSeMTVNxl1EdAN5KOY9jlntlorUtf53GDNgbSE7JK1WOvjqSoB-jzdyn17ZW8BcHVxy1LWDb1gARpBOtEkgDo8D4zpqOrRZu101vYyPp7OMwY85IBlKatTqp7Ebq2Rm04ZLUWKuKeKwTgSQh4GOEQCjcNEeKhbmV7GSCPrXj2w3QH07uEwzQnRzxKPDeAqzJ_ybNhPdUxN6QHEXqmJDB6snQ_LUjLgcfFe8vyiIbw4tpnzLJjrVyKteF5A9yk"
+                    },
+                    {
+                        "id": "story_4",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAj82F_gHhlvIqooR_GsAtlyqFQmegzLuyyPpqfg63_Jxk_mC6Y5fiW5rFnJdvE33RXpq3rJqNv96nRIr0jHtA9T3j6GS00Pcx9RRCUcXzzGb2WAxjVs_Xa90OjT-zWASB9RvY0u4d_KWUSVRTwTTmhcrIxlE_jop6AbCe_nQ8WzCvsn3qpGEAQnc9MWcx7Bcc601BmNMHnRKIDdOVZ-ftbw9xDsN3hZ8Ozc1w7CbnFUEZ46p2nSCrZp_dV4-X8YxtJk3zk2nvZnOQp"
+                    },
+                    {
+                        "id": "story_5",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDnaxUHx9fz0nq7ABINFwCgJP0biSIckSnrwmKn630O6k0jBUt_v9FVVR7WyCI_ADdRwJzQd_FMW7OyBduX1eCA6jhqeeTQ_p33Ahu5y5BTP7KHPHbClGrG2sVnXkKgauP0Rjyhtoa_6SqaoIdI9OlffyC-9nZMyJzTL48l6L-wu-OIBu5-iu1gOyMAYpomjy4JYUsy-Jjjc_KBc9yOsmeZerDiCpgIrVGJQN7L2cV7R7VMU_UENbUKb_UNQ-5MsSqEKMAd5xTqkNve"
+                    }
+                ]
+            }
+        },
+
+
+        {
+            "id": "aesthete_tabs",
+            "type": "aesthete_tabs",
+            "priority": 20,
+            "content": {
+                "tabs": [
+                    "All Items",
+                    "Coats",
+                    "Dresses",
+                    "Tops",
+                    "Bottoms"
+                ]
+            }
+        },
+
+
+
+        {
+            "id": "aesthete_grid",
+            "type": "aesthete_grid",
+            "priority": 30,
+            "content": {
+                "items": [
+                    {
+                        "id": "prod_ribbed_skirt",
+                        "title": "Ribbed Midi Skirt",
+                        "description": "Beige • S, M, L",
+                        "price": "$45.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBbwYOTIv7WzFvNzBLJSobfuPK80-cbys6NqE6449fZEP4T2l3T1x1kb2MVM57qrQeE2MkIlT74y8mHY8FfoyOFpnmi11x0w3gLO1nEYXYFvFkrUqhv4tZc-16XmQzUZu5H3eGHEMcZc68oYZ4-Ye2DpDO52sU68IZimjwt7_svWyUEgUN0sTCWrWgf44JcTQvPUxlmmb_tLhvWPu2EnIXsQ5Kq-dCso4P55FInvdYQgYyByEEid8bidUewcKK0Zw83kSxvpP4rokZX"
+                    },
+                    {
+                        "id": "prod_trench_coat",
+                        "title": "Oversized Trench Coat",
+                        "description": "Khaki • One Size",
+                        "price": "$129.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuA07rH7OnWSCqDqetLKVA48B3oofw1aIILrXJFlD4HUQxSVLYYoVWR_AaJjRSeycwpzQHrRIuRzyZSRCX-qgJAoZadvFGumvGbCe5YX1k9x6RuvrGJL20NrgKppCCXy8jpJ-NvAnzOedXVEV50Gb3KOtF2ZjV9_KKAc0tF1hkVxEvpl8LVQYYPLe0bCzMky5DB6xt9BBmJ78ZBEin9yNzhE5ZFQfAqO3VD5VuXoRIuT0kuQCgqK8wEbWoBQypGJ3r1nd8KYhVFuFhRk"
+                    },
+                    {
+                        "id": "prod_cargo_pants",
+                        "title": "Utility Cargo Pants",
+                        "description": "Tan • XS - XL",
+                        "price": "$68.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAT4jqEKMrEXqgMscsDewEjIuJSl7JSz5hFct5qRBKs8UHkxZgv1HTDQiyl7fZnd0IGFM9w39RSilnbHjicLP44JesUXsjkxveOaaFq0PUiQa8THeD6ENT74wV33Zj5BkvGcJAUQtwFAKSNnNYkNA2l73hVoT-fnr82eXA4Gxf_MiYA3PFJrb2iZKEmXfHUE6IEUskZlOtMOlmjN55iLXCN5s_ZNdccTT7EWdbchsps-v1NfQ9OivnywoIOAEZ73jEGYiJNpVMe9NLA",
+                        "label": "Best Seller"
+                    },
+                    {
+                        "id": "prod_satin_dress",
+                        "title": "Satin Slip Dress",
+                        "description": "Cream • S, M",
+                        "price": "$89.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBjdWJftiM7XKI4IGgSoOLwFpty64HPk8gBU3NgDUKULAWKsHSsZq77KFWPf-hXtHjvxbsLiz1hK6A6Ll9DTpVeigRO8ZNbGyeRRyosvuteBfg6MgEq25XH9FVw2hJSuYsZyoB_ip0y9QL-RGu_cUY_Mig74AwOCADlbT89dPJLRZsmijjcqUjMn4m4Qz2Qgb30YbaQxzuYHH6shFh9Os042fsCYGNydEgt6I7dFLGvLFgSNU20DWIkILR2d1KuI5tKgDkCFdvRqxJi"
+                    },
+                    {
+                        "id": "prod_cable_sweater",
+                        "title": "Cable Knit Sweater",
+                        "description": "Ivory • M, L",
+                        "price": "$75.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAEQJj4JRHKBjUh2zuaK1n7aIUvyM-e9rc72Z-p-rfftfrliMtcgTjTE6HPF40Tx6XhiMgKbueheaizFmZ81qOXZLRGLqHWUhc1R5U0REvCIbKmaxRNWhUIV_mwyOvQNU8jGD5bmN_rJykmjnHenVM_qJNMewQAsyX6WpxWtX_Drgyuwf6hgTCI7wXZGcFN9sC8v9tLzrv7zbrprccyR5qllzOCnZPHk_oK5Z0M44k0burvBXsepYRl0-Z6vW5J45BMXnjGb5qWRKZo"
+                    },
+                    {
+                        "id": "prod_leather_boots",
+                        "title": "Ankle Leather Boots",
+                        "description": "Black • 36-41",
+                        "price": "$110.00",
+                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAwZtzqwuLGgviwrq1ir8QMsITFg6eeEiApq522ScccEHgZpBd7toq3-zztTcVIQP2ylx3lvp4SsSRSZQ3dynGrvswe2cmieT-rt0sURPFc8s-1Fb9X6LWqnF6AKMWvgMHZXUBedneWxFSi6kEw865-4jQ9DCS-GKVpBfq3nQP_3RAjJfxQFPRrbl8BIyLHLJXa1qceFxrI2kES3rUDELwKiZU0Cnsb4cQy9TcdIYvhLVzkm6KiOFk0rcEqyrszfIWgCWgUsUtI8cuL",
+                        "label": "New",
+                        "label_color": "#FFFFFF",
+                        "label_text_color": "#1A1A1A"
+                    }
+                ]
+            }
+        },
+
+
+
+
+
+        {
+            "id": "aesthete_footer",
+            "type": "aesthete_footer",
+            "priority": 40,
+            "content": {
+                "title": "Discover More",
+                "button_text": "View Full Collection"
+            }
+        }
+
+
+
+        
+    ]
+}

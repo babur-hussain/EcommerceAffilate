@@ -1,6 +1,54 @@
 import { getAuth } from 'firebase/auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api';
+const LOCAL_API_URL = 'http://localhost:4000/api';
+const LIVE_API_URL = 'http://3.208.16.32/api';
+
+// State to hold the current base URL
+let currentBaseUrl: string | null = null;
+let isCheckingHealth = false;
+
+/**
+ * Determines the API base URL to use.
+ * Checks if local server is available, otherwise falls back to live.
+ */
+async function getBaseUrl(): Promise<string> {
+  // If we already determined the URL, use it
+  if (currentBaseUrl) return currentBaseUrl;
+
+  // If we are already checking, wait a bit (simple simplistic approach)
+  // In a real app we might want a promise queue, but this is sufficient for now
+  if (isCheckingHealth) {
+    // Wait for up to 1 second
+    await new Promise(resolve => setTimeout(resolve, 500));
+    if (currentBaseUrl) return currentBaseUrl;
+  }
+
+  isCheckingHealth = true;
+  try {
+    // Check local health
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1000); // 1s timeout
+
+    // We try to fetch the health endpoint (assuming /api/health or just root /api response)
+    // Actually typically health is at /health not /api/health based on backend app.ts
+    // app.use(healthRouter) -> router.get("/health"...)
+    // So we should check http://localhost:4000/health
+
+    const checkUrl = 'http://localhost:4000/health';
+    await fetch(checkUrl, { signal: controller.signal, method: 'GET' });
+    clearTimeout(timeoutId);
+
+    console.log('✅ Web configured to use LOCAL API:', LOCAL_API_URL);
+    currentBaseUrl = LOCAL_API_URL;
+  } catch (error) {
+    console.log('⚠️ Local API unavailable, falling back to LIVE API:', LIVE_API_URL);
+    currentBaseUrl = LIVE_API_URL;
+  } finally {
+    isCheckingHealth = false;
+  }
+
+  return currentBaseUrl!;
+}
 
 /**
  * Fetch helper that automatically includes Firebase ID token in Authorization header
@@ -37,7 +85,15 @@ export async function fetchWithAuth(
     headers.set('Authorization', `Bearer ${idToken}`);
     headers.set('Content-Type', 'application/json');
 
-    let response = await fetch(`${API_BASE}${endpoint}`, {
+    const baseUrl = await getBaseUrl();
+    let url = `${baseUrl}${endpoint}`;
+
+    // Handle case where endpoint might already be a full URL (though unlikely with this util usage)
+    if (endpoint.startsWith('http')) {
+      url = endpoint;
+    }
+
+    let response = await fetch(url, {
       ...options,
       headers,
     });
@@ -48,7 +104,7 @@ export async function fetchWithAuth(
         idToken = await user.getIdToken(true);
         await syncAuthCookie(idToken);
         headers.set('Authorization', `Bearer ${idToken}`);
-        response = await fetch(`${API_BASE}${endpoint}`, {
+        response = await fetch(url, {
           ...options,
           headers,
         });
@@ -60,6 +116,8 @@ export async function fetchWithAuth(
     return response;
   } catch (error) {
     console.error('Fetch error:', error);
+    // If we had a connection error and were using local, we could try to switch to live here
+    // But for now, we rely on the initial check functionality
     throw error;
   }
 }

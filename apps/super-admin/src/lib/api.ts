@@ -1,11 +1,51 @@
 import axios from "axios";
 
+const LOCAL_API_URL = "http://localhost:4000";
+const LIVE_API_URL = "http://3.208.16.32";
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
+  baseURL: LOCAL_API_URL, // Default to local initially
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+const checkConnection = async (url: string) => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+
+    // Attempt to hit the health endpoint
+    const response = await fetch(`${url}/health`, {
+      method: 'HEAD',
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (e) {
+    return false;
+  }
+};
+
+const initializeApi = async () => {
+  // Only run on client side
+  if (typeof window === 'undefined') return;
+
+  console.log("🚀 Initializing API...");
+  const isLocalAlive = await checkConnection(LOCAL_API_URL);
+
+  if (isLocalAlive) {
+    console.log(`✅ Connected to Local Server: ${LOCAL_API_URL}`);
+    api.defaults.baseURL = LOCAL_API_URL;
+  } else {
+    console.warn(`⚠️ Local Server unreachable. Switching to LIVE URL: ${LIVE_API_URL}`);
+    api.defaults.baseURL = LIVE_API_URL;
+  }
+};
+
+// Start initialization
+initializeApi();
 
 // Request interceptor to add auth token
 api.interceptors.request.use(

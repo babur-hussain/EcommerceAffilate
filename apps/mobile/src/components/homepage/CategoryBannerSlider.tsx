@@ -54,8 +54,14 @@ export default function CategoryBannerSlider({ banners }: CategoryBannerSliderPr
         setActiveBannerIndex(roundIndex);
     };
 
-    if (banners.length === 0) {
-        return null; // Or return a default banner/placeholder if desired
+    // Filter out invalid banners to prevent crashes/empty renders
+    const validBanners = banners.filter(b => {
+        if (typeof b === 'string') return !!b;
+        return !!b && !!b.imageUrl;
+    });
+
+    if (validBanners.length === 0) {
+        return null;
     }
 
     return (
@@ -69,7 +75,7 @@ export default function CategoryBannerSlider({ banners }: CategoryBannerSliderPr
                 scrollEventThrottle={16}
                 style={styles.bannerContainer}
             >
-                {banners.map((banner, index) => {
+                {validBanners.map((banner, index) => {
                     const imageUrl = typeof banner === 'string' ? banner : banner.imageUrl;
                     const actionUrl = typeof banner === 'string' ? undefined : banner.actionUrl;
 
