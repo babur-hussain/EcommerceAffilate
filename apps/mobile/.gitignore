@@ -54,3 +54,11 @@ web-build/
 
 expo-env.d.ts
 # @end expo-cli
+
+
+# Next.js
+.next
+**/.next
+
+# Node
+node_modules
