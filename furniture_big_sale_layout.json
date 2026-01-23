@@ -8,7 +8,7 @@
             "type": "furniture_header",
             "priority": 10,
             "content": {
-                "season_text": "Autumn 2023",
+                "season_text": "Autumn 2026",
                 "title_main": "New",
                 "title_italic": "Collection",
                 "collection_name": [
@@ -74,9 +74,6 @@
                 ]
             }
         },
-
-
-        
         {
             "id": "furniture_bottom_nav",
             "type": "furniture_bottom_nav",

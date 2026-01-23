@@ -1,0 +1,74 @@
+{
+    "page_id": "big-promo-electronics",
+    "name": "Big Promo Electronics",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_bpe_header",
+            "type": "big_promo_electronics_header",
+            "content": {
+                "mainTitle1": "BIG",
+                "mainTitle2": "PROMO",
+                "subtitle": "Electronic Products",
+                "discountText": "DISCOUNT UP TO 30% - 50% OFF"
+            },
+            "priority": 1
+        },
+        {
+            "id": "sec_bpe_filter",
+            "type": "big_promo_electronics_filter",
+            "content": {
+                "categories": [
+                    "All Items",
+                    "Kitchen",
+                    "Laundry",
+                    "Cooling"
+                ]
+            },
+            "priority": 2
+        },
+        {
+            "id": "sec_bpe_grid",
+            "type": "big_promo_electronics_grid",
+            "content": {
+                "products": [
+                    {
+                        "id": "1",
+                        "title": "Digital Air Fryer Pro 5L",
+                        "originalPrice": "$120",
+                        "price": "$89",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCQEmB_gzcC1b8eHeVSShcwP5F5aoOz6Xqc0lgx4YHrrfe1H4uzvWUU8eiGEJwd5lZ8oh72XTrdYyS00Hesp7w8O0j-vLWTpCpgpLKVV4VH3bF65hiuN8IFzSfR6roVggMZryu6LFHcm5Yx8I1qDwBUaGWt5oMo5og_y8FO8YepJFv-HCFeKo7uWk8amuXFzqehfJKKt9x0HlpKudGckxwhu0nKzcnffVzNXXSVwFqW6x3E2Rcx09MFTqWXc7WkrVVw2YtcrnV-eL21"
+                    },
+                    {
+                        "id": "2",
+                        "title": "High Speed Blender 1000W",
+                        "originalPrice": "$85",
+                        "price": "$55",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDVfAhaUxtDhcAGGF6-wcFHUa_XFxHulLF5OSzyP1dJwJ95t3uZAxAiIi0X4xuxGfW5xB-5lCHK89sCpgFMsFfU7PbPUhNm6tWXKnuE5ZlXP9uxsbgNvBXCjZos8iYazoXNR81YaL6fJD4pmIGuLUVdIYI2sJ6HXybtRS7fgxuezkksCj5DjyEiwN7t4BijUuhp-BwaPgbUMdWQrd1P_0tSUYeNh-JdtrN8pQCC0bRdKK7UctemMHC1eBhBZCFVVXditQEI7G1oxy7n"
+                    },
+                    {
+                        "id": "3",
+                        "title": "Smart Front Load Washer",
+                        "originalPrice": "$699",
+                        "price": "$450",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCzt5H8WK1wvx9c605F3iDoDUNh97rvy_AYYS_dbB8IlFj-VIkvXE7HZGvKNb7XkmW5PNRBr8KuNHxPlPlFCTKz-xyO2GuQflc7rzpsRmbK6qbwR7aYEtLH3bTcigTeaBAcAozwLOV8gAIovrVqeh_k4tLPg-NZNTg_G0vGxQwW0h9ULyqOw4mmD7cVAdy7cUXWZFVo6BqSGn5oEqXGMys4FhD1EL0lFQsZQMNueMV_PVhzHNq_nBLHKFBHKNPYp2vyIHXLUs0h5K9g"
+                    },
+                    {
+                        "id": "4",
+                        "title": "Double Door Frost Free Fridge",
+                        "originalPrice": "$950",
+                        "price": "$720",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAtHnALf_OFvzxil99l-95jx6besZtjrrpdHzaCs3MGYMwPR-JLW01i1aqxE3HkF3P6TOcPbCk2CeSiTQksEvfAQHwO1WqO0NY5IRtcBvI7KothQF40-cHLIEJed7uuLbYaDDESz3Aa7VQGetTZ3UxYidVnscz1BDAsq-nnlmnWSZ4RjqS9rZsMioGGFzI-JQB8q3KQcoPbAQeTZRX0ksQzuA1c0EPWDYJsHon-LHppNU7uQ8vz2WxYtPxduyNP4B566BWiAf-nfuUF"
+                    }
+                ]
+            },
+            "priority": 3
+        },
+        {
+            "id": "sec_bpe_footer",
+            "type": "big_promo_electronics_footer",
+            "content": {},
+            "priority": 4
+        }
+    ]
+}

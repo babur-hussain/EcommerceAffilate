@@ -306,11 +306,15 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
         }
       }
 
-      // Notify sellers for ALL orders (both COD and prepaid)
-      // Sellers need to be aware of orders immediately to prepare for fulfillment
-      // They can see payment status in the order details
-      console.log(`🔔 [Order] Notifying sellers for order ${createdOrder._id} (payment: ${paymentMethod || 'prepaid'})`);
-      void notifySellers(createdOrder);
+      // Notify sellers:
+      // - For COD: Immediately
+      // - For Online (Prepaid): Only after successful payment (handled in payment verification)
+      if (paymentMethod === 'COD') {
+        console.log(`🔔 [Order] Notifying sellers for COD order ${createdOrder._id}`);
+        void notifySellers(createdOrder);
+      } else {
+        console.log(`⏳ [Order] Online order ${createdOrder._id} created. Waiting for payment to notify sellers.`);
+      }
     }
   } catch (error: any) {
     if (error?.message === 'INSUFFICIENT_STOCK') {

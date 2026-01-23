@@ -1,0 +1,88 @@
+{
+    "page_id": "elevate-furniture",
+    "name": "Elevate Furniture",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_elevate_header",
+            "type": "elevate_header",
+            "content": {},
+            "priority": 1
+        },
+        {
+            "id": "sec_elevate_hero",
+            "type": "elevate_hero",
+            "content": {
+                "items": [
+                    {
+                        "id": "1",
+                        "title": "Minimalist Grey",
+                        "badge": "Best Seller",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAUbNZ5aX7gf7v1HR3oLfdajhtsK25289qjvRAR8S70MjKdGXeRYv8ubYf2o1_aM5pOL2bnyEYWlu5Mr-aH6_zNgdqGmKQnnjWEtjt3rt-YOBupf-p03nVICyjFDVVJ5z2QMvxnKmSEUOpZkbw3wzFU6WmU6yalmSMm_sGmNqbYESLQsUFldZsWRNjbFuB3VWvtdwDbopRQhXmONyf8W5v_fQuQXnckR9IbO0k-l_tHSzqEloQGzbSfKKuXBUGGyHnXpwdFChpB9iW9",
+                        "bgColor": "#FFFFFF"
+                    },
+                    {
+                        "id": "2",
+                        "title": "Velvet Sage",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCzyWQ8HAJ5QABlnGcVYIE6s-kMxZfOFhnpZV3K7N5AReVNbSCYPJwatSW1-f9WiHJ9Bz2YgkUxfuD0Hdw3HQzkJL4R90VIaPKX87rLgmBUjGwKl0xNmoFApNcjlOTiJ8-NHOmdZ3z0N7r-hOcdou0FhCNWatb1d9gRgcp4C8b6_907wAzofdx04keRSpPfzikITXJhPxdEw-IgH56T2SEyCSOvE7VN6gjHwfwnebgwIrU9ROuCDfckq48bAXuADHMwfVX9n3dBkAUx",
+                        "bgColor": "#9CC4B8",
+                        "isDarkText": false
+                    },
+                    {
+                        "id": "3",
+                        "title": "Sunset Lounge",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDP_sUVx9UvbDls5FkjjlRYhZd_g48CNqpCjtp0Pb8P1XxJ6kOZBHPS_fzbIvffr97fnvHpOFWnMLncwE5vXSfAvKUgsyi6KgAwDfoShh2N2Lwnz8cORrWHy7eNviElDi12X_DCjMJChTzCMrGobaUL5loKbhRXh85VytdgRpZFQiwf5R-SbNBb3AvOkHxuGXwRGcN5-28vVE8i9e3CtRWwirHryjWDMEw2-Y0uwrX_XVfz83CnBkTy9udyqEKZ_s9BmlsNHoYTq8C_",
+                        "bgColor": "#F0AC96",
+                        "isDarkText": false
+                    }
+                ]
+            },
+            "priority": 2
+        },
+        {
+            "id": "sec_elevate_grid",
+            "type": "elevate_grid",
+            "content": {
+                "products": [
+                    {
+                        "id": "1",
+                        "title": "Eames Replica",
+                        "collection": "Modern Living",
+                        "price": "$120",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuC41AodRnaEN285cJT-Lb1kEV_FAhfdOMOaRvyrSXsZXDVMRDgpxdo-lf-RVV2j_Rdd7d3wW5WIFOn0DYW3yc-B5o2QsJ_6hw8AgitkHdvFi8QZgmUwus-z2mIxgZHcdt4ZLuq-CTLIX69PXYnURnfQL-Jfs2_7zS8hbFtIPmLC6Rm48M3WXptQuARZhcCZduqvtE19sWKe3pYCqCG9Dxb27tYL-5zQO54fFjQTz1uv3O1zMgSsUsh5r-pkGP-4zZrX3_TLeI9LHIFE"
+                    },
+                    {
+                        "id": "2",
+                        "title": "Nordic White",
+                        "collection": "Minimalist",
+                        "price": "$250",
+                        "badge": "HOT",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBRkVyijLULSo_rKHDSaXUsiePklRLGzDv2dlF7QLFln0etXLkxypYAA-_8fzYoUvqRsXKB9T94PO2XBDm-lJPSMj312xsBCFQuU5YOXEGy5OdpN6P3Zx78d5R4HxpBYmW9iLKXRXHkw_VdnXSVAfN9hDAm3GQErgksHo_aaohk1B30r-HzsQJtz8E64a55N8wemkrF5NbL4LDJ38bZ5gQP15tcOHOjWNnTy04rLPH2nXkR1r2PSb7hOFKlgvAz_-_pdnrkO8R5xv7g"
+                    },
+                    {
+                        "id": "3",
+                        "title": "Oak Classic",
+                        "collection": "Traditional",
+                        "price": "$180",
+                        "originalPrice": "$220",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDFjwQ-SL77jJU1A6D2OuN7FWE4yuItA4AcOYpHuOrqj_7NKWl2EYfHMGHhB2q9Y1oig_aSEsGvDEZufk9Weoc-EAn1DjX9932WnjKkDoQ25u4vgM-mAgQwDCTZrFyJ6ExHavXFZ4BEzWJyyslirjgfeW14-1jVjFw1Kce_0K-KXIUy24O8YvGoDWmvz7Fi5EwNhsDCcKBrQsJMAxkz9oL-eXYxx7OUiIuUknsLndxARn8_wZMM9GLJrDTls4HXWA4Wb8zYTVZlcFir"
+                    },
+                    {
+                        "id": "4",
+                        "title": "Industrial Set",
+                        "collection": "Metal Works",
+                        "price": "$95",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBZnWGXluI5NYknNLRnvVmeTwbhMLG__PmYVxwVLkxwnCaU7T6cLM6NJPZIAW7v3V06fC9mqNbd5UvrOejvjteEG9IjdxH8soBgFobVWQKh-iKiO7qQlI4y-fxkFSuoQq7Wz-NYtTLsf_7EeV0NIcDFmOpL5A8PyBIMVBsJMiKfMHzTZM9_P9pjxhWCov8Y6AU8o3aPQDPfaCsit2t4p5E0D8l4h8aX-2ia0q37zgEMiWanTYzLEAkJj-HA4icT6MOUTn5NcN1PRc8t"
+                    }
+                ]
+            },
+            "priority": 3
+        },
+        {
+            "id": "sec_elevate_footer",
+            "type": "elevate_footer",
+            "content": {},
+            "priority": 4
+        }
+    ]
+}

@@ -1,0 +1,75 @@
+{
+    "page_id": "game-day",
+    "name": "Game Day",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_gameday_header",
+            "type": "game_day_header",
+            "content": {},
+            "priority": 1
+        },
+        {
+            "id": "sec_gameday_categories",
+            "type": "game_day_categories",
+            "content": {},
+            "priority": 2
+        },
+        {
+            "id": "sec_gameday_grid",
+            "type": "game_day_grid",
+            "content": {
+                "products": [
+                    {
+                        "id": "1",
+                        "title": "Velocity Pro Elite X",
+                        "subtitle": "Firm Ground Cleats",
+                        "price": "$240",
+                        "badge": "Just In",
+                        "badgeColor": "rgba(212, 255, 62, 0.2)",
+                        "badgeTextColor": "#1a2e05",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDqJN3HAX2DXPNYW9hlMZ3inCXa3tYAAcChqenT5U8UnuDjwagBgyAcRCMSwOlrbWomlnte3R8rvk00qaOBoLlF_h-o0qNqLaZE3J-bOiMKKik9Qqy5uDZLjcoEU6jHTGfqv2dTBZ_Ec4r_WyaMaYcEwsrhGnfn6ltJO7G6ZlJUoPW9hTcCweSemUmmHclHdmotUUdIr0anzsn7-MQzA6l58eK1JE43HgJId5drMo8W0ImHNwEL1R5Bm0A2-tuccBf-VDa-eUyR-iNn"
+                    },
+                    {
+                        "id": "2",
+                        "title": "Striker Jersey '25",
+                        "subtitle": "Dri-Fit Technology",
+                        "price": "$85",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBWG71gzvOoDrQOXZssaDZwZGnzBRsFRk6zBX82fKCkCDpBhlJTe0kk3UzGXLOzeSFqftiYRyT-1_UhRZilDoZOlA6rbe3lp6vO29qUBn0dFhZi6sMH8vuJWm6GEIPVkESmuwF7S3kqBKCwHbaBVGkrzYj2Vb24W7KYzYHemJsN-Xeml7URzlblU6cJ78fb-TmJDyk5D1hJJYMpdSPtWm3Pk-2SpUhFBdM4gvtxPXT3DyzWUxcFpI9-8jEke8hQGU7pJFpz7FO5rLts"
+                    },
+                    {
+                        "id": "3",
+                        "title": "Grip Control GK",
+                        "subtitle": "Pro Grade Latex",
+                        "price": "$120",
+                        "originalPrice": "$150",
+                        "badge": "-20%",
+                        "badgeColor": "#EF4444",
+                        "badgeTextColor": "white",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBS2pXU4clKkSdAurgJS5l_ydvJOGUGiWkxiK_i-lf6u5GHdfcSJPQVJxBBPx6aD7eZnGwIJ6boKAFdRE7O4KozFw_GcVUVrODBzREszirkURUYibjO1_PnaIgVSSjA2j5f_BctTaWBcSB9_sxmgbze4vA3XUyEYsBCWXfDeqwlIS2t93VOvnoeJgEuqOh5K6D3L1JPZd-JE5NBvedwfb-v7WFiG11w6bAGlJNZ3LJO3B5NjuIWGN5ukzb4kbI6vGsWdhOh_U7PpvYq"
+                    },
+                    {
+                        "id": "4",
+                        "title": "Match Ball '25",
+                        "subtitle": "FIFA Quality Pro",
+                        "price": "$160",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuC30ysmCIbGQxkdI8Xsl8OKARO3tmgquPtjVZ3kNEFeJbNLzYvUfkWLAXL0Nycjh_CyRQijreX9szKWwBvlIGNuypdpomecBFJXOS_I0bB9HL0SExmFsGQCBWJbJKhx72lJRnQkHpv3jT1VOSp8WwBeZ0LouxawxdW6fj7GAUP6oUAjf1cQU6pZ9-jLVXsYOKz26Kh4yIiAk1QBolIWifp-StCh1LaewvcB6Xk2ygg_NbU5hLz5xgl6a4YB3wWOLyby0Yp1HQSzvteW"
+                    }
+                ]
+            },
+            "priority": 3
+        },
+        {
+            "id": "sec_gameday_banner",
+            "type": "game_day_banner",
+            "content": {},
+            "priority": 4
+        },
+        {
+            "id": "sec_gameday_footer",
+            "type": "game_day_footer",
+            "content": {},
+            "priority": 5
+        }
+    ]
+}

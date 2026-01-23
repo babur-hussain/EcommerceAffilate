@@ -1,44 +1,57 @@
+
 import React from 'react';
-import { ScrollView, View, ActivityIndicator, Text, StatusBar } from 'react-native';
+import { View, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
-import { usePageLayout } from '../../src/hooks/usePageLayout';
+import { usePageLayout, Section } from '../../src/hooks/usePageLayout';
 import SectionRenderer from '../../src/components/homepage/SectionRenderer';
 
 export default function CyberSalePage() {
-    const { layout, loading, error } = usePageLayout('cyber_sale');
+    const { layout: pageData, loading, error } = usePageLayout('cyber-sale');
 
     if (loading) {
         return (
-            <View className="flex-1 justify-center items-center bg-[#F8FAFC]">
+            <View style={styles.center}>
                 <ActivityIndicator size="large" color="#D9242C" />
             </View>
         );
     }
 
-    if (error || !layout) {
+    if (error || !pageData) {
         return (
-            <View className="flex-1 justify-center items-center bg-[#F8FAFC]">
-                <Text className="text-red-500">Failed to load Cyber Sale Page</Text>
+            <View style={styles.center}>
+                {/* Fallback */}
             </View>
         );
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+        <View style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
-            <StatusBar barStyle="light-content" translucent backgroundColor="black" />
-
             <ScrollView
+                contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
-                bounces={false}
             >
-                {layout.sections
-                    .sort((a, b) => a.priority - b.priority)
-                    .map((section) => (
-                        <SectionRenderer key={section.id} section={section} />
-                    ))}
+                {pageData.sections.map((section: Section) => (
+                    <SectionRenderer key={section.id} section={section} />
+                ))}
             </ScrollView>
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        // We set bg to white as base, but components handle their own dark/light bg
+    },
+    center: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+    },
+    scrollContent: {
+        paddingBottom: 0,
+    },
+});

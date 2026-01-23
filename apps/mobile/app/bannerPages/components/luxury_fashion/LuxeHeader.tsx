@@ -14,20 +14,10 @@ export default function LuxeHeader({ data }: LuxeHeaderProps) {
     return (
         <View style={styles.container}>
             {/* Status Bar Mock */}
-            <View style={styles.statusBar}>
-                <Text style={styles.statusText}>9:41</Text>
-                <View style={styles.statusIcons}>
-                    <MaterialIcons name="signal-cellular-alt" size={14} color="black" />
-                    <MaterialIcons name="wifi" size={14} color="black" />
-                    <MaterialIcons name="battery-full" size={14} color="black" />
-                </View>
-            </View>
+            {/* Status Bar Mock Removed */}
 
             <View style={styles.navBar}>
-                <Text style={styles.logo}>{data.logo_text}</Text>
-                <TouchableOpacity>
-                    <MaterialIcons name="menu" size={32} color="black" />
-                </TouchableOpacity>
+                {/* Logo and Menu removed as per request */}
             </View>
         </View>
     );
@@ -38,6 +28,7 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: '#F3F3F5', // bg-background-light
         zIndex: 50,
+        paddingTop: 30, // Added spacing for status bar
     },
     statusBar: {
         flexDirection: 'row',

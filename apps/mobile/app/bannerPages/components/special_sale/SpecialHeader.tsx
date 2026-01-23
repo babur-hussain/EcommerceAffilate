@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, Dimensions 
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withDelay } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ interface SpecialHeaderProps {
 }
 
 export default function SpecialHeader({ data }: SpecialHeaderProps) {
+    const router = useRouter();
     const float1 = useSharedValue(0);
     const float2 = useSharedValue(0);
     const float3 = useSharedValue(0);
@@ -40,7 +42,7 @@ export default function SpecialHeader({ data }: SpecialHeaderProps) {
         <View style={styles.container}>
             {/* Top Bar Overlay */}
             <View style={styles.topBar}>
-                <TouchableOpacity style={styles.iconBtn}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
                     <MaterialIcons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
                 <View style={styles.searchBar}>
@@ -51,7 +53,7 @@ export default function SpecialHeader({ data }: SpecialHeaderProps) {
                         style={styles.searchInput}
                     />
                 </View>
-                <TouchableOpacity style={styles.iconBtn}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/cart')} style={styles.iconBtn}>
                     <MaterialIcons name="shopping-cart" size={24} color="white" />
                     <View style={styles.cartBadge}>
                         <Text style={styles.cartBadgeText}>3</Text>
@@ -127,7 +129,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: 48, // safe area approximation
+        paddingTop: 60, // Increased for better safe area coverage
         paddingHorizontal: 16,
         paddingBottom: 16,
         backgroundColor: '#D32F2F', // match gradient start roughly
@@ -172,7 +174,7 @@ const styles = StyleSheet.create({
         color: '#D32F2F',
     },
     gradient: {
-        paddingTop: 100, // accommodate top bar
+        paddingTop: 130, // Increased further to clear top bar
         paddingBottom: 48,
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,

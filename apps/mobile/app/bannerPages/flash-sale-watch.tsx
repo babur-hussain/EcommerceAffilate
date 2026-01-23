@@ -1,0 +1,56 @@
+
+import React from 'react';
+import { View, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { Stack } from 'expo-router';
+import { usePageLayout, Section } from '../../src/hooks/usePageLayout';
+import SectionRenderer from '../../src/components/homepage/SectionRenderer';
+
+export default function FlashSaleWatchPage() {
+    const { layout: pageData, loading, error } = usePageLayout('flash-sale-watch');
+
+    if (loading) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color="#D32F2F" />
+            </View>
+        );
+    }
+
+    if (error || !pageData) {
+        return (
+            <View style={styles.center}>
+                {/* Fallback */}
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {pageData.sections.map((section: Section) => (
+                    <SectionRenderer key={section.id} section={section} />
+                ))}
+            </ScrollView>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#FAFAFA',
+    },
+    center: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#FAFAFA',
+    },
+    scrollContent: {
+        paddingBottom: 0,
+    },
+});

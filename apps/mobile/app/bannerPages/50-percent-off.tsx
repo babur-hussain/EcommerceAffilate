@@ -30,17 +30,7 @@ export default function FiftyPercentOffPage() {
             <StatusBar barStyle="dark-content" />
 
             {/* Navbar */}
-            <View className="flex-row justify-between items-center px-6 py-4 pt-12 bg-[#FAFAFA]/90 border-b border-gray-100 z-50">
-                <MaterialIcons name="menu" size={24} color="#1F2937" />
-                <Text className="text-2xl font-bold text-[#6D28D9] font-[PlayfairDisplay_700Bold]">LUMIÈRE</Text>
-                <View className="flex-row gap-3">
-                    <MaterialIcons name="search" size={24} color="#1F2937" />
-                    <View>
-                        <MaterialIcons name="shopping-bag" size={24} color="#1F2937" />
-                        <View className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
-                    </View>
-                </View>
-            </View>
+            {/* Navbar removed as it is now inside LumiereHeader component */}
 
             <ScrollView
                 showsVerticalScrollIndicator={false}

@@ -27,7 +27,7 @@ export default function TShirtHeader({ data }: TShirtHeaderProps) {
 
     return (
         <View style={styles.container}>
-            {/* Header Main Background - Yellow Gradient */}
+            {/* Header Main Background - Green Gradient */}
             <View style={styles.headerBackground}>
                 <ImageBackground
                     source={{ uri: 'https://www.transparenttextures.com/patterns/cream-paper.png' }}
@@ -35,7 +35,7 @@ export default function TShirtHeader({ data }: TShirtHeaderProps) {
                     imageStyle={{ opacity: 0.2, resizeMode: 'repeat' }}
                 >
                     <LinearGradient
-                        colors={['#FACC15', '#CA8A04']} // yellow-400 to yellow-600
+                        colors={['#15803d', '#0f5e36']} // green-700 to green-900
                         style={styles.gradient}
                     >
                         {/* Skewed Shape (simulated with absolute view and transform) */}
@@ -69,8 +69,8 @@ export default function TShirtHeader({ data }: TShirtHeaderProps) {
 const styles = StyleSheet.create({
     container: {
         width: width,
-        height: 300,
-        backgroundColor: '#FACC15',
+        height: 340,
+        backgroundColor: '#0f5e36',
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
-        paddingTop: 40,
+        paddingTop: 70,
     },
     skewedShape: {
         position: 'absolute',
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         left: 0,
         width: '120%',
         height: '90%',
-        backgroundColor: '#0f5e36', // Primary Color
+        backgroundColor: '#FACC15', // Yellow Accent
         transform: [
             { translateX: -40 },
             { translateY: -40 },

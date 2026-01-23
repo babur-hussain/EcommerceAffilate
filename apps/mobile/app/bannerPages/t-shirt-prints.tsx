@@ -25,12 +25,13 @@ export default function TShirtPrintsPage() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-[#FEFCE8] dark:bg-[#18181b]" edges={['top']}>
+        <View className="flex-1 bg-[#FEFCE8] dark:bg-[#18181b]">
             <Stack.Screen options={{ headerShown: false }} />
             <ScrollView
                 contentContainerStyle={{ paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
                 className="flex-1"
+                contentInsetAdjustmentBehavior="never"
             >
                 {layout.sections
                     .sort((a, b) => a.priority - b.priority)
@@ -38,6 +39,6 @@ export default function TShirtPrintsPage() {
                         <SectionRenderer key={section.id} section={section} />
                     ))}
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }

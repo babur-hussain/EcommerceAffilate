@@ -1,0 +1,85 @@
+{
+    "page_id": "back-to-school-4",
+    "name": "Back To School 4",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_school4_header",
+            "type": "school_four_header",
+            "content": {},
+            "priority": 1
+        },
+        {
+            "id": "sec_school4_categories",
+            "type": "school_four_categories",
+            "content": {},
+            "priority": 2
+        },
+        {
+            "id": "sec_school4_grid",
+            "type": "school_four_grid",
+            "content": {
+                "products": [
+                    {
+                        "id": "1",
+                        "title": "Pleated Skirt",
+                        "subtitle": "Grey & Navy Options",
+                        "price": "$24.99",
+                        "badge": "IN STOCK",
+                        "badgeColor": "#DCFCE7",
+                        "badgeTextColor": "#15803D",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAbAgp5kIduqiKyWmtqcIYF7zO_T68btBFWT_2HOkQy-mZzM75b-lXHdoGoXnThkc2Cyi7kNTTskIbYyYcqllCY-fbvzH3SV_8v5q1784x8xHbqgZD-bBIYGbHZwyHKOzSJnHLRAacSvQwBghvLxC6guQYWtL8c1Po8IxCGrzaLEBiIvjrjVzbUkQAhJa1RaxU4RNDyE3jzBgVIircc3LuRBbr6O_NQlB-7IADlgHsmJ3yjdtZ283mYxKHPvrAsFPsIFRxf7vyvaquf"
+                    },
+                    {
+                        "id": "2",
+                        "title": "Premium Polo",
+                        "subtitle": "Cotton Blend (2-Pack)",
+                        "price": "$18.50",
+                        "badge": "IN STOCK",
+                        "badgeColor": "#DCFCE7",
+                        "badgeTextColor": "#15803D",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDspN1w-OKG1sC1udjRFw5eQuMOsUgiwY89bWPd3Zfld2BXkbsQeCi14nKYNyRE5SD8c_fA4_ona5G7ViY-c5cPMq54IyooRSMyvroTFki06Rgwdrv1Syln7lvPmJ_yKgiCLcuqmPy0afmUThKhbl0u8trSY_Xt-t4AlYnmLbmUtaJzu0KZk3f7G-RufiB11TAgWntNuoAfi3n-Gt6ddRperI7tTnJ0hdq4KIKftFN1e_fDK0k4OFtmivOP39wpiyRH9Fl589rD3lMV"
+                    },
+                    {
+                        "id": "3",
+                        "title": "Classic Blazer",
+                        "subtitle": "Embroidered Badge Ready",
+                        "price": "$45.00",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuB8XaXQDpYxSrbNKu8N_FqFsT9IijFf2tO_iNGGCPkvTgVeleqZaRnw8t4r-9-3-t048UgFPVkAz61T5i4icG-fFcNYb-KylYbUxAkAd0pgDaD3fxQX9q_9-g90CL5AYmYDuTQ3U66KCX9NaFxCDDjs2--wSxrPzXmgwA9m7CjM27AnSw8v0ltsW7_UVMB4yV3GH9hPwO_z9blmYRCKQKrILsn4xOQLt3Us4GgSxpnzplAVhmO6CTswl3xHPooXtA9_ARQUWLeePPsM"
+                    },
+                    {
+                        "id": "4",
+                        "title": "Striped Tie",
+                        "subtitle": "Standard House Colors",
+                        "price": "$8.99",
+                        "badge": "LOW STOCK",
+                        "badgeColor": "#FEE2E2",
+                        "badgeTextColor": "#B91C1C",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAnjyr6QlwCJibx6-VYHNaJc-G0veToQYr513y2tNXeRraDxoWWe7uyEBjOVJuJSAIOT-M3d4C98PpIQ3M4K3J1YOLDs2eiAiAUoMKuPRfIWCf6aibZre9el9b-PoTi489Bd4hhKnBPOicMAFZkxCiTnjETxOEcdA5fSC4PWy1ltOpOd1iy5NWd9z_NZJk7FLYN-O3dkKwip-uUATgYfz1Fz_ftjBJ9abRQOQftdNy2f6JYy_uKoK9itqEuSut0N3Z82rN3DHmsI2LY"
+                    },
+                    {
+                        "id": "5",
+                        "title": "Knee High Socks",
+                        "subtitle": "5-Pack Bundle",
+                        "price": "$12.50",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDV7_OEtjl0X8AJ6ZRMHxWxqk2_ViAFWNtl0E6UfM2YCU6vOYY-EZf3dTspjiVmho_Q2ogGQvWY41IOr_Os8ZTayqbSlN0dvTI65daGDau4eMZxLADYhhByFdEuw0Fo3MbGIEX_9OVodedSXwBq3As-VmrW0ytnZQ49XZ9N9572ookyIGkbyVpxUh8cFWqoWBT5qyuEtbi7bxJwRfNaj9xKGOQ1thGscUxQAs16S2lPtnmk-5ugRNlwDK6WBOUQiqnziw63e4T-7qT0"
+                    },
+                    {
+                        "id": "6",
+                        "title": "Sportswear Set",
+                        "subtitle": "Breathable Fabric",
+                        "price": "$29.99",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDSBedqiTXzm2nfcbfl5spw1qajAUv-9GIFpESnbsYQUPjHkoJhSC5o-eSM_sS-_9JPc3qsa9kkRX5533UhQbZreOrEprL3ciWBcujG8iubq-n8ZiRwYARAQHRhojwvoRg5fsIQ8TAozAxMNXYkowkz4Vylm6fKgkQ4h-KnPLE64gum85GiQ9HBTS5tYB4GFImnyI5r3o2h3w2SOedthz_mAd3Ubz75I9ZYiC-BvRczXT1VgtaYFF--AoDr08a-_UueGI7vcxiPZNEH"
+                    }
+                ]
+            },
+            "priority": 3
+        },
+        {
+            "id": "sec_school4_footer",
+            "type": "school_four_footer",
+            "content": {},
+            "priority": 4
+        }
+    ]
+}

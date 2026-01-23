@@ -4,6 +4,8 @@ import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
 import SectionRenderer from '../../src/components/homepage/SectionRenderer';
 
+import { StatusBar } from 'expo-status-bar';
+
 export default function BigBeautySalePage() {
     const { layout, loading, error } = usePageLayout('big_beauty_sale');
 
@@ -25,6 +27,7 @@ export default function BigBeautySalePage() {
 
     return (
         <View style={{ flex: 1, backgroundColor: '#FFF0E5' }}>
+            <StatusBar style="dark" />
             <Stack.Screen options={{ headerShown: false }} />
             <ScrollView
                 showsVerticalScrollIndicator={false}

@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import api from '../../../../src/lib/api';
 
 const { width } = Dimensions.get('window');
 const GAP = 16;
@@ -9,34 +10,92 @@ const PADDING = 16;
 const COLUMN_WIDTH = (width - (PADDING * 2) - GAP) / 2;
 
 interface MegaProduct {
-    id: string;
+    id: string; // Transformed ID
+    _id?: string; // Original ID
     title: string;
-    price: string;
+    price: string; // Formatted price
     original_price?: string;
     image_url: string;
-    badge_text?: string; // e.g. -40%
+    badge_text?: string;
     rating?: string;
     review_count?: string;
 }
 
 interface MegaGridProps {
     data: {
-        items: MegaProduct[];
+        items?: MegaProduct[];
+        dataSource?: {
+            endpoint: string;
+            params?: any;
+        };
+        title?: string; // Optional title override
     };
 }
 
 export default function MegaGrid({ data }: MegaGridProps) {
     const router = useRouter();
-    if (!data || !data.items) return null;
+    const [products, setProducts] = useState<MegaProduct[]>(data?.items || []);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        // If items are provided directly, usage them.
+        if (data?.items && data.items.length > 0) {
+            setProducts(data.items);
+            return;
+        }
+
+        // Otherwise if dataSource is provided, fetch dynamic products
+        if (data?.dataSource) {
+            fetchProducts();
+        }
+    }, [data]);
+
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const { endpoint, params } = data.dataSource!;
+            const res = await api.get(endpoint, { params });
+
+            // Normalize data
+            const rawList = Array.isArray(res.data) ? res.data : (res.data.products || []);
+            const formatted: MegaProduct[] = rawList.map((p: any) => ({
+                id: p._id,
+                _id: p._id,
+                title: p.title || p.name,
+                price: `₹${p.price}`,
+                original_price: p.mrp ? `₹${p.mrp}` : undefined,
+                image_url: p.images?.[0] || 'https://placehold.co/200',
+                badge_text: p.discount ? `-${p.discount}%` : undefined,
+                rating: p.rating?.toString() || '4.5',
+                review_count: p.reviews?.length?.toString() || '10+'
+            }));
+
+            setProducts(formatted);
+        } catch (e) {
+            console.error('MegaGrid fetch error', e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { alignItems: 'center', paddingVertical: 20 }]}>
+                <ActivityIndicator color="#DC2626" />
+            </View>
+        );
+    }
+
+    if (!products || products.length === 0) return null;
 
     return (
         <View style={styles.container}>
             <View style={styles.grid}>
-                {data.items.map((item, index) => (
+                {products.map((item, index) => (
                     <TouchableOpacity
-                        key={item.id || index}
+                        key={item.id || item._id || index}
                         style={styles.card}
-                        onPress={() => router.push(`/product/${item.id}`)}
+                        onPress={() => router.push(`/product/${item.id || item._id}`)}
                         activeOpacity={0.95}
                     >
                         {item.badge_text && (
@@ -52,10 +111,10 @@ export default function MegaGrid({ data }: MegaGridProps) {
                         <View style={styles.details}>
                             <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
 
-                            {item.rating && (
+                            {(item.rating) && (
                                 <View style={styles.ratingRow}>
                                     <MaterialIcons name="star" size={14} color="#FACC15" />
-                                    <Text style={styles.ratingText}>{item.rating} ({item.review_count})</Text>
+                                    <Text style={styles.ratingText}>{item.rating} ({item.review_count || '0'})</Text>
                                 </View>
                             )}
 

@@ -1,0 +1,31 @@
+{
+    "page_id": "sports-shopping-center",
+    "name": "Sports Shopping Center",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_center_header",
+            "type": "center_header",
+            "content": {},
+            "priority": 1
+        },
+        {
+            "id": "sec_center_categories",
+            "type": "center_categories",
+            "content": {},
+            "priority": 2
+        },
+        {
+            "id": "sec_center_hot_deals",
+            "type": "center_hot_deals",
+            "content": {},
+            "priority": 3
+        },
+        {
+            "id": "sec_center_footer",
+            "type": "center_footer",
+            "content": {},
+            "priority": 4
+        }
+    ]
+}

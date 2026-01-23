@@ -4,6 +4,8 @@ import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
 import SectionRenderer from '../../src/components/homepage/SectionRenderer';
 
+import { StatusBar } from 'expo-status-bar';
+
 export default function LuxuryFashionSalePage() {
     const { layout, loading, error } = usePageLayout('luxury_fashion_sale');
 
@@ -25,6 +27,7 @@ export default function LuxuryFashionSalePage() {
 
     return (
         <View style={{ flex: 1, backgroundColor: '#F3F3F5' }}>
+            <StatusBar style="dark" />
             <Stack.Screen options={{ headerShown: false }} />
             <ScrollView
                 showsVerticalScrollIndicator={false}

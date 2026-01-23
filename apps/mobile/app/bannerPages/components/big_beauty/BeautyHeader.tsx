@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -18,6 +19,8 @@ interface BeautyHeaderProps {
 }
 
 export default function BeautyHeader({ data }: BeautyHeaderProps) {
+    const router = useRouter();
+
     if (!data) return null;
 
     return (
@@ -34,11 +37,11 @@ export default function BeautyHeader({ data }: BeautyHeaderProps) {
             <View style={styles.content}>
                 {/* Header Top Bar */}
                 <View style={styles.topBar}>
-                    <TouchableOpacity style={styles.iconButton}>
-                        <MaterialIcons name="menu" size={24} color="#3E2723" />
+                    <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
+                        <MaterialIcons name="arrow-back" size={24} color="#3E2723" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconButton}>
-                        <MaterialIcons name="notifications" size={24} color="#3E2723" />
+                    <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/(tabs)/cart')}>
+                        <MaterialIcons name="shopping-bag" size={24} color="#3E2723" />
                         <View style={styles.notificationDot} />
                     </TouchableOpacity>
                 </View>

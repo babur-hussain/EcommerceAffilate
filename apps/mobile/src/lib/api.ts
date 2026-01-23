@@ -7,6 +7,10 @@ import { router } from 'expo-router';
 const LIVE_URL = 'http://3.208.16.32';
 
 const getLocalUrl = () => {
+  if (!__DEV__) {
+    return LIVE_URL;
+  }
+
   // Use Expo's hostUri to determine local IP (works for Expo Go and builds if configured)
   const hostUri = Constants.expoConfig?.hostUri;
   if (!hostUri) {

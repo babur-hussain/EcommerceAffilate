@@ -435,7 +435,11 @@ router.get(
       const { Order } = await import("../models/order.model");
 
       const orders = await Order.find({
-        "items.productId": { $in: productIds }
+        "items.productId": { $in: productIds },
+        $or: [
+          { paymentProvider: 'COD' },
+          { paymentStatus: { $in: ['PAID', 'SUCCESS'] } }
+        ]
       })
         .sort({ createdAt: -1 })
         .populate("items.productId", "title price image businessId brand category shortDescription")

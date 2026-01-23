@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -25,6 +26,7 @@ interface LumiereHeaderProps {
 }
 
 export default function LumiereHeader({ data }: LumiereHeaderProps) {
+    const router = useRouter();
     const translateY = useSharedValue(0);
     const rotate = useSharedValue(0);
 
@@ -60,6 +62,16 @@ export default function LumiereHeader({ data }: LumiereHeaderProps) {
 
     return (
         <View style={styles.container}>
+            {/* Header Navigation */}
+            <View style={styles.headerNav}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconHitBox}>
+                    <MaterialIcons name="arrow-back" size={24} color="#121212" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/cart')} style={styles.iconHitBox}>
+                    <MaterialIcons name="shopping-bag" size={24} color="#121212" />
+                </TouchableOpacity>
+            </View>
+
             <View style={styles.heroCard}>
                 <Image source={{ uri: data.image_url }} style={styles.image} />
                 <LinearGradient
@@ -103,6 +115,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingBottom: 24,
     },
+    headerNav: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 48, // Status bar spacing
+        marginBottom: 16,
+    },
+    iconHitBox: {
+        padding: 8,
+    },
     heroCard: {
         height: 420,
         borderRadius: 24,
@@ -133,9 +155,6 @@ const styles = StyleSheet.create({
         height: 120,
         alignItems: 'center',
         justifyContent: 'center',
-        // In RN creating the exact star shape is hard with just View, so simplified to circle or rotated squares if needed. 
-        // Using a rotated square background for "star-like" effect or just simple layout.
-        // For fidelity to the design which has a star burst, an SVG would be best but simple view is safer.
     },
     badgePercent: {
         color: 'white',
@@ -197,14 +216,13 @@ const styles = StyleSheet.create({
     title: {
         color: 'white',
         fontSize: 36,
-        fontFamily: 'PlayfairDisplay_400Regular', // or 500
+        fontFamily: 'PlayfairDisplay_400Regular',
         lineHeight: 40,
         marginBottom: 8,
     },
     subtitle: {
         color: 'rgba(255,255,255,0.8)',
         fontSize: 14,
-        /* fontFamily: 'Inter_300Light', */ // Use standard or Inter if configured
         marginBottom: 16,
         maxWidth: 200,
     },
@@ -216,7 +234,7 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     buttonText: {
-        color: 'black', // or #121212
+        color: 'black',
         fontSize: 14,
         fontWeight: '600',
     }

@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     },
     imageWrapper: {
         position: 'absolute',
-        bottom: 0,
+        bottom: -40, // Shifted down
         right: 0,
         width: '100%',
         height: '90%',

@@ -215,6 +215,115 @@ import FurnitureCategories from '../../../app/bannerPages/components/furniture_s
 import FurnitureGrid from '../../../app/bannerPages/components/furniture_sale/FurnitureGrid';
 import FurnitureBottomNav from '../../../app/bannerPages/components/furniture_sale/FurnitureBottomNav';
 
+// New Furniture Sections
+import NewFurnitureHeader from '../../../app/bannerPages/components/new_arrival_furniture/NewFurnitureHeader';
+import NewFurnitureFilter from '../../../app/bannerPages/components/new_arrival_furniture/NewFurnitureFilter';
+import NewFurnitureGrid from '../../../app/bannerPages/components/new_arrival_furniture/NewFurnitureGrid';
+import NewFurnitureFooter from '../../../app/bannerPages/components/new_arrival_furniture/NewFurnitureFooter';
+
+// Big Promo Electronics Sections
+import BigPromoHeader from '../../../app/bannerPages/components/big_promo_electronics/BigPromoHeader';
+import BigPromoFilter from '../../../app/bannerPages/components/big_promo_electronics/BigPromoFilter';
+import BigPromoGrid from '../../../app/bannerPages/components/big_promo_electronics/BigPromoGrid';
+import BigPromoFooter from '../../../app/bannerPages/components/big_promo_electronics/BigPromoFooter';
+
+// Flash Sale Watch Sections
+import WatchHeader from '../../../app/bannerPages/components/flash_sale_watch/WatchHeader';
+import WatchCategories from '../../../app/bannerPages/components/flash_sale_watch/WatchCategories';
+import WatchTimer from '../../../app/bannerPages/components/flash_sale_watch/WatchTimer';
+import WatchGrid from '../../../app/bannerPages/components/flash_sale_watch/WatchGrid';
+import WatchBottomNav from '../../../app/bannerPages/components/flash_sale_watch/WatchBottomNav';
+
+// Furniture New Collection Sections (Mapped to New Arrival Furniture Components)
+// Note: Intentionally empty here as we reuse NewFurniture* components below or mapped differently.
+// Previously invalid imports removed.
+
+// Modern Furniture Sections
+import ModernHeader from '../../../app/bannerPages/components/modern_furniture/ModernHeader';
+import ModernCategories from '../../../app/bannerPages/components/modern_furniture/ModernCategories';
+import ModernGrid from '../../../app/bannerPages/components/modern_furniture/ModernGrid';
+import ModernBottomNav from '../../../app/bannerPages/components/modern_furniture/ModernBottomNav';
+// Elevate Furniture Sections
+import ElevateHeader from '../../../app/bannerPages/components/elevate_furniture/ElevateHeader';
+import ElevateHero from '../../../app/bannerPages/components/elevate_furniture/ElevateHero';
+import ElevateGrid from '../../../app/bannerPages/components/elevate_furniture/ElevateGrid';
+import ElevateFooter from '../../../app/bannerPages/components/elevate_furniture/ElevateFooter';
+
+// Furniture Sale Feed Sections
+import SaleFeedHeader from '../../../app/bannerPages/components/furniture_sale_feed/SaleFeedHeader';
+import SaleFeedFilter from '../../../app/bannerPages/components/furniture_sale_feed/SaleFeedFilter';
+import SaleFeedGrid from '../../../app/bannerPages/components/furniture_sale_feed/SaleFeedGrid';
+import SaleFeedFooter from '../../../app/bannerPages/components/furniture_sale_feed/SaleFeedFooter';
+
+// Back to School 1 Sections
+import BackToSchoolHeader from '../../../app/bannerPages/components/back_to_school_1/BackToSchoolHeader';
+import BackToSchoolCategories from '../../../app/bannerPages/components/back_to_school_1/BackToSchoolCategories';
+import BackToSchoolGrid from '../../../app/bannerPages/components/back_to_school_1/BackToSchoolGrid';
+import BackToSchoolBanner from '../../../app/bannerPages/components/back_to_school_1/BackToSchoolBanner';
+import BackToSchoolFooter from '../../../app/bannerPages/components/back_to_school_1/BackToSchoolFooter';
+
+// Back to School 2 Sections
+import SchoolTwoHeader from '../../../app/bannerPages/components/back_to_school_2/SchoolTwoHeader';
+import SchoolTwoCategories from '../../../app/bannerPages/components/back_to_school_2/SchoolTwoCategories';
+import SchoolTwoGrid from '../../../app/bannerPages/components/back_to_school_2/SchoolTwoGrid';
+import SchoolTwoBanner from '../../../app/bannerPages/components/back_to_school_2/SchoolTwoBanner';
+import SchoolTwoDeals from '../../../app/bannerPages/components/back_to_school_2/SchoolTwoDeals';
+import SchoolTwoFooter from '../../../app/bannerPages/components/back_to_school_2/SchoolTwoFooter';
+
+// Back to School 3 Sections
+import SchoolThreeHeader from '../../../app/bannerPages/components/back_to_school_3/SchoolThreeHeader';
+import SchoolThreeCategories from '../../../app/bannerPages/components/back_to_school_3/SchoolThreeCategories';
+import SchoolThreeGrid from '../../../app/bannerPages/components/back_to_school_3/SchoolThreeGrid';
+import SchoolThreeBanner from '../../../app/bannerPages/components/back_to_school_3/SchoolThreeBanner';
+import SchoolThreeEssentials from '../../../app/bannerPages/components/back_to_school_3/SchoolThreeEssentials';
+import SchoolThreeFooter from '../../../app/bannerPages/components/back_to_school_3/SchoolThreeFooter';
+
+// Back to School 4 Sections
+import SchoolFourHeader from '../../../app/bannerPages/components/back_to_school_4/SchoolFourHeader';
+import SchoolFourCategories from '../../../app/bannerPages/components/back_to_school_4/SchoolFourCategories';
+import SchoolFourGrid from '../../../app/bannerPages/components/back_to_school_4/SchoolFourGrid';
+import SchoolFourFooter from '../../../app/bannerPages/components/back_to_school_4/SchoolFourFooter';
+
+// Back to School 5 Sections
+import SchoolFiveHeader from '../../../app/bannerPages/components/back_to_school_5/SchoolFiveHeader';
+import SchoolFiveCategories from '../../../app/bannerPages/components/back_to_school_5/SchoolFiveCategories';
+import SchoolFiveGrid from '../../../app/bannerPages/components/back_to_school_5/SchoolFiveGrid';
+import SchoolFiveFooter from '../../../app/bannerPages/components/back_to_school_5/SchoolFiveFooter';
+
+// Game Day Sections
+import GameDayHeader from '../../../app/bannerPages/components/game_day/GameDayHeader';
+import GameDayCategories from '../../../app/bannerPages/components/game_day/GameDayCategories';
+import GameDayGrid from '../../../app/bannerPages/components/game_day/GameDayGrid';
+import GameDayBanner from '../../../app/bannerPages/components/game_day/GameDayBanner';
+import GameDayFooter from '../../../app/bannerPages/components/game_day/GameDayFooter';
+
+// Sports Shopping Center Sections
+import CenterHeader from '../../../app/bannerPages/components/sports_shopping_center/CenterHeader';
+import CenterCategories from '../../../app/bannerPages/components/sports_shopping_center/CenterCategories';
+import CenterHotDeals from '../../../app/bannerPages/components/sports_shopping_center/CenterHotDeals';
+import CenterFooter from '../../../app/bannerPages/components/sports_shopping_center/CenterFooter';
+
+// PayDay Promo Sections
+import PayDayHeader from '../../../app/bannerPages/components/payday_promo/PayDayHeader';
+import PayDayCategories from '../../../app/bannerPages/components/payday_promo/PayDayCategories';
+import PayDayGrid from '../../../app/bannerPages/components/payday_promo/PayDayGrid';
+import PayDayFlashSale from '../../../app/bannerPages/components/payday_promo/PayDayFlashSale';
+import PayDayFooter from '../../../app/bannerPages/components/payday_promo/PayDayFooter';
+
+// Sports Shoes Collection Sections
+import ShoeHeader from '../../../app/bannerPages/components/sports_shoes_collection/ShoeHeader';
+import ShoeCategories from '../../../app/bannerPages/components/sports_shoes_collection/ShoeCategories';
+import ShoeGrid from '../../../app/bannerPages/components/sports_shoes_collection/ShoeGrid';
+import ShoeFooter from '../../../app/bannerPages/components/sports_shoes_collection/ShoeFooter';
+
+// Furniture Collection Sections (LUSSO)
+import ModernCollHeader from '../../../app/bannerPages/components/furniture_collection/ModernHeader';
+import ModernCollCategories from '../../../app/bannerPages/components/furniture_collection/ModernCategories';
+import ModernCollGrid from '../../../app/bannerPages/components/furniture_collection/ModernGrid';
+import ModernCollFooter from '../../../app/bannerPages/components/furniture_collection/ModernFooter';
+
+
+
 // A simple generic Product Grid component to replace the hardcoded "Featured Products"
 const DynamicProductGrid = ({ title, dataSource }: { title?: string, dataSource?: any }) => {
     const router = useRouter();
@@ -644,6 +753,216 @@ export default function SectionRenderer({ section, user }: SectionRendererProps)
             return <FurnitureGrid data={content} />;
         case 'furniture_bottom_nav':
             return <FurnitureBottomNav />;
+
+        // --- New Furniture Sections ---
+        case 'new_furniture_header':
+            return <NewFurnitureHeader data={content} />;
+        case 'new_furniture_filter':
+            return <NewFurnitureFilter data={content} />;
+        case 'new_furniture_grid':
+            return <NewFurnitureGrid data={content} />;
+        case 'new_furniture_footer':
+            return <NewFurnitureFooter />;
+
+        // --- Big Promo Electronics Sections ---
+        case 'big_promo_electronics_header':
+            return <BigPromoHeader data={content} />;
+        case 'big_promo_electronics_filter':
+            return <BigPromoFilter data={content} />;
+        case 'big_promo_electronics_grid':
+            return <BigPromoGrid data={content} />;
+        case 'big_promo_electronics_footer':
+            return <BigPromoFooter />;
+
+        // --- Cyber Sale Sections ---
+        case 'cyber_header':
+            return <CyberHeader data={content} />;
+        case 'cyber_categories':
+            return <CyberCategories data={content} />;
+        case 'cyber_grid':
+            return <CyberGrid data={content} />;
+        case 'cyber_flash_deal':
+            return <CyberFlashDeal data={content} />;
+        case 'cyber_bottom_nav':
+            return <CyberBottomNav />;
+
+        // --- Flash Sale Watch Sections ---
+        case 'watch_header':
+            return <WatchHeader data={content} />;
+        case 'watch_categories':
+            return <WatchCategories data={content} />;
+        case 'watch_timer':
+            return <WatchTimer data={content} />;
+        case 'watch_grid':
+            return <WatchGrid data={content} />;
+        case 'watch_bottom_nav':
+            return <WatchBottomNav />;
+
+
+        // --- Furniture New Collection Sections ---
+        case 'furniture_header':
+            return <NewFurnitureHeader data={content} />;
+        case 'furniture_categories':
+            // If NewFurnitureFilter is the intended category component
+            return <NewFurnitureFilter data={content} />;
+        case 'furniture_grid':
+            return <NewFurnitureGrid data={content} />;
+        case 'furniture_bottom_nav':
+            return <NewFurnitureFooter />;
+
+        // --- Modern Furniture Sections ---
+        case 'modern_header':
+            return <ModernHeader data={content} />;
+        case 'modern_categories':
+            return <ModernCategories data={content} />;
+        case 'modern_grid':
+            return <ModernGrid data={content} />;
+        case 'modern_bottom_nav':
+            return <ModernBottomNav />;
+
+        // --- New Arrival Furniture Sections ---
+        case 'new_furniture_header':
+            return <NewFurnitureHeader data={content} />;
+        case 'new_furniture_filter':
+            return <NewFurnitureFilter data={content} />;
+        case 'new_furniture_grid':
+            return <NewFurnitureGrid data={content} />;
+        case 'new_furniture_footer':
+            return <NewFurnitureFooter />;
+
+        // --- Elevate Furniture Sections ---
+        case 'elevate_header':
+            return <ElevateHeader data={content} />;
+        case 'elevate_hero':
+            return <ElevateHero data={content} />;
+        case 'elevate_grid':
+            return <ElevateGrid data={content} />;
+        case 'elevate_footer':
+            return <ElevateFooter />;
+
+        // --- Furniture Sale Feed Sections ---
+        case 'sale_feed_header':
+            return <SaleFeedHeader data={content} />;
+        case 'sale_feed_filter':
+            return <SaleFeedFilter data={content} />;
+        case 'sale_feed_grid':
+            return <SaleFeedGrid data={content} />;
+        case 'sale_feed_footer':
+            return <SaleFeedFooter />;
+
+        // --- Back to School 1 Sections ---
+        case 'back_to_school_header':
+            return <BackToSchoolHeader data={content} />;
+        case 'back_to_school_categories':
+            return <BackToSchoolCategories data={content} />;
+        case 'back_to_school_grid':
+            return <BackToSchoolGrid data={content} />;
+        case 'back_to_school_banner':
+            return <BackToSchoolBanner data={content} />;
+        case 'back_to_school_footer':
+            return <BackToSchoolFooter />;
+
+        // --- Back to School 2 Sections ---
+        case 'school_two_header':
+            return <SchoolTwoHeader data={content} />;
+        case 'school_two_categories':
+            return <SchoolTwoCategories data={content} />;
+        case 'school_two_grid':
+            return <SchoolTwoGrid data={content} />;
+        case 'school_two_banner':
+            return <SchoolTwoBanner data={content} />;
+        case 'school_two_deals':
+            return <SchoolTwoDeals data={content} />;
+        case 'school_two_footer':
+            return <SchoolTwoFooter />;
+
+        // --- Back to School 3 Sections ---
+        case 'school_three_header':
+            return <SchoolThreeHeader data={content} />;
+        case 'school_three_categories':
+            return <SchoolThreeCategories data={content} />;
+        case 'school_three_grid':
+            return <SchoolThreeGrid data={content} />;
+        case 'school_three_banner':
+            return <SchoolThreeBanner data={content} />;
+        case 'school_three_essentials':
+            return <SchoolThreeEssentials data={content} />;
+        case 'school_three_footer':
+            return <SchoolThreeFooter />;
+
+        // --- Back to School 4 Sections ---
+        case 'school_four_header':
+            return <SchoolFourHeader data={content} />;
+        case 'school_four_categories':
+            return <SchoolFourCategories data={content} />;
+        case 'school_four_grid':
+            return <SchoolFourGrid data={content} />;
+        case 'school_four_footer':
+            return <SchoolFourFooter />;
+
+        // --- Back to School 5 Sections ---
+        case 'school_five_header':
+            return <SchoolFiveHeader data={content} />;
+        case 'school_five_categories':
+            return <SchoolFiveCategories data={content} />;
+        case 'school_five_grid':
+            return <SchoolFiveGrid data={content} />;
+        case 'school_five_footer':
+            return <SchoolFiveFooter />;
+
+        // --- Game Day Sections ---
+        case 'game_day_header':
+            return <GameDayHeader data={content} />;
+        case 'game_day_categories':
+            return <GameDayCategories data={content} />;
+        case 'game_day_grid':
+            return <GameDayGrid data={content} />;
+        case 'game_day_banner':
+            return <GameDayBanner data={content} />;
+        case 'game_day_footer':
+            return <GameDayFooter />;
+
+        // --- Sports Shopping Center Sections ---
+        case 'center_header':
+            return <CenterHeader data={content} />;
+        case 'center_categories':
+            return <CenterCategories data={content} />;
+        case 'center_hot_deals':
+            return <CenterHotDeals data={content} />;
+        case 'center_footer':
+            return <CenterFooter />;
+
+        // --- PayDay Promo Sections ---
+        case 'payday_header':
+            return <PayDayHeader data={content} />;
+        case 'payday_categories':
+            return <PayDayCategories data={content} />;
+        case 'payday_grid':
+            return <PayDayGrid data={content} />;
+        case 'payday_flash_sale':
+            return <PayDayFlashSale data={content} />;
+        case 'payday_footer':
+            return <PayDayFooter />;
+
+        // --- Sports Shoes Collection Sections ---
+        case 'shoe_header':
+            return <ShoeHeader data={content} />;
+        case 'shoe_categories':
+            return <ShoeCategories data={content} />;
+        case 'shoe_grid':
+            return <ShoeGrid data={content} />;
+        case 'shoe_footer':
+            return <ShoeFooter />;
+
+        // --- Furniture Collection Sections (LUSSO) ---
+        case 'modern_coll_header':
+            return <ModernCollHeader data={content} />;
+        case 'modern_coll_categories':
+            return <ModernCollCategories data={content} />;
+        case 'modern_coll_grid':
+            return <ModernCollGrid data={content} />;
+        case 'modern_coll_footer':
+            return <ModernCollFooter />;
 
         default:
             console.warn(`Unknown section type: ${type}`);

@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
+import { useRouter } from 'expo-router';
+
 interface StoryItem {
     id: string;
     image_url: string;
@@ -19,6 +21,8 @@ interface AestheteHeaderProps {
 }
 
 export default function AestheteHeader({ data }: AestheteHeaderProps) {
+    const router = useRouter();
+
     if (!data) return null;
 
     return (
@@ -35,8 +39,8 @@ export default function AestheteHeader({ data }: AestheteHeaderProps) {
             <View style={styles.content}>
                 {/* Nav Bar */}
                 <View style={styles.navBar}>
-                    <TouchableOpacity style={styles.iconButton}>
-                        <MaterialIcons name="menu" size={24} color="#1F2937" />
+                    <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
+                        <MaterialIcons name="arrow-back" size={24} color="#1F2937" />
                     </TouchableOpacity>
                     <Text style={styles.logo}>{data.logo_text}</Text>
                     <TouchableOpacity style={styles.iconButton}>

@@ -1,0 +1,80 @@
+{
+    "page_id": "payday-promo",
+    "name": "PayDay Promo",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_payday_header",
+            "type": "payday_header",
+            "content": {},
+            "priority": 1
+        },
+        {
+            "id": "sec_payday_categories",
+            "type": "payday_categories",
+            "content": {},
+            "priority": 2
+        },
+        {
+            "id": "sec_payday_grid",
+            "type": "payday_grid",
+            "content": {
+                "products": [
+                    {
+                        "id": "1",
+                        "brand": "Wilson",
+                        "title": "Pro Staff 97 V13",
+                        "price": "$144",
+                        "originalPrice": "$240",
+                        "badge": "-40%",
+                        "badgeColor": "#EF4444",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAjPuw40Z0RRVQO_dLMUPbGHT4q7RGHYkhagjX3l7TwyBDQh9zbaG5jeBAjdZ2aEdEVyX9lUE9jXqyMJtRmzeZOrN2sLcHlbgHPTC5jrvKF0Qhz5Yp1eZ21oPXPMu2_GNvoPIll7cFurjFZBbOB8Ia7aedpZr13j7mLwceUO8x4sEISJkpafQSRlVhMleKaJF-bArLApn7HhlEJ4ko2YqSW5Gq8OrpLC6tBKnEAwlhx1a_2sqj1SkeNey9s0VOEiCdJcqJnDVq4YcQj"
+                    },
+                    {
+                        "id": "2",
+                        "brand": "Dunlop",
+                        "title": "Fort All Court (3-Pack)",
+                        "price": "$6",
+                        "originalPrice": "$12",
+                        "badge": "-50%",
+                        "badgeColor": "#EF4444",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBvIJE0pDk0VllP1SfCifiCkuZucRH6vJ2kMGoN90pfTTPzElfRcMEySPnZuUYb1tex1IBUckvC6w7kxBr6Lh0vMauoLMH7w0Lu8103HV2u7gB2WqwO8PfGe7joSHptKU7COnDHQVh_MbbvGTTkEqFRmZG7w_8GV7PJAGmV9pvFkeuAh0YUOOJAvrdVpHZetHS_ay4thj9VixYUUSdu9xO1jUzT81hp2dYrdZ7xNSXsHHsPbjj7a0YUdpm8nIvhJEJnsfLUIPDKPG1J"
+                    },
+                    {
+                        "id": "3",
+                        "brand": "Oakley",
+                        "title": "Radar EV Path",
+                        "price": "$180",
+                        "originalPrice": "$205",
+                        "badge": "New",
+                        "badgeColor": "#1B4B63",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuA0FajKYgPN-Dxz37FfjVy7POqDbEZ2DAupAdYNVY9QQ37qwCbvmJl5kWk0ZgPLuGIJfq2xyXQXiSH9TIUFMqorD1l-01DZI9ABuqIHI6EYEX1EZ_Ltzr82w3Y2BS2_5SdTPp8tAJ2vIYB8Dx5a864HMMTHOuabNvZs68ibc_-d4Jo_9vthyztBsj9cvsaQDLHdgAxhwF9xNMtP9rW33DuD80oy7Rvvq9j9ZFXDazv2doMOtsSPfFXwZXxSQ_bOPg1d3fdg5AUSbI8E"
+                    },
+                    {
+                        "id": "4",
+                        "brand": "Nike",
+                        "title": "Zoom Vapor Cage 4",
+                        "price": "$120",
+                        "originalPrice": "$150",
+                        "badge": "-20%",
+                        "badgeColor": "#EF4444",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCkX5N72DoQM0PURYpZexvVA3G6e6tYuL6on2R5lm4RVk9Kq4IqA2U3v-7azNQiyRO8t7YKJf8tbc3-pkErjeVGin-JQqXJ-0vFt4LKmaQKpS0Dm0xgJdUHGFslI76QNT77NfwXq0_CHZlQURluOUjALuV3ThnPv4d3yy7P5_uGM_G2dLKMQhElCzIji7mo08BA18cu6ev-1vK43vDMZzrS1YG9t8wnGDsD58lsWsF-eZzrHuuF4Ae1ouR3O7TTeMBI8rvN7BwTvYLq"
+                    }
+                ]
+            },
+            "priority": 3
+        },
+        {
+            "id": "sec_payday_flash_sale",
+            "type": "payday_flash_sale",
+            "content": {},
+            "priority": 4
+        },
+        {
+            "id": "sec_payday_footer",
+            "type": "payday_footer",
+            "content": {},
+            "priority": 5
+        }
+    ]
+}

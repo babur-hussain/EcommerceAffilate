@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -22,6 +23,7 @@ interface ElegantHeaderProps {
 
 export default function ElegantHeader({ data }: ElegantHeaderProps) {
     // Animation for sparkles
+    const router = useRouter();
     const scale = useSharedValue(1);
     const opacity = useSharedValue(0.8);
     const rotation = useSharedValue(0);
@@ -80,17 +82,15 @@ export default function ElegantHeader({ data }: ElegantHeaderProps) {
                 <MaterialIcons name="auto-awesome" size={24} color="rgba(255,255,255,0.8)" />
             </Animated.View>
 
-
             <View style={styles.content}>
                 {/* Top Bar */}
                 <View style={styles.topBar}>
-                    <TouchableOpacity style={styles.iconButton}>
-                        <MaterialIcons name="menu" size={24} color="white" />
+                    <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
+                        <MaterialIcons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
                     <Text style={styles.brand}>LUXE BEAUTY</Text>
-                    <TouchableOpacity style={styles.iconButton}>
+                    <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/(tabs)/cart')}>
                         <MaterialIcons name="shopping-bag" size={24} color="white" />
-                        <View style={styles.dot} />
                     </TouchableOpacity>
                 </View>
 

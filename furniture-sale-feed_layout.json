@@ -1,0 +1,78 @@
+{
+    "page_id": "furniture-sale-feed",
+    "name": "Furniture Sale Feed",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_sale_feed_header",
+            "type": "sale_feed_header",
+            "content": {},
+            "priority": 1
+        },
+        {
+            "id": "sec_sale_feed_filter",
+            "type": "sale_feed_filter",
+            "content": {
+                "categories": [
+                    "All Items",
+                    "Sofas",
+                    "Armchairs",
+                    "Tables",
+                    "Lighting"
+                ]
+            },
+            "priority": 2
+        },
+        {
+            "id": "sec_sale_feed_grid",
+            "type": "sale_feed_grid",
+            "content": {
+                "products": [
+                    {
+                        "id": "1",
+                        "title": "Sage Velvet Sofa",
+                        "subtitle": "Living Room",
+                        "price": "$629",
+                        "originalPrice": "$899",
+                        "saveBadge": "Save 30%",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCMsdTu9SWAj8lYwRTYTlTwng-U36suU7UGpKprpKLjzf20RRADAPH9Nmrc6qlY6SJajJHu-4c5gU60IZViJNixtjJy5i6EboqN0X4oU7ndn60pJ0CS_83VJ7YX01OKKVqhaftef3HKSOMpXNr0DG77ytAl_3kt9gwe-xYUZMkmOBtmwNwD7NJitEZEe1SH_zuiRfOvfjSIrZI4Yhxc3791H4ofd505avA3B3BJDXUVdkv2SvktXnxyIRXjOgrNBaAJ1YPfyI1C8Chk"
+                    },
+                    {
+                        "id": "2",
+                        "title": "Teal Wingback",
+                        "subtitle": "Reading Corner",
+                        "price": "$315",
+                        "originalPrice": "$450",
+                        "saveBadge": "Save 30%",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBdlPAB2efbHh6Vj3xp2WLvYDGJT0uBGM_BnGq8xahjtxX6jH57f8_dQWdKwQ1xGlk5iz3_r9pmH_DxfQOcv4eAcaKK8iiJ_VRQGAo11g-QGyJ9nW2aiFrwa_zQuURTRKLl8ynvavjQdkrcVdyqj8EKQIehang4jxtBwaFik-QtgfRiPx0enX9dpLxDMRPNbAyLrlP1v4b_uQSIxcVBD5_z_HpZBj8Is8LvnR2nBozz8stFqwUjJFNOJfP21umbfJ8ECV22J3OtttYy"
+                    },
+                    {
+                        "id": "3",
+                        "title": "Oak Coffee Table",
+                        "subtitle": "Accessories",
+                        "price": "$209",
+                        "originalPrice": "$299",
+                        "saveBadge": "Save 30%",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDHNpMS591AgvZ26yetz5jAl9GK7waTrP6MwuB86Qh2RX3z1u0-UmeagbPcRn8mXOuyOV3F5Iivp_qbeYa9-udobCNJnwxU_4gVhYuZho30XrBXd6hrS3UHh5DiHGHGKywKQAAGkdWsWYZOxLVmaGPeuOEUXw1X8Lsjd6ZmVCVu7jltkeUdx4dGgQpFWoeQPq8QMrEwYS-HGYIcIsTo-CT-Xrifuw90DqyRWLygpfRYlu-66dius9Cl7soU5wu8F5iDoSn29f5MJGCk"
+                    },
+                    {
+                        "id": "4",
+                        "title": "Lounge Sofa Grey",
+                        "subtitle": "Living Room",
+                        "price": "$840",
+                        "originalPrice": "$1200",
+                        "saveBadge": "Save 30%",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuD2CLVmc4Bu70SWeWubyFreVjbxXoO_gEIf903R_hzGgmnBpC_-UH4oT_UxxJf1xGXGgw7cSOMOjiVSsvR6svm6ZpzC078uLKzEkNanGGy6IpVqhDwlO04V9dgV0dc-1gZgklNMEIdVLisEN5TmWn_pR_lJOU6okfGj_KJRcXJT5-HvWFEmDZd8psaASFhE6Uvj3pQ2hM31buFBuIuGSetptcZlcTs88JwZHu5IZxswJArFTv6KhPPouKMtkLid-hIlS9sNn79-4qso"
+                    }
+                ]
+            },
+            "priority": 3
+        },
+        {
+            "id": "sec_sale_feed_footer",
+            "type": "sale_feed_footer",
+            "content": {},
+            "priority": 4
+        }
+    ]
+}

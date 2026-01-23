@@ -339,7 +339,8 @@ export default function CheckoutScreen() {
                     });
                 } catch (e) {
                     console.error("Paytm Init Error:", e);
-                    Alert.alert("Error", "Failed to initiate Paytm payment");
+                    // Alert.alert("Error", "Failed to initiate Paytm payment");
+                    router.push(`/checkout/payment-failed?orderId=${orderId}&amount=${orderPayload.items.reduce((acc: number, item: any) => acc + (item.price || 0) * item.quantity, 0)}`);
                 }
             } else {
                 // Online Payment (Razorpay) - Backup
@@ -380,13 +381,25 @@ export default function CheckoutScreen() {
                 }).catch((error: any) => {
                     // Failure
                     console.log("Razorpay Error", error);
-                    Alert.alert("Payment Failed", "Transaction was cancelled or failed. Please try again.");
+                    // Alert.alert("Payment Failed", "Transaction was cancelled or failed. Please try again.");
+                    router.push({
+                        pathname: '/checkout/payment-failed',
+                        params: {
+                            orderId: orderId,
+                            amount: amount / 100 // Razorpay amount is in paise
+                        }
+                    });
                 });
             }
 
         } catch (error: any) {
             console.error("Payment Flow Error", error);
-            Alert.alert("Error", error.response?.data?.error || "Failed to process order/payment");
+            const errorMessage = error.response?.data?.error || "Failed to process order/payment";
+
+            // If we have a generic error but it's related to payment failing after order creation
+            // effectively we want to show the error.
+            // If order was not even created, stay here and alert.
+            Alert.alert("Error", errorMessage);
         } finally {
             setLoading(false);
         }

@@ -30,19 +30,7 @@ export default function BeautyProductPage() {
             <StatusBar barStyle="dark-content" />
 
             {/* Navbar */}
-            <View className="flex-row justify-between items-center px-4 py-3 pt-12 bg-white/90 border-b border-gray-100 z-50">
-                <View className="p-2 -ml-2">
-                    <MaterialIcons name="menu" size={24} color="#1F2937" />
-                </View>
-                <Text className="text-xl font-bold text-[#a03028] font-[PlayfairDisplay_700Bold] tracking-wide">LUMINOUS</Text>
-                <View className="flex-row gap-2">
-                    <MaterialIcons name="search" size={24} color="#1F2937" />
-                    <View className="p-2 -mr-2 relative">
-                        <MaterialIcons name="shopping-bag" size={24} color="#1F2937" />
-                        <View className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#a03028] rounded-full border-2 border-white" />
-                    </View>
-                </View>
-            </View>
+            {/* Navbar removed as it is now inside LuminousHeader component */}
 
             <ScrollView
                 showsVerticalScrollIndicator={false}

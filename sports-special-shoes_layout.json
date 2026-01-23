@@ -1,0 +1,73 @@
+{
+    "page_id": "sports-special-shoes",
+    "name": "Sports Special Shoes",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_special_header",
+            "type": "special_header",
+            "content": {},
+            "priority": 1
+        },
+        {
+            "id": "sec_special_categories",
+            "type": "special_categories",
+            "content": {},
+            "priority": 2
+        },
+        {
+            "id": "sec_special_grid",
+            "type": "special_grid",
+            "content": {
+                "products": [
+                    {
+                        "id": "1",
+                        "title": "Cyber High-Top X1",
+                        "subtitle": "Urban Series",
+                        "price": "$145.00",
+                        "badge": "EXCLUSIVE",
+                        "badgeColor": "#000000",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDTIybldomSJneu0tokz7IH2lmn5-VCllFrM5eG2tBNHe9uyYlXzfBDA8omRbEhjsLjNap9RjRzh6qFESmI0cLQ7GF_uNwSe0iPdhqQvOYwyC_nQgaTwaq2TYlIl3jreTUR9pGkkU33PsFGXUdTsxkpuyH3lR6WEQ4V885n2R9vLRgh5qDsP1YwZ-UfKtrmi3yjzQLpZugj4KhmGWQXZ-5hX8-_eSAGtQ2n5EH_GL19AecWwPXHljXU_GBCGDRto-dSVSwq1IeNaFor"
+                    },
+                    {
+                        "id": "2",
+                        "title": "Retro Chunky Red",
+                        "subtitle": "Vintage Vibes",
+                        "price": "$189.99",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAoUY0xkTp07I79nulYd7Cc89SOa1WkjlPbens6fW8eXMGbyPNUksoo4NWGtVx30evmnhZATijXvgmE4U3rXxyrWPoCSDLM_xC6t73tkAW1aV5Vt_yIORzRHABJbPHAMtKMVZ8h27NRDVaMHEE4cqpZE_fTeB0Wlu5V3rdLW2X6WfBKwRAIiZLVF4TeV_SdTy8ST5Gcx6tuR6YBDQzNDyuYJOnsnlXHD6JWUYiwvQ-Uh48tZvqm1pZRva2Nn2iTc7LgRA6iivVeijdd"
+                    },
+                    {
+                        "id": "3",
+                        "title": "Street Flex V2",
+                        "subtitle": "Running Tech",
+                        "price": "$128.00",
+                        "originalPrice": "$160",
+                        "badge": "SALE -20%",
+                        "badgeColor": "#C62828",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuD6q9kGEWgikgtgf7ExPIxkUtHRO18ZIwwxgET5xUqbgFqTLO5H4HdWZzrmiK1g1dAFrFyXbAJN6EUOle4KV0Zw8y9fHLm2THmkJ4ffHlq3lqOPYjc2I5CQoLF-W6Z0W9i5ezoRkGR1ZIlbC84X0RsddXJkZ34-I7Mh1oX3T5bmYzCS1EclhLZHb4N1rKBoauPh1RMOk_5rvzD9NWQ1mZXBR4nn2aeBEPne7NqPvBd6XLXWAt_QzP7GNGJKqrbfjFssJtK93JFoUJ5G"
+                    },
+                    {
+                        "id": "4",
+                        "title": "Green Strike Low",
+                        "subtitle": "Skate Culture",
+                        "price": "$115.00",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCOZdzCZdgFYmZftJeuQ40AutswNtqbBpJ9eOHZW4F7vClL8iMaXDuk3p_CdkE44rt3l72BjL3keRIqjnvA2oP3HnKpzJl2S1V9cOjFCsVlQGTZ_fUtFe-lS7f_sUDB_RMecF2tEqDFyhP58fmciU9QCLsr5_tYGXbbP60_TwaIWkb1QlcmbH067U-26ehRSLSBmTt6edTz8DjqfJpB6gbv-F2AGnVI6aphq-dKOhnEdd0pl12k7OJwWchHpOBDo2e-mrshGuhOfYOe"
+                    }
+                ]
+            },
+            "priority": 3
+        },
+        {
+            "id": "sec_special_flash_sale",
+            "type": "special_flash_sale",
+            "content": {},
+            "priority": 4
+        },
+        {
+            "id": "sec_special_footer",
+            "type": "special_footer",
+            "content": {},
+            "priority": 5
+        }
+    ]
+}

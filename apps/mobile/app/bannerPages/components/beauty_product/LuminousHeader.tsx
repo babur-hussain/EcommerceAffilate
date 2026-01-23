@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -14,10 +16,22 @@ interface LuminousHeaderProps {
 }
 
 export default function LuminousHeader({ data }: LuminousHeaderProps) {
+    const router = useRouter();
+
     if (!data) return null;
 
     return (
         <View style={styles.container}>
+            {/* Header Navigation */}
+            <View style={styles.headerNav}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconHitBox}>
+                    <MaterialIcons name="arrow-back" size={24} color="#1F2937" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/cart')} style={styles.iconHitBox}>
+                    <MaterialIcons name="shopping-bag" size={24} color="#1F2937" />
+                </TouchableOpacity>
+            </View>
+
             {/* 
                Background Image Area 
                We use a container that is positioned absolutely on the right.
@@ -58,8 +72,19 @@ const styles = StyleSheet.create({
         height: 480,
         backgroundColor: 'white',
         position: 'relative',
-        justifyContent: 'center',
+        justifyContent: 'flex-start', // Changed to flex-start to align header
         overflow: 'hidden', // Contain the mask
+    },
+    headerNav: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        marginTop: 48, // Status bar spacing
+        zIndex: 20, // ensure clickable
+    },
+    iconHitBox: {
+        padding: 8,
     },
     backgroundContainer: {
         ...StyleSheet.absoluteFillObject,

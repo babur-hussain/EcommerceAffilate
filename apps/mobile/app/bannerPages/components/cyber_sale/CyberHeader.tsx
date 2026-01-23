@@ -1,136 +1,171 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, withDelay } from 'react-native-reanimated';
+
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Image, Dimensions, Animated, Easing, useColorScheme, TouchableOpacity } from 'react-native';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-interface CyberHeaderProps {
-    data: {
-        title_top: string;
-        title_bottom: string;
-        discount_text: {
-            prefix: string;
-            value: string;
-        };
-        image_url: string;
+const CyberHeader = ({ data }: { data: any }) => {
+    const isDarkMode = useColorScheme() === 'dark';
+    const router = useRouter();
+
+    // Theme Colors
+    const colors = {
+        primary: "#D9242C", // Bold Red
+        secondary: "#FFCB05", // Bold Yellow
+        accent: "#2A7FFF", // Blue
+        darkblock: "#0F172A", // Deep black/blue
+        textLight: "#FFFFFF",
+        textDark: "#000000",
+        backgroundLight: "#F8FAFC",
+        backgroundDark: "#0B0B0B"
     };
-}
 
-export default function CyberHeader({ data }: CyberHeaderProps) {
-    // Pulse animation for lightning bolt/star
-    const pulse = useSharedValue(1);
-    const spin = useSharedValue(0);
+    // Animations
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const spinAnim = useRef(new Animated.Value(0)).current;
 
-    React.useEffect(() => {
-        pulse.value = withRepeat(withTiming(1.2, { duration: 800 }), -1, true);
-        spin.value = withRepeat(withTiming(360, { duration: 8000, easing: Easing.linear }), -1, false);
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.2,
+                    duration: 1000,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+
+        Animated.loop(
+            Animated.timing(spinAnim, {
+                toValue: 1,
+                duration: 6000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
     }, []);
 
-    const animPulse = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
-    const animSpin = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
-
-    if (!data) return null;
+    const spin = spinAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg']
+    });
 
     return (
         <View style={styles.container}>
-            {/* Top Bar */}
+            {/* Top Bar for Nav mimic */}
             <View style={styles.topBar}>
-                <TouchableOpacity style={styles.iconBtn}>
-                    <MaterialIcons name="menu" size={24} color="#FFCB05" />
+                <TouchableOpacity onPress={() => router.back()} style={styles.menuButton}>
+                    <MaterialIcons name="arrow-back" size={24} color={colors.secondary} />
                 </TouchableOpacity>
-                <Text style={styles.topLogo}>POP SHOP</Text>
-                <TouchableOpacity style={styles.iconBtn}>
-                    <MaterialIcons name="shopping-bag" size={24} color="#FFCB05" />
+                <Text style={styles.topBarTitle}>POP SHOP</Text>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/cart')} style={styles.bagButton}>
+                    <MaterialIcons name="shopping-bag" size={24} color={colors.secondary} />
                     <View style={styles.badge}>
                         <Text style={styles.badgeText}>3</Text>
                     </View>
                 </TouchableOpacity>
             </View>
 
-            {/* Main Content */}
-            <View style={styles.mainContent}>
-                {/* Floating Decorations */}
-                <Animated.View style={[styles.decoPulse, animPulse]}>
-                    <MaterialIcons name="flash-on" size={32} color="#D9242C" />
+            {/* Header Content */}
+            <View style={styles.headerContent}>
+                {/* Floating Elements */}
+                <Animated.View style={[styles.floatIcon, styles.boltIcon, { transform: [{ scale: pulseAnim }] }]}>
+                    <MaterialCommunityIcons name="lightning-bolt" size={32} color={colors.primary} />
                 </Animated.View>
 
-                <Animated.View style={[styles.decoSpin, animSpin]}>
-                    <MaterialIcons name="local-florist" size={36} color="#2A7FFF" />
+                <Animated.View style={[styles.floatIcon, styles.flowerIcon, { transform: [{ rotate: spin }] }]}>
+                    <MaterialIcons name="local-florist" size={32} color={colors.accent} />
                 </Animated.View>
 
-                {/* Vertical Text Stack */}
-                <View style={styles.textStack}>
-                    <Text style={styles.titleCyber}>{data.title_top}</Text>
-                    <Text style={styles.titleSale}>{data.title_bottom}</Text>
+                {/* Main Titles */}
+                <View style={styles.titleContainer}>
+                    <View style={styles.titleRow}>
+                        {/* Text Stroke Simulation for CYBER */}
+                        <Text style={[styles.titleText, styles.strokeText, { color: colors.darkblock, transform: [{ rotate: '-2deg' }] }]}>CYBER</Text>
+                        <Text style={[styles.titleText, styles.frontText, { color: colors.secondary, transform: [{ rotate: '-2deg' }] }]}>CYBER</Text>
+                    </View>
 
-                    {/* Zigzag SVG placeholder - represented by simple view or text for now */}
-                    <Text style={styles.zigzag}>VVVVVV</Text>
+                    <View style={[styles.titleRow, { marginLeft: 16, marginTop: -10 }]}>
+                        {/* Text Stroke Simulation for SALE */}
+                        <Text style={[styles.titleText, styles.strokeText, { color: colors.darkblock, transform: [{ rotate: '1deg' }] }]}>SALE</Text>
+                        <Text style={[styles.titleText, styles.frontText, { color: colors.primary, transform: [{ rotate: '1deg' }] }]}>SALE</Text>
+                    </View>
+
+                    {/* Zig Zag Decoration (Simulated with Text chars since SVG missing) */}
+                    <View style={styles.zigZagContainer}>
+                        <Text style={{ color: colors.secondary, fontSize: 32, fontWeight: 'bold', letterSpacing: -5 }}>
+                            VVVVVV
+                        </Text>
+                    </View>
                 </View>
 
-                {/* Hero Image Block */}
-                <View style={styles.heroBlock}>
+                {/* Hero Image Section */}
+                <View style={styles.heroImageSection}>
                     <View style={styles.imageFrame}>
-                        <Image source={{ uri: data.image_url }} style={styles.heroImage} />
+                        <Image
+                            source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuCwwtEkfE5LZS0HGuf1i4bWzACl2OBWJjf53W_JKaL2yhoF2v30yKpDVGhvSOt8d5BOQfrGpQZ_U5qEdUFEXuZCeFK_hF8QRcDqzIMzKc26ylNWBZKf6HFcNFdrmzVv5rRJx6qWEC3NjFaW4aXu_sLXhUfNbHCAfGHW8YYGe41hoJYX-MIwgPdg7yVB23oGbbaFMSWXAHSOpsz-40iNIAnO6ieYa81od1nU0MXa4s9tpRK2V92eE9WGPRcR3B7aIHH7ozCfktdTd4Ye" }}
+                            style={styles.heroImage}
+                        />
                     </View>
 
-                    {/* Pop-out Discount Tag */}
-                    <View style={styles.discountTag}>
-                        <Text style={styles.discountPrefix}>{data.discount_text.prefix}</Text>
-                        <Text style={styles.discountValue}>{data.discount_text.value}</Text>
+                    {/* Discount Badge */}
+                    <View style={styles.discountBadge}>
+                        <Text style={styles.discountText}>UP TO <Text style={{ color: colors.secondary, textShadowColor: '#000', textShadowRadius: 1 }}>50%</Text></Text>
                     </View>
 
-                    {/* Star Badge */}
-                    <View style={styles.starBadge}>
-                        <MaterialIcons name="star" size={48} color="#FFCB05" style={{ textShadowColor: 'black', textShadowRadius: 1, textShadowOffset: { width: 1, height: 1 } }} />
+                    {/* Star Decoration */}
+                    <View style={styles.starIcon}>
+                        <MaterialCommunityIcons name="star-four-points" size={56} color={colors.secondary} style={{ textShadowColor: 'black', textShadowRadius: 1 }} />
                     </View>
                 </View>
             </View>
 
-            {/* Checkerboard Strip */}
-            <LinearGradient
-                colors={['#FFCB05', 'transparent']}
-                start={[0, 0]} end={[1, 1]}
-                locations={[0.5, 0.5]}
-                style={styles.checkerStrip}
-            >
-                {/* Simulated checker pattern via repeated views or gradient */}
-                <Image
-                    source={{ uri: 'https://placehold.co/20x20/FFCB05/000000/png?text=+' }}
-                    style={{ width: '100%', height: 24, resizeMode: 'repeat', opacity: 0.8 }}
-                />
-            </LinearGradient>
+            {/* Checker Strip */}
+            <View style={styles.checkerStrip}>
+                <View style={styles.checkerPattern} />
+            </View>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
         backgroundColor: '#000000',
-        paddingBottom: 0,
+        overflow: 'hidden',
     },
     topBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingTop: 48,
         paddingHorizontal: 16,
-        paddingBottom: 16,
+        paddingBottom: 12,
+        paddingTop: 54, // Added space for status bar
         borderBottomWidth: 2,
         borderBottomColor: '#FFCB05',
-        backgroundColor: 'black',
+        backgroundColor: '#000000',
         zIndex: 50,
     },
-    iconBtn: {
+    menuButton: {
         padding: 4,
-        borderRadius: 20,
+        borderRadius: 999,
     },
-    topLogo: {
-        fontFamily: 'Bangers_400Regular',
+    topBarTitle: {
         fontSize: 24,
+        fontWeight: '800', // tracking-wider
         color: '#FFCB05',
-        letterSpacing: 2,
+        letterSpacing: 1.5,
+        // fontFamily: 'Bangers' // We don't have custom fonts loaded usually, stick to system bold
+    },
+    bagButton: {
+        padding: 4,
+        position: 'relative',
     },
     badge: {
         position: 'absolute',
@@ -140,8 +175,8 @@ const styles = StyleSheet.create({
         width: 16,
         height: 16,
         borderRadius: 8,
-        alignItems: 'center',
         justifyContent: 'center',
+        alignItems: 'center',
         borderWidth: 1,
         borderColor: 'white',
     },
@@ -150,140 +185,131 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: 'bold',
     },
-    mainContent: {
-        minHeight: 400,
+    headerContent: {
+        paddingTop: 32,
         paddingHorizontal: 16,
-        paddingTop: 24,
+        paddingBottom: 40, // Space for image overhang
         position: 'relative',
-        overflow: 'hidden',
     },
-    decoPulse: {
+    floatIcon: {
         position: 'absolute',
+        zIndex: 5,
+    },
+    boltIcon: {
         top: 16,
         left: 8,
-        zIndex: 0,
     },
-    decoSpin: {
-        position: 'absolute',
-        top: 80,
+    flowerIcon: {
+        top: 60,
         right: 24,
-        zIndex: 0,
     },
-    textStack: {
+    titleContainer: {
         marginBottom: 24,
         position: 'relative',
         zIndex: 10,
     },
-    titleCyber: {
-        fontFamily: 'Anton_400Regular',
-        fontSize: 80,
-        lineHeight: 80,
-        color: '#FFCB05',
-        textShadowColor: '#0F172A',
-        textShadowOffset: { width: 3, height: 3 },
-        textShadowRadius: 0, // Hard shadow
-        transform: [{ rotate: '-2deg' }],
+    titleRow: {
+        position: 'relative',
+        height: 70, // Roughly matching text height
     },
-    titleSale: {
-        fontFamily: 'Anton_400Regular',
-        fontSize: 96,
-        lineHeight: 80,
-        color: '#D9242C',
-        textShadowColor: '#0F172A',
-        textShadowOffset: { width: 3, height: 3 },
-        textShadowRadius: 0, // Hard shadow
-        marginLeft: 16,
-        marginTop: -10,
-        transform: [{ rotate: '1deg' }],
+    titleText: {
+        fontSize: 80, // text-7xl / 8xl
+        fontWeight: '900',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+    },
+    frontText: {
         zIndex: 2,
     },
-    zigzag: {
-        position: 'absolute',
-        top: 100,
-        left: -8,
-        color: '#FFCB05',
-        fontSize: 24,
-        fontWeight: 'bold',
-        transform: [{ rotate: '90deg' }],
-        opacity: 0.8,
+    strokeText: {
+        zIndex: 1,
+        textShadowColor: '#0F172A', // darkblock
+        textShadowOffset: { width: 3, height: 3 },
+        textShadowRadius: 0, // Hard shadow
+        // textStroke is not standard RN, using shadow simulation
     },
-    heroBlock: {
-        marginTop: -30,
-        marginRight: -20,
+    zigZagContainer: {
+        position: 'absolute',
+        top: '40%',
+        left: -10,
+        zIndex: 3,
+    },
+    heroImageSection: {
         alignItems: 'flex-end',
+        marginTop: -40,
+        marginRight: -20,
         position: 'relative',
+        height: 220,
     },
     imageFrame: {
-        width: 200,
-        height: 200,
-        backgroundColor: '#FDBA74', // orange-300
-        borderTopLeftRadius: 100,
-        borderTopRightRadius: 100,
-        borderBottomLeftRadius: 16,
-        borderBottomRightRadius: 16,
+        width: 192, // w-48
+        height: 192,
+        backgroundColor: '#FDBA74',
+        borderTopLeftRadius: 96, // rounded-t-full
+        borderTopRightRadius: 96,
+        borderBottomLeftRadius: 8,
+        borderBottomRightRadius: 8,
         borderWidth: 4,
         borderColor: 'black',
         overflow: 'hidden',
-        // Hard drop shadow
         shadowColor: '#0F172A',
         shadowOffset: { width: 4, height: 4 },
         shadowOpacity: 1,
         shadowRadius: 0,
-        elevation: 10, // Elevation doesn't support offset perfectly on android but good enough
+        elevation: 10,
     },
     heroImage: {
-        width: '120%',
-        height: '120%',
+        width: '100%',
+        height: '100%',
         resizeMode: 'cover',
-        marginLeft: -10,
+        transform: [{ scale: 1.1 }, { translateY: 8 }]
     },
-    discountTag: {
+    discountBadge: {
         position: 'absolute',
         bottom: 16,
-        left: 0, // Relative to the flex-end container, need to push it left
-        right: 40,
-        backgroundColor: '#D9242C',
+        left: 0,
+        backgroundColor: '#D9242C', // primary
         paddingHorizontal: 24,
         paddingVertical: 8,
-        borderRadius: 24,
+        borderRadius: 999,
         borderWidth: 4,
         borderColor: 'black',
         transform: [{ rotate: '-3deg' }],
-        zIndex: 20,
-        flexDirection: 'row',
-        alignItems: 'baseline',
-        gap: 4,
         shadowColor: '#0F172A',
         shadowOffset: { width: 4, height: 4 },
         shadowOpacity: 1,
         shadowRadius: 0,
+        elevation: 10,
+        zIndex: 20,
     },
-    discountPrefix: {
-        fontFamily: 'Bangers_400Regular',
-        fontSize: 14,
+    discountText: {
         color: 'white',
-    },
-    discountValue: {
-        fontFamily: 'Bangers_400Regular',
         fontSize: 24,
-        color: '#FFCB05', // Secondary
-        textShadowColor: 'black',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 0,
+        fontWeight: 'bold',
     },
-    starBadge: {
+    starIcon: {
         position: 'absolute',
-        bottom: 60,
-        left: -40,
+        bottom: 64,
+        left: -32,
         zIndex: 20,
     },
     checkerStrip: {
         height: 24,
-        backgroundColor: 'black',
+        backgroundColor: '#000',
         borderTopWidth: 4,
         borderBottomWidth: 4,
-        borderTopColor: 'black',
-        borderBottomColor: 'black',
+        borderColor: 'black',
         overflow: 'hidden',
+        flexDirection: 'row',
+    },
+    checkerPattern: {
+        flex: 1,
+        backgroundColor: '#FFCB05', // secondary
+        // Pattern logic would be complex with just Views, 
+        // simplifying to a solid yellow strip for stability or use SVG pattern if required
+        // For MVP, bold yellow strip serves the visual divider purpose nicely
     }
 });
+
+export default CyberHeader;

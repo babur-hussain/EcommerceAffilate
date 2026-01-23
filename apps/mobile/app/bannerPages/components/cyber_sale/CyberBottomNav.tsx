@@ -1,85 +1,134 @@
+
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, useColorScheme } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter, Href } from 'expo-router';
 
-export default function CyberBottomNav() {
+const { width } = Dimensions.get('window');
+
+const CyberBottomNav = () => {
+    const isDarkMode = useColorScheme() === 'dark';
+    const router = useRouter();
+
+    // Theme colors
+    const colors = {
+        primary: "#D9242C",
+        secondary: "#FFCB05",
+        bgLight: "#FFFFFF",
+        bgDark: "#111827", // gray-900
+        textLight: "#9CA3AF", // gray-400
+        textDark: "#6B7280", // gray-500
+        activeTextLight: "#000000",
+        activeTextDark: "#FFFFFF",
+    };
+
+    const navItems = [
+        { icon: "home", label: "Home", route: "/" },
+        { icon: "search", label: "Search", route: "/search" },
+        { icon: "local-offer", label: "Deals", route: "/deals", isCenter: true },
+        { icon: "favorite-border", label: "Saved", route: "/wishlist" },
+        { icon: "person-outline", label: "Profile", route: "/profile" },
+    ];
+
     return (
-        <View style={styles.container}>
-            <View style={styles.bar}>
-                <TouchableOpacity style={styles.navItem}>
-                    <MaterialIcons name="home" size={28} color="#D9242C" />
-                    <Text style={[styles.label, { color: '#D9242C', fontWeight: 'bold' }]}>Home</Text>
-                </TouchableOpacity>
+        <View style={[
+            styles.container,
+            {
+                backgroundColor: isDarkMode ? colors.bgDark : colors.bgLight,
+                borderTopColor: 'black'
+            }
+        ]}>
+            <View style={styles.navContent}>
+                {navItems.map((item, index) => {
+                    const isCenter = item.isCenter;
+                    if (isCenter) {
+                        return (
+                            <View key={index} style={styles.centerButtonWrapper}>
+                                <TouchableOpacity
+                                    style={[styles.centerButton, { backgroundColor: colors.secondary, borderColor: 'black' }]}
+                                    activeOpacity={0.9}
+                                    onPress={() => router.push(item.route as Href)}
+                                >
+                                    <MaterialIcons name={item.icon as any} size={28} color="black" />
+                                </TouchableOpacity>
+                            </View>
+                        );
+                    }
 
-                <TouchableOpacity style={styles.navItem}>
-                    <MaterialIcons name="search" size={28} color="#9CA3AF" />
-                    <Text style={styles.label}>Search</Text>
-                </TouchableOpacity>
-
-                <View style={styles.centerWrapper}>
-                    <TouchableOpacity style={styles.centerBtn}>
-                        <MaterialIcons name="local-offer" size={32} color="black" />
-                    </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity style={styles.navItem}>
-                    <MaterialIcons name="favorite-border" size={28} color="#9CA3AF" />
-                    <Text style={styles.label}>Saved</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.navItem}>
-                    <MaterialIcons name="person-outline" size={28} color="#9CA3AF" />
-                    <Text style={styles.label}>Profile</Text>
-                </TouchableOpacity>
+                    return (
+                        <TouchableOpacity
+                            key={index}
+                            style={styles.navItem}
+                            onPress={() => item.route !== "/" ? router.push(item.route as Href) : null}
+                        >
+                            <MaterialIcons
+                                name={item.icon as any}
+                                size={28}
+                                color={index === 0
+                                    ? colors.primary
+                                    : (isDarkMode ? colors.textDark : colors.textLight)
+                                }
+                            />
+                            <Text style={[
+                                styles.navLabel,
+                                {
+                                    color: index === 0
+                                        ? colors.primary
+                                        : (isDarkMode ? colors.textDark : colors.textLight)
+                                }
+                            ]}>
+                                {item.label}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
+        width: '100%',
+        borderTopWidth: 2,
+        paddingTop: 12,
+        paddingBottom: 32, // Safe area
         position: 'absolute',
         bottom: 0,
-        width: '100%',
-        zIndex: 100,
+        zIndex: 50,
     },
-    bar: {
+    navContent: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        backgroundColor: 'white',
-        borderTopWidth: 2,
-        borderTopColor: 'black',
-        paddingVertical: 12,
-        paddingBottom: 24, // Safe Area
     },
     navItem: {
         alignItems: 'center',
+        justifyContent: 'center',
     },
-    label: {
+    navLabel: {
         fontSize: 10,
-        marginTop: 4,
         fontWeight: 'bold',
-        color: '#9CA3AF',
+        marginTop: 4,
     },
-    centerWrapper: {
+    centerButtonWrapper: {
         position: 'relative',
         top: -30,
     },
-    centerBtn: {
-        width: 56,
-        height: 56,
+    centerButton: {
+        width: 56, // w-14
+        height: 56, // h-14
         borderRadius: 28,
-        backgroundColor: '#FFCB05', // Secondary
-        borderWidth: 2,
-        borderColor: 'black',
-        alignItems: 'center',
         justifyContent: 'center',
-        // Hard Pop Shadow
-        shadowColor: '#0F172A',
+        alignItems: 'center',
+        borderWidth: 2,
+        // Pop shadow
+        shadowColor: '#000',
         shadowOffset: { width: 4, height: 4 },
         shadowOpacity: 1,
         shadowRadius: 0,
-        elevation: 6,
-    }
+        elevation: 10,
+    },
 });
+
+export default CyberBottomNav;

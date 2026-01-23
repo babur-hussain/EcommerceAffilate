@@ -4,6 +4,8 @@ import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
 import SectionRenderer from '../../src/components/homepage/SectionRenderer';
 
+import { StatusBar } from 'expo-status-bar';
+
 export default function NewCollectionShopPage() {
     const { layout, loading, error } = usePageLayout('new_collection_shop');
 
@@ -25,6 +27,7 @@ export default function NewCollectionShopPage() {
 
     return (
         <View style={{ flex: 1, backgroundColor: '#F3F4F6' }}>
+            <StatusBar style="dark" />
             <Stack.Screen options={{ headerShown: false }} />
             <ScrollView
                 showsVerticalScrollIndicator={false}

@@ -1,0 +1,82 @@
+{
+    "page_id": "flash-sale-watch",
+    "name": "Flash Sale Watch",
+    "isActive": true,
+    "sections": [
+        {
+            "id": "sec_fw_header",
+            "type": "watch_header",
+            "content": {},
+            "priority": 1
+        },
+        {
+            "id": "sec_fw_categories",
+            "type": "watch_categories",
+            "content": {
+                "categories": [
+                    "All Watches",
+                    "Chronograph",
+                    "Automatic",
+                    "Gold"
+                ]
+            },
+            "priority": 2
+        },
+        {
+            "id": "sec_fw_timer",
+            "type": "watch_timer",
+            "content": {},
+            "priority": 3
+        },
+        {
+            "id": "sec_fw_grid",
+            "type": "watch_grid",
+            "content": {
+                "products": [
+                    {
+                        "id": "1",
+                        "title": "Oyster Perpetual Silver",
+                        "collection": "Automatic, 41mm",
+                        "originalPrice": "$8,500",
+                        "price": "$5,100",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCGlfMSUQlZdcPKE-8mNNy2pXcSAuVU7prDDB2CIR2t0CsKm-h8XvgHSro4r9ZE3kKE1EZiWDfHgEUrsbJ0lmxOafa44j-UhDLOl0oI1CIEuvR2RIxfIlRLYytFakedc_rDgCFeS_5dfIuvcbxZnLkUV9YunBpoPFM0lEaQfYl0ai2-ttlykXpX8CBt-Pn3kpR4khMbk3rXo9HMjF0WtZZKG5WCHERu1TFy0BX8Ku6Un5l4Rz-lQEOBv2z8cY_etd7bQPjmPVu7hjHc",
+                        "discount": "-40%"
+                    },
+                    {
+                        "id": "2",
+                        "title": "Royal Oak Gold Leather",
+                        "collection": "Mechanical, 39mm",
+                        "originalPrice": "$12,000",
+                        "price": "$9,000",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBzAHgN5Z5aq7rKH6jJn4LdSeiZvnoA1Y74C6lHMKUsgi8DlQXXpII0j_izfoFPn4IZc28BCh3rtBob3DiP0IgrdTKj-cEonF1-J9GdmqgWBObvl5o89OG9h6cyzhCpVfc4lbOJ2FOw_5T9E5wAUbQOkNOCEWaQN1TPIEgPsEzZ1Q8qTmKxavlzZyCwRyFgMVdO1E95k0fB7zBpmikd1xf5cO9iGq4KJ1yLOYAIU3VEJRhEiaEfdYwJr4fd-WveN7mD1LfZqPZxZ0Ys",
+                        "discount": "-25%"
+                    },
+                    {
+                        "id": "3",
+                        "title": "Cosmograph Black Dial",
+                        "collection": "Chronograph, Steel",
+                        "originalPrice": "$24,000",
+                        "price": "$12,000",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCllc5_JUgN8gnyYzBoJQCZVRfjJTV_iJN3bBNpLDy4MsAcFhmKDW55RrKwlB0YY6zxYLgkVcsbZKlIYjZW7SdclPhmh6_QPTI49MT-alJgMjg9aB2I6kdT6wg0J7UcUVUKE9p83GokaJv6meYqy5li5RIjAnM7ETJ6rXS36ee-l_ZenDVi61ix_eO8eiJH5Eqa3AtImXYXlumUr9JvK6_jR6NiQsnSzc9XTM5V4RmviqokB5SbrH75ZE64DMsGTYl5uM4uF4oVq54z",
+                        "discount": "-50%"
+                    },
+                    {
+                        "id": "4",
+                        "title": "Nautilus Blue Horizon",
+                        "collection": "Stainless Steel",
+                        "originalPrice": "$32,000",
+                        "price": "$28,500",
+                        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDNK-HkUkBZDX2EJnyPSjbeRvEbTPNebYkB7Y5RtEWmZTTtOi0ShoAmh6_VAEV8p3ccsLviCLw92MtA1tsy71f5fPrZUu5qSFAYI51r51-7X-tUatWw5PZDKRP_6KLn6Rx0-lvItZtNkrbAzq8lsfr4907rkzB512Hqa1SWTKji1Wf7L06kud__jhDX6EBT6EODaKt2NhvOKCwUUd8S-0d27I5ql--8jHLp9wKInqlt_L62MG_-XGvgX2unkFPY5_CJIC-9KZEEwHtM"
+                    }
+                ]
+            },
+            "priority": 4
+        },
+        {
+            "id": "sec_fw_footer",
+            "type": "watch_bottom_nav",
+            "content": {},
+            "priority": 5
+        }
+    ]
+}

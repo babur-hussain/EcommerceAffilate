@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
@@ -19,6 +21,7 @@ interface CosmeticHeaderProps {
 }
 
 export default function CosmeticHeader({ data }: CosmeticHeaderProps) {
+    const router = useRouter();
     const badgeBounce = useSharedValue(0);
 
     useEffect(() => {
@@ -46,6 +49,23 @@ export default function CosmeticHeader({ data }: CosmeticHeaderProps) {
                 <View style={[styles.blob, styles.blobTeal]} />
 
                 <View style={styles.content}>
+                    {/* Top Navigation Bar */}
+                    <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        width: '100%',
+                        marginBottom: 16
+                    }}>
+                        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8 }}>
+                            <MaterialIcons name="arrow-back" size={24} color="#112D4E" />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => router.push('/(tabs)/cart')} style={{ padding: 8 }}>
+                            <MaterialIcons name="shopping-bag" size={24} color="#112D4E" />
+                        </TouchableOpacity>
+                    </View>
+
                     <Text style={styles.title}>
                         {data.title_top}{'\n'}
                         <Text style={styles.italicTitle}>{data.title_bottom}</Text>

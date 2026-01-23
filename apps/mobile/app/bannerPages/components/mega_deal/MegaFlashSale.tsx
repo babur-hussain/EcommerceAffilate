@@ -1,14 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 interface MegaFlashSaleProps {
     data: {
-        tabs: string[];
+        tabs?: string[];
+        targetDate?: string; // ISO string 
     };
 }
 
 export default function MegaFlashSale({ data }: MegaFlashSaleProps) {
+    const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+
+    useEffect(() => {
+        // Default to 24 hours from now if no targetDate is provided
+        const target = data?.targetDate ? new Date(data.targetDate).getTime() : new Date().getTime() + 24 * 60 * 60 * 1000;
+
+        const interval = setInterval(() => {
+            const now = new Date().getTime();
+            const difference = target - now;
+
+            if (difference <= 0) {
+                clearInterval(interval);
+                setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+            } else {
+                const hours = Math.floor((difference / (1000 * 60 * 60)));
+                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+                setTimeLeft({ hours, minutes, seconds });
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [data?.targetDate]);
+
+    const formatTime = (time: number) => time < 10 ? `0${time}` : time;
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -18,11 +45,11 @@ export default function MegaFlashSale({ data }: MegaFlashSaleProps) {
                 </View>
                 <View style={styles.timerRow}>
                     <Text style={styles.endingText}>Ending in</Text>
-                    <View style={styles.timeBox}><Text style={styles.timeText}>04</Text></View>
+                    <View style={styles.timeBox}><Text style={styles.timeText}>{formatTime(timeLeft.hours)}</Text></View>
                     <Text>:</Text>
-                    <View style={styles.timeBox}><Text style={styles.timeText}>12</Text></View>
+                    <View style={styles.timeBox}><Text style={styles.timeText}>{formatTime(timeLeft.minutes)}</Text></View>
                     <Text>:</Text>
-                    <View style={styles.timeBox}><Text style={styles.timeText}>55</Text></View>
+                    <View style={styles.timeBox}><Text style={styles.timeText}>{formatTime(timeLeft.seconds)}</Text></View>
                 </View>
             </View>
 

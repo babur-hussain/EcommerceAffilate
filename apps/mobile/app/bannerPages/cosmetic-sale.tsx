@@ -29,17 +29,7 @@ export default function CosmeticSalePage() {
             <Stack.Screen options={{ headerShown: false }} />
             <StatusBar barStyle="dark-content" />
 
-            {/* Navbar */}
-            <View className="flex-row justify-between items-center px-6 py-4 pt-12 bg-white/70 border-b border-white/20 z-50">
-                <View className="p-2 rounded-full bg-transparent">
-                    <MaterialIcons name="menu" size={24} color="#112D4E" />
-                </View>
-                <Text className="text-xl font-bold text-[#112D4E] font-[PlayfairDisplay_700Bold] tracking-widest">LUXE.</Text>
-                <View className="p-2 rounded-full relative">
-                    <MaterialIcons name="shopping-bag" size={24} color="#112D4E" />
-                    <View className="absolute top-1 right-1 w-2 h-2 bg-red-400 rounded-full" />
-                </View>
-            </View>
+            {/* Navbar removed as it is now inside CosmeticHeader */}
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
