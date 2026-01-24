@@ -42,10 +42,15 @@ export interface IOrder extends Document {
   | 'REFUNDED'
   | 'CANCELLED';
   returnReason?: string;
+  returnType?: 'RETURN' | 'REPLACEMENT';
+  returnStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+  returnImages?: string[];
+  returnRejectionReason?: string;
   refundAmount?: number;
   paymentProvider?: 'RAZORPAY' | 'PAYTM' | 'CASHFREE' | 'COD';
   paymentOrderId?: string;
   paymentStatus?: 'PENDING' | 'SUCCESS' | 'PAID' | 'FAILED';
+  paymentInstrument?: string;
   createdAt: Date;
   updatedAt: Date;
   deliveryPartnerId?: mongoose.Types.ObjectId;
@@ -146,6 +151,21 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       trim: true,
     },
+    returnType: {
+      type: String,
+      enum: ['RETURN', 'REPLACEMENT'],
+    },
+    returnStatus: {
+      type: String,
+      enum: ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED'],
+    },
+    returnImages: {
+      type: [String],
+    },
+    returnRejectionReason: {
+      type: String,
+      trim: true,
+    },
     refundAmount: {
       type: Number,
       min: 0,
@@ -161,6 +181,9 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       enum: ['PENDING', 'SUCCESS', 'PAID', 'FAILED'],
       default: 'PENDING',
+    },
+    paymentInstrument: {
+      type: String, // e.g., 'UPI', 'Credit Card (HDFC)', etc.
     },
     deliveryPartnerId: {
       type: Schema.Types.ObjectId,

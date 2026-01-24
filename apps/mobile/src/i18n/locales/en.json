@@ -1,0 +1,66 @@
+{
+    "profile": {
+        "account_settings": "Account Settings",
+        "my_activity": "My Activity",
+        "earn": "Earn with Us",
+        "feedback": "Feedback & Information",
+        "plus": "Premium Membership",
+        "edit_profile": "Edit Profile",
+        "wallet": "Saved Cards & Wallet",
+        "addresses": "Saved Addresses",
+        "language": "Select Language",
+        "notifications": "Notification Settings",
+        "privacy": "Privacy Settings",
+        "reviews": "Reviews",
+        "questions": "Questions & Answers",
+        "sell": "Sell on Platform",
+        "policies": "Terms, Policies and Licenses",
+        "faqs": "Browse FAQs",
+        "orders": "Orders",
+        "wishlist": "Wishlist",
+        "help_center": "Help Center",
+        "logout": "Log Out",
+        "delete_account": "Delete Account",
+        "explore": "Explore",
+        "not_signed_in": "Not signed in",
+        "sign_in": "Sign In",
+        "confirm_delete_title": "Delete Account",
+        "confirm_delete_message": "Are you sure you want to delete your account? This action cannot be undone.",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "account_deleted": "Account Deleted",
+        "account_deleted_message": "Your account has been successfully deleted.",
+        "delete_error": "Error",
+        "delete_error_message": "Failed to delete account. Please try again."
+    },
+    "home": {
+        "search_placeholder": "Search for products...",
+        "deliver_to": "Deliver to"
+    },
+    "language": {
+        "selectLanguage": "Select Language",
+        "english": "English",
+        "hindi": "Hindi",
+        "continue": "Continue"
+    },
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "success": "Success",
+        "error": "Error",
+        "loading": "Loading..."
+    },
+    "privacy_center": {
+        "title": "Privacy Center",
+        "privacy_policy": "Privacy Policy",
+        "request_data": "Request My Data",
+        "consent_management": "Consent Management",
+        "grievance_redressal": "Grievance Redressal",
+        "deactivate_account": "De-activate my Account",
+        "delete_account": "Delete my Account",
+        "deactivate_confirm_title": "Deactivate Account",
+        "deactivate_confirm_message": "Are you sure? deactivating will disable your account until you log in again.",
+        "deactivate_success": "Account Deactivated",
+        "deactivate_success_message": "Your account has been deactivated."
+    }
+}

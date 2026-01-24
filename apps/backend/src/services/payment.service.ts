@@ -221,6 +221,35 @@ export const verifyPayment = async (
     const generatedSignature = hmac.digest('hex');
     if (generatedSignature === razorpay_signature) {
       success = true;
+
+      // Fetch payment details to store actual method
+      try {
+        const razorpay = new Razorpay({
+          key_id: env.payments.razorpay.key_id,
+          key_secret: env.payments.razorpay.key_secret,
+        });
+        const paymentDetails = await razorpay.payments.fetch(razorpay_payment_id);
+
+        // Format instrument string (e.g., "UPI (username@upi)" or "Card (HDFC - **** 1234)")
+        let instrument = (paymentDetails as any).method; // e.g., 'upi', 'card', 'netbanking', 'wallet'
+
+        if (instrument === 'upi') {
+          instrument = `UPI (${(paymentDetails as any).vpa})`;
+        } else if (instrument === 'card') {
+          const card = (paymentDetails as any).card;
+          instrument = `Card (${card?.network || ''} - ${card?.last4 || ''})`;
+        } else if (instrument === 'netbanking') {
+          instrument = `NetBanking (${(paymentDetails as any).bank})`;
+        } else if (instrument === 'wallet') {
+          instrument = `Wallet (${(paymentDetails as any).wallet})`;
+        }
+
+        order.paymentInstrument = instrument ? instrument.toUpperCase() : 'RAZORPAY';
+
+      } catch (err) {
+        console.error('Failed to fetch razorpay payment details', err);
+        order.paymentInstrument = 'RAZORPAY';
+      }
     }
   } else if (order.paymentProvider === 'PAYTM') {
     // Verify Paytm Signature

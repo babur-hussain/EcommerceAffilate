@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   StatusBar,
+  FlatList,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -19,6 +20,8 @@ import { useCart } from '../../src/context/CartContext';
 import { useBasket } from '../../src/context/BasketContext';
 import { useAuth } from '../../src/context/AuthContext';
 import { useUserLocation } from '../../src/hooks/useUserLocation';
+import CartItem from '../../src/components/cart/CartItem';
+import GroceryCartView from '../../src/components/cart/GroceryCartView';
 
 // --- Shared Types ---
 type TabType = 'shopping' | 'grocery';
@@ -54,208 +57,7 @@ const AddressBar = () => {
   );
 };
 
-// --- Component: Shopping Cart Item ---
-interface CartItemProps {
-  item: any;
-  onUpdateQuantity: (id: string, qty: number) => void;
-  onRemove: (id: string) => void;
-}
-
-const CartItem = ({ item, onUpdateQuantity, onRemove }: CartItemProps) => {
-  const product = item.productId || {};
-  const productId = typeof product === 'string' ? product : (product._id || product);
-  const name = product.name || product.title || 'Unknown Product';
-  const price = product.price || 0;
-
-  // Discount logic
-  const originalPrice = Math.round(price * 1.05);
-  const discount = 5;
-
-  // Image logic
-  const imageUri = (product.images && product.images[0]) || product.image;
-
-  const quantity = item.quantity;
-
-  return (
-    <View style={styles.cartItemContainer}>
-      <View style={styles.cartItemContent}>
-        <View style={styles.imageColumn}>
-          <View style={styles.imageWrapper}>
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.productImage} />
-            ) : (
-              <View style={styles.placeholderImage}>
-                <MaterialIcons name="image" size={24} color="#9CA3AF" />
-              </View>
-            )}
-          </View>
-          <View style={styles.qtySelector}>
-            <Text style={styles.qtyLabel}>Qty: {quantity}</Text>
-            <MaterialIcons name="arrow-drop-down" size={24} color="#333" />
-          </View>
-        </View>
-
-        <View style={styles.detailsColumn}>
-          <Text style={styles.productTitle} numberOfLines={2}>{name}</Text>
-
-          <View style={styles.ratingRow}>
-            <View style={styles.ratingBadge}>
-              <Text style={styles.ratingText}>4.7</Text>
-              <FontAwesome name="star" size={10} color="#fff" style={{ marginLeft: 2 }} />
-            </View>
-            <Text style={styles.ratingCount}> (12,567)</Text>
-          </View>
-
-          <View style={styles.priceRow}>
-            <Text style={styles.discountText}>↓{discount}%</Text>
-            <Text style={styles.originalPrice}>₹{originalPrice.toLocaleString()}</Text>
-            <Text style={styles.currentPrice}>₹{price.toLocaleString()}</Text>
-          </View>
-
-          <Text style={styles.offersText}>2 offers applied • 5% off</Text>
-
-          <View style={styles.deliveryRow}>
-            <Text style={styles.deliveryDate}>Delivery by {new Date(Date.now() + 86400000 * 2).toLocaleDateString().slice(0, 5)}</Text>
-            <View style={styles.separator} />
-            <Text style={styles.freeDelivery}>Free</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.itemActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <MaterialIcons name="archive" size={20} color="#878787" />
-          <Text style={styles.actionText}>Save for later</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => onRemove(productId)}
-        >
-          <MaterialIcons name="delete" size={20} color="#878787" />
-          <Text style={styles.actionText}>Remove</Text>
-        </TouchableOpacity>
-        <View style={styles.qtyEditButton}>
-          <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdateQuantity(productId, quantity - 1); }} style={styles.qtyBtn}>
-            <MaterialIcons name="remove" size={16} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdateQuantity(productId, quantity + 1); }} style={styles.qtyBtn}>
-            <MaterialIcons name="add" size={16} color="#333" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-};
-
-// --- Component: Grocery Cart View ---
-const GroceryCartView = ({ items, updateQuantity, basketTotal }: any) => {
-  return (
-    <View style={styles.listContent}>
-      {/* Delivery Banner */}
-      <View style={styles.deliveryBanner}>
-        <MaterialCommunityIcons name="truck-delivery-outline" size={24} color="#15803d" />
-        <View style={styles.deliveryTextContainer}>
-          <Text style={styles.deliveryTitle}>Delivery in 15 mins</Text>
-          <Text style={styles.deliverySubtitle}>Shipment of {items.length} items</Text>
-        </View>
-      </View>
-
-      {/* Items List */}
-      <View style={styles.itemsList}>
-        {items.map((item: any, index: number) => {
-          const product = item.productId as any;
-          const price = product.price || 0;
-          const originalPrice = product.mrp || (price * 1.2);
-          const pid = product._id || product;
-
-          return (
-            <View key={pid || `item-${index}`} style={styles.groceryItemCard}>
-              {/* Image */}
-              <View style={styles.groceryImageContainer}>
-                <Image source={{ uri: product.image || product.primaryImage }} style={styles.productImage} resizeMode="contain" />
-              </View>
-
-              {/* Info */}
-              <View style={styles.groceryItemInfo}>
-                <Text style={styles.groceryItemTitle} numberOfLines={2}>{product.title}</Text>
-                <Text style={styles.groceryItemWeight}>{product.netWeight || '1 pc'}</Text>
-
-                <View style={styles.groceryPriceRow}>
-                  <Text style={styles.groceryCurrentPrice}>₹{price}</Text>
-                  <Text style={styles.groceryOriginalPrice}>₹{Math.round(originalPrice)}</Text>
-                </View>
-              </View>
-
-              {/* Quantity Control */}
-              <View style={styles.groceryQuantityControl}>
-                <TouchableOpacity
-                  style={styles.groceryQtyBtn}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateQuantity(pid, item.quantity - 1); }}
-                >
-                  <Text style={styles.groceryQtyBtnText}>-</Text>
-                </TouchableOpacity>
-                <Text style={styles.groceryQtyText}>{item.quantity}</Text>
-                <TouchableOpacity
-                  style={styles.groceryQtyBtn}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateQuantity(pid, item.quantity + 1); }}
-                >
-                  <Text style={styles.groceryQtyBtnText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          );
-        })}
-      </View>
-
-      {/* Bill Details */}
-      <View style={styles.billSection}>
-        <Text style={styles.sectionTitle}>Bill Details</Text>
-
-        <View style={styles.billRow}>
-          <View style={styles.billRowLeft}>
-            <MaterialIcons name="receipt-long" size={16} color="#6B7280" />
-            <Text style={styles.billLabel}>Item Total</Text>
-          </View>
-          <Text style={styles.billValue}>₹{basketTotal}</Text>
-        </View>
-
-        <View style={styles.billRow}>
-          <View style={styles.billRowLeft}>
-            <MaterialIcons name="delivery-dining" size={16} color="#6B7280" />
-            <Text style={styles.billLabel}>Delivery Fee</Text>
-          </View>
-          <Text style={[styles.billValue, { color: '#15803d' }]}>Free</Text>
-        </View>
-
-        <View style={styles.billRow}>
-          <View style={styles.billRowLeft}>
-            <MaterialIcons name="shopping-bag" size={16} color="#6B7280" />
-            <Text style={styles.billLabel}>Handling Charge</Text>
-          </View>
-          <Text style={styles.billValue}>₹2</Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>To Pay</Text>
-          <Text style={styles.totalValue}>₹{basketTotal + 2}</Text>
-        </View>
-      </View>
-
-      {/* Savings Banner */}
-      <View style={styles.savingsBanner}>
-        <MaterialIcons name="local-offer" size={18} color="#155E75" />
-        <Text style={styles.savingsText}>You saved ₹{Math.round(basketTotal * 0.2)} on this order!</Text>
-      </View>
-
-      {/* Safe Area padding for footer */}
-      <View style={{ height: 100 }} />
-    </View>
-  );
-};
-
-
+// --- Main Component: Cart Screen ---
 export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -330,141 +132,155 @@ export default function CartScreen() {
     router.push({
       pathname: '/checkout',
       params: { source: 'cart' }
-    });
+    } as any);
   };
 
-  // --- Render ---
+  // --- Render Sections ---
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <Text style={styles.headerTitle}>
+        {activeTab === 'shopping' ? 'My Cart' : `My Basket (${count} Items)`}
+      </Text>
+    </View>
+  );
+
+  const renderTabs = () => (
+    <View style={styles.tabsStickyContainer}>
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'shopping' && styles.activeTab]}
+          onPress={() => setActiveTab('shopping')}
+        >
+          <Text style={[styles.tabText, activeTab === 'shopping' && styles.activeTabText]}>
+            Shopping ({cartCount})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'grocery' && styles.activeTab]}
+          onPress={() => setActiveTab('grocery')}
+        >
+          <Text style={[styles.tabText, activeTab === 'grocery' && styles.activeTabText]}>
+            Grocery
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.tabLineBackground}>
+        <View style={[
+          styles.activeTabLine,
+          {
+            width: '50%',
+            left: activeTab === 'shopping' ? '0%' : '50%'
+          }
+        ]} />
+      </View>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Image
+        source={{
+          uri: activeTab === 'shopping'
+            ? 'https://rukminim1.flixcart.com/www/800/800/promos/16/05/2019/d438a32e-765a-4d8b-b4a6-520b560971e8.png?q=90'
+            : 'https://cdn-icons-png.flaticon.com/512/11329/11329060.png'
+        }}
+        style={{ width: 200, height: 150, resizeMode: 'contain' }}
+      />
+      <Text style={styles.emptyText}>Your {activeTab} {activeTab === 'shopping' ? 'cart' : 'basket'} is empty!</Text>
+      <Text style={styles.emptySubText}>Explore our wide range of products.</Text>
+      <TouchableOpacity style={styles.shopNowBtn} onPress={() => router.push('/')}>
+        <Text style={styles.shopNowText}>Shop Now</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderFooter = () => (
+    <View style={styles.priceDetailsContainer}>
+      <Text style={styles.priceHeader}>Price Details</Text>
+      <View style={styles.detailsRow}>
+        <Text style={styles.priceLabel}>Price ({count} items)</Text>
+        <Text style={styles.priceValue}>₹{total.toLocaleString()}</Text>
+      </View>
+      <View style={styles.detailsRow}>
+        <Text style={styles.priceLabel}>Delivery Charges</Text>
+        <Text style={[styles.discountValue, { color: '#388E3C' }]}>FREE</Text>
+      </View>
+      <View style={styles.totalRow}>
+        <Text style={styles.totalLabel}>Total Amount</Text>
+        <Text style={styles.totalValue}>₹{total.toLocaleString()}</Text>
+      </View>
+
+      {/* Spacer for bottom bar */}
+      <View style={{ height: 100 }} />
+    </View>
+  );
+
+  // FlatList Render Item
+  const renderItem = ({ item, index }: { item: any, index: number }) => {
+    // Generate stable key for component (API data might lack id on item level sometimes)
+    const pid = typeof item.productId === 'string' ? item.productId : item.productId?._id;
+
+    return (
+      <CartItem
+        item={item}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemove={handleRemove}
+      />
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
+      {/* Header and Tabs are static outside scroll for stickiness/layout control or could be ListHeaderComponent */}
+      <View style={{ zIndex: 10 }}>
+        {renderHeader()}
+        {renderTabs()}
+        <AddressBar />
+      </View>
+
       <View style={styles.contentBackground}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          stickyHeaderIndices={[1]} // Stick ONLY the tabs (Index 1)
-        >
-          {/* Index 0: Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-              {activeTab === 'shopping' ? 'My Cart' : `My Basket (${count} Items)`}
-            </Text>
+        {isLoading ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#2874F0" />
           </View>
-
-          {/* Index 1: Sticky Tabs */}
-          <View style={styles.tabsStickyContainer}>
-            <View style={styles.tabsContainer}>
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'shopping' && styles.activeTab]}
-                onPress={() => setActiveTab('shopping')}
-              >
-                <Text style={[styles.tabText, activeTab === 'shopping' && styles.activeTabText]}>
-                  Shopping ({cartCount})
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'grocery' && styles.activeTab]}
-                onPress={() => setActiveTab('grocery')}
-              >
-                <Text style={[styles.tabText, activeTab === 'grocery' && styles.activeTabText]}>
-                  Grocery
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.tabLineBackground}>
-              <View style={[
-                styles.activeTabLine,
-                {
-                  width: '50%',
-                  left: activeTab === 'shopping' ? '0%' : '50%'
-                }
-              ]} />
-            </View>
-          </View>
-
-          {/* Index 2: Address Bar */}
-          <AddressBar />
-
-          {/* Index 3: Content Items */}
-          {isLoading ? (
-            <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="#2874F0" />
-            </View>
-          ) : items.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              {/* Dynamic Empty State Image based on tab */}
-              <Image
-                source={{
-                  uri: activeTab === 'shopping'
-                    ? 'https://rukminim1.flixcart.com/www/800/800/promos/16/05/2019/d438a32e-765a-4d8b-b4a6-520b560971e8.png?q=90'
-                    : 'https://cdn-icons-png.flaticon.com/512/11329/11329060.png'
-                }}
-                style={{ width: 200, height: 150, resizeMode: 'contain' }}
-              />
-              <Text style={styles.emptyText}>Your {activeTab} {activeTab === 'shopping' ? 'cart' : 'basket'} is empty!</Text>
-              <Text style={styles.emptySubText}>Explore our wide range of products.</Text>
-              <TouchableOpacity style={styles.shopNowBtn} onPress={() => router.push('/')}>
-                <Text style={styles.shopNowText}>Shop Now</Text>
-              </TouchableOpacity>
-            </View>
+        ) : items.length === 0 ? (
+          renderEmptyState()
+        ) : (
+          activeTab === 'shopping' ? (
+            <FlatList
+              data={items}
+              renderItem={renderItem}
+              keyExtractor={(item, index) => {
+                const pid = typeof item.productId === 'string' ? item.productId : item.productId?._id;
+                return pid || `cart-item-${index}`;
+              }}
+              ListFooterComponent={renderFooter}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+            />
           ) : (
-            activeTab === 'shopping' ? (
-              <View style={styles.listContent}>
-                {items.map((item, index) => {
-                  const pid = typeof item.productId === 'string' ? item.productId : item.productId?._id;
-                  const key = (pid || 'item') + `_${index}`;
-                  return (
-                    <CartItem
-                      key={key}
-                      item={item}
-                      onUpdateQuantity={handleUpdateQuantity}
-                      onRemove={handleRemove}
-                    />
-                  );
-                })}
-
-                {/* Price Details Block (Shopping) */}
-                <View style={styles.priceDetailsContainer}>
-                  <Text style={styles.priceHeader}>Price Details</Text>
-                  <View style={styles.detailsRow}>
-                    <Text style={styles.priceLabel}>Price ({count} items)</Text>
-                    <Text style={styles.priceValue}>₹{(Math.round(total * 1.05)).toLocaleString()}</Text>
-                  </View>
-                  <View style={styles.detailsRow}>
-                    <Text style={styles.priceLabel}>Discount</Text>
-                    <Text style={styles.discountValue}>-₹{(Math.round(total * 0.05)).toLocaleString()}</Text>
-                  </View>
-                  <View style={styles.detailsRow}>
-                    <Text style={styles.priceLabel}>Delivery Charges</Text>
-                    <Text style={[styles.discountValue, { color: '#388E3C' }]}>FREE</Text>
-                  </View>
-                  <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>Total Amount</Text>
-                    <Text style={styles.totalValue}>₹{total.toLocaleString()}</Text>
-                  </View>
-                  <Text style={styles.savingsText}>You will save ₹{(Math.round(total * 0.05)).toLocaleString()} on this order</Text>
-                </View>
-                <View style={{ height: 80 }} />
-              </View>
-            ) : (
-              // Grocery View
+            // Grocery View (Kept as single component for now as it renders complex nested list)
+            // Ideally refactor this to FlatList as well if grocery lists get huge
+            <ScrollView showsVerticalScrollIndicator={false}>
               <GroceryCartView
                 items={items}
                 updateQuantity={handleUpdateQuantity}
                 basketTotal={total}
               />
-            )
-          )}
-        </ScrollView>
+            </ScrollView>
+          )
+        )}
       </View>
 
-      {/* Footer Logic (Dynamic based on Tab) */}
-      {items.length > 0 && (
+      {/* Bottom Sticky Checkout Bar */}
+      {items.length > 0 && !isLoading && (
         activeTab === 'shopping' ? (
           <View style={[styles.footer, { paddingBottom: 16 + insets.bottom }]}>
             <View style={styles.footerTotal}>
-              <Text style={styles.footerOldPrice}>₹{(Math.round(total * 1.05)).toLocaleString()}</Text>
+              <Text style={styles.footerOldPrice}>₹{total < 10000 ? (total * 1.1).toFixed(0) : ''}</Text>
               <Text style={styles.footerCurrentPrice}>₹{total.toLocaleString()}</Text>
             </View>
             <TouchableOpacity style={styles.placeOrderBtn} onPress={handleCheckout}>
@@ -472,7 +288,6 @@ export default function CartScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          // Grocery Footer
           <View style={[styles.checkoutBar, { paddingBottom: 16 + insets.bottom }]}>
             <View>
               <Text style={styles.checkoutTotalLabel}>Total</Text>

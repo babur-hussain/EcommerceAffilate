@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../src/context/AuthContext';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,10 +39,16 @@ export default function SignupScreen() {
             ]);
         } catch (error: any) {
             Alert.alert('Signup Failed', error.message || 'Failed to create account');
-        } finally {
-            setLoading(false);
         }
     };
+
+    // Cleanup sensitive state on unmount
+    useEffect(() => {
+        return () => {
+            setPassword('');
+            setConfirmPassword('');
+        };
+    }, []);
 
     return (
         <SafeAreaView style={styles.container}>

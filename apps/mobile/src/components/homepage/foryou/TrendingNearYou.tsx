@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ImageBackground, Image } from 'react-native';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import TrendingProductCard, { TrendingProduct } from './TrendingProductCard';
 import { useUserLocation } from '../../../hooks/useUserLocation';
@@ -110,12 +111,22 @@ export default function TrendingNearYou({ limit = 10, productIds = [] }: { limit
         }
     };
 
+    const router = useRouter();
+
     const renderItem = ({ item }: { item: TrendingProduct }) => (
-        <TrendingProductCard product={item} onAdd={() => {
-            // Placeholder: The card itself handles Add to Cart internally if it uses AddToCartButton
-            // But TrendingProductCard might not use it yet.
-            // checking TrendingProductCard implementation next.
-        }} />
+        <TrendingProductCard
+            product={item}
+            onAdd={() => {
+                // Placeholder: The card itself handles Add to Cart internally if it uses AddToCartButton
+                // But TrendingProductCard might not use it yet.
+                // checking TrendingProductCard implementation next.
+            }}
+            onPress={() => {
+                const pid = item.id.split('-')[0];
+                console.log('Trending Product Pressed:', pid);
+                router.push(`/product/${pid}`);
+            }}
+        />
     );
 
     if (loading || products.length === 0) return null; // Or a loading skeleton

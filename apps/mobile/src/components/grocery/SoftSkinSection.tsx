@@ -23,13 +23,11 @@ export function SoftSkinSection() {
 
     const fetchProducts = async () => {
         try {
-            const response = await api.get('/api/products?limit=200');
-            const allProducts: Product[] = response.data;
-
-            const filtered = allProducts.filter(p => SOFT_SKIN_IDS.includes(p._id));
-            const ordered = SOFT_SKIN_IDS.map(id => filtered.find(p => p._id === id)).filter(Boolean) as Product[];
-
-            setProducts(ordered.length > 0 ? ordered : filtered.slice(0, 6));
+            setProducts([
+                { _id: 'ss1', title: 'Moisturizing Cream', price: 250, mrp: 300, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/moisturizer-cream/e/d/e/-original-imaghfcpz8zq8frz.jpeg?q=70', netWeight: '200ml', rating: 4.6, ratingCount: 150, categoryDetails: { _id: 'c11', name: 'Personal Care' } },
+                { _id: 'ss2', title: 'Body Lotion', price: 180, mrp: 220, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/body-lotion/j/k/l/-original-imagg9k8z6c7qg5z.jpeg?q=70', netWeight: '100ml', rating: 4.5, ratingCount: 80, categoryDetails: { _id: 'c11', name: 'Personal Care' } },
+                { _id: 'ss3', title: 'Face Wash', price: 150, mrp: 199, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/face-wash/m/n/o/-original-imagm2h2m2h2m2h2.jpeg?q=70', netWeight: '100g', rating: 4.7, ratingCount: 200, categoryDetails: { _id: 'c11', name: 'Personal Care' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch soft skin products:', error);
         } finally {

@@ -22,15 +22,12 @@ export function DealsOfTheDaySection() {
 
     const fetchProducts = async () => {
         try {
-            const response = await api.get('/api/products?limit=200');
-            const allProducts: Product[] = response.data;
-
-            const filtered = allProducts.filter(p => {
-                const catId = p.categoryDetails?._id;
-                return catId && DEALS_CATEGORY_IDS.includes(catId);
-            });
-
-            setProducts(filtered.slice(0, 10)); // Show top 10
+            // Mock data fallback
+            setProducts([
+                { _id: 'dd1', title: 'Good Day Biscuits', price: 20, mrp: 25, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/cookie-biscuit/k/2/k/-original-imagp4m8m8z8m8z8.jpeg?q=70', netWeight: '100g', rating: 4.4, ratingCount: 8, categoryDetails: { _id: 'c6', name: 'Snacks' } },
+                { _id: 'dd2', title: 'Detergent Powder 1kg', price: 90, mrp: 130, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/washing-powder/c/3/c/-original-imagg6t6g6t6g6t6.jpeg?q=70', netWeight: '1 kg', rating: 4.3, ratingCount: 12, categoryDetails: { _id: 'c7', name: 'Household' } },
+                { _id: 'dd3', title: 'Sugar 1kg', price: 42, mrp: 50, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/sugar/j/k/l/-original-imagm2h2m2h2m2h2.jpeg?q=70', netWeight: '1 kg', rating: 4.5, ratingCount: 20, categoryDetails: { _id: 'c8', name: 'Staples' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch deals items:', error);
         } finally {

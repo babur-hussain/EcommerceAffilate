@@ -1,4 +1,5 @@
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, Text, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -11,7 +12,7 @@ export default function TShirtPrintsPage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#FEFCE8] dark:bg-[#18181b]">
-                <ActivityIndicator size="large" color="#0f5e36" />
+                <GlobalLoader />
             </View>
         );
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image, Keyboard } from 'react-native';
+import GlobalLoader from '../common/GlobalLoader';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -198,7 +199,9 @@ export default function GlobalSearch() {
                     // Suggestions View
                     <View style={styles.section}>
                         {loading ? (
-                            <ActivityIndicator size="small" color="#FF6F00" style={{ marginTop: 20 }} />
+                            <View style={{ marginTop: 20 }}>
+                                <GlobalLoader />
+                            </View>
                         ) : suggestions.length > 0 ? (
                             <FlatList
                                 data={suggestions}

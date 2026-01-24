@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { useData } from '../../src/hooks/useData';
 import { useAuth } from '../../src/context/AuthContext';
@@ -9,6 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import api from '../../src/lib/api';
+import { useTranslation } from 'react-i18next';
+import '../../src/i18n/i18n'; // Ensure init
 
 interface LayoutItem {
   id: string;
@@ -33,6 +35,7 @@ interface AccountLayout {
 export default function ProfileScreen() {
   const { user, signOut, refreshUser } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
 
   // Use smart caching hook
   const { data: layout, refetch: refetchLayout, isRefetching, error: layoutError } = useData<AccountLayout>('/api/me/account-layout');
@@ -47,18 +50,20 @@ export default function ProfileScreen() {
     router.replace('/login');
   };
 
+
+
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar style="dark" />
         <View style={styles.emptyContainer}>
           <MaterialIcons name="account-circle" size={64} color="#d1d5db" />
-          <Text style={styles.emptyText}>Not signed in</Text>
+          <Text style={styles.emptyText}>{t('profile.not_signed_in')}</Text>
           <TouchableOpacity
             style={styles.loginButton}
             onPress={() => router.push('/login')}
           >
-            <Text style={styles.loginButtonText}>Sign In</Text>
+            <Text style={styles.loginButtonText}>{t('profile.sign_in')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -70,21 +75,22 @@ export default function ProfileScreen() {
 
     return (
       <View key={section.id} style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>{section.title}</Text>
+        <Text style={styles.sectionTitle}>{t(`profile.${section.id}`, section.title)}</Text>
         {section.items.map((item, index) => (
           <TouchableOpacity
             key={item.id}
             style={[styles.sectionItem, index === section.items.length - 1 && styles.lastSectionItem]}
             onPress={() => {
-              // Handle dynamic navigation or deep links here
-              console.log('Navigate to:', item.actionUrl);
+              if (item.actionUrl) {
+                router.push(item.actionUrl as any);
+              }
             }}
           >
             <View style={styles.itemIconContainer}>
               <Ionicons name={item.icon} size={24} color="#2874F0" />
             </View>
             <View style={styles.itemContent}>
-              <Text style={styles.itemTitle}>{item.title}</Text>
+              <Text style={styles.itemTitle}>{t(`profile.${item.id}`, item.title)}</Text>
               {item.subtitle && (
                 <Text style={styles.itemSubtitle}>{item.subtitle}</Text>
               )}
@@ -109,10 +115,9 @@ export default function ProfileScreen() {
           <View style={styles.headerTop}>
             <View>
               <Text style={styles.userName}>{user.email}</Text>
-              {/* Fallback to email if name logic is complex, or use both if available */}
               <TouchableOpacity style={styles.membershipRow}>
                 <Text style={styles.membershipText}>
-                  Explore <Text style={{ fontWeight: '800', fontStyle: 'italic' }}>{(user as any).membershipStatus || 'Plus'}</Text>
+                  {t('profile.explore')} <Text style={{ fontWeight: '800', fontStyle: 'italic' }}>{(user as any).membershipStatus || 'Plus'}</Text>
                 </Text>
                 <MaterialIcons name="chevron-right" size={16} color="#6B7280" />
               </TouchableOpacity>
@@ -131,22 +136,22 @@ export default function ProfileScreen() {
           <View style={styles.gridRow}>
             <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/orders')}>
               <Ionicons name="cube-outline" size={24} color="#2874F0" />
-              <Text style={styles.gridLabel}>Orders</Text>
+              <Text style={styles.gridLabel}>{t('profile.orders')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/wishlist')}>
 
               <Ionicons name="heart-outline" size={24} color="#2874F0" />
-              <Text style={styles.gridLabel}>Wishlist</Text>
+              <Text style={styles.gridLabel}>{t('profile.wishlist')}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.gridRow}>
             <TouchableOpacity style={styles.gridItem} onPress={() => router.push('/wallet')}>
               <Ionicons name="wallet-outline" size={24} color="#2874F0" />
-              <Text style={styles.gridLabel}>Wallet</Text>
+              <Text style={styles.gridLabel}>{t('profile.wallet')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.gridItem}>
               <Ionicons name="headset-outline" size={24} color="#2874F0" />
-              <Text style={styles.gridLabel}>Help Center</Text>
+              <Text style={styles.gridLabel}>{t('profile.help_center')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -164,7 +169,7 @@ export default function ProfileScreen() {
         <View style={{ height: 20 }} />
 
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutText}>Log Out</Text>
+          <Text style={styles.signOutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -309,6 +314,19 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '600',
     fontSize: 16,
+  },
+  deleteButton: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    // No background or border, just text
+  },
+  deleteText: {
+    color: '#EF4444', // Red
+    fontWeight: '600',
+    fontSize: 14,
   },
   // Empty State
   emptyContainer: {

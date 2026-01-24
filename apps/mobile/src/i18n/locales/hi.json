@@ -1,0 +1,66 @@
+{
+    "profile": {
+        "account_settings": "खाता सेटिंग्स",
+        "my_activity": "मेरी गतिविधि",
+        "earn": "हमारे साथ कमाएं",
+        "feedback": "प्रतिक्रिया और जानकारी",
+        "plus": "प्रीमियम सदस्यता",
+        "edit_profile": "प्रोफाइल संपादित करें",
+        "wallet": "सहेजे गए कार्ड और वॉलेट",
+        "addresses": "सहेजे गए पते",
+        "language": "भाषा चुनें",
+        "notifications": "अधिसूचना सेटिंग्स",
+        "privacy": "गोपनीयता सेटिंग्स",
+        "reviews": "समीक्षाएं",
+        "questions": "सवाल और जवाब",
+        "sell": "प्लेटफ़ॉर्म पर बेचें",
+        "policies": "शर्तें, नीतियां और लाइसेंस",
+        "faqs": "अक्सर पूछे जाने वाले प्रश्न",
+        "orders": "ऑर्डर",
+        "wishlist": "विशलिस्ट",
+        "help_center": "सहायता केंद्र",
+        "logout": "लॉग आउट",
+        "delete_account": "खाता हटाएं",
+        "explore": "एक्सप्लोर करें",
+        "not_signed_in": "साइन इन नहीं किया गया",
+        "sign_in": "साइन इन करें",
+        "confirm_delete_title": "खाता हटाएं",
+        "confirm_delete_message": "क्या आप वाकई अपना खाता हटाना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती।",
+        "delete": "हटाएं",
+        "cancel": "रद्द करें",
+        "account_deleted": "खाता हटा दिया गया",
+        "account_deleted_message": "आपका खाता सफलतापूर्वक हटा दिया गया है।",
+        "delete_error": "त्रुटि",
+        "delete_error_message": "खाता हटाने में विफल। कृपया पुन: प्रयास करें।"
+    },
+    "home": {
+        "search_placeholder": "उत्पादों की खोज करें...",
+        "deliver_to": "डिलीवर करें"
+    },
+    "language": {
+        "selectLanguage": "भाषा चुनें",
+        "english": "अंग्रेज़ी",
+        "hindi": "हिंदी",
+        "continue": "जारी रखें"
+    },
+    "common": {
+        "save": "सहेजें",
+        "cancel": "रद्द करें",
+        "success": "सफल",
+        "error": "त्रुटि",
+        "loading": "लोड हो रहा है..."
+    },
+    "privacy_center": {
+        "title": "गोपनीयता केंद्र",
+        "privacy_policy": "गोपनीयता नीति",
+        "request_data": "मेरा डेटा अनुरोध करें",
+        "consent_management": "सहमति प्रबंधन",
+        "grievance_redressal": "शिकायत निवारण",
+        "deactivate_account": "मेरा खाता निष्क्रिय करें",
+        "delete_account": "मेरा खाता हटाएं",
+        "deactivate_confirm_title": "खाता निष्क्रिय करें",
+        "deactivate_confirm_message": "क्या आप ुनिश्‍चित हैं? निष्क्रिय करने से आपका खाता तब तक अक्षम हो जाएगा जब तक आप दोबारा लॉग इन नहीं करते।",
+        "deactivate_success": "खाता निष्क्रिय",
+        "deactivate_success_message": "आपका खाता निष्क्रिय कर दिया गया है।"
+    }
+}

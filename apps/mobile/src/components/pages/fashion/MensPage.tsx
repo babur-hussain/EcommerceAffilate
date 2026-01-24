@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions, TextInput, Platform, SafeAreaView, BackHandler, ActivityIndicator } from 'react-native';
+import GlobalLoader from '../../common/GlobalLoader';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,7 +43,7 @@ export default function MensPage() {
         if (layoutLoading) {
             return (
                 <View style={{ height: 400, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color={COLORS.primary} />
+                    <GlobalLoader />
                 </View>
             );
         }
@@ -184,7 +185,7 @@ export default function MensPage() {
 
                 {productsLoading ? (
                     <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
-                        <ActivityIndicator size="small" color={COLORS.primary} />
+                        <GlobalLoader size={0.8} />
                     </View>
                 ) : products.length === 0 ? (
                     <View style={{ alignItems: 'center', padding: 40 }}>

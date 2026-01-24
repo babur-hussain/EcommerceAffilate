@@ -23,10 +23,11 @@ export function PriceCrashSection() {
 
     const fetchProducts = async () => {
         try {
-            const response = await api.get('/api/products?limit=200');
-            const allProducts: Product[] = response.data;
-            const filtered = allProducts.filter(p => PRICE_CRASH_IDS.includes(p._id));
-            setProducts(filtered);
+            setProducts([
+                { _id: 'pc1', title: 'Sugar 5kg', price: 180, mrp: 220, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/sugar/j/k/l/-original-imagm2h2m2h2m2h2.jpeg?q=70', netWeight: '5kg', rating: 4.6, ratingCount: 100, categoryDetails: { _id: 'c4', name: 'Staples' } },
+                { _id: 'pc2', title: 'Salt 1kg', price: 20, mrp: 25, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/salt/e/d/e/-original-imaghfcpz8zq8frz.jpeg?q=70', netWeight: '1kg', rating: 4.5, ratingCount: 200, categoryDetails: { _id: 'c4', name: 'Staples' } },
+                { _id: 'pc3', title: 'Rice 5kg', price: 300, mrp: 350, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/rice/y/n/z/5-super-premium-basmati-rice-bag-1-kohinoor-original-imags3x2y7h7qshz.jpeg?q=70', netWeight: '5kg', rating: 4.8, ratingCount: 150, categoryDetails: { _id: 'c4', name: 'Staples' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch price crash products:', error);
         } finally {

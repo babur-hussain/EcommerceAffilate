@@ -34,15 +34,11 @@ export function BreakfastEssentialsSection() {
             // Better to use the main products endpoint with a limit and client-side filter or repeated calls.
 
             // Optimization: Fetch all active products (since we have ~100) and filter.
-            const response = await api.get('/api/products?limit=200');
-            const allProducts: Product[] = response.data;
-
-            const filtered = allProducts.filter(p => {
-                const catId = p.categoryDetails?._id;
-                return catId && BREAKFAST_CATEGORY_IDS.includes(catId);
-            });
-
-            setProducts(filtered.slice(0, 10)); // Show top 10 matching
+            setProducts([
+                { _id: 'be1', title: 'Whole Wheat Bread', price: 40, mrp: 50, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/bread/8/n/o/400-whole-wheat-bread-brown-bread-packet-britannia-original-imagq6z5z5z5z5z5.jpeg?q=70', netWeight: '400g', rating: 4.5, ratingCount: 120, categoryDetails: { _id: 'c9', name: 'Bakery' } },
+                { _id: 'be2', title: 'Farm Fresh Eggs (6pcs)', price: 45, mrp: 60, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/egg/e/e/e/-original-imaghfcpz8zq8frz.jpeg?q=70', netWeight: '6 pcs', rating: 4.7, ratingCount: 300, categoryDetails: { _id: 'c10', name: 'Eggs' } },
+                { _id: 'be3', title: 'Toned Milk 1L', price: 65, mrp: 70, image: 'https://rukminim2.flixcart.com/image/612/612/kdbzqfk0/milk/w/h/v/1-toned-fresh-milk-carton-amul-original-imafu9v4z5z7g2z5.jpeg?q=70', netWeight: '1 L', rating: 4.8, ratingCount: 500, categoryDetails: { _id: 'c3', name: 'Dairy' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch breakfast items:', error);
         } finally {

@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-const WatchHeader = () => {
+const WatchHeader = ({ data }: { data?: any }) => {
     const isDarkMode = useColorScheme() === 'dark';
     const router = useRouter();
 

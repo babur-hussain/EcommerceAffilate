@@ -21,10 +21,11 @@ export function LaundryFavouritesSection() {
 
     const fetchProducts = async () => {
         try {
-            const response = await api.get('/api/products?limit=200');
-            const allProducts: Product[] = response.data;
-            const filtered = allProducts.filter(p => LAUNDRY_IDS.includes(p._id));
-            setProducts(filtered);
+            setProducts([
+                { _id: 'lf1', title: 'Liquid Detergent', price: 199, mrp: 250, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/washing-powder/c/3/c/-original-imagg6t6g6t6g6t6.jpeg?q=70', netWeight: '1L', rating: 4.7, ratingCount: 300, categoryDetails: { _id: 'c7', name: 'Household' } },
+                { _id: 'lf2', title: 'Fabric Conditioner', price: 150, mrp: 180, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/fabric-softener/f/g/h/-original-imagm7bgugbjysir.jpeg?q=70', netWeight: '500ml', rating: 4.6, ratingCount: 200, categoryDetails: { _id: 'c7', name: 'Household' } },
+                { _id: 'lf3', title: 'Stain Remover', price: 120, mrp: 150, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/stain-remover/s/t/u/-original-imagm2h2m2h2m2h2.jpeg?q=70', netWeight: '200ml', rating: 4.5, ratingCount: 100, categoryDetails: { _id: 'c7', name: 'Household' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch laundry products:', error);
         } finally {

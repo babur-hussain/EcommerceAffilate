@@ -1,4 +1,5 @@
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, ActivityIndicator, Text, StatusBar } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -10,7 +11,7 @@ export default function LuxuriousNewCollectionPage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#FDFBF9] dark:bg-[#1C1917]">
-                <ActivityIndicator size="large" color="#8B5E55" />
+                <GlobalLoader />
             </View>
         );
     }

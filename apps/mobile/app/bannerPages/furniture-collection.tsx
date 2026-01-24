@@ -1,5 +1,6 @@
 
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { View, ScrollView, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { usePageLayout, Section } from '../../src/hooks/usePageLayout';

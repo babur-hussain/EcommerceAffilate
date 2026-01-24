@@ -23,17 +23,12 @@ export function BestSellersSection() {
 
     const fetchProducts = async () => {
         try {
-            // Fetch all products and filter by ID locally
-            // Ideally backend would support GET /products?ids=...
-            const response = await api.get('/api/products?limit=200');
-            const allProducts: Product[] = response.data;
-
-            const filtered = allProducts.filter(p => BEST_SELLER_IDS.includes(p._id));
-
-            // Maintain the order of IDs in BEST_SELLER_IDS if possible, or just filtered result
-            const ordered = BEST_SELLER_IDS.map(id => filtered.find(p => p._id === id)).filter(Boolean) as Product[];
-
-            setProducts(ordered.length > 0 ? ordered : filtered.slice(0, 6));
+            // Mock data fallback
+            setProducts([
+                { _id: 'bs1', title: 'Premium Basmati Rice', price: 249, mrp: 350, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/rice/y/n/z/5-super-premium-basmati-rice-bag-1-kohinoor-original-imags3x2y7h7qshz.jpeg?q=70', netWeight: '5 kg', rating: 4.8, ratingCount: 200, categoryDetails: { _id: 'c4', name: 'Staples' } },
+                { _id: 'bs2', title: 'Sunflower Oil 1L', price: 180, mrp: 220, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/edible-oil/g/v/t/-original-imagg9k8z6c7qg5z.jpeg?q=70', netWeight: '1 L', rating: 4.6, ratingCount: 150, categoryDetails: { _id: 'c5', name: 'Oil' } },
+                { _id: 'bs3', title: 'Atta 5kg', price: 210, mrp: 250, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/flour/z/t/t/5-sharbati-atta-1-bag-aashirvaad-original-imafv2z2g3z2g3z2.jpeg?q=70', netWeight: '5 kg', rating: 4.7, ratingCount: 180, categoryDetails: { _id: 'c4', name: 'Staples' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch best sellers:', error);
         } finally {

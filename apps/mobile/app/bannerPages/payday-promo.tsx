@@ -1,5 +1,6 @@
 
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { View, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout, Section } from '../../src/hooks/usePageLayout';
@@ -11,7 +12,7 @@ export default function PayDayPromoPage() {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#4FA960" />
+                <GlobalLoader />
             </View>
         );
     }

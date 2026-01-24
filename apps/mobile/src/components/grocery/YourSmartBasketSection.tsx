@@ -25,13 +25,11 @@ export function YourSmartBasketSection() {
 
     const fetchProducts = async () => {
         try {
-            const response = await api.get('/api/products?limit=200');
-            const allProducts: Product[] = response.data;
-
-            const filtered = allProducts.filter(p => SMART_BASKET_IDS.includes(p._id));
-            const ordered = SMART_BASKET_IDS.map(id => filtered.find(p => p._id === id)).filter(Boolean) as Product[];
-
-            setProducts(ordered.length > 0 ? ordered : filtered.slice(0, 6));
+            setProducts([
+                { _id: 'sb1', title: 'Extra Virgin Olive Oil', price: 900, mrp: 1200, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/edible-oil/g/v/t/-original-imagg9k8z6c7qg5z.jpeg?q=70', netWeight: '1L', rating: 4.9, ratingCount: 50, categoryDetails: { _id: 'c5', name: 'Oil' } },
+                { _id: 'sb2', title: 'Himalayan Pink Salt', price: 90, mrp: 120, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/salt/e/d/e/-original-imaghfcpz8zq8frz.jpeg?q=70', netWeight: '1kg', rating: 4.8, ratingCount: 200, categoryDetails: { _id: 'c4', name: 'Staples' } },
+                { _id: 'sb3', title: 'Organic Turmeric Powder', price: 150, mrp: 180, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/spice-masala/m/n/o/-original-imagm2h2m2h2m2h2.jpeg?q=70', netWeight: '200g', rating: 4.7, ratingCount: 100, categoryDetails: { _id: 'c4', name: 'Staples' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch smart basket products:', error);
         } finally {

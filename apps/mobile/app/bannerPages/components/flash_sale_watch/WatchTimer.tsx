@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-const WatchTimer = () => {
+const WatchTimer = ({ data }: { data?: any }) => {
     const isDarkMode = useColorScheme() === 'dark';
 
     // Theme colors

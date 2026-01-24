@@ -4,7 +4,7 @@ import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
-import api from '../../src/lib/api';
+import api, { addToHistory } from '../../src/lib/api';
 import { useCart } from '../../src/context/CartContext';
 
 // Components
@@ -78,7 +78,11 @@ export default function ProductDetailScreen() {
   const [refreshReviews, setRefreshReviews] = useState(0);
 
   useEffect(() => {
-    if (id) fetchProduct();
+    if (id) {
+      fetchProduct();
+      // Record history silently
+      addToHistory(id).catch((err: any) => console.log('Failed to record history', err));
+    }
   }, [id]);
 
   const fetchProduct = async () => {

@@ -40,6 +40,8 @@ import adminCategoryRouter from "./routes/admin.category.route";
 import adminAttributeRouter from "./routes/admin.attribute.route";
 import attributeRouter from "./routes/attribute.route";
 import adminTrustBadgeRouter from "./routes/admin.trustBadge.route";
+import adminLayoutRouter from "./routes/admin.layout.route";
+import advancedLayoutRouter from "./routes/advanced-layout.route";
 import superAdminRouter from "./routes/super-admin.route";
 import offerRouter from "./routes/offer.route";
 import deliveryRuleRouter from "./routes/deliveryRule.route";
@@ -168,6 +170,14 @@ app.use("/api", returnRouter);
 app.use('/api/super-admin', adminCategoryRouter);
 app.use('/api/super-admin', adminAttributeRouter);
 app.use('/api/super-admin', adminTrustBadgeRouter);
+import browserHistoryRouter from "./routes/browserHistory.route";
+
+// ... existing code ...
+
+app.use('/api', adminLayoutRouter);
+app.use('/api', advancedLayoutRouter);
+app.use('/api', browserHistoryRouter);
+
 
 // Global error handler
 // Note: keep last

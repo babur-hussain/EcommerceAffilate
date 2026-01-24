@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
@@ -41,7 +41,9 @@ interface OrderDetails {
         phone: string;
     };
     paymentStatus: string;
+
     paymentProvider: string;
+    paymentInstrument?: string;
 }
 
 export default function OrderTrackingScreen() {
@@ -58,13 +60,38 @@ export default function OrderTrackingScreen() {
     const fetchOrderDetails = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/orders/${id}`);
+            const res = await api.get(`/api/orders/${id}`);
             setOrder(res.data);
         } catch (e: any) {
             setError(e.response?.data?.error || 'Failed to load order details');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleCancelOrder = () => {
+        Alert.alert(
+            'Cancel Order',
+            'Are you sure you want to cancel this order?',
+            [
+                { text: 'No', style: 'cancel' },
+                {
+                    text: 'Yes, Cancel',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await api.post(`/api/orders/${id}/cancel`);
+                            Alert.alert('Success', 'Order cancelled successfully');
+                            fetchOrderDetails();
+                        } catch (e: any) {
+                            Alert.alert('Error', e.response?.data?.error || 'Failed to cancel order');
+                            setLoading(false); // Reset loading state if error occurs
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const getStatusIndex = (status: string) => {
@@ -279,7 +306,9 @@ export default function OrderTrackingScreen() {
                     <Text style={styles.sectionTitle}>Payment Details</Text>
                     <View style={styles.paymentRow}>
                         <Text style={styles.paymentLabel}>Payment Method</Text>
-                        <Text style={styles.paymentValue}>{order.paymentProvider || 'N/A'}</Text>
+                        <Text style={styles.paymentValue}>
+                            {order.paymentInstrument || order.paymentProvider || 'N/A'}
+                        </Text>
                     </View>
                     <View style={styles.paymentRow}>
                         <Text style={styles.paymentLabel}>Payment Status</Text>
@@ -294,10 +323,21 @@ export default function OrderTrackingScreen() {
                         <Text style={styles.totalLabel}>Total Amount</Text>
                         <Text style={styles.totalValue}>₹{order.totalAmount.toLocaleString()}</Text>
                     </View>
+
                 </Animated.View>
 
+                {/* Cancel Button */}
+                {['CREATED', 'PAID', 'PROCESSING'].includes(order.status) && (
+                    <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={handleCancelOrder}
+                    >
+                        <Text style={styles.cancelButtonText}>Cancel Order</Text>
+                    </TouchableOpacity>
+                )}
+
             </ScrollView>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }
 
@@ -604,5 +644,20 @@ const styles = StyleSheet.create({
         color: '#2563EB',
         fontWeight: '600',
         fontSize: 14,
+    },
+    cancelButton: {
+        backgroundColor: '#FEE2E2',
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 8,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#FECACA',
+    },
+    cancelButtonText: {
+        color: '#DC2626',
+        fontWeight: '700',
+        fontSize: 16,
     },
 });

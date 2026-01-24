@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import LightningDealCard, { LightningDealProduct } from './LightningDealCard';
 import api from '../../../lib/api';
@@ -77,6 +78,7 @@ interface VisualOverride {
 }
 
 export default function LightningDeals({ limit = 6, productIds = [] }: { limit?: number, productIds?: string[] }) {
+    const router = useRouter();
     const [products, setProducts] = useState<LightningDealProduct[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -136,8 +138,20 @@ export default function LightningDeals({ limit = 6, productIds = [] }: { limit?:
         }
     };
 
+
     const renderItem = ({ item }: { item: LightningDealProduct }) => (
-        <LightningDealCard product={item} onAdd={() => console.log('Add Deal', item.name)} onSeeMore={() => console.log('See More', item.name)} />
+        <LightningDealCard
+            product={item}
+            onAdd={() => console.log('Add Deal', item.name)}
+            onSeeMore={() => console.log('See More', item.name)}
+            onPress={() => {
+                const pid = item.id.split('-')[0];
+                console.log('Lightning Deal Pressed:', pid);
+                if (pid) {
+                    router.push(`/product/${pid}`);
+                }
+            }}
+        />
     );
 
     if (loading || products.length === 0) return null;

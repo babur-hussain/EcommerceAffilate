@@ -14,11 +14,8 @@ const getLocalUrl = () => {
   // Use Expo's hostUri to determine local IP (works for Expo Go and builds if configured)
   const hostUri = Constants.expoConfig?.hostUri;
   if (!hostUri) {
-    // Fallback to localhost/emulator specific IPs or a specific local IP if needed
-    // For Android Emulator: 10.0.2.2
-    // For iOS Simulator: localhost
-    // For iOS Simulator: localhost
-    return 'http://localhost:4000'; // Default fallback for Simulator
+    // Fallback for simulators where hostUri might be null
+    return 'http://localhost:4000';
   }
 
   // Use the same IP as the Expo Bundler
@@ -29,10 +26,11 @@ const getLocalUrl = () => {
 const LOCAL_URL = getLocalUrl();
 
 // Default to Local URL initially, but we will check health
-let currentBaseUrl = LOCAL_URL;
-let isLive = false;
+// Default to Live URL only as requested
+let currentBaseUrl = LIVE_URL;
+let isLive = true;
 
-console.log('🚀 Initializing API with Default Local URL:', currentBaseUrl);
+console.log('🚀 Initializing API with LIVE URL:', currentBaseUrl);
 
 const api = axios.create({
   baseURL: currentBaseUrl,
@@ -42,12 +40,19 @@ const api = axios.create({
   },
 });
 
-// Function to check which server to use
+// Helper for adding to history
+export const addToHistory = async (productId: string) => {
+  return api.post('/api/history', { productId });
+};
+
+// Function to check which server to use - DISABLED
 const initializeApi = async () => {
+  // Disabled to force Live URL
+  /*
   try {
     console.log(`Checking connection to LOCAL: ${LOCAL_URL}/health...`);
     // Create a temporary instance to avoid interceptors for this check
-    const checkApi = axios.create({ timeout: 2000 });
+    const checkApi = axios.create({ timeout: 5000 });
     await checkApi.get(`${LOCAL_URL}/health`);
 
     currentBaseUrl = LOCAL_URL;
@@ -61,10 +66,11 @@ const initializeApi = async () => {
     api.defaults.baseURL = LIVE_URL;
     console.log('✅ Connected to Live Server:', LIVE_URL);
   }
+  */
 };
 
-// Start initialization
-initializeApi();
+// Start initialization - DISABLED
+// initializeApi();
 
 // Cache key generator with sorted keys for determinism
 const getCacheKey = (url: string, params: any) => {

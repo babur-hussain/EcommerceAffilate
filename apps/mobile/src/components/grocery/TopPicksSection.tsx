@@ -14,17 +14,12 @@ export function TopPicksSection() {
 
     const fetchProducts = async () => {
         try {
-            const response = await api.get('/api/products/public/random');
-
-            // Filter products to only show Grocery items (parent or direct)
-            const GROCERY_CATEGORY_ID = "696686d02c5aacc146652e03";
-            const groceryProducts = response.data.filter((product: Product) => {
-                const categoryId = product.categoryDetails?._id;
-                const parentCategoryId = product.categoryDetails?.parentCategory;
-                return categoryId === GROCERY_CATEGORY_ID || parentCategoryId === GROCERY_CATEGORY_ID;
-            });
-
-            setProducts(groceryProducts);
+            // Mock data fallback
+            setProducts([
+                { _id: 'tp1', title: 'Fresh Bananas', price: 40, mrp: 60, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/fruit/e/s/q/-original-imagz6f2x9p8g6hz.jpeg?q=70', netWeight: '1 kg', rating: 4.5, ratingCount: 100, categoryDetails: { _id: 'c1', name: 'Fruits' } },
+                { _id: 'tp2', title: 'Farm Fresh Tomatoes', price: 30, mrp: 40, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/vegetable/q/u/u/-original-imag5q25xgu5d22s.jpeg?q=70', netWeight: '1 kg', rating: 4.2, ratingCount: 50, categoryDetails: { _id: 'c2', name: 'Vegetables' } },
+                { _id: 'tp3', title: 'Cow Milk', price: 70, mrp: 75, image: 'https://rukminim2.flixcart.com/image/612/612/kdbzqfk0/milk/w/h/v/1-toned-fresh-milk-carton-amul-original-imafu9v4z5z7g2z5.jpeg?q=70', netWeight: '1 L', rating: 4.8, ratingCount: 200, categoryDetails: { _id: 'c3', name: 'Dairy' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch top picks:', error);
         } finally {

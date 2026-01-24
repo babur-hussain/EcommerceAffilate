@@ -18,7 +18,71 @@ import { calculateHaversineDistance, geocodePincode } from '../utils/geo';
 
 const router = Router();
 
-// TODO: Add order cancellation endpoint that restores stock for order items.
+// POST /api/orders/:id/cancel - Cancel order (customer)
+router.post('/orders/:id/cancel', requireCustomer, async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  try {
+    const { id } = req.params;
+    const user = (req as any).user as { id?: string } | undefined;
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid order id' });
+    }
+
+    let updatedOrder: any | null = null;
+    await session.withTransaction(async () => {
+      const order = await Order.findOne({ _id: id, userId: user.id }).session(session);
+      if (!order) {
+        throw new Error('NOT_FOUND');
+      }
+
+      // Allow cancellation only for early stages
+      const allowedStatuses = ['CREATED', 'PAID', 'PROCESSING'];
+      if (!allowedStatuses.includes(order.status)) {
+        throw new Error('NOT_ELLIGIBLE');
+      }
+
+      if (order.status === 'CANCELLED') {
+        throw new Error('ALREADY_CANCELLED');
+      }
+
+      // Restore Stock
+      for (const item of order.items) {
+        await Product.updateOne(
+          { _id: item.productId },
+          { $inc: { stock: item.quantity } },
+          { session }
+        );
+      }
+
+      order.status = 'CANCELLED';
+      updatedOrder = await order.save({ session });
+    });
+
+    res.json(updatedOrder);
+
+    if (updatedOrder) {
+      void logAction({
+        userId: user.id,
+        role: (req as any)?.user?.role,
+        action: 'ORDER_CANCELLED',
+        entityType: 'ORDER',
+        entityId: id,
+        metadata: { totalAmount: (updatedOrder as any).totalAmount },
+      });
+    }
+
+  } catch (error: any) {
+    if (error?.message === 'NOT_FOUND') return res.status(404).json({ error: 'Order not found' });
+    if (error?.message === 'NOT_ELLIGIBLE') return res.status(400).json({ error: 'Order cannot be cancelled at this stage' });
+    if (error?.message === 'ALREADY_CANCELLED') return res.status(400).json({ error: 'Order is already cancelled' });
+
+    res.status(500).json({ error: 'Failed to cancel order', message: error.message });
+  } finally {
+    await session.endSession();
+  }
+});
 
 router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
   try {
@@ -481,7 +545,7 @@ router.post('/orders/:id/deliver', requireAdmin, async (req: Request, res: Respo
 router.post('/orders/:id/return', requireCustomer, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { reason } = req.body as { reason?: string };
+    const { reason, type, images } = req.body as { reason?: string; type?: 'RETURN' | 'REPLACEMENT'; images?: string[] };
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -500,6 +564,9 @@ router.post('/orders/:id/return', requireCustomer, async (req: Request, res: Res
 
     order.status = 'RETURN_REQUESTED';
     order.returnReason = reason;
+    order.returnType = type || 'RETURN';
+    order.returnStatus = 'PENDING';
+    order.returnImages = images || [];
     await order.save();
 
     res.json(order);
@@ -510,7 +577,7 @@ router.post('/orders/:id/return', requireCustomer, async (req: Request, res: Res
       action: 'ORDER_RETURN_REQUESTED',
       entityType: 'ORDER',
       entityId: order._id.toString(),
-      metadata: { reason },
+      metadata: { reason, type: order.returnType },
     });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to request return', message: error.message });
@@ -615,6 +682,97 @@ router.post('/orders/:id/refund', requireAdmin, async (req: Request, res: Respon
     res.status(500).json({ error: 'Failed to refund order', message: error.message });
   } finally {
     await session.endSession();
+  }
+});
+
+
+// POST /api/orders/:id/return/approve - Approve return/replacement (admin/seller)
+router.post('/orders/:id/return/approve', requireAdmin, async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  try {
+    const { id } = req.params;
+    const { actionNote } = req.body; // Optional note
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid order id' });
+    }
+
+    let updatedOrder: any | null = null;
+    await session.withTransaction(async () => {
+      const order = await Order.findById(id).session(session);
+      if (!order) throw new Error('NOT_FOUND');
+      if (order.status !== 'RETURN_REQUESTED') throw new Error('INVALID_STATE');
+
+      order.returnStatus = 'APPROVED';
+
+      if (order.returnType === 'REPLACEMENT') {
+        // For Replacement: Mark as Replacement Approved.
+        // In a full system, this might trigger a new "Replacement Order" creation automatically.
+        // For now, we update status to indicate approval so seller can ship new item manually or via another flow.
+        order.status = 'RETURNED'; // Using RETURNED as a proxy for "processed return"
+      } else {
+        // For Refund: Refund logic usually handled by explicit /refund, but approval is first step.
+        // We leave status as RETURN_REQUESTED or update to something else? 
+        // Let's keep loop open for /refund call, OR we assume approval implies readiness for refund.
+        // We will update returnStatus to APPROVED.
+      }
+
+      updatedOrder = await order.save({ session });
+    });
+
+    res.json(updatedOrder);
+
+    if (updatedOrder) {
+      await createNotification(
+        updatedOrder.userId.toString(),
+        'RETURN',
+        `Return ${updatedOrder.returnType === 'REPLACEMENT' ? 'Replacement' : 'Request'} Approved`,
+        `Your request has been approved. ${actionNote ? `Note: ${actionNote}` : ''}`
+      );
+    }
+
+  } catch (error: any) {
+    if (error?.message === 'NOT_FOUND') return res.status(404).json({ error: 'Order not found' });
+    if (error?.message === 'INVALID_STATE') return res.status(400).json({ error: 'Order not in return requested state' });
+    res.status(500).json({ error: 'Failed to approve return', message: error.message });
+  } finally {
+    await session.endSession();
+  }
+});
+
+// POST /api/orders/:id/return/reject - Reject return/replacement (admin/seller)
+router.post('/orders/:id/return/reject', requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { rejectionReason } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid order id' });
+    }
+    if (!rejectionReason) {
+      return res.status(400).json({ error: 'Rejection reason is required' });
+    }
+
+    const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.status !== 'RETURN_REQUESTED') return res.status(400).json({ error: 'Order not in return requested state' });
+
+    order.returnStatus = 'REJECTED';
+    order.returnRejectionReason = rejectionReason;
+    order.status = 'DELIVERED'; // Revert to delivered state
+    await order.save();
+
+    res.json(order);
+
+    await createNotification(
+      order.userId.toString(),
+      'RETURN',
+      'Return Request Rejected',
+      `Your return request was rejected. Reason: ${rejectionReason}`
+    );
+
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to reject return', message: error.message });
   }
 });
 

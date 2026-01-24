@@ -49,7 +49,7 @@ export default function HomeScreen() {
 
   const isGroceryTab = activeTab === 'grocery';
   // Use custom color if set (e.g. from basket), otherwise fall back to tab defaults
-  const safeAreaColor = customColor || (isGroceryTab ? '#FFF8E7' : '#FF6B00');
+  const safeAreaColor = customColor || (isGroceryTab ? '#FFF8E7' : '#da0b2e');
   const statusBarStyle = isGroceryTab ? 'dark-content' : 'light-content';
 
   const onCategorySelect = (category: any) => {
@@ -62,12 +62,13 @@ export default function HomeScreen() {
     // Reset custom color when changing main tabs
     setCustomColor(null);
 
+    const parent = navigation.getParent();
     if (activeTab === 'grocery') {
-      navigation.setOptions({
+      parent?.setOptions({
         tabBarStyle: { display: 'none' },
       });
     } else {
-      navigation.setOptions({
+      parent?.setOptions({
         tabBarStyle: undefined,
       });
     }

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, ActivityIndicator, Text, StatusBar, TouchableOpacity, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -20,7 +21,7 @@ export default function SpecialSalePage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#FAFAFA]">
-                <ActivityIndicator size="large" color="#D32F2F" />
+                <GlobalLoader />
             </View>
         );
     }

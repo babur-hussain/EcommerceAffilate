@@ -3,6 +3,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import "./globals.css";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/footer/Footer";
 import AffiliateTracker from "@/components/common/AffiliateTracker";
 
 export const metadata: Metadata = {
@@ -43,12 +44,15 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased font-sans">
+      <body className="antialiased font-sans flex flex-col min-h-screen">
         <AuthProvider>
           <CartProvider>
             <AffiliateTracker />
             <Header />
-            {children}
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
           </CartProvider>
         </AuthProvider>
       </body>

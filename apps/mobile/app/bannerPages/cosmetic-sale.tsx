@@ -1,4 +1,5 @@
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, ActivityIndicator, Text, StatusBar } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -11,7 +12,7 @@ export default function CosmeticSalePage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#F0F9FB] dark:bg-[#0F172A]">
-                <ActivityIndicator size="large" color="#112D4E" />
+                <GlobalLoader />
             </View>
         );
     }

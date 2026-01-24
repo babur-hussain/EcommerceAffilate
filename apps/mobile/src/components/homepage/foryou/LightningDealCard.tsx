@@ -25,14 +25,15 @@ interface LightningDealCardProps {
     product: LightningDealProduct;
     onAdd: () => void;
     onSeeMore?: () => void;
+    onPress?: () => void;
 }
 
-export default function LightningDealCard({ product, onAdd, onSeeMore }: LightningDealCardProps) {
+export default function LightningDealCard({ product, onAdd, onSeeMore, onPress }: LightningDealCardProps) {
     const formatPrice = (price: number) => price ? `₹${price.toLocaleString()}` : '';
     const formatReviews = (count: number) => count ? `(${count.toLocaleString()})` : '(0)';
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
             {/* Badges Overlay */}
             <View style={styles.badgesContainer}>
                 {product.isImported && (
@@ -127,7 +128,7 @@ export default function LightningDealCard({ product, onAdd, onSeeMore }: Lightni
                     <Ionicons name="caret-forward" size={12} color="#166534" />
                 </TouchableOpacity>
             )}
-        </View>
+        </TouchableOpacity>
     );
 }
 

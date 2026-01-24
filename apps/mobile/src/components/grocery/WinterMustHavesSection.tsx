@@ -24,14 +24,11 @@ export function WinterMustHavesSection() {
 
     const fetchProducts = async () => {
         try {
-            const response = await api.get('/api/products?limit=200');
-            const allProducts: Product[] = response.data;
-
-            const filtered = allProducts.filter(p => WINTER_IDS.includes(p._id));
-            // Ensure unique items if ID list has duplicates for demo filling
-            const unique = Array.from(new Set(filtered.map(p => p._id))).map(id => filtered.find(p => p._id === id));
-
-            setProducts(unique as Product[]);
+            setProducts([
+                { _id: 'wm1', title: 'Winter Care Lotion', price: 199, mrp: 299, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/body-lotion/j/k/l/-original-imagg9k8z6c7qg5z.jpeg?q=70', netWeight: '200ml', rating: 4.6, ratingCount: 150, categoryDetails: { _id: 'c11', name: 'Personal Care' } },
+                { _id: 'wm2', title: 'Hot Chocolate Mix', price: 150, mrp: 200, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/beverage/m/n/o/-original-imagm2h2m2h2m2h2.jpeg?q=70', netWeight: '200g', rating: 4.7, ratingCount: 80, categoryDetails: { _id: 'c12', name: 'Beverages' } },
+                { _id: 'wm3', title: 'Green Tea', price: 250, mrp: 300, image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/tea/t/u/v/-original-imagp4m8m8z8m8z8.jpeg?q=70', netWeight: '100g', rating: 4.8, ratingCount: 120, categoryDetails: { _id: 'c12', name: 'Beverages' } },
+            ]);
         } catch (error) {
             console.error('Failed to fetch winter products:', error);
         } finally {

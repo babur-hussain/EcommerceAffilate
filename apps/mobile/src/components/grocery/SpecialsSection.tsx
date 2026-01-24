@@ -38,7 +38,7 @@ export function SpecialsSection() {
                 style={styles.bannerBackground}
                 resizeMode="cover"
             />
-            {/* 
+            {/* Content Restored */}
             <View style={styles.subcategoryRow}>
                 {SUBCATEGORY_DATA.map((item) => (
                     <TouchableOpacity
@@ -66,7 +66,6 @@ export function SpecialsSection() {
                     Get delivered in 30 Minutes
                 </Text>
             </View>
-            */}
         </View >
     );
 }

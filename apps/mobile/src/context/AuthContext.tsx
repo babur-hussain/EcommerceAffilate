@@ -11,6 +11,7 @@ import { auth, googleProvider } from '../lib/firebase';
 import api from '../lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Google from 'expo-auth-session/providers/google';
+import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -96,12 +97,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Google Sign-In Configuration
-  // TODO: Replace these with your actual Client IDs from Google Cloud Console
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: '289792075088-6td58kavr8slvog42a31ncnn5q221n84.apps.googleusercontent.com',
-    iosClientId: '289792075088-e0qo7dnh8fm612grks53tnatthlph2gp.apps.googleusercontent.com',
-    // Using Web Client ID for Android as fallback for Expo Go since native ID is missing
-    androidClientId: '289792075088-6td58kavr8slvog42a31ncnn5q221n84.apps.googleusercontent.com',
+    clientId: Constants.expoConfig?.extra?.googleWebClientId || '289792075088-6td58kavr8slvog42a31ncnn5q221n84.apps.googleusercontent.com',
+    iosClientId: Constants.expoConfig?.extra?.googleIosClientId || '289792075088-e0qo7dnh8fm612grks53tnatthlph2gp.apps.googleusercontent.com',
+    androidClientId: Constants.expoConfig?.extra?.googleAndroidClientId || '289792075088-6td58kavr8slvog42a31ncnn5q221n84.apps.googleusercontent.com',
   });
 
   useEffect(() => {
@@ -150,26 +149,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    // Check if Client IDs are still placeholders
+    if (!request) {
+      throw new Error('Google Sign-In is not initialized. Please check your configuration.');
+    }
+
+    // Check if Client IDs are still placeholders or missing
     const isPlaceholder =
       request?.clientId?.includes('YOUR_WEB_CLIENT_ID') ||
       request?.clientId?.includes('YOUR_ANDROID_CLIENT_ID');
 
-    // Check if Client IDs look like OAuth IDs (should end with .apps.googleusercontent.com)
-    const isValidFormat = request?.clientId?.endsWith('.apps.googleusercontent.com');
-
     if (isPlaceholder) {
-      throw new Error('Google Sign-In is not fully configured. Please add your Web and Android Client IDs in AuthContext.tsx.');
+      console.warn('Google Sign-In misconfigured: Placeholder IDs detected.');
+      throw new Error('Google Sign-In is not fully configured.');
     }
 
-    if (!isValidFormat) {
-      throw new Error('Invalid Client ID format. Please use the OAuth Client ID (ends with ".apps.googleusercontent.com") from the Google Cloud Console Credentials page.');
+    try {
+      await promptAsync();
+    } catch (err) {
+      console.error("Google Sign-In prompt failed:", err);
+      throw err;
     }
-
-    if (!request) {
-      throw new Error('Google Sign-In is not ready. Check your configuration.');
-    }
-    await promptAsync();
   };
 
   const signOut = async () => {

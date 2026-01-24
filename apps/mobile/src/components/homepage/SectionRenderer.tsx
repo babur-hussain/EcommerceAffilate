@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Section } from '../../hooks/usePageLayout';
 
 // Components
@@ -396,9 +396,8 @@ export default function SectionRenderer({ section, user }: SectionRendererProps)
 
         case 'product_list_horizontal':
             // Specifically handling "Trending near you" logic
-            // Ideally TrendingNearYou should accept dataSource/title
-            // For now, if title matches "Trending", use specific component
-            if (title?.includes('Trending')) {
+            // Check content structure or type specifically if available, fall back to title check as last resort
+            if (content?.type === 'trending' || title?.includes('Trending')) {
                 // Pass params if we refactor TrendingNearYou, else it uses its own defaults
                 return <TrendingNearYou limit={content?.limit} productIds={content?.productIds} />;
             }
@@ -412,10 +411,23 @@ export default function SectionRenderer({ section, user }: SectionRendererProps)
             return <LightningDeals limit={content?.limit} productIds={content?.productIds} />;
 
         case 'grand_kitchen':
-        case 'banner_single': // Mapping kitchen to single banner or generic
-            if (type === 'grand_kitchen') return <GrandKitchenSale />;
-            // If strictly banner_single logic implemented later:
-            return <GrandKitchenSale />; // Fallback 
+            return <GrandKitchenSale />;
+
+        case 'banner_single':
+            // Correctly handle single banner here. 
+            // If no specific single banner component exists yet, we should render a generic one or null, NOT GrandKitchenSale.
+            // Assuming HeroBanner or a new SimpleBanner component could be used.
+            // For now, logging warning and returning null to avoid misleading UI, or implementing a simple Image render if content provides it.
+            if (content?.imageUrl) {
+                return (
+                    <View style={{ padding: 16 }}>
+                        <TouchableOpacity>
+                            <Image source={{ uri: content.imageUrl }} style={{ width: '100%', height: 150, borderRadius: 12 }} resizeMode="cover" />
+                        </TouchableOpacity>
+                    </View>
+                );
+            }
+            return null;
 
         case 'fifty_percent_off':
             return <FiftyPercentOffZone />;

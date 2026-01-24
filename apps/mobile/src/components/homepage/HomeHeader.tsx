@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform, Easing, FlatList } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -126,8 +127,9 @@ const searchStyles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 0,
         paddingBottom: 6,
-        backgroundColor: '#FF6B00',
+        backgroundColor: 'transparent',
     },
+    // ... other styles map to original lines
     searchContainer: {
         flex: 1,
         flexDirection: 'row',
@@ -169,8 +171,6 @@ const searchStyles = StyleSheet.create({
         elevation: 2,
     },
 });
-
-// --- CategoriesSlider ---
 
 const sliderCategories: Category[] = [
     { id: '1', name: 'For You', icon: 'local-offer', iconFamily: 'MaterialIcons' },
@@ -318,10 +318,9 @@ function CategoriesSlider({ onCategorySelect, selectedCategory, showIcons = true
     );
 }
 
-
 const sliderStyles = StyleSheet.create({
     container: {
-        backgroundColor: '#FF6F00',
+        backgroundColor: 'transparent',
         paddingTop: 4,
         paddingBottom: 0,
     },
@@ -373,27 +372,27 @@ interface HomeStickyHeaderProps {
 
 export const HomeStaticHeader = ({ onTabPress }: HomeStaticHeaderProps) => {
     return (
-        <View style={{ backgroundColor: '#FF6B00' }}>
+        <LinearGradient colors={['#da0b2e', '#da0b2e']} style={{}}>
             <TopCategoryBoxes
                 activeTab="shopping"
                 onTabPress={(id) => onTabPress(id)}
-                backgroundColor="#FF6B00"
+                backgroundColor="#da0b2e"
                 activeBackgroundColor="#FFD700"
             />
             <LocationBar />
-        </View>
+        </LinearGradient>
     );
 };
 
 export const HomeStickyHeader = ({ onCategorySelect, selectedCategory, showIcons = true }: HomeStickyHeaderProps) => {
     return (
-        <View style={{ backgroundColor: '#FF6B00' }}>
+        <LinearGradient colors={['#da0b2e', '#ffffff']} style={{}}>
             <SearchBar />
             <CategoriesSlider
                 onCategorySelect={onCategorySelect}
                 selectedCategory={selectedCategory}
                 showIcons={showIcons}
             />
-        </View>
+        </LinearGradient>
     );
 };

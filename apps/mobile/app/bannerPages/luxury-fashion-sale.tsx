@@ -1,4 +1,5 @@
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, ActivityIndicator, Text } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -12,7 +13,7 @@ export default function LuxuryFashionSalePage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#F3F3F5] dark:bg-[#0F0F0F]">
-                <ActivityIndicator size="large" color="#E60023" />
+                <GlobalLoader />
             </View>
         );
     }

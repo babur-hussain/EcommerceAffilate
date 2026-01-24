@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { useRouter } from 'expo-router';
 import { usePageLayout } from '../../hooks/usePageLayout';
 import SectionRenderer from './SectionRenderer';
+import AdvancedRenderer from '../sdui/AdvancedRenderer';
+import api from '../../lib/api';
 
 interface ForYouSectionProps {
     staticHeader?: React.ReactNode;
@@ -19,6 +21,22 @@ export default function ForYouSection({ staticHeader, renderStickyHeader }: ForY
     // SDUI Hook
     const { layout, loading, refresh } = usePageLayout('home');
     const [refreshing, setRefreshing] = useState(false);
+    const [advancedLayout, setAdvancedLayout] = useState<any>(null);
+
+    useEffect(() => {
+        fetchAdvancedLayout();
+    }, []);
+
+    const fetchAdvancedLayout = async () => {
+        try {
+            const res = await api.get('/api/advanced-layout/for-you');
+            setAdvancedLayout(res.data);
+        } catch (err) {
+            console.error('Failed to fetch advanced layout:', err);
+            // Ideally call a global toast/alert here:
+            // Toast.show({ type: 'error', text1: 'Could not load personalized layout' });
+        }
+    };
 
     // Scroll tracking for sticky header
     const [isSticky, setIsSticky] = useState(false);
@@ -26,7 +44,7 @@ export default function ForYouSection({ staticHeader, renderStickyHeader }: ForY
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await refresh();
+        await Promise.all([refresh(), fetchAdvancedLayout()]);
         setRefreshing(false);
     };
 
@@ -55,6 +73,12 @@ export default function ForYouSection({ staticHeader, renderStickyHeader }: ForY
             <View>{renderStickyHeader ? renderStickyHeader(isSticky) : null}</View>
 
             <View style={{ backgroundColor: '#F9FAFB', flex: 1, paddingBottom: 100 }}>
+                {/* Advanced SDUI Sections (Lightning Deals etc) */}
+                {advancedLayout?.components?.map((component: any) => (
+                    <AdvancedRenderer key={component.id || component._id || Math.random().toString()} component={component} />
+                ))}
+
+                {/* LEGACY LAYOUT RESTORED */}
                 {loading && !layout ? (
                     <View style={styles.loadingContainer}>
                         <CategoryPulseLoader />
@@ -78,7 +102,7 @@ export default function ForYouSection({ staticHeader, renderStickyHeader }: ForY
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FF6B00',
+        backgroundColor: '#FF6B00', // TODO: Use theme.colors.primary or similar
     },
     sectionHeader: {
         flexDirection: 'row',

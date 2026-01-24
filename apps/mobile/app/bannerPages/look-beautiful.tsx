@@ -1,4 +1,5 @@
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, ActivityIndicator, Text } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -10,7 +11,7 @@ export default function LookBeautifulPage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#FFF5F7] dark:bg-[#18181b]">
-                <ActivityIndicator size="large" color="#F26985" />
+                <GlobalLoader />
             </View>
         );
     }

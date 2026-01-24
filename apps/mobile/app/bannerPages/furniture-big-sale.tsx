@@ -1,4 +1,5 @@
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, ActivityIndicator, Text, StatusBar } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -10,7 +11,7 @@ export default function FurnitureBigSalePage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#FDFBF7]">
-                <ActivityIndicator size="large" color="#9F6B08" />
+                <GlobalLoader />
             </View>
         );
     }

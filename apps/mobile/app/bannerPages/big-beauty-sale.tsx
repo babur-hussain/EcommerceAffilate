@@ -1,4 +1,5 @@
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, ActivityIndicator, Text } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -12,7 +13,7 @@ export default function BigBeautySalePage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#FFF0E5] dark:bg-[#1C1917]">
-                <ActivityIndicator size="large" color="#3E2723" />
+                <GlobalLoader />
             </View>
         );
     }

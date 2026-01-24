@@ -57,7 +57,7 @@ router.post(
         advanced,
       } = req.body;
 
-      // Validate required fields
+      // Validate required fields (logistics is now optional)
       if (
         !accountType ||
         !businessIdentity ||
@@ -66,7 +66,6 @@ router.post(
         !taxLegal ||
         !bankDetails ||
         !storeProfile ||
-        !logistics ||
         !compliance
       ) {
         console.log("❌ Missing required fields");
@@ -80,7 +79,6 @@ router.post(
             "taxLegal",
             "bankDetails",
             "storeProfile",
-            "logistics",
             "compliance",
           ],
         });

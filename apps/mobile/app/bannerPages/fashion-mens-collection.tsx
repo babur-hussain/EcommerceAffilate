@@ -1,4 +1,5 @@
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { ScrollView, View, ActivityIndicator, Text } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout } from '../../src/hooks/usePageLayout';
@@ -11,7 +12,7 @@ export default function MenFashionCollectionPage() {
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-[#F3F4F6] dark:bg-[#0f0f0f]">
-                <ActivityIndicator size="large" color="#EF3333" />
+                <GlobalLoader />
             </View>
         );
     }

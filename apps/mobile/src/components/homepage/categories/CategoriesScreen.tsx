@@ -54,9 +54,13 @@ export default function CategoriesScreen() {
     // Get Subcategories for Selected Category
     const subCategories = categories.filter(c => c.parentCategory === selectedCategoryId);
 
+    const scrollViewRef = React.useRef<ScrollView>(null);
+
     const handleCategoryPress = (id: string, slug: string) => {
         // Always display in the right content area, never navigate away
         setSelectedCategoryId(id);
+        // Scroll to top when switching categories
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     };
 
     if (loading) {
@@ -163,7 +167,11 @@ export default function CategoriesScreen() {
                         );
                     })()}
 
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.rightContentScroll}>
+                    <ScrollView
+                        ref={scrollViewRef}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.rightContentScroll}
+                    >
                         {selectedCategoryId === FOR_YOU_ID ? (
                             <ForYouView />
                         ) : (

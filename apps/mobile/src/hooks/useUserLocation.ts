@@ -38,38 +38,44 @@ export function useUserLocation(): UseUserLocationResult {
                 return;
             }
 
-            let location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced,
-            });
-            setLocation(location);
-
-            // Reverse geocode
-            let reverseGeocode = await Location.reverseGeocodeAsync({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude
-            });
-
-            if (reverseGeocode && reverseGeocode.length > 0) {
-                const result = reverseGeocode[0];
-                const formattedAddr = [
-                    result.street,
-                    result.city,
-                    result.region
-                ].filter(Boolean).join(', ');
-
-                setAddress({
-                    city: result.city,
-                    district: result.district,
-                    street: result.street,
-                    region: result.region,
-                    country: result.country,
-                    postalCode: result.postalCode,
-                    name: result.name,
-                    formattedAddress: formattedAddr
+            try {
+                let location = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.Balanced,
                 });
+                setLocation(location);
+
+                // Reverse geocode
+                let reverseGeocode = await Location.reverseGeocodeAsync({
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude
+                });
+
+                if (reverseGeocode && reverseGeocode.length > 0) {
+                    const result = reverseGeocode[0];
+                    const formattedAddr = [
+                        result.street,
+                        result.city,
+                        result.region
+                    ].filter(Boolean).join(', ');
+
+                    setAddress({
+                        city: result.city,
+                        district: result.district,
+                        street: result.street,
+                        region: result.region,
+                        country: result.country,
+                        postalCode: result.postalCode,
+                        name: result.name,
+                        formattedAddress: formattedAddr
+                    });
+                }
+            } catch (locationError: any) {
+                console.warn('Location fetching failed:', locationError);
+                // Handle specific error codes if needed, for now treat as unavailable
+                setErrorMsg('Could not fetch location');
             }
         } catch (error) {
-            console.error('Error fetching location:', error);
+            console.error('Error requesting permissions:', error);
             setErrorMsg('Error fetching location');
         } finally {
             setLoading(false);

@@ -34,6 +34,7 @@ const navigation = [
   { name: "Delivery Rules", href: "/admin/delivery-rules", icon: TrendingUp },
   { name: "Reports", href: "/admin/reports", icon: FileText },
   { name: "Layout Manager", href: "/admin/homepage", icon: LayoutDashboard },
+  { name: "Advanced Layouts", href: "/admin/layout-manager", icon: Sliders },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

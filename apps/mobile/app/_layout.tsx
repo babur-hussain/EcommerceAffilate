@@ -3,6 +3,7 @@ import { AuthProvider } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
 import { BasketProvider } from '../src/context/BasketContext';
 import { WishlistProvider } from '../src/context/WishlistContext';
+import { LanguageProvider } from '../src/context/LanguageContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 
@@ -74,6 +75,7 @@ import {
 } from '@expo-google-fonts/roboto';
 import { Bangers_400Regular } from '@expo-google-fonts/bangers';
 import { ActivityIndicator, View } from 'react-native';
+import GlobalLoader from '../src/components/common/GlobalLoader';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -127,7 +129,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+        <GlobalLoader size={1.5} />
       </View>
     );
   }
@@ -135,35 +137,37 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <CartProvider>
-          <BasketProvider>
-            <WishlistProvider>
-              <StatusBar style="auto" />
-              <Stack
-                screenOptions={{
-                  headerStyle: {
-                    backgroundColor: '#6366f1',
-                  },
-                  headerTintColor: '#fff',
-                  headerTitleStyle: {
-                    fontWeight: 'bold',
-                  },
-                }}
-              >
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="login" options={{
-                  headerShown: false,
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom'
-                }} />
-                <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
-                <Stack.Screen name="influencers" options={{ headerShown: false }} />
-                <Stack.Screen name="address/new" options={{ headerShown: false }} />
-              </Stack>
-            </WishlistProvider>
-          </BasketProvider>
-        </CartProvider>
+        <LanguageProvider>
+          <CartProvider>
+            <BasketProvider>
+              <WishlistProvider>
+                <StatusBar style="auto" />
+                <Stack
+                  screenOptions={{
+                    headerStyle: {
+                      backgroundColor: '#6366f1',
+                    },
+                    headerTintColor: '#fff',
+                    headerTitleStyle: {
+                      fontWeight: 'bold',
+                    },
+                  }}
+                >
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="login" options={{
+                    headerShown: false,
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom'
+                  }} />
+                  <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
+                  <Stack.Screen name="influencers" options={{ headerShown: false }} />
+                  <Stack.Screen name="address/new" options={{ headerShown: false }} />
+                </Stack>
+              </WishlistProvider>
+            </BasketProvider>
+          </CartProvider>
+        </LanguageProvider>
       </AuthProvider>
     </GestureHandlerRootView>
   );

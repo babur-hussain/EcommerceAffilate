@@ -23,15 +23,16 @@ export interface TrendingProduct {
 interface TrendingProductCardProps {
     product: TrendingProduct;
     onAdd: () => void;
+    onPress?: () => void;
 }
 
-export default function TrendingProductCard({ product, onAdd }: TrendingProductCardProps) {
+export default function TrendingProductCard({ product, onAdd, onPress }: TrendingProductCardProps) {
     // Safe formatting helpers
     const formatPrice = (price: number) => price ? `₹${price.toLocaleString()}` : '';
     const formatReviews = (count: number) => count ? `(${count.toLocaleString()})` : '(0)';
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
             {/* Image Area */}
             <View style={styles.imageContainer}>
 
@@ -113,7 +114,7 @@ export default function TrendingProductCard({ product, onAdd }: TrendingProductC
                     <Text style={styles.emiText}>₹{Math.round(product.price / 3).toLocaleString()}/month (No cost EMI)</Text>
                 )}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 

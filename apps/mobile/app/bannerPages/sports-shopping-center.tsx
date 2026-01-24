@@ -1,5 +1,6 @@
 
 import React from 'react';
+import GlobalLoader from '../../src/components/common/GlobalLoader';
 import { View, ScrollView, StyleSheet, ActivityIndicator, StatusBar } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePageLayout, Section } from '../../src/hooks/usePageLayout';
@@ -11,7 +12,7 @@ export default function SportsShoppingCenterPage() {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#314CB6" />
+                <GlobalLoader />
             </View>
         );
     }

@@ -28,8 +28,34 @@ export function StealDealSection() {
 
     const fetchOffers = async () => {
         try {
-            const response = await api.get('/api/offers/active');
-            setOffers(response.data);
+            // const response = await api.get('/api/offers/active');
+            // setOffers(response.data);
+            setOffers([
+                {
+                    _id: '1',
+                    title: 'Steal Deal',
+                    productId: {
+                        _id: 'p1',
+                        title: 'Sunfeast Dark Fantasy Yumfills Cookie Cake',
+                        price: 77,
+                        image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/cookie-biscuit/2/e/4/-original-imagm7bgugbjysir.jpeg?q=70'
+                    },
+                    minSpendAmount: 599,
+                    dealPrice: 1
+                },
+                {
+                    _id: '2',
+                    title: 'Steal Deal',
+                    productId: {
+                        _id: 'p2',
+                        title: 'Premium Shampoo Anti-Dandruff 500ml',
+                        price: 199,
+                        image: 'https://rukminim2.flixcart.com/image/612/612/xif0q/shampoo/s/i/o/-original-imaghfcpz8zq8frz.jpeg?q=70'
+                    },
+                    minSpendAmount: 999,
+                    dealPrice: 9
+                }
+            ]);
         } catch (error) {
             console.error('Failed to fetch steal deals:', error);
         } finally {

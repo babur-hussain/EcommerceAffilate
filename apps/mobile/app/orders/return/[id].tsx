@@ -58,6 +58,7 @@ export default function ReturnRequestScreen() {
     const [selectedItems, setSelectedItems] = useState<Record<string, SelectedItem>>({});
     const [customerNote, setCustomerNote] = useState('');
     const [images, setImages] = useState<string[]>([]);
+    const [returnType, setReturnType] = useState<'RETURN' | 'REPLACEMENT'>('RETURN');
 
     useEffect(() => {
         fetchOrderDetails();
@@ -66,7 +67,7 @@ export default function ReturnRequestScreen() {
     const fetchOrderDetails = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/orders/${id}`);
+            const res = await api.get(`/api/orders/${id}`);
             setOrder(res.data);
         } catch (e: any) {
             Alert.alert('Error', 'Failed to load order details');
@@ -168,10 +169,11 @@ export default function ReturnRequestScreen() {
                 items: itemsToReturn,
                 customerNote,
                 images: uploadedImageUrls,
-                refundMethod: 'WALLET' // Default for now, could be selectable
+                refundMethod: 'WALLET', // Default for now, could be selectable
+                type: returnType
             };
 
-            await api.post('/returns', payload); // Check route: /api/returns (customer endpoint)
+            await api.post('/api/returns', payload); // Check route: /api/returns (customer endpoint)
 
             Alert.alert(
                 'Return Requested',
@@ -217,6 +219,32 @@ export default function ReturnRequestScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
+
+                {/* Return Type Selection */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>I want to...</Text>
+                    <View style={styles.typeSelector}>
+                        <TouchableOpacity
+                            style={[styles.typeOption, returnType === 'RETURN' && styles.typeOptionSelected]}
+                            onPress={() => setReturnType('RETURN')}
+                        >
+                            <Ionicons name="cash-outline" size={20} color={returnType === 'RETURN' ? '#2563EB' : '#4B5563'} />
+                            <Text style={[styles.typeOptionText, returnType === 'RETURN' && styles.typeOptionTextSelected]}>
+                                Return for Refund
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.typeOption, returnType === 'REPLACEMENT' && styles.typeOptionSelected]}
+                            onPress={() => setReturnType('REPLACEMENT')}
+                        >
+                            <Ionicons name="swap-horizontal-outline" size={20} color={returnType === 'REPLACEMENT' ? '#2563EB' : '#4B5563'} />
+                            <Text style={[styles.typeOptionText, returnType === 'REPLACEMENT' && styles.typeOptionTextSelected]}>
+                                Exchange / Replace
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
                 <Text style={styles.subtitle}>Select items to return</Text>
 
                 {order.items.map((item, idx) => {
@@ -600,5 +628,36 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: '700',
         fontSize: 16,
+    },
+    // New Styles
+    typeSelector: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 4,
+    },
+    typeOption: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 8,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        backgroundColor: '#F9FAFB',
+        gap: 8,
+    },
+    typeOptionSelected: {
+        borderColor: '#3B82F6',
+        backgroundColor: '#EFF6FF',
+    },
+    typeOptionText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#4B5563',
+    },
+    typeOptionTextSelected: {
+        color: '#2563EB',
     },
 });

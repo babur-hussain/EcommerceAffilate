@@ -22,7 +22,7 @@ const CenterCategories = ({ data }: { data: any }) => {
         textMainDark: "#FFFFFF",
     };
 
-    const categories = [
+    const defaultCategories = [
         {
             id: 'football',
             label: "Football",
@@ -57,6 +57,8 @@ const CenterCategories = ({ data }: { data: any }) => {
         }
     ];
 
+    const categories = data?.categories || defaultCategories;
+
     return (
         <View style={styles.container}>
             <View style={styles.headerRow}>
@@ -71,7 +73,7 @@ const CenterCategories = ({ data }: { data: any }) => {
             </View>
 
             <View style={styles.grid}>
-                {categories.map((item, index) => (
+                {categories.map((item: any, index: number) => (
                     <TouchableOpacity
                         key={index}
                         style={[
@@ -81,7 +83,7 @@ const CenterCategories = ({ data }: { data: any }) => {
                             }
                         ]}
                         activeOpacity={0.9}
-                        onPress={() => router.push(`/category/${item.id}`)}
+                        onPress={() => router.push({ pathname: `/category/${item.id}` } as any)}
                     >
                         {/* Background Icon Opacity */}
                         <MaterialIcons

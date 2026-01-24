@@ -274,17 +274,16 @@ const businessSchema = new Schema<IBusiness>(
     },
 
     logistics: {
-      pickupAddress: { type: String, required: true },
+      pickupAddress: { type: String },
       pickupTimeSlot: { type: String },
       packagingType: {
         type: String,
         enum: ['Seller Packed', 'Platform Packed'],
-        required: true,
         default: 'Seller Packed'
       },
       courierPreference: { type: String },
-      returnAddress: { type: String, required: true },
-      returnPolicyAccepted: { type: Boolean, required: true, default: false }
+      returnAddress: { type: String },
+      returnPolicyAccepted: { type: Boolean, default: false }
     },
 
     compliance: {

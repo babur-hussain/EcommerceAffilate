@@ -39,10 +39,16 @@ export default function LoginScreen() {
   const handleSkip = () => {
     if (router.canDismiss()) {
       router.dismiss();
-    } else {
-      router.replace('/');
     }
-  }
+  };
+
+  // Cleanup sensitive state on unmount
+  React.useEffect(() => {
+    return () => {
+      setPassword('');
+      setEmail(''); // Optional, but good practice if not persisting
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
