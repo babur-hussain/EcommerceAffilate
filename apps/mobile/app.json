@@ -50,7 +50,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "http://3.208.16.32/api"
+      "apiUrl": "https://api.lfvs.in/api"
     }
   }
 }

@@ -4,7 +4,7 @@ import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 
-const LIVE_URL = 'http://3.208.16.32';
+const LIVE_URL = 'https://api.lfvs.in';
 
 const getLocalUrl = () => {
   if (!__DEV__) {
