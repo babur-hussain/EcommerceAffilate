@@ -21,17 +21,124 @@ export interface Seller {
   createdAt: string;
   business?: {
     _id: string;
-    businessName: string;
-    businessType: string;
-    status: "PENDING" | "APPROVED" | "REJECTED";
-    trustBadges?: string[];
-    address?: {
-      street: string;
-      city: string;
-      state: string;
-      zipCode: string;
-      country: string;
+    userId: string;
+    firebaseUid: string;
+    accountType: 'new' | 'convert';
+    businessIdentity: {
+      legalBusinessName: string;
+      tradeName: string;
+      businessType: 'Proprietorship' | 'Partnership' | 'LLP' | 'Private Limited' | 'Public Limited' | 'Trust / NGO';
+      natureOfBusiness: 'Manufacturer' | 'Wholesaler' | 'Distributor' | 'Retailer' | 'Service Provider';
+      yearOfEstablishment: number;
     };
+    ownerDetails: {
+      fullName: string;
+      designation: string;
+      mobileNumber: string;
+      email: string;
+      dateOfBirth?: string;
+      gender?: string;
+      governmentIdType: 'Aadhaar' | 'PAN' | 'Passport';
+      governmentIdNumber: string;
+      idProofUrl?: string;
+    };
+    addresses: {
+      registered: {
+        addressLine1: string;
+        addressLine2?: string;
+        city: string;
+        district?: string;
+        state: string;
+        country: string;
+        pincode: string;
+      };
+      operational: {
+        sameAsRegistered: boolean;
+        addressLine1?: string;
+        addressLine2?: string;
+        city?: string;
+        district?: string;
+        state?: string;
+        country?: string;
+        pincode?: string;
+      };
+      warehouse?: {
+        addressLine1?: string;
+        addressLine2?: string;
+        city?: string;
+        district?: string;
+        state?: string;
+        country?: string;
+        pincode?: string;
+      };
+    };
+    taxLegal: {
+      gstinNumber: string;
+      gstRegistrationType: 'Regular' | 'Composition';
+      gstCertificateUrl?: string;
+      panNumber: string;
+      panCardUrl?: string;
+      cinLlpin?: string;
+      shopEstablishmentUrl?: string;
+      msmeUdyamNumber?: string;
+    };
+    bankDetails: {
+      accountHolderName: string;
+      bankName: string;
+      accountNumber: string;
+      ifscCode: string;
+      accountType: 'Savings' | 'Current';
+      cancelledChequeUrl?: string;
+      settlementCycle: 'Daily' | 'Weekly' | 'Bi-Weekly';
+    };
+    verification?: {
+      businessAddressProofUrl?: string;
+      selfieUrl?: string;
+      signatureUrl?: string;
+      authorizationLetterUrl?: string;
+      isVerified: boolean;
+      verifiedAt?: string;
+    };
+    storeProfile: {
+      logoUrl?: string;
+      description?: string;
+      categories: string[];
+      brandOwnership: 'Own Brand' | 'Authorized Seller' | 'Reseller';
+      brandAuthorizationUrl?: string;
+      websiteUrl?: string;
+      socialMediaLinks?: {
+        facebook?: string;
+        instagram?: string;
+        twitter?: string;
+        linkedin?: string;
+      };
+    };
+    logistics: {
+      pickupAddress?: string;
+      pickupTimeSlot?: string;
+      packagingType: 'Seller Packed' | 'Platform Packed';
+      courierPreference?: string;
+      returnAddress?: string;
+      returnPolicyAccepted: boolean;
+    };
+    compliance: {
+      sellerAgreementAccepted: boolean;
+      platformPoliciesAccepted: boolean;
+      taxResponsibilityAccepted: boolean;
+      acceptedAt: string;
+    };
+    advanced?: {
+      multipleWarehouses?: boolean;
+      apiAccessRequested?: boolean;
+      erpIntegration?: string;
+      dedicatedAccountManager?: boolean;
+    };
+    isActive: boolean;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+    trustBadges?: string[];
+    assignedAttributes?: string[];
+    createdAt: string;
+    updatedAt: string;
   };
   stats: {
     totalProducts: number;
