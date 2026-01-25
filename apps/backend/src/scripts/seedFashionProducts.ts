@@ -3,7 +3,7 @@ import { Product } from '../models/product.model';
 import { Brand } from '../models/brand.model';
 import { connectMongo, disconnectMongo } from '../config/mongo';
 
-const BUSINESS_ID = '696f93fcf288b99a36271ab3';
+const BUSINESS_ID = '696f93fcf288b99a36271ab3'; // Urban Fashion Hub
 
 // Fashion subcategories
 const fashionSubcategories = {
