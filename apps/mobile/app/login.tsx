@@ -58,7 +58,7 @@ export default function LoginScreen() {
           <Ionicons name="close" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>EcommerceEarn</Text>
+          <Text style={styles.logoText}>Local For Vocal Startup</Text>
           {/* Or use an Image here if available locally */}
         </View>
       </View>

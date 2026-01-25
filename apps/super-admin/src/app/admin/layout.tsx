@@ -75,7 +75,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900">Super Admin</h1>
-            <p className="text-xs text-gray-500">EcommerceEarn</p>
+            <p className="text-xs text-gray-500">Local For Vocal Startup</p>
           </div>
         </div>
 

@@ -45,9 +45,9 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const [settings, setSettings] = useState<Settings>({
     platform: {
-      name: "EcommerceEarn",
+      name: "Local For Vocal Startup",
       description: "Affiliate Marketing Platform",
-      email: "support@ecommerceearn.com",
+      email: "support@localforvocal.com",
       phone: "+1 (555) 123-4567",
     },
     business: {
@@ -146,11 +146,10 @@ export default function SettingsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                    activeTab === tab.id
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${activeTab === tab.id
                       ? "bg-primary-50 text-primary-700 font-medium"
                       : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   {tab.name}

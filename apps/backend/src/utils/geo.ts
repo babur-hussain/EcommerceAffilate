@@ -37,7 +37,7 @@ export const geocodePincode = async (pincode: string): Promise<{ lat: number; ln
 
         const response = await axios.get(url, {
             headers: {
-                'User-Agent': 'EcommerceEarn/1.0 (internal-delivery-calc)'
+                'User-Agent': 'Local For Vocal Startup/1.0 (internal-delivery-calc)'
             }
         });
 

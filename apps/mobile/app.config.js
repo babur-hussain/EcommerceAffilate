@@ -1,6 +1,6 @@
 export default {
   expo: {
-    name: 'EcommerceEarn',
+    name: 'Local For Vocal Startup',
     slug: 'ecommerceearn-mobile',
     version: '1.0.0',
     orientation: 'portrait',

@@ -202,7 +202,7 @@ export default function AuthModal({
             {/* Headline Text */}
             <div className="text-center mb-6">
               <h1 className="text-neutral-900 tracking-tight text-3xl font-extrabold leading-tight mb-2">
-                {mode === "login" ? "Welcome Back" : "Join Startup Betul"}
+                {mode === "login" ? "Welcome Back" : "Join Local For Vocal Startup"}
               </h1>
               <p className="text-neutral-500 text-sm font-medium leading-relaxed">
                 {mode === "login"

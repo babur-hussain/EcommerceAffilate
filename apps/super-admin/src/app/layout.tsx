@@ -5,9 +5,9 @@ import { Providers } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Super Admin - EcommerceEarn",
-  description: "Super Admin Panel for EcommerceEarn Platform",
+export const metadata = {
+  title: "Super Admin - Local For Vocal Startup",
+  description: "Super Admin Panel for Local For Vocal Startup Platform",
 };
 
 export default function RootLayout({

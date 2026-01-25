@@ -186,7 +186,7 @@ export const createPaymentOrder = async (
       paymentOrderData,
       key_id: provider === 'RAZORPAY' ? env.payments.razorpay.key_id : undefined,
       currency: 'INR',
-      name: 'EcommerceEarn',
+      name: 'Local For Vocal Startup',
       description: 'Order Payment',
       orderId: order._id,
     };

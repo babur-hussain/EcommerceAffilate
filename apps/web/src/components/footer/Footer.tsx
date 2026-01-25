@@ -155,7 +155,7 @@ export default function Footer() {
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/30">
                   <span className="material-symbols-outlined text-white text-2xl">shopping_bag</span>
                 </div>
-                <h3 className="text-2xl font-bold text-white">Startup Betul</h3>
+                <h3 className="text-2xl font-bold text-white">Local For Vocal Startup</h3>
               </div>
               <p className="text-slate-400 mb-6 leading-relaxed">
                 Your premier destination for quality products. From tech essentials to home décor, discover everything you need.
@@ -300,7 +300,7 @@ export default function Footer() {
             {/* Copyright */}
             <div className="text-center md:text-right">
               <p className="text-slate-500 text-sm">
-                © 2026 <span className="text-white font-semibold">Startup Betul</span>. All rights reserved.
+                © 2026 <span className="text-white font-semibold">Local For Vocal Startup</span>. All rights reserved.
               </p>
               <div className="flex items-center justify-center md:justify-end gap-4 mt-2">
                 <Link href="#" className="text-slate-500 hover:text-sky-400 text-xs transition-colors">

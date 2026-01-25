@@ -7,7 +7,7 @@ import Footer from "@/components/footer/Footer";
 import AffiliateTracker from "@/components/common/AffiliateTracker";
 
 export const metadata: Metadata = {
-  title: "Startup Betul - Modern E-commerce",
+  title: "Local For Vocal Startup - Modern E-commerce",
   description: "Clean. Scalable. Built for web & mobile.",
 };
 

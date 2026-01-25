@@ -44,7 +44,7 @@ export default function Header() {
                             </span>
                         </div>
                         <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900">
-                            Startup Betul
+                            Local For Vocal Startup
                         </h1>
                     </Link>
 

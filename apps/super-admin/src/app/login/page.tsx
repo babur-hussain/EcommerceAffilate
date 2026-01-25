@@ -59,7 +59,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-white mb-2">
             Super Admin Panel
           </h1>
-          <p className="text-white/80">EcommerceEarn Platform Management</p>
+          <p className="text-white/80">Local For Vocal Startup Platform Management</p>
         </div>
 
         {/* Login Card */}
@@ -138,7 +138,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-white/60 text-sm mt-8">
-          © 2026 EcommerceEarn. All rights reserved.
+          © 2026 Local For Vocal Startup. All rights reserved.
         </p>
       </div>
     </div>
