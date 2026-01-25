@@ -62,6 +62,18 @@ const resolveDynamicData = async (component: any, userId?: string) => {
 
             if (!component.props) component.props = {};
             component.props.products = products;
+        } else if (query.source === 'category' && query.category) {
+            // Fetch products by category (regex match)
+            const limit = query.limit || 10;
+            const products = await Product.find({
+                category: { $regex: query.category, $options: 'i' },
+                isActive: true
+            })
+                .select('title price images rating reviewCount')
+                .limit(limit);
+
+            if (!component.props) component.props = {};
+            component.props.products = products;
         }
     }
     // Add more resolvers here (e.g., bestselling, new_arrivals)

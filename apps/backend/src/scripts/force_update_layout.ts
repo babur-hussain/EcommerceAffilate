@@ -101,6 +101,49 @@ const premiumLayout = {
             ]
         },
         {
+            id: "kids_fashion_section",
+            type: "Container",
+            style: {
+                marginTop: 8,
+                marginBottom: 24,
+                paddingHorizontal: 16,
+                backgroundColor: "#FFFFFF"
+            },
+            children: [
+                {
+                    id: "kids_header_text",
+                    type: "Text",
+                    props: {
+                        text: "Kids' Fashion"
+                    },
+                    style: {
+                        fontSize: 20,
+                        fontWeight: "700",
+                        color: "#111827",
+                        marginBottom: 16
+                    }
+                },
+                {
+                    id: "kids_grid",
+                    type: "ProductGrid",
+                    props: {
+                        columns: 2,
+                        cardStyle: "standard",
+                        showPrice: true,
+                        showRating: true
+                    },
+                    dataSource: {
+                        type: "DYNAMIC",
+                        query: {
+                            source: "category",
+                            category: "Fashion > Kids' Fashion",
+                            limit: 6
+                        }
+                    }
+                }
+            ]
+        },
+        {
             id: "section_still_looking",
             type: "Container",
             style: {
