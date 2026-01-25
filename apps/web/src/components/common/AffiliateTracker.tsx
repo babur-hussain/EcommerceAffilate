@@ -1,6 +1,15 @@
 "use client";
 
+import { Suspense } from "react";
 import { useAffiliateTracking } from "@/hooks/useAffiliateTracking";
+
+/**
+ * Inner component that uses useSearchParams via useAffiliateTracking
+ */
+function AffiliateTrackerInner() {
+    useAffiliateTracking();
+    return null;
+}
 
 /**
  * Global component to handle affiliate tracking logic.
@@ -8,9 +17,9 @@ import { useAffiliateTracking } from "@/hooks/useAffiliateTracking";
  * on any page entrance.
  */
 export default function AffiliateTracker() {
-    // This hook automatically captures ?ref=CODE from URL
-    // and stores it in localStorage
-    useAffiliateTracking();
-
-    return null;
+    return (
+        <Suspense fallback={null}>
+            <AffiliateTrackerInner />
+        </Suspense>
+    );
 }
