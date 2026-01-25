@@ -197,14 +197,16 @@ export default function Header() {
                                                     </button>
                                                 )}
                                                 {isBusiness && (
-                                                    <Link
-                                                        href="/business"
-                                                        onClick={() => setProfileOpen(false)}
-                                                        className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
+                                                    <button
+                                                        onClick={() => {
+                                                            setProfileOpen(false);
+                                                            window.location.href = 'https://www.seller.localforvocalstartup.com/login';
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group text-left"
                                                     >
                                                         <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">dashboard</span>
                                                         Seller Dashboard
-                                                    </Link>
+                                                    </button>
                                                 )}
                                             </div>
 
@@ -212,14 +214,16 @@ export default function Header() {
                                             {(isBusiness || isInfluencer) && (
                                                 <div className="border-t border-slate-50 py-2">
                                                     {isBusiness && (
-                                                        <Link
-                                                            href="/business"
-                                                            onClick={() => setProfileOpen(false)}
-                                                            className="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                                        <button
+                                                            onClick={() => {
+                                                                setProfileOpen(false);
+                                                                window.location.href = 'https://www.seller.localforvocalstartup.com/login';
+                                                            }}
+                                                            className="w-full flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors text-left"
                                                         >
                                                             <span className="material-symbols-outlined">storefront</span>
                                                             Seller Dashboard
-                                                        </Link>
+                                                        </button>
                                                     )}
                                                     {isInfluencer && (
                                                         <Link

@@ -69,7 +69,7 @@ export default function Footer() {
   };
 
   const handleGoToDashboard = () => {
-    router.push('/business');
+    window.location.href = 'https://www.seller.localforvocalstartup.com/login';
   };
 
   const handleSubscribe = (e: React.FormEvent) => {
