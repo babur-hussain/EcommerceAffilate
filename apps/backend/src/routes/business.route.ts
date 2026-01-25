@@ -272,6 +272,67 @@ router.post(
   }
 );
 
+// GET /api/business/status - Get business registration status for current user
+router.get(
+  "/business/status",
+  verifyFirebaseToken,
+  async (req: Request, res: Response) => {
+    try {
+      const firebaseUser = (req as any).firebaseUser;
+      const user = (req as any).user;
+
+      if (!firebaseUser || !user) {
+        return res.status(401).json({ error: "Authentication failed" });
+      }
+
+      const firebaseUid = firebaseUser.uid;
+
+      // Check if user already has a business role
+      const mongoUser = await User.findById(user.id);
+      if (!mongoUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // If user is BUSINESS_OWNER, BUSINESS_MANAGER, or BUSINESS_STAFF, they're approved
+      if (
+        mongoUser.role === "BUSINESS_OWNER" ||
+        mongoUser.role === "BUSINESS_MANAGER" ||
+        mongoUser.role === "BUSINESS_STAFF" ||
+        mongoUser.role === "SELLER_OWNER"
+      ) {
+        return res.json({ status: "APPROVED" });
+      }
+
+      // Check if there's a business registration for this user
+      const business = await Business.findOne({ firebaseUid });
+
+      if (!business) {
+        // No business found - user can register
+        return res.json({ status: "NONE" });
+      }
+
+      // Business exists - return its status
+      // The Business model has a 'status' field: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'
+      return res.json({
+        status: business.status || "PENDING",
+        businessId: business._id,
+        tradeName: business.businessIdentity?.tradeName
+      });
+    } catch (error: any) {
+      console.error("❌ Error fetching business status:", error.message);
+      logger.error({
+        error: error.message,
+        stack: error.stack,
+      }, "Error fetching business status");
+      return res.status(500).json({
+        error: "Failed to fetch business status",
+        details: error.message,
+      });
+    }
+  }
+);
+
+
 // POST /api/business - Create a business (owner-only). Admin bypasses restrictions.
 router.post(
   "/business",
