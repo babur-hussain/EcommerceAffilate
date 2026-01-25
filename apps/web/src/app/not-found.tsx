@@ -1,8 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function NotFound() {
+// Force dynamic rendering to avoid build-time errors
+export const dynamic = 'force-dynamic';
+
+function NotFoundContent() {
     return (
         <div className="min-h-[80vh] flex items-center justify-center bg-[#f6f8f8] px-4">
             <div className="w-full max-w-lg text-center space-y-8">
@@ -57,5 +61,17 @@ export default function NotFound() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function NotFound() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-[80vh] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#22a8c3]"></div>
+            </div>
+        }>
+            <NotFoundContent />
+        </Suspense>
     );
 }
