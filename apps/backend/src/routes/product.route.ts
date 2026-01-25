@@ -535,7 +535,17 @@ router.get("/products", async (req: Request, res: Response) => {
     }
 
     if (category) {
-      filter.category = category;
+      if (mongoose.Types.ObjectId.isValid(category as string)) {
+        const categoryDoc = await Category.findById(category);
+        if (categoryDoc) {
+          filter.category = { $regex: categoryDoc.name, $options: 'i' };
+        } else {
+          // If ID provided but not found, likely no matches
+          filter.category = category;
+        }
+      } else {
+        filter.category = { $regex: category, $options: 'i' };
+      }
     }
 
     if (search) {

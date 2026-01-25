@@ -928,28 +928,50 @@ export default function EditProductPage() {
                   <select
                     name="category"
                     value={formData.category}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      // Reset subCategory when category changes
+                      setFormData({
+                        ...formData,
+                        category: e.target.value,
+                        subCategory: ""
+                      });
+                    }}
                     required
                     className={selectClass}
                   >
                     <option value="">Select category</option>
-                    {categories.map((category) => (
-                      <option key={category._id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
+                    {categories
+                      .filter(c => !c.parentCategory) // Only parent categories
+                      .map((category) => (
+                        <option key={category._id} value={category.name}>
+                          {category.name}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className={labelClass}>Sub-Category</label>
-                  <input
-                    type="text"
+                  <select
                     name="subCategory"
                     value={formData.subCategory}
                     onChange={handleChange}
-                    placeholder="e.g., Smartphones, T-Shirts"
-                    className={inputClass}
-                  />
+                    className={selectClass}
+                    disabled={!formData.category}
+                  >
+                    <option value="">Select sub-category</option>
+                    {(() => {
+                      const selectedParent = categories.find(c => c.name === formData.category);
+                      if (!selectedParent) return null;
+
+                      return categories
+                        .filter(c => c.parentCategory === selectedParent._id)
+                        .map((subCat) => (
+                          <option key={subCat._id} value={subCat.name}>
+                            {subCat.name}
+                          </option>
+                        ));
+                    })()}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <label className={labelClass}>Product Type *</label>
