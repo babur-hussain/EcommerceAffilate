@@ -196,6 +196,16 @@ export default function Header() {
                                                         Become a Seller
                                                     </button>
                                                 )}
+                                                {isBusiness && (
+                                                    <Link
+                                                        href="/business"
+                                                        onClick={() => setProfileOpen(false)}
+                                                        className="flex items-center gap-3 px-5 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
+                                                    >
+                                                        <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">dashboard</span>
+                                                        Seller Dashboard
+                                                    </Link>
+                                                )}
                                             </div>
 
                                             {/* Role Specific Portals */}

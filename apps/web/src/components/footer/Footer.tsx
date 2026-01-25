@@ -1,18 +1,60 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import BusinessRegistrationModal from '@/components/business/BusinessRegistrationModal';
 
 export default function Footer() {
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, backendUser } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [showSellerModal, setShowSellerModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [businessStatus, setBusinessStatus] = useState<'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'>('NONE');
+  const [loadingStatus, setLoadingStatus] = useState(false);
+
+  // Fetch business status when user logs in
+  useEffect(() => {
+    const fetchBusinessStatus = async () => {
+      if (!backendUser || !firebaseUser) {
+        setBusinessStatus('NONE');
+        return;
+      }
+
+      // If user already has a business role, they're approved
+      if (backendUser.role === 'BUSINESS_OWNER' || backendUser.role === 'BUSINESS_MANAGER' || backendUser.role === 'BUSINESS_STAFF') {
+        setBusinessStatus('APPROVED');
+        return;
+      }
+
+      // Check if they have a pending registration
+      try {
+        setLoadingStatus(true);
+        const response = await fetch('/api/business/status', {
+          headers: {
+            'Authorization': `Bearer ${await firebaseUser.getIdToken()}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setBusinessStatus(data.status || 'NONE');
+        } else {
+          setBusinessStatus('NONE');
+        }
+      } catch (error) {
+        console.error('Error fetching business status:', error);
+        setBusinessStatus('NONE');
+      } finally {
+        setLoadingStatus(false);
+      }
+    };
+
+    fetchBusinessStatus();
+  }, [backendUser, firebaseUser]);
 
   const handleSellerRegistrationClick = () => {
     if (firebaseUser) {
@@ -20,6 +62,14 @@ export default function Footer() {
     } else {
       setShowLoginPrompt(true);
     }
+  };
+
+  const handleCheckStatus = () => {
+    router.push('/account/business-status');
+  };
+
+  const handleGoToDashboard = () => {
+    router.push('/business');
   };
 
   const handleSubscribe = (e: React.FormEvent) => {
@@ -125,14 +175,47 @@ export default function Footer() {
 
               {/* Right CTA */}
               <div className="flex flex-col sm:flex-row items-center gap-4">
-                <button
-                  onClick={handleSellerRegistrationClick}
-                  className="group relative px-8 py-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
-                >
-                  <span className="material-symbols-outlined">storefront</span>
-                  Register as Seller
-                  <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                </button>
+                {businessStatus === 'NONE' && (
+                  <button
+                    onClick={handleSellerRegistrationClick}
+                    disabled={loadingStatus}
+                    className="group relative px-8 py-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined">storefront</span>
+                    Register as Seller
+                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </button>
+                )}
+                {businessStatus === 'PENDING' && (
+                  <button
+                    onClick={handleCheckStatus}
+                    className="group relative px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">pending</span>
+                    Check Status
+                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </button>
+                )}
+                {businessStatus === 'APPROVED' && (
+                  <button
+                    onClick={handleGoToDashboard}
+                    className="group relative px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">dashboard</span>
+                    Seller Dashboard
+                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </button>
+                )}
+                {businessStatus === 'REJECTED' && (
+                  <button
+                    onClick={handleCheckStatus}
+                    className="group relative px-8 py-4 bg-gradient-to-r from-red-500 to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">cancel</span>
+                    Application Rejected
+                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </button>
+                )}
                 <Link
                   href="#"
                   className="text-slate-400 hover:text-sky-400 text-sm transition-colors flex items-center gap-1"
