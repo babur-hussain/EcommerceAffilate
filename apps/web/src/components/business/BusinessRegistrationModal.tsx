@@ -59,9 +59,10 @@ interface BusinessFormData {
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function BusinessRegistrationModal({ open, onClose }: Props) {
+export default function BusinessRegistrationModal({ open, onClose, onSuccess }: Props) {
   const { firebaseUser, idToken } = useAuth();
   const [step, setStep] = useState<Step>(2);
   const [formData, setFormData] = useState<BusinessFormData>({
@@ -848,24 +849,24 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-all z-10"
+          className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-white bg-black/10 hover:bg-black/20 rounded-full transition-all z-20 backdrop-blur-sm"
         >
           <span className="material-symbols-outlined text-2xl">close</span>
         </button>
 
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-sky-500 to-blue-600 text-white px-8 py-6 border-b border-sky-400/30 shadow-lg">
+        <div className="relative bg-linear-to-r from-primary to-blue-600 text-white px-6 py-5 border-b border-sky-400/30 shadow-lg shrink-0">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
               <span className="material-symbols-outlined text-3xl">storefront</span>
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Business Registration</h2>
+              <h2 className="text-xl sm:text-2xl font-bold">Business Registration</h2>
               <p className="text-sky-100 text-sm">Step {step - 1} of 5</p>
             </div>
           </div>
           {/* Modern Progress Bar */}
-          <div className="mt-4 w-full bg-white/20 rounded-full h-2 overflow-hidden">
+          <div className="mt-4 w-full bg-black/10 rounded-full h-2 overflow-hidden">
             <div
               className="bg-white h-2 rounded-full transition-all duration-500 ease-out shadow-glow"
               style={{ width: `${((step - 1) / 5) * 100}%` }}
@@ -904,7 +905,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-8 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                  className="px-8 py-3 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -922,7 +923,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => setStep(Math.min(6, step + 1) as Step)}
-                  className="px-8 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                  className="px-8 py-3 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
                 >
                   Next
                   <span className="material-symbols-outlined text-xl">arrow_forward</span>
@@ -935,7 +936,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
 
       {/* Beautiful Animated Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60]">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-60">
           <style>{`
             @keyframes fadeIn {
               from { opacity: 0; }
@@ -960,7 +961,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div
-                  className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center"
+                  className="w-20 h-20 bg-linear-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center"
                   style={{ animation: 'scaleIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}
                 >
                   <svg
@@ -979,7 +980,7 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
                   </svg>
                 </div>
                 <div
-                  className="absolute inset-0 w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full opacity-20"
+                  className="absolute inset-0 w-20 h-20 bg-linear-to-br from-green-400 to-emerald-600 rounded-full opacity-20"
                   style={{ animation: 'scaleIn 1s infinite' }}
                 ></div>
               </div>
@@ -1014,8 +1015,9 @@ export default function BusinessRegistrationModal({ open, onClose }: Props) {
               onClick={() => {
                 setShowSuccessModal(false);
                 onClose();
+                onSuccess?.();
               }}
-              className="w-full bg-gradient-to-r from-sky-500 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-sky-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+              className="w-full bg-linear-to-r from-sky-500 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-sky-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
             >
               Got it!
             </button>

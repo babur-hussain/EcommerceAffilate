@@ -94,12 +94,20 @@ router.post(
       // Check if business already exists for this user
       const existingBusiness = await Business.findOne({ firebaseUid });
       if (existingBusiness) {
-        console.log(
-          "⚠️ Business already exists - updating with new information"
-        );
+        if (existingBusiness.status === 'PENDING' || existingBusiness.status === 'APPROVED') {
+          console.log(`⚠️ Blocked duplicate registration for ${firebaseUid} - Status: ${existingBusiness.status}`);
+          return res.status(400).json({
+            error: "Registration already exists",
+            status: existingBusiness.status,
+            message: existingBusiness.status === 'PENDING'
+              ? "Your application is currently under review."
+              : "Your account is already approved."
+          });
+        }
 
+        console.log("⚠️ Updating existing REJECTED/SUSPENDED business profile");
+        // ... (rest of the update logic remains same for rejected profiles)
         try {
-          // Update existing business with new information
           existingBusiness.accountType = accountType;
           existingBusiness.businessIdentity = businessIdentity;
           existingBusiness.ownerDetails = ownerDetails;
@@ -117,6 +125,7 @@ router.post(
           existingBusiness.advanced =
             advanced || existingBusiness.advanced || {};
           existingBusiness.isActive = true;
+          existingBusiness.status = 'PENDING'; // Reset to pending after re-submission
 
           await existingBusiness.save();
           console.log("✅ Business information updated:", existingBusiness._id);

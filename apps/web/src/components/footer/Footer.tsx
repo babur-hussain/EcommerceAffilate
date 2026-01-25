@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import BusinessRegistrationModal from '@/components/business/BusinessRegistrationModal';
+import InfluencerRegistrationModal from '@/components/influencer/InfluencerRegistrationModal';
 
 export default function Footer() {
   const { firebaseUser, backendUser } = useAuth();
@@ -12,6 +13,7 @@ export default function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [showSellerModal, setShowSellerModal] = useState(false);
+  const [showInfluencerModal, setShowInfluencerModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [businessStatus, setBusinessStatus] = useState<'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'>('NONE');
   const [loadingStatus, setLoadingStatus] = useState(false);
@@ -83,12 +85,23 @@ export default function Footer() {
     }
   };
 
+  const isSeller = backendUser?.role === 'BUSINESS_OWNER' || backendUser?.role === 'BUSINESS_MANAGER' || backendUser?.role === 'BUSINESS_STAFF';
+  const isInfluencer = backendUser?.role === 'INFLUENCER';
+
   return (
     <>
       {/* Seller Registration Modal */}
       <BusinessRegistrationModal
         open={showSellerModal}
         onClose={() => setShowSellerModal(false)}
+        onSuccess={() => setBusinessStatus('PENDING')}
+      />
+
+      {/* Influencer Registration Modal */}
+      <InfluencerRegistrationModal
+        open={showInfluencerModal}
+        onClose={() => setShowInfluencerModal(false)}
+        onSuccess={() => setBusinessStatus('PENDING')}
       />
 
       {/* Login Prompt Modal */}
@@ -103,7 +116,7 @@ export default function Footer() {
             </button>
 
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-sky-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-sky-500/30">
+              <div className="w-16 h-16 bg-linear-to-br from-sky-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-sky-500/30">
                 <span className="material-symbols-outlined text-white text-3xl">lock</span>
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Login Required</h3>
@@ -115,7 +128,7 @@ export default function Footer() {
             <div className="space-y-3">
               <button
                 onClick={() => router.push('/login?redirect=/&action=seller-register')}
-                className="w-full px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined">login</span>
                 Login to Continue
@@ -132,7 +145,7 @@ export default function Footer() {
         </div>
       )}
 
-      <footer className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-300 mt-auto overflow-hidden">
+      <footer className="relative bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-300 mt-auto overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{
@@ -141,146 +154,178 @@ export default function Footer() {
           }} />
         </div>
 
-        {/* Influencer CTA Section */}
-        <div className="relative border-b border-slate-800/50 bg-slate-900/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-              {/* Left Content */}
-              <div className="flex-1 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-full text-purple-400 text-sm font-semibold mb-4">
-                  <span className="material-symbols-outlined text-lg">campaign</span>
-                  Join Our Creator Network
+        {/* Influencer CTA Section - Hidden for Sellers */}
+        {!isSeller && (
+          <div className="relative border-b border-slate-800/50 bg-slate-900/50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                {/* Left Content */}
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-linear-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-full text-purple-400 text-sm font-semibold mb-4">
+                    <span className="material-symbols-outlined text-lg">campaign</span>
+                    Join Our Creator Network
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
+                    Monetize Your Influence
+                  </h3>
+                  <p className="text-slate-400 text-base sm:text-lg mb-4 sm:mb-6 max-w-2xl">
+                    Partner with premium brands, share products you love, and earn competitive commissions. No limits on what you can earn.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-8 justify-center lg:justify-start text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-purple-400">check_circle</span>
+                      <span className="text-slate-300">High Commissions</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-purple-400">check_circle</span>
+                      <span className="text-slate-300">Exclusive Perks</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-purple-400">check_circle</span>
+                      <span className="text-slate-300">Partner Support</span>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
-                  Monetize Your Influence
-                </h3>
-                <p className="text-slate-400 text-base sm:text-lg mb-4 sm:mb-6 max-w-2xl">
-                  Partner with premium brands, share products you love, and earn competitive commissions. No limits on what you can earn.
-                </p>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-8 justify-center lg:justify-start text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-purple-400">check_circle</span>
-                    <span className="text-slate-300">High Commissions</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-purple-400">check_circle</span>
-                    <span className="text-slate-300">Exclusive Perks</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-purple-400">check_circle</span>
-                    <span className="text-slate-300">Partner Support</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Right CTA */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                <Link
-                  href="/influencer/register"
-                  className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
-                >
-                  <span className="material-symbols-outlined">stars</span>
-                  Register as Influencer
-                  <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                </Link>
-                <Link
-                  href="#"
-                  className="text-slate-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1 justify-center"
-                >
-                  Learn more
-                  <span className="material-symbols-outlined text-sm">help</span>
-                </Link>
+                {/* Right CTA */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                  {businessStatus === 'NONE' && (
+                    <button
+                      onClick={() => {
+                        if (firebaseUser) {
+                          setShowInfluencerModal(true);
+                        } else {
+                          setShowLoginPrompt(true);
+                        }
+                      }}
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
+                      <span className="material-symbols-outlined">stars</span>
+                      Register as Influencer
+                      <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                  )}
+                  {businessStatus === 'PENDING' && (
+                    <button
+                      onClick={handleCheckStatus}
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
+                      <span className="material-symbols-outlined">pending</span>
+                      Check Status
+                      <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                  )}
+                  {businessStatus === 'APPROVED' && (
+                    <button
+                      onClick={() => window.location.href = 'https://influencer.localforvocalstartup.com'}
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
+                      <span className="material-symbols-outlined">dashboard</span>
+                      Influencer Dashboard
+                      <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                  )}
+                  <Link
+                    href="#"
+                    className="text-slate-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1 justify-center"
+                  >
+                    Learn more
+                    <span className="material-symbols-outlined text-sm">help</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Seller CTA Section */}
-        <div className="relative border-b border-slate-800/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-              {/* Left Content */}
-              <div className="flex-1 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-sky-500/10 to-blue-500/10 border border-sky-500/20 rounded-full text-sky-400 text-sm font-semibold mb-4">
-                  <span className="material-symbols-outlined text-lg">trending_up</span>
-                  Join Our Seller Community
+        {/* Seller CTA Section - Hidden for Influencers */}
+        {!isInfluencer && (
+          <div className="relative border-b border-slate-800/50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                {/* Left Content */}
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-linear-to-r from-sky-500/10 to-blue-500/10 border border-sky-500/20 rounded-full text-sky-400 text-sm font-semibold mb-4">
+                    <span className="material-symbols-outlined text-lg">trending_up</span>
+                    Join Our Seller Community
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
+                    Start Selling Today
+                  </h3>
+                  <p className="text-slate-400 text-base sm:text-lg mb-4 sm:mb-6 max-w-2xl">
+                    Reach millions of customers and grow your business with our powerful e-commerce platform. Zero setup fees, easy onboarding.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-8 justify-center lg:justify-start text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-green-400">check_circle</span>
+                      <span className="text-slate-300">Low Commission</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-green-400">check_circle</span>
+                      <span className="text-slate-300">Fast Payouts</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-green-400">check_circle</span>
+                      <span className="text-slate-300">Free Tools</span>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
-                  Start Selling Today
-                </h3>
-                <p className="text-slate-400 text-base sm:text-lg mb-4 sm:mb-6 max-w-2xl">
-                  Reach millions of customers and grow your business with our powerful e-commerce platform. Zero setup fees, easy onboarding.
-                </p>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-8 justify-center lg:justify-start text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-green-400">check_circle</span>
-                    <span className="text-slate-300">Low Commission</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-green-400">check_circle</span>
-                    <span className="text-slate-300">Fast Payouts</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-green-400">check_circle</span>
-                    <span className="text-slate-300">Free Tools</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Right CTA */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                {businessStatus === 'NONE' && (
-                  <button
-                    onClick={handleSellerRegistrationClick}
-                    disabled={loadingStatus}
-                    className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
+                {/* Right CTA */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                  {businessStatus === 'NONE' && (
+                    <button
+                      onClick={handleSellerRegistrationClick}
+                      disabled={loadingStatus}
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
+                    >
+                      <span className="material-symbols-outlined">storefront</span>
+                      Register as Seller
+                      <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                  )}
+                  {businessStatus === 'PENDING' && (
+                    <button
+                      onClick={handleCheckStatus}
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
+                      <span className="material-symbols-outlined">pending</span>
+                      Check Status
+                      <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                  )}
+                  {businessStatus === 'APPROVED' && (
+                    <button
+                      onClick={handleGoToDashboard}
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
+                      <span className="material-symbols-outlined">dashboard</span>
+                      Seller Dashboard
+                      <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                  )}
+                  {businessStatus === 'REJECTED' && (
+                    <button
+                      onClick={handleCheckStatus}
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-red-500 to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
+                      <span className="material-symbols-outlined">cancel</span>
+                      Application Rejected
+                      <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                  )}
+                  <Link
+                    href="#"
+                    className="text-slate-400 hover:text-sky-400 text-sm transition-colors flex items-center gap-1"
                   >
-                    <span className="material-symbols-outlined">storefront</span>
-                    Register as Seller
-                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                  </button>
-                )}
-                {businessStatus === 'PENDING' && (
-                  <button
-                    onClick={handleCheckStatus}
-                    className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
-                  >
-                    <span className="material-symbols-outlined">pending</span>
-                    Check Status
-                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                  </button>
-                )}
-                {businessStatus === 'APPROVED' && (
-                  <button
-                    onClick={handleGoToDashboard}
-                    className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
-                  >
-                    <span className="material-symbols-outlined">dashboard</span>
-                    Seller Dashboard
-                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                  </button>
-                )}
-                {businessStatus === 'REJECTED' && (
-                  <button
-                    onClick={handleCheckStatus}
-                    className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-red-500 to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
-                  >
-                    <span className="material-symbols-outlined">cancel</span>
-                    Application Rejected
-                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                  </button>
-                )}
-                <Link
-                  href="#"
-                  className="text-slate-400 hover:text-sky-400 text-sm transition-colors flex items-center gap-1"
-                >
-                  Learn more
-                  <span className="material-symbols-outlined text-sm">help</span>
-                </Link>
+                    Learn more
+                    <span className="material-symbols-outlined text-sm">help</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main Footer Content */}
         <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-8 sm:pt-12 md:pt-16 pb-6 sm:pb-8">
@@ -289,7 +334,7 @@ export default function Footer() {
             {/* Brand Section */}
             <div className="col-span-2 sm:col-span-2 lg:col-span-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/30">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/30">
                   <span className="material-symbols-outlined text-white text-2xl">shopping_bag</span>
                 </div>
                 <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Local For Vocal Startup</h3>
@@ -366,17 +411,39 @@ export default function Footer() {
             <div className="col-span-1 lg:col-span-2">
               <h4 className="text-white font-bold mb-4 text-sm uppercase tracking-wider">Company</h4>
               <ul className="space-y-3">
-                {['About Us', 'Careers', 'Press', 'Blog', 'Contact', 'Join as Influencer'].map((item) => (
-                  <li key={item}>
-                    <Link
-                      href={item === 'Join as Influencer' ? '/influencer/register' : '#'}
-                      className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
-                    >
-                      <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
-                      {item}
-                    </Link>
-                  </li>
-                ))}
+                {['About Us', 'Careers', 'Press', 'Blog', 'Contact', 'Join as Influencer']
+                  .filter(item => !(item === 'Join as Influencer' && isSeller))
+                  .map((item) => (
+                    <li key={item}>
+                      {item === 'Join as Influencer' ? (
+                        <button
+                          onClick={() => {
+                            if (businessStatus !== 'NONE') {
+                              handleCheckStatus();
+                              return;
+                            }
+                            if (firebaseUser) {
+                              setShowInfluencerModal(true);
+                            } else {
+                              setShowLoginPrompt(true);
+                            }
+                          }}
+                          className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group text-left"
+                        >
+                          <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                          {businessStatus === 'PENDING' ? 'Registration Under Review' : businessStatus === 'APPROVED' ? 'Go to Dashboard' : item}
+                        </button>
+                      ) : (
+                        <Link
+                          href="#"
+                          className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
+                        >
+                          <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                          {item}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
               </ul>
             </div>
 
@@ -397,7 +464,7 @@ export default function Footer() {
                 />
                 <button
                   type="submit"
-                  className="absolute right-1 top-1 bottom-1 px-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-md hover:shadow-lg hover:shadow-sky-500/50 transition-all duration-300 flex items-center justify-center disabled:opacity-50"
+                  className="absolute right-1 top-1 bottom-1 px-4 bg-linear-to-r from-sky-500 to-blue-600 text-white rounded-md hover:shadow-lg hover:shadow-sky-500/50 transition-all duration-300 flex items-center justify-center disabled:opacity-50"
                   disabled={subscribed}
                 >
                   {subscribed ? (
@@ -457,7 +524,7 @@ export default function Footer() {
         </div>
 
         {/* Decorative Gradient Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 via-blue-500 to-purple-500" />
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-sky-500 via-blue-500 to-purple-500" />
       </footer>
     </>
   );

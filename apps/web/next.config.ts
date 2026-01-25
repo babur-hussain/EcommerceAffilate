@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:4000";
+    const backendUrl = process.env.BACKEND_URL || "https://api.lfvs.in";
     return [
       {
         source: "/api/:path*",

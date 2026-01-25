@@ -6,7 +6,7 @@ import GlobalSearch from "@/components/search/GlobalSearch";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import AuthModal from "@/components/auth/AuthModal";
-import BusinessRegisterForm from "@/components/business/BusinessRegisterForm";
+import BusinessRegistrationModal from "@/components/business/BusinessRegistrationModal";
 import CartPopup from "@/components/cart/CartPopup";
 
 export default function Header() {
@@ -287,11 +287,10 @@ export default function Header() {
                 onClose={() => setAuthOpen(false)}
                 initialMode={authMode}
             />
-            {businessRegisterOpen && (
-                <BusinessRegisterForm
-                    onClose={() => setBusinessRegisterOpen(false)}
-                />
-            )}
+            <BusinessRegistrationModal
+                open={businessRegisterOpen}
+                onClose={() => setBusinessRegisterOpen(false)}
+            />
         </header>
     );
 }

@@ -1,7 +1,7 @@
 import { getAuth } from 'firebase/auth';
 
 const LOCAL_API_URL = 'http://localhost:4000/api';
-const LIVE_API_URL = 'http://3.208.16.32/api';
+const LIVE_API_URL = 'https://api.lfvs.in/api';
 
 // State to hold the current base URL
 let currentBaseUrl: string | null = null;
@@ -15,6 +15,11 @@ async function getBaseUrl(): Promise<string> {
   // If we already determined the URL, use it
   if (currentBaseUrl) return currentBaseUrl;
 
+  // Force Live URL as per request
+  currentBaseUrl = LIVE_API_URL;
+  return currentBaseUrl;
+
+  /*
   // If we are already checking, wait a bit (simple simplistic approach)
   // In a real app we might want a promise queue, but this is sufficient for now
   if (isCheckingHealth) {
@@ -48,6 +53,7 @@ async function getBaseUrl(): Promise<string> {
   }
 
   return currentBaseUrl!;
+  */
 }
 
 /**

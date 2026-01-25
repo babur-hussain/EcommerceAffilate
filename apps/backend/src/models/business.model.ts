@@ -9,8 +9,8 @@ export interface IBusiness extends Document {
   businessIdentity: {
     legalBusinessName: string;
     tradeName: string;
-    businessType: 'Proprietorship' | 'Partnership' | 'LLP' | 'Private Limited' | 'Public Limited' | 'Trust / NGO';
-    natureOfBusiness: 'Manufacturer' | 'Wholesaler' | 'Distributor' | 'Retailer' | 'Service Provider';
+    businessType: 'Proprietorship' | 'Partnership' | 'LLP' | 'Private Limited' | 'Public Limited' | 'Trust / NGO' | 'Influencer';
+    natureOfBusiness: 'Manufacturer' | 'Wholesaler' | 'Distributor' | 'Retailer' | 'Service Provider' | 'Content Creator' | 'Influencer';
     yearOfEstablishment: number;
   };
 
@@ -153,12 +153,12 @@ const businessSchema = new Schema<IBusiness>(
       tradeName: { type: String, required: true },
       businessType: {
         type: String,
-        enum: ['Proprietorship', 'Partnership', 'LLP', 'Private Limited', 'Public Limited', 'Trust / NGO'],
+        enum: ['Proprietorship', 'Partnership', 'LLP', 'Private Limited', 'Public Limited', 'Trust / NGO', 'Influencer'],
         required: true
       },
       natureOfBusiness: {
         type: String,
-        enum: ['Manufacturer', 'Wholesaler', 'Distributor', 'Retailer', 'Service Provider'],
+        enum: ['Manufacturer', 'Wholesaler', 'Distributor', 'Retailer', 'Service Provider', 'Content Creator', 'Influencer'],
         required: true
       },
       yearOfEstablishment: { type: Number, required: true }
@@ -260,7 +260,7 @@ const businessSchema = new Schema<IBusiness>(
       categories: [{ type: String }],
       brandOwnership: {
         type: String,
-        enum: ['Own Brand', 'Authorized Seller', 'Reseller'],
+        enum: ['Own Brand', 'Authorized Seller', 'Reseller', 'Influencer'],
         required: true
       },
       brandAuthorizationUrl: { type: String },

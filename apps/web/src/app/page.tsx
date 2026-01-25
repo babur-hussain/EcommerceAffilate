@@ -1,5 +1,6 @@
 import Link from "next/link";
 import HeroSlider from "@/components/home/HeroSlider";
+import MobileHeroSlider from "@/components/home/MobileHeroSlider";
 import HomeCategoryList from "@/components/home/HomeCategoryList";
 import GlobalSearch from "@/components/search/GlobalSearch";
 import ProductRow from "@/components/home/ProductRow";
@@ -17,7 +18,14 @@ export default function Home() {
         {/* Hero Section */}
         <section className="relative w-full pt-1 pb-2 px-2 sm:px-3 md:px-6">
           <div className="max-w-[1440px] mx-auto">
-            <HeroSlider />
+            {/* Desktop Slider */}
+            <div className="hidden md:block">
+              <HeroSlider />
+            </div>
+            {/* Mobile Slider */}
+            <div className="block md:hidden">
+              <MobileHeroSlider />
+            </div>
           </div>
         </section>
 
@@ -73,81 +81,81 @@ export default function Home() {
                 title="Boys T-Shirts"
                 categoryIds={["696e6dba9d453a4173def3e0"]}
                 viewAllLink="/search?category=696e6dba9d453a4173def3e0"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Boys Shirts"
                 categoryIds={["696e6dba9d453a4173def3e3"]}
                 viewAllLink="/search?category=696e6dba9d453a4173def3e3"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Boys Jeans"
                 categoryIds={["696e6dba9d453a4173def3e6"]}
                 viewAllLink="/search?category=696e6dba9d453a4173def3e6"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Boys Shorts"
                 categoryIds={["696e6dbb9d453a4173def3e9"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def3e9"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Boys Ethnic Wear"
                 categoryIds={["696e6dbb9d453a4173def3ec"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def3ec"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
 
               <ProductRow
                 title="Girls Dresses"
                 categoryIds={["696e6dbb9d453a4173def3ef"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def3ef"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Girls Tops"
                 categoryIds={["696e6dbb9d453a4173def3f2"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def3f2"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Girls Jeans"
                 categoryIds={["696e6dbb9d453a4173def3f5"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def3f5"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Girls Skirts"
                 categoryIds={["696e6dbb9d453a4173def3f8"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def3f8"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Girls Ethnic Wear"
                 categoryIds={["696e6dbb9d453a4173def3fb"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def3fb"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
 
               <ProductRow
                 title="Infant Wear"
                 categoryIds={["696e6dbb9d453a4173def3fe"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def3fe"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="Kids Innerwear"
                 categoryIds={["696e6dbb9d453a4173def401"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def401"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
               <ProductRow
                 title="School Uniforms"
                 categoryIds={["696e6dbb9d453a4173def404"]}
                 viewAllLink="/search?category=696e6dbb9d453a4173def404"
-                className="!bg-transparent !py-3 sm:!py-5 !shadow-none border-b border-slate-50 last:border-0"
+                className="bg-transparent! py-3! sm:py-5! shadow-none! border-b border-slate-50 last:border-0"
               />
             </div>
 
