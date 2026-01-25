@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { Product } from '../models/product.model';
 import { Brand } from '../models/brand.model';
-import { config } from '../config/database';
+import { connectMongo, disconnectMongo } from '../config/mongo';
 
 const BUSINESS_ID = '696f93fcf288b99a36271ab3';
 
@@ -132,7 +132,7 @@ function generateImages(category: string): string[] {
 async function seedFashionProducts() {
     try {
         console.log('🔌 Connecting to MongoDB...');
-        await mongoose.connect(config.mongoUri);
+        await connectMongo();
         console.log('✅ Connected to MongoDB');
 
         // Verify business exists
@@ -312,6 +312,7 @@ async function seedFashionProducts() {
         console.error('❌ Error seeding products:', error.message);
         process.exit(1);
     } finally {
+        await disconnectMongo();
         await mongoose.disconnect();
         console.log('👋 Disconnected from MongoDB');
         process.exit(0);
