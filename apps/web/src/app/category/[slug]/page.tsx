@@ -125,7 +125,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
               <div className="flex-1">
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                   {[...Array(8)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-2xl p-4">
+                    <div key={i} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4">
                       <div className="aspect-square bg-slate-200 rounded-xl mb-4" />
                       <div className="h-4 bg-slate-200 rounded mb-2" />
                       <div className="h-4 bg-slate-200 rounded w-2/3" />
@@ -170,12 +170,12 @@ export default function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <main className="max-w-[1440px] mx-auto w-full px-6 lg:px-12 py-8 flex gap-10">
+      <main className="max-w-[1440px] mx-auto w-full px-3 sm:px-4 md:px-6 lg:px-12 py-4 sm:py-6 md:py-8 flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-10">
         {/* Sidebar Filters */}
         <CategorySidebar parentCategoryId={category._id} />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col gap-8">
+        <div className="flex-1 flex flex-col gap-4 sm:gap-6 md:gap-8">
           {/* Category Banner */}
           <CategoryBanner
             name={category.name}
@@ -188,17 +188,17 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           <TrendingProducts products={products} categorySlug={category.slug} />
 
           {/* Product Grid Header */}
-          <div className="flex items-center justify-between px-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-1 sm:px-2">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-slate-900">{products.length} Items</span>
+              <span className="text-xs sm:text-sm font-bold text-slate-900">{products.length} Items</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {/* Sort Dropdown */}
               <div className="relative">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none bg-transparent border-none text-sm font-bold pr-8 py-2 focus:ring-0 cursor-pointer text-slate-700"
+                  className="appearance-none bg-transparent border-none text-xs sm:text-sm font-bold pr-6 sm:pr-8 py-2 focus:ring-0 cursor-pointer text-slate-700"
                 >
                   <option value="featured">Sort by: Featured</option>
                   <option value="price-low">Price: Low to High</option>
@@ -210,7 +210,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 </span>
               </div>
               {/* View Toggle */}
-              <div className="flex border border-slate-200 rounded overflow-hidden">
+              <div className="hidden sm:flex border border-slate-200 rounded overflow-hidden">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`p-1.5 ${viewMode === "grid" ? "bg-slate-100" : "hover:bg-slate-50"}`}
@@ -229,8 +229,8 @@ export default function CategoryPage({ params }: CategoryPageProps) {
 
           {/* Product Grid */}
           {products.length > 0 ? (
-            <div className={`grid gap-6 px-2 pb-16 ${viewMode === "grid"
-              ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+            <div className={`grid gap-3 sm:gap-4 md:gap-6 px-1 sm:px-2 pb-8 sm:pb-12 md:pb-16 ${viewMode === "grid"
+              ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
               : "grid-cols-1"
               }`}>
               {products.map((product) => {
@@ -246,9 +246,9 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                   <Link
                     key={product._id}
                     href={`/product/${product._id}`}
-                    className="product-card group relative bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl transition-all duration-300"
+                    className="product-card group relative bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm hover:shadow-xl transition-all duration-300"
                   >
-                    <div className="relative aspect-square rounded-xl overflow-hidden mb-4 bg-slate-50">
+                    <div className="relative aspect-square rounded-lg sm:rounded-xl overflow-hidden mb-2 sm:mb-4 bg-slate-50">
                       <Image
                         src={imageUrl}
                         alt={product.title}
@@ -279,13 +279,13 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                           e.preventDefault();
                           // Add to cart logic here
                         }}
-                        className="absolute bottom-3 right-3 size-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-primary/90"
+                        className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 size-8 sm:size-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-primary/90"
                       >
                         <span className="material-symbols-outlined">add</span>
                       </button>
                     </div>
                     <div className="flex justify-between items-start mb-1">
-                      <h3 className="text-sm font-bold text-slate-900 leading-tight line-clamp-1 flex-1">
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight line-clamp-1 flex-1">
                         {product.title}
                       </h3>
                       {product.rating && (
@@ -302,12 +302,12 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                         </div>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-500 mb-3 truncate">
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 mb-2 sm:mb-3 truncate">
                       {product.brand || "Brand"}
                     </p>
                     <div className="flex items-center justify-between mt-auto">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-extrabold text-primary">
+                        <span className="text-base sm:text-lg font-extrabold text-primary">
                           ₹{price.toLocaleString()}
                         </span>
                         {originalPrice && (

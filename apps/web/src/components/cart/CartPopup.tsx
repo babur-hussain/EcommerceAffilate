@@ -25,7 +25,7 @@ export default function CartPopup({ onClose }: { onClose: () => void }) {
 
     if (!items || items.length === 0) {
         return (
-            <div className="absolute top-full right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl ring-1 ring-slate-900/5 py-6 px-4 z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200 text-center">
+            <div className="fixed inset-x-0 bottom-0 md:absolute md:top-full md:right-0 md:bottom-auto md:inset-x-auto mt-0 md:mt-3 w-full md:w-80 bg-white rounded-t-2xl md:rounded-2xl shadow-xl ring-1 ring-slate-900/5 py-6 px-4 z-50 origin-bottom md:origin-top-right animate-in fade-in slide-in-from-bottom-4 md:slide-in-from-bottom-0 md:zoom-in-95 duration-200 text-center max-h-[80vh] md:max-h-none">
                 <div className="mx-auto size-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
                     <span className="material-symbols-outlined text-3xl text-slate-300">shopping_cart_off</span>
                 </div>
@@ -47,9 +47,9 @@ export default function CartPopup({ onClose }: { onClose: () => void }) {
     }, 0);
 
     return (
-        <div className="absolute top-full right-0 mt-3 w-96 bg-white rounded-2xl shadow-xl ring-1 ring-slate-900/5 z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+        <div className="fixed inset-x-0 bottom-0 md:absolute md:top-full md:right-0 md:bottom-auto md:inset-x-auto mt-0 md:mt-3 w-full md:w-96 bg-white rounded-t-2xl md:rounded-2xl shadow-xl ring-1 ring-slate-900/5 z-50 origin-bottom md:origin-top-right animate-in fade-in slide-in-from-bottom-4 md:slide-in-from-bottom-0 md:zoom-in-95 duration-200 overflow-hidden max-h-[85vh] md:max-h-none">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
                 <h3 className="font-bold text-slate-900">Shopping Cart ({items.length})</h3>
                 <span className="text-xs font-bold text-primary uppercase tracking-wide">
                     {formatPrice(subtotal)}
@@ -59,7 +59,7 @@ export default function CartPopup({ onClose }: { onClose: () => void }) {
             {/* Items List - Max 3 items */}
             <div className="py-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {items.slice(0, 3).map((item, idx) => (
-                    <div key={idx} className="flex gap-3 px-5 py-3 hover:bg-slate-50 transition-colors group relative">
+                    <div key={idx} className="flex gap-3 px-4 sm:px-5 py-3 hover:bg-slate-50 transition-colors group relative">
                         {/* Image */}
                         <div className="shrink-0 size-16 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                             {item.productId?.image ? (
@@ -112,7 +112,7 @@ export default function CartPopup({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Footer */}
-            <div className="p-5 border-t border-slate-50 bg-slate-50/30 space-y-3">
+            <div className="p-4 sm:p-5 border-t border-slate-50 bg-slate-50/30 space-y-3">
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-slate-500 font-medium">Subtotal</span>
                     <span className="text-lg font-bold text-slate-900">{formatPrice(subtotal)}</span>

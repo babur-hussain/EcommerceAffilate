@@ -519,6 +519,100 @@ router.get("/products/:id", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/products/meta - Get aggregation data for filters (price range, brands, etc.)
+router.get("/products/meta", async (req: Request, res: Response) => {
+  try {
+    const { category, search, brand, subCategory, minPrice, maxPrice, ids } = req.query;
+
+    const matchStage: any = { isActive: true };
+
+    // Apply filters similar to main product listing
+    if (ids) {
+      const idArray = (ids as string).split(',').map(id => id.trim()).filter(id => mongoose.Types.ObjectId.isValid(id));
+      if (idArray.length > 0) matchStage._id = { $in: idArray };
+    }
+
+    if (category) {
+      // Check if category is ID
+      if (mongoose.Types.ObjectId.isValid(category as string)) {
+        // If ID, try to find category name to regex match, OR simply match exact category ID if you stored IDs.
+        // Current logic in GET /products suggests we store Category NAME in product.category string field.
+        const categoryDoc = await Category.findById(category);
+        if (categoryDoc) {
+          matchStage.category = { $regex: categoryDoc.name, $options: 'i' };
+        } else {
+          // Fallback
+          matchStage.category = category;
+        }
+      } else {
+        matchStage.category = { $regex: category, $options: 'i' };
+      }
+    }
+
+    if (search) {
+      matchStage.title = { $regex: search, $options: 'i' };
+    }
+
+    // Note: We typically exclude the specific filter we are aggregating for 
+    // to show *other* options, but for strict narrowing, including them is also common.
+    // For price bounds, we usually want global bounds of the search context *ignoring* current price selection.
+
+    const priceMatch = { ...matchStage };
+    // For brands aggregation, we might want to respect price filter
+    const brandMatch = { ...matchStage };
+    if (minPrice || maxPrice) {
+      brandMatch.price = {};
+      if (minPrice) brandMatch.price.$gte = Number(minPrice);
+      if (maxPrice) brandMatch.price.$lte = Number(maxPrice);
+    }
+    // For price aggregation, we respect brand filter
+    if (brand) {
+      priceMatch.brand = brand;
+    }
+
+    const [priceStats, brandStats] = await Promise.all([
+      Product.aggregate([
+        { $match: priceMatch },
+        {
+          $group: {
+            _id: null,
+            minPrice: { $min: "$price" },
+            maxPrice: { $max: "$price" },
+            count: { $sum: 1 }
+          }
+        }
+      ]),
+      Product.aggregate([
+        { $match: brandMatch },
+        {
+          $group: {
+            _id: "$brand",
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { count: -1 } }
+      ])
+    ]);
+
+    const stats = {
+      price: {
+        min: priceStats.length > 0 ? priceStats[0].minPrice : 0,
+        max: priceStats.length > 0 ? priceStats[0].maxPrice : 1000,
+      },
+      brands: brandStats.map(b => ({ name: b._id || 'Generic', count: b.count })),
+      totalProducts: priceStats.length > 0 ? priceStats[0].count : 0
+    };
+
+    res.json(stats);
+
+  } catch (error: any) {
+    res.status(500).json({
+      error: "Failed to fetch product metadata",
+      message: error.message,
+    });
+  }
+});
+
 // GET /api/products - Get all active products
 router.get("/products", async (req: Request, res: Response) => {
   try {

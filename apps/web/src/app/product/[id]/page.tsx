@@ -130,9 +130,9 @@ export default function ProductPage({ params }: ProductPageProps) {
            So I should REMOVE Header import and usage here.
        */}
 
-      <main className="max-w-[1440px] mx-auto px-6 lg:px-12 py-8">
+      <main className="max-w-[1440px] mx-auto px-3 sm:px-4 md:px-6 lg:px-12 py-4 sm:py-6 md:py-8">
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 mb-8 text-sm text-[#4597a1] font-medium">
+        <div className="flex items-center gap-1 sm:gap-2 mb-4 sm:mb-6 md:mb-8 text-xs sm:text-sm text-[#4597a1] font-medium overflow-x-auto hide-scrollbar">
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
           <span>/</span>
           <Link href={`/category/${product.category}`} className="hover:text-primary transition-colors">{product.category}</Link>
@@ -140,7 +140,7 @@ export default function ProductPage({ params }: ProductPageProps) {
           <span className="text-[#0c1b1d] font-bold line-clamp-1">{product.title}</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 md:gap-12">
           <div className="lg:col-span-7">
             <div className="flex flex-col md:flex-row gap-4 h-full">
               {/* Thumbnails Swiper (Left on desktop, Bottom on mobile) */}
@@ -201,14 +201,14 @@ export default function ProductPage({ params }: ProductPageProps) {
             <div className="lg:sticky lg:top-28 space-y-8">
               {/* Product Title */}
               <div className="space-y-2">
-                <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight font-display">{product.title}</h1>
-                <p className="text-lg text-[#4597a1]">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-tight font-display">{product.title}</h1>
+                <p className="text-sm sm:text-base md:text-lg text-[#4597a1]">
                   {product.sellerName || product.brand || "Premium Brand"} • {product.categoryDetails?.name || product.category}
                 </p>
-                <div className="flex items-center gap-4 pt-2">
-                  <span className="text-3xl font-bold text-primary">₹{product.price.toFixed(2)}</span>
+                <div className="flex items-center gap-2 sm:gap-4 pt-2 flex-wrap">
+                  <span className="text-2xl sm:text-3xl font-bold text-primary">₹{product.price.toFixed(2)}</span>
                   {product.mrp && product.mrp > product.price && (
-                    <span className="text-xl text-slate-400 line-through">₹{product.mrp.toFixed(2)}</span>
+                    <span className="text-lg sm:text-xl text-slate-400 line-through">₹{product.mrp.toFixed(2)}</span>
                   )}
                   {/* <span className="px-2 py-1 rounded bg-primary/10 text-primary text-xs font-bold">PREMIUM CHOICE</span> */}
                 </div>
@@ -220,7 +220,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               </div>
 
               {/* Rapid Delivery Card */}
-              <div className="p-5 bg-white rounded-xl border border-primary/10 shadow-sm space-y-4">
+              <div className="p-4 sm:p-5 bg-white rounded-xl border border-primary/10 shadow-sm space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-green-600 font-bold">
                     <span className="material-symbols-outlined">bolt</span>
@@ -264,13 +264,13 @@ export default function ProductPage({ params }: ProductPageProps) {
                     await addToCart(product._id);
                     router.push("/checkout");
                   }}
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-xl text-lg transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 sm:py-5 rounded-xl text-base sm:text-lg transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
                 >
                   <span>Buy Now • {product.deliveryEstimate || "Fast Delivery"}</span>
                 </button>
                 <button
                   onClick={() => addToCart(product._id)}
-                  className="w-full border-2 border-primary text-primary hover:bg-primary/5 font-bold py-4 rounded-xl transition-all"
+                  className="w-full border-2 border-primary text-primary hover:bg-primary/5 font-bold py-3 sm:py-4 rounded-xl transition-all"
                 >
                   Add to Cart
                 </button>
@@ -297,10 +297,10 @@ export default function ProductPage({ params }: ProductPageProps) {
         </div>
 
         {/* Detailed Specifications - Static Placeholder to match design */}
-        <section className="mt-24 pt-24 border-t border-[#e6f3f4]">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <section className="mt-12 sm:mt-16 md:mt-24 pt-8 sm:pt-12 md:pt-24 border-t border-[#e6f3f4]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 md:gap-12">
             <div className="lg:col-span-4 space-y-6">
-              <h2 className="text-3xl font-black font-display">{product.keyFeatures && product.keyFeatures.length > 0 ? "Key Features" : "Why Shop With Us"}</h2>
+              <h2 className="text-2xl sm:text-3xl font-black font-display">{product.keyFeatures && product.keyFeatures.length > 0 ? "Key Features" : "Why Shop With Us"}</h2>
               <p className="text-[#4597a1] leading-relaxed">
                 {product.keyFeatures && product.keyFeatures.length > 0
                   ? "Here's what makes this product special."
@@ -364,10 +364,10 @@ export default function ProductPage({ params }: ProductPageProps) {
         </section>
 
         {/* Reviews Section - Static Placeholder */}
-        <section className="mt-24 space-y-12">
-          <div className="flex items-end justify-between">
+        <section className="mt-12 sm:mt-16 md:mt-24 space-y-6 sm:space-y-8 md:space-y-12">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="space-y-2">
-              <h2 className="text-3xl font-black font-display">Trusted by Experts</h2>
+              <h2 className="text-2xl sm:text-3xl font-black font-display">Trusted by Experts</h2>
               <div className="flex items-center gap-4">
                 <div className="flex text-primary">
                   <span className="material-symbols-outlined filled-star">star</span>
@@ -382,7 +382,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             </div>
             <button className="text-primary font-bold hover:underline">Write a review</button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             <div className="p-6 bg-white rounded-xl space-y-4 border border-primary/5">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-slate-200"></div>

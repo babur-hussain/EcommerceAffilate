@@ -1,0 +1,2 @@
+# Helper function to ensure directory exists
+mkdir -p /Users/baburhussain/Pictures/ecommerceearn/apps/web/src/app/influencer/register

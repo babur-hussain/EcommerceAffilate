@@ -30,10 +30,17 @@ function SearchContent() {
     async function fetchResults() {
       setLoading(true);
       try {
-        // Fetch products with search query
-        // The backend supports ?search=... which regex matches title
+        // Construct query string from all search params
+        const params = new URLSearchParams(searchParams.toString());
+
+        // Ensure 'search' param used by backend maps to 'q' from frontend if needed, 
+        // or just pass 'q' as 'search' if backend expects 'search'
+        if (query) {
+          params.set('search', query);
+        }
+
         const res = await fetch(
-          `${API_BASE}/products?search=${encodeURIComponent(query)}`
+          `${API_BASE}/products?${params.toString()}`
         );
         if (res.ok) {
           const data = await res.json();
@@ -46,13 +53,8 @@ function SearchContent() {
       }
     }
 
-    if (query) {
-      fetchResults();
-    } else {
-      // If no query, maybe fetch some defaults or nothing
-      fetchResults(); // Backend handles empty search by returning all active (filtered by limit if set, but we want all for now or paginated)
-    }
-  }, [query]);
+    fetchResults();
+  }, [searchParams.toString()]);
 
   return (
     <div className="bg-white text-slate-900 font-display min-h-screen">

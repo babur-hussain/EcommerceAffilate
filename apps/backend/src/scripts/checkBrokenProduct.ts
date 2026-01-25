@@ -1,0 +1,1 @@
+import mongoose from 'mongoose'; import { Product } from '../models/product.model'; import { connectMongo, disconnectMongo } from '../config/mongo'; async function check() { await connectMongo(); const p = await Product.findOne({ title: 'Casual Dress - Charcoal (Chiffon)' }); console.log(p?.image); await disconnectMongo(); process.exit(0); } check();

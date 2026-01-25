@@ -11,9 +11,9 @@ export default function ProductCard({ product }: ProductCardProps) {
     product.originalPrice && product.originalPrice > product.price;
   const discountPercent = hasDiscount
     ? Math.round(
-        ((product.originalPrice! - product.price) / product.originalPrice!) *
-          100
-      )
+      ((product.originalPrice! - product.price) / product.originalPrice!) *
+      100
+    )
     : 0;
 
   return (
@@ -39,10 +39,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        <div className="p-4 flex flex-col flex-1">
+        <div className="p-3 sm:p-4 flex flex-col flex-1">
           {/* Category & Brand */}
           {(product.category || product.brand) && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+            <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-1.5 sm:mb-2 flex-wrap">
               {product.category && (
                 <span className="bg-gray-100 px-2 py-0.5 rounded">
                   {product.category}
@@ -57,13 +57,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           {/* Title */}
-          <h3 className="text-sm text-gray-800 mb-3 line-clamp-2 min-h-[2.5rem] font-medium">
+          <h3 className="text-xs sm:text-sm text-gray-800 mb-2 sm:mb-3 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] font-medium">
             {product.title}
           </h3>
 
           {/* Rating */}
           {product.rating && product.ratingCount && (
-            <div className="flex items-center gap-1 mb-3">
+            <div className="flex items-center gap-1 mb-2 sm:mb-3">
               <div className="flex items-center gap-1 bg-green-600 text-white text-xs font-semibold px-2 py-0.5 rounded">
                 <span>{product.rating.toFixed(1)}</span>
                 <svg
@@ -83,15 +83,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Price Section */}
           <div className="mt-auto">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-base sm:text-xl font-bold text-gray-900">
                 ₹{product.price.toLocaleString("en-IN")}
               </span>
               {hasDiscount && (
                 <>
-                  <span className="text-sm text-gray-500 line-through">
+                  <span className="text-xs sm:text-sm text-gray-500 line-through">
                     ₹{product.originalPrice!.toLocaleString("en-IN")}
                   </span>
-                  <span className="text-sm text-green-600 font-semibold">
+                  <span className="text-[10px] sm:text-sm text-green-600 font-semibold">
                     Save ₹
                     {(product.originalPrice! - product.price).toLocaleString(
                       "en-IN"

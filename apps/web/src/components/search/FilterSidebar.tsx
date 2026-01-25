@@ -1,9 +1,64 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useProductMeta } from "@/hooks/useProductMeta";
 
 export default function FilterSidebar() {
-    const [priceRange, setPriceRange] = useState([50, 450]);
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const { meta, loading } = useProductMeta();
+
+    // Local state for UI responsiveness (debounce price slider)
+    const [priceRange, setPriceRange] = useState([0, 1000]);
+
+    // Sync local state with URL params on load
+    useEffect(() => {
+        const min = Number(searchParams.get("minPrice")) || 0;
+        const max = Number(searchParams.get("maxPrice")) || 1000;
+        setPriceRange([min, max]);
+    }, [searchParams]);
+
+    // Helper to update URL params
+    const updateFilter = (key: string, value: string | null) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (value === null) {
+            params.delete(key);
+        } else {
+            params.set(key, value);
+        }
+        router.push(`?${params.toString()}`);
+    };
+
+    const toggleBrand = (brand: string) => {
+        const currentBrand = searchParams.get("brand");
+        if (currentBrand === brand) {
+            updateFilter("brand", null); // Deselect
+        } else {
+            updateFilter("brand", brand); // Select (single select for now, could be multi)
+        }
+    };
+
+    const applyPriceFilter = () => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("minPrice", priceRange[0].toString());
+        params.set("maxPrice", priceRange[1].toString());
+        router.push(`?${params.toString()}`);
+    };
+
+    const clearAll = () => {
+        router.push(window.location.pathname); // Clear all query params
+    };
+
+    if (loading && !meta) {
+        return (
+            <aside className="hidden lg:block w-64 shrink-0 space-y-8 sticky top-24 h-fit animate-pulse">
+                <div className="h-4 bg-slate-100 rounded w-1/3"></div>
+                <div className="space-y-3">
+                    <div className="h-4 bg-slate-100 rounded w-1/4"></div>
+                    <div className="h-20 bg-slate-50 rounded-xl"></div>
+                </div>
+            </aside>
+        );
+    }
 
     return (
         <aside className="hidden lg:block w-64 shrink-0 space-y-8 sticky top-24 h-fit">
@@ -12,42 +67,12 @@ export default function FilterSidebar() {
                     <span className="material-symbols-outlined text-primary">tune</span>
                     Filters
                 </h2>
-                <button className="text-sm text-primary font-semibold hover:underline">
+                <button
+                    onClick={clearAll}
+                    className="text-sm text-primary font-semibold hover:underline"
+                >
                     Clear All
                 </button>
-            </div>
-
-            {/* Category Filter */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-400">
-                    Category
-                </h3>
-                <div className="space-y-2">
-                    <label className="flex items-center justify-between group cursor-pointer">
-                        <span className="text-sm font-medium text-slate-600 group-hover:text-primary transition-colors">
-                            Parkas
-                        </span>
-                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full font-bold text-slate-600">
-                            120
-                        </span>
-                    </label>
-                    <label className="flex items-center justify-between group cursor-pointer">
-                        <span className="text-sm font-medium group-hover:text-primary transition-colors text-primary underline underline-offset-4">
-                            Trench Coats
-                        </span>
-                        <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full font-bold">
-                            45
-                        </span>
-                    </label>
-                    <label className="flex items-center justify-between group cursor-pointer">
-                        <span className="text-sm font-medium text-slate-600 group-hover:text-primary transition-colors">
-                            Puffers
-                        </span>
-                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full font-bold text-slate-600">
-                            88
-                        </span>
-                    </label>
-                </div>
             </div>
 
             {/* Price Range */}
@@ -58,61 +83,42 @@ export default function FilterSidebar() {
                 <div className="px-2">
                     <input
                         type="range"
-                        min="0"
-                        max="1000"
+                        min={meta?.price.min || 0}
+                        max={meta?.price.max || 1000}
                         step="10"
                         className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
                         value={priceRange[1]}
                         onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                        onMouseUp={applyPriceFilter} // Apply on release
+                        onTouchEnd={applyPriceFilter}
                     />
                     <div className="flex justify-between mt-3">
                         <div className="relative">
                             <span className="absolute left-3 top-2 text-xs text-slate-400">
-                                $
+                                ₹
                             </span>
                             <input
                                 type="number"
                                 value={priceRange[0]}
                                 onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                                onBlur={applyPriceFilter} // Apply on blur
                                 className="w-20 pl-6 pr-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                             />
                         </div>
                         <div className="relative">
                             <span className="absolute left-3 top-2 text-xs text-slate-400">
-                                $
+                                ₹
                             </span>
                             <input
                                 type="number"
                                 value={priceRange[1]}
                                 onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                                onBlur={applyPriceFilter}
                                 className="w-20 pl-6 pr-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                             />
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Delivery Speed */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-400">
-                    Delivery Speed
-                </h3>
-                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-green-50 border border-green-100/50 hover:border-green-200 transition-all">
-                    <input
-                        type="checkbox"
-                        defaultChecked
-                        className="w-5 h-5 rounded border-green-500 text-green-600 focus:ring-green-500 focus:ring-offset-0"
-                    />
-                    <div className="flex flex-col">
-                        <span className="text-sm font-bold flex items-center gap-1 text-green-700">
-                            <span className="material-symbols-outlined text-lg">bolt</span>
-                            Express Delivery
-                        </span>
-                        <span className="text-[10px] text-green-600/80 font-medium leading-none">
-                            Next-day available
-                        </span>
-                    </div>
-                </label>
             </div>
 
             {/* Brands */}
@@ -120,40 +126,52 @@ export default function FilterSidebar() {
                 <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-400">
                     Brand
                 </h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                    {["Arc'teryx", "The North Face", "Moncler", "Canada Goose", "Patagonia", "Zara"].map((brand) => (
-                        <label key={brand} className="flex items-center gap-2 cursor-pointer group">
-                            <input
-                                type="checkbox"
-                                className="w-5 h-5 rounded border-slate-200 text-primary focus:ring-primary"
-                                defaultChecked={brand === "The North Face"}
-                            />
-                            <span className="text-sm font-medium text-slate-600 group-hover:text-primary transition-colors">
-                                {brand}
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                    {meta?.brands.length === 0 && (
+                        <p className="text-sm text-slate-400 italic">No brands found</p>
+                    )}
+                    {meta?.brands.map((brand) => (
+                        <label key={brand.name} className="flex items-center justify-between cursor-pointer group">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 rounded border-slate-200 text-primary focus:ring-primary"
+                                    checked={searchParams.get("brand") === brand.name}
+                                    onChange={() => toggleBrand(brand.name)}
+                                />
+                                <span className="text-sm font-medium text-slate-600 group-hover:text-primary transition-colors line-clamp-1">
+                                    {brand.name}
+                                </span>
+                            </div>
+                            <span className="text-xs bg-slate-50 text-slate-400 px-2 py-0.5 rounded-full font-bold">
+                                {brand.count}
                             </span>
                         </label>
                     ))}
                 </div>
             </div>
 
-            {/* Rating */}
+            {/* Delivery Speed (Static for now as it needs backend logic) */}
             <div className="space-y-3">
                 <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-400">
-                    Minimum Rating
+                    Delivery Speed
                 </h3>
-                <div className="space-y-1">
-                    <button className="flex items-center gap-2 w-full p-2 hover:bg-slate-50 rounded-lg transition-all group">
-                        <div className="flex text-[#F5CE22]">
-                            {[1, 2, 3, 4].map((i) => (
-                                <span key={i} className="material-symbols-outlined text-xl filled-star">star</span>
-                            ))}
-                            <span className="material-symbols-outlined text-xl">star</span>
-                        </div>
-                        <span className="text-xs font-bold text-slate-400 group-hover:text-primary">
-                            & Up
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-green-50 border border-green-100/50 hover:border-green-200 transition-all">
+                    <input
+                        type="checkbox"
+                        disabled
+                        className="w-5 h-5 rounded border-green-500 text-green-600 focus:ring-green-500 focus:ring-offset-0 opacity-50"
+                    />
+                    <div className="flex flex-col opacity-50">
+                        <span className="text-sm font-bold flex items-center gap-1 text-green-700">
+                            <span className="material-symbols-outlined text-lg">bolt</span>
+                            Express Delivery
                         </span>
-                    </button>
-                </div>
+                        <span className="text-[10px] text-green-600/80 font-medium leading-none">
+                            Coming Soon
+                        </span>
+                    </div>
+                </label>
             </div>
         </aside>
     );

@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const LOCAL_API_URL = "http://localhost:4000";
+// Use environment variable if available, otherwise fallback to localhost
+const LOCAL_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const LIVE_API_URL = "http://3.208.16.32";
 
 const api = axios.create({

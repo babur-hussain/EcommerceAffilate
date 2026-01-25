@@ -24,6 +24,7 @@ interface Category {
   slug: string;
   description?: string;
   parentCategory?: string;
+  group?: string;
 }
 
 interface Variant {
@@ -215,8 +216,12 @@ export default function EditProductPage() {
   const [activeSection, setActiveSection] = useState<string>("basics");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]); // Track existing images from server
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+
 
   const [formData, setFormData] = useState({
     // 1. Product Basics
@@ -295,7 +300,7 @@ export default function EditProductPage() {
     pickupLocation: "",
     pickupLocationCoordinates: undefined as { lat: number; lng: number } | undefined,
     processingTime: { value: 2, unit: "days" } as { value: number; unit: "hours" | "days" },
-    shippingCharges: "Free",
+    shippingCharges: "0",
     codAvailable: true,
     internationalShipping: false,
 
@@ -353,18 +358,44 @@ export default function EditProductPage() {
     fetchTrustBadges();
   }, []);
 
+  // Auto-select group if subCategory is present (for editing)
+  useEffect(() => {
+    // Only run if we have categories and both category and subCategory are set
+    if (categories.length > 0 && formData.category && formData.subCategory) {
+      const parent = categories.find(c => c.name === formData.category && !c.parentCategory);
+      if (parent) {
+        const sub = categories.find(c => c.name === formData.subCategory && c.parentCategory === parent._id);
+        if (sub?.group && sub.group !== selectedGroup) {
+          setSelectedGroup(sub.group);
+        }
+      }
+    }
+  }, [categories, formData.category, formData.subCategory]);
+
   const fetchProduct = async () => {
     try {
       setFetchingProduct(true);
       const response = await apiClient.get(`/api/products/${productId}`);
       const product: Partial<Product> = response.data;
 
+      let parsedCategory = product.category || "";
+      let parsedSubCategory = product.subCategory || "";
+
+      // Parse breadcrumb if present (e.g. "Fashion > Kids' Fashion > Girls Dresses")
+      if (parsedCategory.includes(" > ")) {
+        const parts = parsedCategory.split(" > ");
+        parsedCategory = parts[0]; // Main category
+        if (parts.length > 1) {
+          parsedSubCategory = parts[parts.length - 1]; // Last part is subcategory
+        }
+      }
+
       // Pre-fill form with product data
       setFormData({
         title: product.title || "",
         subtitle: product.subtitle || "",
-        category: product.category || "",
-        subCategory: product.subCategory || "",
+        category: parsedCategory,
+        subCategory: parsedSubCategory,
         productType: product.productType || "Physical",
         brandName: product.brandName || "",
         manufacturerName: product.manufacturerName || "",
@@ -430,7 +461,7 @@ export default function EditProductPage() {
               value: parseInt(product.processingTime?.toString() || "2"),
               unit: "days",
             },
-        shippingCharges: product.shippingCharges?.toString() || "Free",
+        shippingCharges: product.shippingCharges?.toString() || "0",
         codAvailable:
           product.codAvailable !== undefined ? product.codAvailable : true,
         internationalShipping: product.internationalShipping || false,
@@ -471,8 +502,9 @@ export default function EditProductPage() {
         trustBadges: product.trustBadges || [],
       });
 
-      // Set existing images as preview
+      // Set existing images - track both for display and for backend update
       if (product.images?.length) {
+        setExistingImages(product.images);
         setImagePreview(product.images);
       }
 
@@ -499,6 +531,8 @@ export default function EditProductPage() {
   const fetchCategories = async () => {
     try {
       const response = await apiClient.get<Category[]>("/api/categories");
+      console.log("DEBUG: All categories:", response.data);
+      console.log("DEBUG: Root categories:", response.data.filter(c => !c.parentCategory));
       setCategories(response.data);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -526,8 +560,11 @@ export default function EditProductPage() {
     if (!files || files.length === 0) return;
 
     const fileArray = Array.from(files);
-    if (imageFiles.length + fileArray.length > 7) {
-      toast.error("Maximum 7 images allowed");
+    // Check total count including existing images from server
+    const totalImages = existingImages.length + imageFiles.length + fileArray.length;
+
+    if (totalImages > 7) {
+      toast.error(`Maximum 7 images allowed. You can add ${7 - existingImages.length - imageFiles.length} more.`);
       return;
     }
 
@@ -545,20 +582,36 @@ export default function EditProductPage() {
 
     setImageFiles([...imageFiles, ...fileArray]);
 
-    // Generate preview URLs
+    // Generate preview URLs and append to existing previews
     const newPreviews = fileArray.map((file) => URL.createObjectURL(file));
     setImagePreview([...imagePreview, ...newPreviews]);
   };
 
   const removeImage = (index: number) => {
-    const newFiles = imageFiles.filter((_, i) => i !== index);
-    const newPreviews = imagePreview.filter((_, i) => i !== index);
+    const previewUrl = imagePreview[index];
 
-    // Revoke old preview URL to free memory
-    URL.revokeObjectURL(imagePreview[index]);
+    // Check if this is an existing image (URL from server) or a new upload (blob URL)
+    const isExistingImage = existingImages.includes(previewUrl);
 
-    setImageFiles(newFiles);
-    setImagePreview(newPreviews);
+    if (isExistingImage) {
+      // Remove from existing images - this will be reflected in the final update
+      setExistingImages(existingImages.filter(url => url !== previewUrl));
+    } else {
+      // It's a new upload - find and remove from imageFiles
+      // Calculate the index in imageFiles (offset by existingImages count in preview)
+      const existingCount = existingImages.length;
+      const newImageIndex = index - existingCount;
+
+      if (newImageIndex >= 0 && newImageIndex < imageFiles.length) {
+        const newFiles = imageFiles.filter((_, i) => i !== newImageIndex);
+        setImageFiles(newFiles);
+        // Revoke blob URL to free memory
+        URL.revokeObjectURL(previewUrl);
+      }
+    }
+
+    // Always update the preview array
+    setImagePreview(imagePreview.filter((_, i) => i !== index));
   };
 
   const uploadImagesToCloudinary = async () => {
@@ -606,11 +659,21 @@ export default function EditProductPage() {
     setLoading(true);
 
     try {
-      let uploadedImageUrls: string[] = [];
+      // Start with retained existing images
+      let finalImages: string[] = [...existingImages];
 
-      // Upload images if any
+      // Upload new images if any and merge with existing
       if (imageFiles.length > 0) {
-        uploadedImageUrls = await uploadImagesToCloudinary();
+        const uploadedImageUrls = await uploadImagesToCloudinary();
+        finalImages = [...finalImages, ...uploadedImageUrls];
+      }
+
+      // Build full category breadcrumb path (e.g., "Fashion > Kids' Fashion > Girls Dresses")
+      let fullCategory = formData.category;
+      if (selectedGroup && formData.subCategory) {
+        fullCategory = `${formData.category} > ${selectedGroup} > ${formData.subCategory}`;
+      } else if (formData.subCategory) {
+        fullCategory = `${formData.category} > ${formData.subCategory}`;
       }
 
       const productData: any = {
@@ -620,7 +683,7 @@ export default function EditProductPage() {
         mrp: formData.mrp
           ? parseFloat(formData.mrp)
           : parseFloat(formData.price),
-        category: formData.category,
+        category: fullCategory,
         subCategory: formData.subCategory,
         description: formData.description,
         shortDescription: formData.shortDescription,
@@ -638,11 +701,9 @@ export default function EditProductPage() {
         visibility: formData.visibility,
       };
 
-      // Only update images if new ones were uploaded
-      if (uploadedImageUrls.length > 0) {
-        productData.image = uploadedImageUrls[0];
-        productData.images = uploadedImageUrls;
-      }
+      // Always update images array to reflect any deletions or additions
+      productData.images = finalImages;
+      productData.image = finalImages[0] || '';
 
       await apiClient.put(`/api/products/${productId}`, productData);
       toast.success("Draft saved successfully!");
@@ -658,23 +719,27 @@ export default function EditProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (
-      !formData.qualityCheckConfirmed ||
-      !formData.authenticityConfirmed ||
-      !formData.brandAuthorizationConfirmed
-    ) {
-      toast.error("Please confirm all quality and authenticity declarations");
-      return;
-    }
+    // Note: Quality & Moderation checkboxes validation is only required during product creation,
+    // not when editing existing products (already validated during creation)
 
     setLoading(true);
 
     try {
-      // Upload new images if any
-      let uploadedImageUrls: string[] = [];
+      // Start with retained existing images
+      let finalImages: string[] = [...existingImages];
+
+      // Upload new images if any and merge with existing
       if (imageFiles.length > 0) {
-        uploadedImageUrls = await uploadImagesToCloudinary();
+        const uploadedImageUrls = await uploadImagesToCloudinary();
+        finalImages = [...finalImages, ...uploadedImageUrls];
+      }
+
+      // Build full category breadcrumb path (e.g., "Fashion > Kids' Fashion > Girls Dresses")
+      let fullCategory = formData.category;
+      if (selectedGroup && formData.subCategory) {
+        fullCategory = `${formData.category} > ${selectedGroup} > ${formData.subCategory}`;
+      } else if (formData.subCategory) {
+        fullCategory = `${formData.category} > ${formData.subCategory}`;
       }
 
       const productData: any = {
@@ -682,7 +747,7 @@ export default function EditProductPage() {
         subtitle: formData.subtitle,
         price: parseFloat(formData.price),
         mrp: parseFloat(formData.mrp),
-        category: formData.category,
+        category: fullCategory,
         subCategory: formData.subCategory,
         description: formData.description,
         shortDescription: formData.shortDescription,
@@ -741,11 +806,9 @@ export default function EditProductPage() {
       console.log("🎁 Last Chance Offers being sent:", productData.lastChanceOffers);
       console.log("📦 Full product data:", productData);
 
-      // Only update images if new ones were uploaded
-      if (uploadedImageUrls.length > 0) {
-        productData.image = uploadedImageUrls[0];
-        productData.images = uploadedImageUrls;
-      }
+      // Always update images array to reflect any deletions or additions
+      productData.images = finalImages;
+      productData.image = finalImages[0] || '';
 
       await apiClient.put(`/api/products/${productId}`, productData);
       toast.success("Product updated successfully!");
@@ -929,12 +992,13 @@ export default function EditProductPage() {
                     name="category"
                     value={formData.category}
                     onChange={(e) => {
-                      // Reset subCategory when category changes
+                      // Reset group and subCategory when category changes
                       setFormData({
                         ...formData,
                         category: e.target.value,
                         subCategory: ""
                       });
+                      setSelectedGroup("");
                     }}
                     required
                     className={selectClass}
@@ -950,13 +1014,44 @@ export default function EditProductPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
+                  <label className={labelClass}>Group</label>
+                  <select
+                    value={selectedGroup}
+                    onChange={(e) => {
+                      setSelectedGroup(e.target.value);
+                      // Reset subCategory when group changes
+                      setFormData({ ...formData, subCategory: "" });
+                    }}
+                    className={selectClass}
+                    disabled={!formData.category}
+                  >
+                    <option value="">Select group</option>
+                    {(() => {
+                      const selectedParent = categories.find(c => c.name === formData.category);
+                      if (!selectedParent) return null;
+
+                      // Get all subcategories for this parent
+                      const subcategories = categories.filter(c => c.parentCategory === selectedParent._id);
+
+                      // Extract unique groups
+                      const groups = Array.from(new Set(subcategories.map(c => c.group).filter(Boolean)));
+
+                      return groups.map((group) => (
+                        <option key={group} value={group}>
+                          {group}
+                        </option>
+                      ));
+                    })()}
+                  </select>
+                </div>
+                <div className="space-y-2">
                   <label className={labelClass}>Sub-Category</label>
                   <select
                     name="subCategory"
                     value={formData.subCategory}
                     onChange={handleChange}
                     className={selectClass}
-                    disabled={!formData.category}
+                    disabled={!formData.category || !selectedGroup}
                   >
                     <option value="">Select sub-category</option>
                     {(() => {
@@ -964,7 +1059,7 @@ export default function EditProductPage() {
                       if (!selectedParent) return null;
 
                       return categories
-                        .filter(c => c.parentCategory === selectedParent._id)
+                        .filter(c => c.parentCategory === selectedParent._id && c.group === selectedGroup)
                         .map((subCat) => (
                           <option key={subCat._id} value={subCat.name}>
                             {subCat.name}
@@ -1713,11 +1808,11 @@ export default function EditProductPage() {
                       onChange={(e) => handleImageUpload(e.target.files)}
                       className="hidden"
                       id="image-upload"
-                      disabled={imageFiles.length >= 7}
+                      disabled={existingImages.length + imageFiles.length >= 7}
                     />
                     <label
                       htmlFor="image-upload"
-                      className={`flex flex-col items-center justify-center cursor-pointer ${imageFiles.length >= 7
+                      className={`flex flex-col items-center justify-center cursor-pointer ${existingImages.length + imageFiles.length >= 7
                         ? "opacity-50 cursor-not-allowed"
                         : ""
                         }`}
@@ -1739,7 +1834,7 @@ export default function EditProductPage() {
                         Click to upload or drag and drop
                       </p>
                       <p className="text-xs text-gray-500">
-                        PNG, JPG, JPEG up to 5MB ({imageFiles.length}/7
+                        PNG, JPG, JPEG up to 5MB ({existingImages.length + imageFiles.length}/7
                         uploaded)
                       </p>
                     </label>
