@@ -45,7 +45,7 @@ ssh -i "$PEM_KEY" -o StrictHostKeyChecking=no ec2-user@$EC2_IP << EOF
   # Run new container using the uploaded .env file AND mounted firebase config
   docker run -d \
     --name $APP_NAME \
-    -p 80:4000 \
+    -p 3000:4000 \
     --restart unless-stopped \
     --env-file ~/.env.production \
     -v /home/ec2-user/firebase-adminsdk.json:/app/firebase-adminsdk.json \
