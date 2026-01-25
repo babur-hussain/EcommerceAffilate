@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import { auth } from './firebase';
 
 // Always use the API URL from environment variable (live backend only)
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://3.208.16.32';
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.lfvs.in';
 
 class ApiClient {
   private client: AxiosInstance;

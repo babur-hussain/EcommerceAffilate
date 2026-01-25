@@ -48,7 +48,8 @@ export default function BrandsPage() {
         throw new Error("Not authenticated");
       }
 
-      const response = await fetch("http://localhost:4000/api/brands", {
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.lfvs.in';
+      const response = await fetch(`${apiUrl}/api/brands`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -87,7 +88,8 @@ export default function BrandsPage() {
         throw new Error("Not authenticated");
       }
 
-      const response = await fetch("http://localhost:4000/api/brands", {
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.lfvs.in';
+      const response = await fetch(`${apiUrl}/api/brands`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
