@@ -4,6 +4,9 @@ import { CreateBrand, BrandStatusButton } from '@/components/business/BrandActio
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:4000/api';
 const AUTH_COOKIE_NAME = 'auth_token';
 
+// Force dynamic rendering since we use cookies
+export const dynamic = 'force-dynamic';
+
 async function getToken() {
   const store = await cookies();
   return store.get(AUTH_COOKIE_NAME)?.value;
