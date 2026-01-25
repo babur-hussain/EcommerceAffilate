@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
-import { ArrowLeft, Save, Loader2, Smartphone, Mail, MapPin, Building2, Calendar, CheckCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Smartphone, Mail, MapPin, Building2, Calendar, CheckCircle, Trash2, Shield, FileText, Banknote, Package, Settings, Check, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { Seller } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -15,6 +15,7 @@ export default function SellerDetailPage() {
     const [loading, setLoading] = useState(true);
     const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
     const [saving, setSaving] = useState(false);
+    const [activating, setActivating] = useState(false);
     const [trustBadges, setTrustBadges] = useState<Array<{ id: string; name: string; description: string; icon: string }>>([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newBadge, setNewBadge] = useState({ id: '', name: '', description: '', icon: 'shield-checkmark' });
@@ -52,6 +53,33 @@ export default function SellerDetailPage() {
         }
     };
 
+    const handleActivateAccount = async () => {
+        if (!seller?.business?._id) return;
+
+        const action = seller.business.status === 'APPROVED' ? 'deactivate' : 'activate';
+        if (!window.confirm(`Are you sure you want to ${action} this seller account?`)) {
+            return;
+        }
+
+        setActivating(true);
+        try {
+            const newStatus = seller.business.status === 'APPROVED' ? 'SUSPENDED' : 'APPROVED';
+            await api.patch(`/api/super-admin/businesses/${seller.business._id}/status`, {
+                status: newStatus
+            });
+
+            toast.success(`Account ${action}d successfully`);
+
+            // Refresh seller data
+            fetchSellerDetails();
+        } catch (error: any) {
+            console.error("Error updating account status:", error);
+            toast.error(error.response?.data?.error || `Failed to ${action} account`);
+        } finally {
+            setActivating(false);
+        }
+    };
+
     const handleCreateBadge = async () => {
         if (!newBadge.id || !newBadge.name) {
             toast.error("Please fill Badge ID and Badge Name");
@@ -74,24 +102,13 @@ export default function SellerDetailPage() {
     };
 
     const handleSaveBadges = async () => {
-        console.log('handleSaveBadges called');
-        console.log('seller:', seller);
-        console.log('seller.business:', seller?.business);
-        console.log('seller.business._id:', seller?.business?._id);
-        console.log('selectedBadges:', selectedBadges);
-
-        if (!seller?.business?._id) {
-            console.log('No business ID, returning early');
-            return;
-        }
+        if (!seller?.business?._id) return;
 
         setSaving(true);
         try {
-            console.log('Making API call to:', `/api/super-admin/businesses/${seller.business._id}/trust-badges`);
-            const response = await api.patch(`/api/super-admin/businesses/${seller.business._id}/trust-badges`, {
+            await api.patch(`/api/super-admin/businesses/${seller.business._id}/trust-badges`, {
                 badges: selectedBadges
             });
-            console.log('API response:', response);
             toast.success("Trust badges assigned successfully");
         } catch (error) {
             console.error("Error saving badges:", error);
@@ -110,11 +127,7 @@ export default function SellerDetailPage() {
         try {
             await api.delete(`/api/super-admin/trust-badges/${badgeId}`);
             toast.success("Trust badge deleted successfully");
-
-            // Remove from local list
             setTrustBadges(prev => prev.filter(b => b.id !== badgeId));
-
-            // Remove from selection if present
             if (selectedBadges.includes(badgeId)) {
                 setSelectedBadges(prev => prev.filter(id => id !== badgeId));
             }
@@ -154,63 +167,249 @@ export default function SellerDetailPage() {
         );
     }
 
-
+    const business = seller.business;
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6 pb-20">
+        <div className="max-w-7xl mx-auto space-y-6 pb-20">
             {/* Header */}
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={() => router.back()}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    <ArrowLeft className="h-6 w-6 text-gray-500" />
-                </button>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{seller.name}</h1>
-                    <p className="text-gray-500">Seller ID: {seller._id}</p>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <ArrowLeft className="h-6 w-6 text-gray-500" />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">{seller.name}</h1>
+                        <p className="text-gray-500">Seller ID: {seller._id}</p>
+                    </div>
                 </div>
+
+                {/* Activate/Deactivate Button */}
+                {business && (
+                    <button
+                        onClick={handleActivateAccount}
+                        disabled={activating}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors ${business.status === 'APPROVED'
+                                ? 'bg-red-600 hover:bg-red-700 text-white'
+                                : 'bg-green-600 hover:bg-green-700 text-white'
+                            } disabled:opacity-50`}
+                    >
+                        {activating ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : business.status === 'APPROVED' ? (
+                            <>
+                                <X className="h-5 w-5" />
+                                Deactivate Account
+                            </>
+                        ) : (
+                            <>
+                                <Check className="h-5 w-5" />
+                                Activate Account
+                            </>
+                        )}
+                    </button>
+                )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Left Column: Info Cards */}
-                <div className="space-y-6 md:col-span-2">
-                    {/* Business Info */}
+            {!business ? (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                    <p className="text-gray-500 text-lg">No business registration found for this seller</p>
+                </div>
+            ) : (
+                <>
+                    {/* Status Card */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Account Status</h3>
+                                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold
+                                    ${business.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                        business.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                            business.status === 'SUSPENDED' ? 'bg-orange-100 text-orange-800' :
+                                                'bg-red-100 text-red-800'}`}>
+                                    {business.status}
+                                </span>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm text-gray-500">Account Type</p>
+                                <p className="text-lg font-semibold text-gray-900 capitalize">{business.accountType}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Business Identity */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Building2 className="h-5 w-5 text-gray-400" />
-                            Business Details
+                            <Building2 className="h-5 w-5 text-primary-600" />
+                            Business Identity
                         </h2>
-                        {seller.business ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-500">Business Name</label>
-                                    <p className="mt-1 text-gray-900 font-medium">{seller.business.businessName}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-500">Business Type</label>
-                                    <p className="mt-1 text-gray-900">{seller.business.businessType}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-500">Status</label>
-                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium mt-1
-                                        ${seller.business.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                                            seller.business.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-red-100 text-red-800'}`}>
-                                        {seller.business.status}
-                                    </span>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-500">Joined Date</label>
-                                    <p className="mt-1 text-gray-900 flex items-center gap-2">
-                                        <Calendar className="h-4 w-4 text-gray-400" />
-                                        {formatDate(seller.createdAt)}
-                                    </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <InfoField label="Legal Business Name" value={business.businessIdentity?.legalBusinessName} />
+                            <InfoField label="Trade Name" value={business.businessIdentity?.tradeName} />
+                            <InfoField label="Business Type" value={business.businessIdentity?.businessType} />
+                            <InfoField label="Nature of Business" value={business.businessIdentity?.natureOfBusiness} />
+                            <InfoField label="Year of Establishment" value={business.businessIdentity?.yearOfEstablishment?.toString()} />
+                        </div>
+                    </div>
+
+                    {/* Owner Details */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Smartphone className="h-5 w-5 text-primary-600" />
+                            Owner / Authorized Person Details
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <InfoField label="Full Name" value={business.ownerDetails?.fullName} />
+                            <InfoField label="Designation" value={business.ownerDetails?.designation} />
+                            <InfoField label="Mobile Number" value={business.ownerDetails?.mobileNumber} />
+                            <InfoField label="Email" value={business.ownerDetails?.email} />
+                            <InfoField label="Date of Birth" value={business.ownerDetails?.dateOfBirth ? formatDate(business.ownerDetails.dateOfBirth) : '-'} />
+                            <InfoField label="Gender" value={business.ownerDetails?.gender || '-'} />
+                            <InfoField label="Government ID Type" value={business.ownerDetails?.governmentIdType} />
+                            <InfoField label="Government ID Number" value={business.ownerDetails?.governmentIdNumber} />
+                        </div>
+                    </div>
+
+                    {/* Addresses */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                            <MapPin className="h-5 w-5 text-primary-600" />
+                            Business Addresses
+                        </h2>
+
+                        {/* Registered Address */}
+                        <div className="mb-6">
+                            <h3 className="text-md font-semibold text-gray-700 mb-3">Registered Address</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+                                <InfoField label="Address Line 1" value={business.addresses?.registered?.addressLine1} />
+                                <InfoField label="Address Line 2" value={business.addresses?.registered?.addressLine2 || '-'} />
+                                <InfoField label="City" value={business.addresses?.registered?.city} />
+                                <InfoField label="District" value={business.addresses?.registered?.district || '-'} />
+                                <InfoField label="State" value={business.addresses?.registered?.state} />
+                                <InfoField label="Country" value={business.addresses?.registered?.country} />
+                                <InfoField label="Pincode" value={business.addresses?.registered?.pincode} />
+                            </div>
+                        </div>
+
+                        {/* Operational Address */}
+                        {business.addresses?.operational && !business.addresses.operational.sameAsRegistered && (
+                            <div className="mb-6">
+                                <h3 className="text-md font-semibold text-gray-700 mb-3">Operational Address</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+                                    <InfoField label="Address Line 1" value={business.addresses.operational.addressLine1} />
+                                    <InfoField label="Address Line 2" value={business.addresses.operational.addressLine2 || '-'} />
+                                    <InfoField label="City" value={business.addresses.operational.city} />
+                                    <InfoField label="State" value={business.addresses.operational.state} />
+                                    <InfoField label="Pincode" value={business.addresses.operational.pincode} />
                                 </div>
                             </div>
-                        ) : (
-                            <p className="text-gray-500 italic">No business details available</p>
                         )}
+
+                        {/* Warehouse Address */}
+                        {business.addresses?.warehouse?.addressLine1 && (
+                            <div>
+                                <h3 className="text-md font-semibold text-gray-700 mb-3">Warehouse Address</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+                                    <InfoField label="Address Line 1" value={business.addresses.warehouse.addressLine1} />
+                                    <InfoField label="City" value={business.addresses.warehouse.city} />
+                                    <InfoField label="State" value={business.addresses.warehouse.state} />
+                                    <InfoField label="Pincode" value={business.addresses.warehouse.pincode} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Tax & Legal */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-primary-600" />
+                            Tax & Legal Information
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <InfoField label="GSTIN Number" value={business.taxLegal?.gstinNumber} />
+                            <InfoField label="GST Registration Type" value={business.taxLegal?.gstRegistrationType} />
+                            <InfoField label="PAN Number" value={business.taxLegal?.panNumber} />
+                            <InfoField label="CIN/LLPIN" value={business.taxLegal?.cinLlpin || '-'} />
+                            <InfoField label="MSME/Udyam Number" value={business.taxLegal?.msmeUdyamNumber || '-'} />
+                        </div>
+                    </div>
+
+                    {/* Bank Details */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Banknote className="h-5 w-5 text-primary-600" />
+                            Bank & Payment Details
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <InfoField label="Account Holder Name" value={business.bankDetails?.accountHolderName} />
+                            <InfoField label="Bank Name" value={business.bankDetails?.bankName} />
+                            <InfoField label="Account Number" value={business.bankDetails?.accountNumber} />
+                            <InfoField label="IFSC Code" value={business.bankDetails?.ifscCode} />
+                            <InfoField label="Account Type" value={business.bankDetails?.accountType} />
+                            <InfoField label="Settlement Cycle" value={business.bankDetails?.settlementCycle} />
+                        </div>
+                    </div>
+
+                    {/* Store Profile */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Package className="h-5 w-5 text-primary-600" />
+                            Store Profile
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <InfoField label="Brand Ownership" value={business.storeProfile?.brandOwnership} />
+                            <InfoField label="Website URL" value={business.storeProfile?.websiteUrl || '-'} />
+                            <InfoField label="Categories" value={business.storeProfile?.categories?.join(', ') || '-'} />
+                        </div>
+                        {business.storeProfile?.description && (
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-500 mb-1">Description</label>
+                                <p className="text-gray-900">{business.storeProfile.description}</p>
+                            </div>
+                        )}
+                        {business.storeProfile?.socialMediaLinks && (
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-500 mb-2">Social Media Links</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {business.storeProfile.socialMediaLinks.facebook && <InfoField label="Facebook" value={business.storeProfile.socialMediaLinks.facebook} />}
+                                    {business.storeProfile.socialMediaLinks.instagram && <InfoField label="Instagram" value={business.storeProfile.socialMediaLinks.instagram} />}
+                                    {business.storeProfile.socialMediaLinks.twitter && <InfoField label="Twitter" value={business.storeProfile.socialMediaLinks.twitter} />}
+                                    {business.storeProfile.socialMediaLinks.linkedin && <InfoField label="LinkedIn" value={business.storeProfile.socialMediaLinks.linkedin} />}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Logistics */}
+                    {business.logistics && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Settings className="h-5 w-5 text-primary-600" />
+                                Logistics & Shipping
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <InfoField label="Packaging Type" value={business.logistics.packagingType} />
+                                <InfoField label="Pickup Address" value={business.logistics.pickupAddress || '-'} />
+                                <InfoField label="Return Address" value={business.logistics.returnAddress || '-'} />
+                                <InfoField label="Return Policy Accepted" value={business.logistics.returnPolicyAccepted ? 'Yes' : 'No'} />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Compliance */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-primary-600" />
+                            Compliance & Agreements
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <InfoField label="Seller Agreement" value={business.compliance?.sellerAgreementAccepted ? '✓ Accepted' : '✗ Not Accepted'} />
+                            <InfoField label="Platform Policies" value={business.compliance?.platformPoliciesAccepted ? '✓ Accepted' : '✗ Not Accepted'} />
+                            <InfoField label="Tax Responsibility" value={business.compliance?.taxResponsibilityAccepted ? '✓ Accepted' : '✗ Not Accepted'} />
+                            <InfoField label="Accepted At" value={business.compliance?.acceptedAt ? formatDate(business.compliance.acceptedAt) : '-'} />
+                        </div>
                     </div>
 
                     {/* Trust Badges Assignment */}
@@ -285,54 +484,8 @@ export default function SellerDetailPage() {
                             })}
                         </div>
                     </div>
-                </div>
-
-                {/* Right Column: Contact/Actions */}
-                <div className="space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Info</h2>
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-gray-100 rounded-lg">
-                                    <Mail className="h-5 w-5 text-gray-600" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 uppercase font-medium">Email</p>
-                                    <p className="text-sm text-gray-900 font-medium break-all">{seller.email}</p>
-                                </div>
-                            </div>
-
-                            {seller.phoneNumber && (
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-gray-100 rounded-lg">
-                                        <Smartphone className="h-5 w-5 text-gray-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500 uppercase font-medium">Phone</p>
-                                        <p className="text-sm text-gray-900 font-medium">{seller.phoneNumber}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {seller.business?.address && (
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2 bg-gray-100 rounded-lg mt-0.5">
-                                        <MapPin className="h-5 w-5 text-gray-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500 uppercase font-medium">Address</p>
-                                        <p className="text-sm text-gray-900">
-                                            {seller.business.address.street}<br />
-                                            {seller.business.address.city}, {seller.business.address.state} {seller.business.address.zipCode}<br />
-                                            {seller.business.address.country}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+                </>
+            )}
 
             {/* Create Badge Modal */}
             {showCreateModal && (
@@ -409,6 +562,16 @@ export default function SellerDetailPage() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+// Helper component for displaying info fields
+function InfoField({ label, value }: { label: string; value?: string | null }) {
+    return (
+        <div>
+            <label className="block text-sm font-medium text-gray-500 mb-1">{label}</label>
+            <p className="text-gray-900 font-medium break-words">{value || '-'}</p>
         </div>
     );
 }

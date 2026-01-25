@@ -421,16 +421,7 @@ router.get(
         phoneNumber: seller.phoneNumber,
         isActive: seller.isActive,
         createdAt: seller.createdAt,
-        business: business
-          ? {
-            _id: business._id,
-            businessName: business.businessIdentity.tradeName,
-            businessType: business.businessIdentity.businessType,
-            status: business.status,
-            address: business.addresses.registered,
-            trustBadges: business.trustBadges || []
-          }
-          : null,
+        business: business || null,  // Return full business object
         stats: {
           totalProducts: products,
           totalOrders,
@@ -476,6 +467,63 @@ router.patch(
     } catch (error: any) {
       console.error("Error updating trust badges:", error);
       res.status(500).json({ error: 'Failed to update trust badges', message: error.message });
+    }
+  }
+);
+
+// PATCH /api/super-admin/businesses/:id/status - Update business status (activate/deactivate)
+router.patch(
+  "/super-admin/businesses/:id/status",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: 'Invalid business ID' });
+      }
+
+      const validStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'];
+      if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({
+          error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+        });
+      }
+
+      const business = await Business.findById(id);
+      if (!business) {
+        return res.status(404).json({ error: 'Business not found' });
+      }
+
+      // Update business status
+      business.status = status;
+
+      // Update isActive based on status
+      business.isActive = status === 'APPROVED';
+
+      await business.save();
+
+      // If approving, also ensure the user is active
+      if (status === 'APPROVED') {
+        await User.findByIdAndUpdate(business.userId, { isActive: true });
+      }
+
+      res.json({
+        message: `Business status updated to ${status}`,
+        business: {
+          _id: business._id,
+          status: business.status,
+          isActive: business.isActive
+        }
+      });
+    } catch (error: any) {
+      console.error("Error updating business status:", error);
+      res.status(500).json({
+        error: 'Failed to update business status',
+        message: error.message
+      });
     }
   }
 );
