@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 import ProductCardGrid from '../ProductCardGrid';
 import CuratedCollections from '../homepage/foryou/CuratedCollections';
 import GrandKitchenSale from '../homepage/foryou/GrandKitchenSale';
@@ -18,9 +19,10 @@ interface SDUIComponent {
 
 interface AdvancedRendererProps {
     component: SDUIComponent;
+    onBack?: () => void;
 }
 
-const AdvancedRenderer: React.FC<AdvancedRendererProps> = ({ component }) => {
+const AdvancedRenderer: React.FC<AdvancedRendererProps> = ({ component, onBack }) => {
     const router = useRouter();
 
     if (!component) return null;
@@ -31,14 +33,14 @@ const AdvancedRenderer: React.FC<AdvancedRendererProps> = ({ component }) => {
     // recursive rendering helper
     const renderChildren = () => {
         return children.map((child: SDUIComponent, index: number) => (
-            <AdvancedRenderer key={child.id || `child-${index}`} component={child} />
+            <AdvancedRenderer key={child.id || `child-${index}`} component={child} onBack={onBack} />
         ));
     };
 
     switch (type) {
         case 'Container':
             return (
-                <View style={style}>
+                <View style={style} collapsable={false}>
                     {renderChildren()}
                 </View>
             );
@@ -136,26 +138,7 @@ const AdvancedRenderer: React.FC<AdvancedRendererProps> = ({ component }) => {
             );
 
         case 'lightning_deals':
-            // Logic for wrapping lightning deals with gradient
-            // We expect products to be hydrated into props.products OR content.products
-            const lightningProducts = props.products || props.content?.products || [];
-            return (
-                <LinearGradient
-                    colors={['#FFF0F5', '#FFE4E1', '#FDF2F8']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[{ paddingVertical: 24, position: "relative", overflow: "hidden", marginBottom: 16 }, style]}
-                >
-                    <Image
-                        source={{ uri: "https://cdn-icons-png.flaticon.com/512/616/616490.png" }}
-                        style={{ position: "absolute", right: -20, top: -10, width: 150, height: 150, opacity: 0.05, tintColor: "#EF4444", transform: [{ rotate: "-15deg" }] }}
-                    />
-                    <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
-                        <Text style={{ fontSize: 20, fontWeight: "800", color: "#BE123C", marginBottom: 4 }}>Lightning deals</Text>
-                    </View>
-                    <ProductCardGrid products={lightningProducts} layout="lightning" />
-                </LinearGradient>
-            );
+            return null;
 
         case 'curated_collections':
             return (
@@ -188,6 +171,7 @@ const AdvancedRenderer: React.FC<AdvancedRendererProps> = ({ component }) => {
             );
 
         case 'product_list_horizontal':
+            if (props.title === 'Kids Fashion') return null;
             return (
                 <View style={[{ paddingHorizontal: 16, marginBottom: 24 }, style]}>
                     {props.title ? <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 12, color: "#111827" }}>{props.title}</Text> : null}
@@ -196,6 +180,7 @@ const AdvancedRenderer: React.FC<AdvancedRendererProps> = ({ component }) => {
             );
 
         case 'product_grid':
+            if (props.title === 'Kids Fashion') return null;
             return (
                 <View style={[{ paddingHorizontal: 16, marginBottom: 100 }, style]}>
                     {props.title ? <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 12 }}>{props.title}</Text> : null}
@@ -207,12 +192,132 @@ const AdvancedRenderer: React.FC<AdvancedRendererProps> = ({ component }) => {
             return (
                 <ScrollView
                     horizontal={props.horizontal}
-                    showsHorizontalScrollIndicator={false}
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={style}
+                    style={style}
+                    contentContainerStyle={props.contentContainerStyle}
+                    stickyHeaderIndices={props.stickyHeaderIndices}
                 >
                     {renderChildren()}
                 </ScrollView>
+            );
+
+        // --- Service Hub Components ---
+        case 'service_header':
+            return (
+                <LinearGradient
+                    colors={['#2BC0E4', '#EAECC6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1.8 }}
+                    style={{ paddingBottom: 16 }}
+                >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 0, paddingBottom: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View style={{ marginRight: 8 }}>
+                                <MaterialIcons name="location-on" size={24} color="#144bb8" />
+                            </View>
+                            <View>
+                                <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '500' }}>Current Location</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#111318' }}>New York, USA</Text>
+                                    <MaterialIcons name="expand-more" size={16} color="#111318" />
+                                </View>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }}>
+                            <MaterialIcons name="account-circle" size={24} color="#4B5563" />
+                        </TouchableOpacity>
+                    </View>
+                    <View style={{ paddingHorizontal: 16 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f2f4', borderRadius: 12, height: 48, paddingHorizontal: 16 }}>
+                            <MaterialIcons name="search" size={24} color="#144bb8" style={{ marginRight: 8 }} />
+                            <Text style={{ flex: 1, fontSize: 16, color: '#636f88', fontWeight: '500' }}>What service do you need?</Text>
+                        </View>
+                    </View>
+                </LinearGradient>
+            );
+
+        case 'service_hero_section':
+            return (
+                <View style={{ marginBottom: 24, marginTop: 16 }}>
+                    <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#111318' }}>Featured Services</Text>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 16 }}>
+                        {props.items?.map((item: any, index: number) => (
+                            <TouchableOpacity key={index} style={{ width: 280, height: 157, borderRadius: 12, overflow: 'hidden', marginRight: 16 }}>
+                                <Image source={{ uri: item.image }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                                <LinearGradient
+                                    colors={['transparent', 'rgba(0,0,0,0.8)']}
+                                    style={StyleSheet.absoluteFillObject}
+                                />
+                                <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}>
+                                    <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, backgroundColor: item.tagColor || '#144bb8', marginBottom: 4 }}>
+                                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#fff' }}>{item.tag}</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#fff' }}>{item.title}</Text>
+                                    <Text style={{ fontSize: 14, fontWeight: '500', color: '#E5E7EB' }}>{item.subtitle}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+            );
+
+        case 'service_category_section':
+            return (
+                <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#111318' }}>{props.title}</Text>
+                        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#144bb8', marginRight: 4 }}>See All</Text>
+                            <MaterialIcons name="arrow-forward" size={18} color="#144bb8" />
+                        </TouchableOpacity>
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                        {props.items?.map((item: any, index: number) => (
+                            <TouchableOpacity key={index} style={{ width: '30%', alignItems: 'center', marginBottom: 16 }}>
+                                <View style={{
+                                    width: 64, height: 64, borderRadius: 16,
+                                    backgroundColor: item.bgColor,
+                                    justifyContent: 'center', alignItems: 'center',
+                                    marginBottom: 12
+                                }}>
+                                    <MaterialIcons name={item.icon as any} size={32} color={item.iconColor} />
+                                </View>
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#111318', textAlign: 'center' }}>{item.label}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+            );
+
+        case 'service_bottom_nav':
+            return (
+                <View style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    backgroundColor: '#fff',
+                    borderTopWidth: 1, borderTopColor: '#f3f4f6',
+                    paddingBottom: 20, // Safe area approximation
+                    paddingTop: 12,
+                    flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
+                }}>
+                    <TouchableOpacity style={{ alignItems: 'center' }}>
+                        <MaterialIcons name="home" size={24} color="#144bb8" />
+                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#144bb8', marginTop: 2 }}>Services</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ alignItems: 'center' }}>
+                        <MaterialIcons name="calendar-today" size={24} color="#9CA3AF" />
+                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#9CA3AF', marginTop: 2 }}>Bookings</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ alignItems: 'center' }}>
+                        <MaterialIcons name="account-balance-wallet" size={24} color="#9CA3AF" />
+                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#9CA3AF', marginTop: 2 }}>Wallet</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ alignItems: 'center' }}>
+                        <MaterialIcons name="person" size={24} color="#9CA3AF" />
+                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#9CA3AF', marginTop: 2 }}>Profile</Text>
+                    </TouchableOpacity>
+                </View>
             );
 
         default:

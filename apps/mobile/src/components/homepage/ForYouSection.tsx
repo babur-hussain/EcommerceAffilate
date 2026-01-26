@@ -24,7 +24,7 @@ export default function ForYouSection({ staticHeader, renderStickyHeader }: ForY
     const [advancedLayout, setAdvancedLayout] = useState<any>(null);
 
     useEffect(() => {
-        fetchAdvancedLayout();
+        // fetchAdvancedLayout();
     }, []);
 
     const fetchAdvancedLayout = async () => {
@@ -74,9 +74,11 @@ export default function ForYouSection({ staticHeader, renderStickyHeader }: ForY
 
             <View style={{ backgroundColor: '#F9FAFB', flex: 1, paddingBottom: 100 }}>
                 {/* Advanced SDUI Sections (Lightning Deals etc) */}
+                {/* Advanced SDUI Sections (Lightning Deals etc) - DISABLED FOR NOW
                 {advancedLayout?.components?.map((component: any) => (
                     <AdvancedRenderer key={component.id || component._id || Math.random().toString()} component={component} />
                 ))}
+                */}
 
                 {/* LEGACY LAYOUT RESTORED */}
                 {loading && !layout ? (

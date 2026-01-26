@@ -408,7 +408,8 @@ export default function SectionRenderer({ section, user }: SectionRendererProps)
             return <CuratedCollections data={content} />;
 
         case 'lightning_deals':
-            return <LightningDeals limit={content?.limit} productIds={content?.productIds} />;
+            // return <LightningDeals limit={content?.limit} productIds={content?.productIds} />;
+            return null;
 
         case 'grand_kitchen':
             return <GrandKitchenSale />;
@@ -433,6 +434,7 @@ export default function SectionRenderer({ section, user }: SectionRendererProps)
             return <FiftyPercentOffZone />;
 
         case 'product_grid':
+            if (title === 'Kids Fashion') return null;
             return <DynamicProductGrid title={title} dataSource={content?.dataSource} />;
 
         // --- Fashion Sections ---

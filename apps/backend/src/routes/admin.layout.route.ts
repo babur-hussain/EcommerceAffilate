@@ -7,13 +7,17 @@ const router = Router();
 
 // GET /api/admin/layouts - List all layouts
 router.get('/admin/layouts', requireAdmin, async (req: Request, res: Response) => {
+    console.log('GET /api/admin/layouts hit');
     try {
+        console.log('AdvancedLayout model:', AdvancedLayout ? 'Defined' : 'Undefined');
         const layouts = await AdvancedLayout.find({})
             .select('slug name description isActive version updatedAt')
             .sort({ updatedAt: -1 });
+        console.log(`Found ${layouts.length} layouts`);
         res.json(layouts);
     } catch (error: any) {
-        res.status(500).json({ error: 'Failed to fetch layouts', message: error.message });
+        console.error('Error fetching layouts:', error);
+        res.status(500).json({ error: 'Failed to fetch layouts', message: error.message, stack: error.stack });
     }
 });
 
@@ -41,15 +45,22 @@ router.get('/admin/layouts/:id', requireAdmin, async (req: Request, res: Respons
 
 // POST /api/admin/layouts - Create new layout
 router.post('/admin/layouts', requireAdmin, async (req: Request, res: Response) => {
+    console.log('POST /api/admin/layouts hit');
     try {
         const { slug, name, description, components, meta } = req.body;
+        console.log('Creating layout:', { slug, name, componentsCount: components?.length });
+        if (components) {
+            console.log('Received components payload:', JSON.stringify(components, null, 2));
+        }
 
         if (!slug || !name) {
+            console.log('Missing slug or name');
             return res.status(400).json({ error: 'Slug and Name are required' });
         }
 
         const existing = await AdvancedLayout.findOne({ slug });
         if (existing) {
+            console.log('Layout already exists:', slug);
             return res.status(400).json({ error: 'Layout with this slug already exists' });
         }
 
@@ -63,9 +74,11 @@ router.post('/admin/layouts', requireAdmin, async (req: Request, res: Response) 
             isActive: true
         });
 
+        console.log('Layout created successfully:', layout._id);
         res.status(201).json(layout);
     } catch (error: any) {
-        res.status(500).json({ error: 'Failed to create layout', message: error.message });
+        console.error('Error creating layout:', error);
+        res.status(500).json({ error: 'Failed to create layout', message: error.message, stack: error.stack });
     }
 });
 

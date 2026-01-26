@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, BackHandler } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useState, useEffect } from 'react';
-import { useNavigation, useRouter, useLocalSearchParams } from 'expo-router';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigation, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { HomeStaticHeader, HomeStickyHeader } from '../../../src/components/homepage/HomeHeader';
 import ShoppingTab from '../../../src/components/homepage/ShoppingTab';
 import ServicesTab from '../../../src/components/homepage/ServicesTab';
@@ -48,13 +48,24 @@ export default function HomeScreen() {
   const [customColor, setCustomColor] = useState<string | null>(null);
 
   const isGroceryTab = activeTab === 'grocery';
-  // Use custom color if set (e.g. from basket), otherwise fall back to tab defaults
-  const safeAreaColor = customColor || (isGroceryTab ? '#FFF8E7' : '#da0b2e');
-  const statusBarStyle = isGroceryTab ? 'dark-content' : 'light-content';
+  const isServicesTab = activeTab === 'businesses';
 
-  const onCategorySelect = (category: any) => {
+  // Use custom color if set (e.g. from basket), otherwise fall back to tab defaults
+  // For Services tab, use white background to match the design
+  const safeAreaColor = customColor || (isGroceryTab ? '#FFF8E7' : (isServicesTab ? '#2BC0E4' : '#c21500'));
+  const statusBarStyle = (isGroceryTab || isServicesTab) ? 'dark-content' : 'light-content';
+
+  const onCategorySelect = useCallback((category: any) => {
     setSelectedCategory(category.name);
-  };
+  }, []);
+
+  const handleTabPress = useCallback((id: string) => {
+    if (id === 'influencers') {
+      router.push('/influencers');
+    } else {
+      setActiveTab(id as TabType);
+    }
+  }, [router]);
 
   const navigation = useNavigation();
 
@@ -63,7 +74,7 @@ export default function HomeScreen() {
     setCustomColor(null);
 
     const parent = navigation.getParent();
-    if (activeTab === 'grocery') {
+    if (activeTab === 'grocery' || activeTab === 'businesses') {
       parent?.setOptions({
         tabBarStyle: { display: 'none' },
       });
@@ -72,7 +83,33 @@ export default function HomeScreen() {
         tabBarStyle: undefined,
       });
     }
+
   }, [activeTab, navigation]);
+
+  // Handle hardware back button
+  useEffect(() => {
+    const onBackPress = () => {
+      console.log('🔙 BackHandler triggered. activeTab:', activeTab);
+      if (activeTab !== 'shopping') {
+        console.log('🔙 Switching back to shopping tab');
+        setActiveTab('shopping');
+        return true; // Prevent default behavior (exit app)
+      }
+      console.log('🔙 Already on shopping, allowing default back');
+      return false; // Let default behavior happen
+    };
+
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress
+    );
+
+    console.log('🔙 BackHandler registered for activeTab:', activeTab);
+    return () => {
+      console.log('🔙 BackHandler cleanup for activeTab:', activeTab);
+      subscription.remove();
+    };
+  }, [activeTab]);
 
   // Helper to create header components
   const createHeaders = () => {
@@ -96,7 +133,8 @@ export default function HomeScreen() {
           <HomeStickyHeader
             onCategorySelect={onCategorySelect}
             selectedCategory={selectedCategory}
-            showIcons={!isSticky}
+            showIcons={true}
+            isSticky={isSticky}
           />
         )}
       </View>
@@ -163,20 +201,14 @@ export default function HomeScreen() {
 
       {/* Tab Content - All tabs are mounted, inactive ones are hidden */}
       <View style={styles.contentContainer}>
-        {/* Shopping Tab */}
-        <View style={[styles.tabContent, activeTab !== 'shopping' && styles.hiddenTab]}>
+        {/* Shopping Tab - Always visible at lowest zIndex for slide animation */}
+        <View style={[styles.tabContent, { zIndex: 1 }]}>
           {renderShoppingContent()}
         </View>
 
-        {/* Businesses Tab */}
-        <View style={[styles.tabContent, activeTab !== 'businesses' && styles.hiddenTab]}>
-          <ServicesTab onTabPress={(id) => {
-            if (id === 'influencers') {
-              router.push('/influencers');
-            } else {
-              setActiveTab(id as TabType);
-            }
-          }} />
+        {/* Businesses Tab - On top with higher zIndex when active */}
+        <View style={[styles.tabContent, activeTab !== 'businesses' && styles.hiddenTab, { zIndex: activeTab === 'businesses' ? 2 : 0 }]}>
+          <ServicesTab onTabPress={handleTabPress} />
         </View>
 
         {/* Grocery Tab */}

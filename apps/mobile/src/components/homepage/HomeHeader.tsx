@@ -368,15 +368,16 @@ interface HomeStickyHeaderProps {
     onCategorySelect: (category: Category) => void;
     selectedCategory: string;
     showIcons?: boolean;
+    isSticky?: boolean;
 }
 
 export const HomeStaticHeader = ({ onTabPress }: HomeStaticHeaderProps) => {
     return (
-        <LinearGradient colors={['#da0b2e', '#da0b2e']} style={{}}>
+        <LinearGradient colors={['#c21500', '#E06D00']} style={{}}>
             <TopCategoryBoxes
                 activeTab="shopping"
                 onTabPress={(id) => onTabPress(id)}
-                backgroundColor="#da0b2e"
+                backgroundColor="transparent"
                 activeBackgroundColor="#FFD700"
             />
             <LocationBar />
@@ -384,15 +385,47 @@ export const HomeStaticHeader = ({ onTabPress }: HomeStaticHeaderProps) => {
     );
 };
 
-export const HomeStickyHeader = ({ onCategorySelect, selectedCategory, showIcons = true }: HomeStickyHeaderProps) => {
+export const HomeStickyHeader = ({ onCategorySelect, selectedCategory, showIcons = true, isSticky = false }: HomeStickyHeaderProps) => {
+    // Base Gradient (Bottom half): #E06D00 -> #ffc500
+    // Overlay Gradient (Full): #c21500 -> #ffc500
+
+    const opacity = useSharedValue(0);
+
+    useEffect(() => {
+        opacity.value = withTiming(isSticky ? 1 : 0, {
+            duration: 300,
+            easing: ReanimatedEasing.bezier(0.25, 0.1, 0.25, 1),
+        });
+    }, [isSticky]);
+
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            opacity: opacity.value,
+        };
+    });
+
     return (
-        <LinearGradient colors={['#da0b2e', '#ffffff']} style={{}}>
-            <SearchBar />
-            <CategoriesSlider
-                onCategorySelect={onCategorySelect}
-                selectedCategory={selectedCategory}
-                showIcons={showIcons}
+        <View>
+            <LinearGradient
+                colors={['#E06D00', '#ffc500']}
+                style={StyleSheet.absoluteFill}
             />
-        </LinearGradient>
+            <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
+                <LinearGradient
+                    colors={['#c21500', '#ffc500']}
+                    style={StyleSheet.absoluteFill}
+                />
+            </Animated.View>
+
+            {/* Content Container */}
+            <View>
+                <SearchBar />
+                <CategoriesSlider
+                    onCategorySelect={onCategorySelect}
+                    selectedCategory={selectedCategory}
+                    showIcons={showIcons}
+                />
+            </View>
+        </View>
     );
 };
