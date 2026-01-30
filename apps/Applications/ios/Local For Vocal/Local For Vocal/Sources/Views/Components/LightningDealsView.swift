@@ -3,25 +3,29 @@ import SwiftUI
 struct LightningDealsView: View {
     @State private var products: [Product] = []
     @State private var isLoading = true
-    
+
     // Props
+    var title: String = "Lightning deals"
+    var subtitle: String = "Big savings on select products"
     var limit: Int = 6
     var productIds: [String] = []
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
             VStack(alignment: .leading, spacing: 4) {
-                Text("Lightning deals")
+                Text(title)
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Color(hex: "#BE123C")) // Rose 700
-                
-                Text("Big savings on select products")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(Color(hex: "#4B5563")) // Gray 600
+                    .foregroundColor(Color(hex: "#BE123C"))  // Rose 700
+
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(hex: "#4B5563"))  // Gray 600
+                }
             }
             .padding(.horizontal, 16)
-            
+
             // Horizontal List
             if isLoading {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -52,7 +56,7 @@ struct LightningDealsView: View {
                 colors: [
                     Color(hex: "#FFF0F5"),
                     Color(hex: "#FFE4E1"),
-                    Color(hex: "#FDF2F8")
+                    Color(hex: "#FDF2F8"),
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -62,13 +66,13 @@ struct LightningDealsView: View {
             await loadProducts()
         }
     }
-    
+
     private func loadProducts() async {
         do {
             let fetched = try await APIService.shared.fetchProducts(limit: limit)
-             if !productIds.isEmpty {
-                 self.products = fetched.filter { productIds.contains($0.id) }
-                 if self.products.isEmpty { self.products = fetched }
+            if !productIds.isEmpty {
+                self.products = fetched.filter { productIds.contains($0.id) }
+                if self.products.isEmpty { self.products = fetched }
             } else {
                 self.products = fetched
             }
@@ -81,27 +85,29 @@ struct LightningDealsView: View {
 
 struct LightningDealCard: View {
     let product: Product
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Image Area
             ZStack(alignment: .topTrailing) {
-                // Great Deal Badge Mock
-                VStack(spacing: 0) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white)
-                    Text("GREAT\nDEAL")
-                        .font(.system(size: 7, weight: .bold))
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
+                // Discount Badge if applicable
+                if let discount = product.discountPercentage, discount > 0 {
+                    VStack(spacing: 0) {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white)
+                        Text("\(discount)% OFF")
+                            .font(.system(size: 7, weight: .bold))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                    }
+                    .padding(4)
+                    .background(Color(hex: "#EF4444"))
+                    .cornerRadius(4, corners: [.bottomLeft, .bottomRight])
+                    .offset(y: -5)  // Hang from top
+                    .padding(.trailing, 10)
                 }
-                .padding(4)
-                .background(Color(hex: "#EF4444"))
-                .cornerRadius(4, corners: [.bottomLeft, .bottomRight])
-                .offset(y: -5) // Hang from top
-                .padding(.trailing, 10)
-                
+
                 if let imageUrl = product.images.first, let url = URL(string: imageUrl) {
                     AsyncImage(url: url) { image in
                         image.resizable()
@@ -113,7 +119,7 @@ struct LightningDealCard: View {
                     .frame(maxWidth: .infinity)
                     .padding(12)
                 }
-                
+
                 // Add Button
                 Button(action: {}) {
                     Text("ADD")
@@ -129,68 +135,62 @@ struct LightningDealCard: View {
                         )
                         .shadow(color: .black.opacity(0.1), radius: 2, y: 2)
                 }
-                .offset(y: 130) // Push to bottom of image area
+                .offset(y: 130)  // Push to bottom of image area
                 .padding(.trailing, 8)
             }
             .zIndex(1)
-            
+
             // Details
             VStack(alignment: .leading, spacing: 6) {
                 Spacer().frame(height: 16)
-                
-                // Veg + Weight
+
+                // Veg/Non-veg + Subtitle/Weight
                 HStack(spacing: 6) {
-                    // Veg icon mock
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 2).stroke(Color(hex: "#16A34A"), lineWidth: 1)
-                            .frame(width: 14, height: 14)
-                        Circle().fill(Color(hex: "#16A34A")).frame(width: 8, height: 8)
+                    // Using subtitle for weight/unit if available
+                    if let subtitle = product.subtitle, !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(Color(hex: "#374151"))
                     }
-                    
-                    Text("250 g") // Mock
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(Color(hex: "#374151"))
                 }
-                
+
                 Text(product.name)
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(Color(hex: "#1F2937"))
                     .lineLimit(2)
                     .frame(height: 38, alignment: .topLeading)
-                
+
                 // Stars
-                HStack(spacing: 2) {
-                    ForEach(0..<5) { i in
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(i < Int(product.rating ?? 0) ? .yellow : .gray.opacity(0.3))
+                if let rating = product.rating {
+                    HStack(spacing: 2) {
+                        ForEach(0..<5) { i in
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(i < Int(rating) ? .yellow : .gray.opacity(0.3))
+                        }
+                        if let count = product.reviewCount {
+                            Text("(\(count))")
+                                .font(.system(size: 11))
+                                .foregroundColor(.gray)
+                        }
                     }
-                    Text("(\(product.reviewCount ?? 0))")
-                        .font(.system(size: 11))
-                        .foregroundColor(.gray)
                 }
-                
-                // Delivery
-                HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color(hex: "#16A34A"))
-                    Text("9 MINS")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(Color(hex: "#059669"))
-                }
-                
+
+                // Delivery - Removed Mock "9 MINS"
+
                 // Scarcity
-                Text("Only 1 left")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(Color(hex: "#EA580C"))
-                
+                if let stock = product.stock, stock < 10 {
+                    Text("Only \(stock) left")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Color(hex: "#EA580C"))
+                }
+
                 // Price
                 HStack(alignment: .bottom, spacing: 6) {
                     Text("₹\(Int(product.price))")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(Color(hex: "#1F2937"))
-                    
+
                     if let mrp = product.mrp, mrp > product.price {
                         Text("MRP ₹\(Int(mrp))")
                             .font(.system(size: 11))
@@ -200,7 +200,7 @@ struct LightningDealCard: View {
                 }
             }
             .padding(12)
-            
+
             // Footer
             Button(action: {}) {
                 HStack(spacing: 4) {
@@ -225,22 +225,5 @@ struct LightningDealCard: View {
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
         .frame(width: 160)
-    }
-}
-
-// Extension for partial corner radius
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape( RoundedCorner(radius: radius, corners: corners) )
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
     }
 }

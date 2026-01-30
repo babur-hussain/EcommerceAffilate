@@ -33,7 +33,8 @@ router.post('/influencer/register', verifyFirebaseToken, async (req: Request, re
     } = req.body;
 
     // Validate essential fields
-    if (!businessIdentity || !ownerDetails || !bankDetails) {
+    // For influencers, we might allow partial registration (no bank details initially)
+    if (!businessIdentity || !ownerDetails) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 

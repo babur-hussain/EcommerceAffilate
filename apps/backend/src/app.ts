@@ -11,6 +11,7 @@ import adminAnalyticsRouter from "./routes/admin.analytics.route";
 import adminDashboardRouter from "./routes/admin.dashboard.route";
 import adminInfluencerRouter from "./routes/admin.influencer.route";
 import adminBusinessRouter from "./routes/admin.business.route";
+import searchRouter from "./routes/search.route"; // New Search Router
 import authRouter from "./routes/auth.route";
 import brandRouter from "./routes/brand.route";
 import cartRouter from "./routes/cart.route";
@@ -131,6 +132,7 @@ app.get("/api/test-early", (req, res) => {
 // Routes
 app.use(healthRouter);
 app.use("/api", authRouter);
+app.use("/api", searchRouter); // Use Search Router
 app.use("/api", brandRouter);
 app.use("/api", productRouter);
 app.use("/api", cartRouter);

@@ -212,14 +212,13 @@ const businessSchema = new Schema<IBusiness>(
     },
 
     taxLegal: {
-      gstinNumber: { type: String, required: true },
+      gstinNumber: { type: String },
       gstRegistrationType: {
         type: String,
-        enum: ['Regular', 'Composition'],
-        required: true
+        enum: ['Regular', 'Composition']
       },
       gstCertificateUrl: { type: String },
-      panNumber: { type: String, required: true },
+      panNumber: { type: String },
       panCardUrl: { type: String },
       cinLlpin: { type: String },
       shopEstablishmentUrl: { type: String },
@@ -227,20 +226,18 @@ const businessSchema = new Schema<IBusiness>(
     },
 
     bankDetails: {
-      accountHolderName: { type: String, required: true },
-      bankName: { type: String, required: true },
-      accountNumber: { type: String, required: true },
-      ifscCode: { type: String, required: true },
+      accountHolderName: { type: String },
+      bankName: { type: String },
+      accountNumber: { type: String },
+      ifscCode: { type: String },
       accountType: {
         type: String,
-        enum: ['Savings', 'Current'],
-        required: true
+        enum: ['Savings', 'Current']
       },
       cancelledChequeUrl: { type: String },
       settlementCycle: {
         type: String,
         enum: ['Daily', 'Weekly', 'Bi-Weekly'],
-        required: true,
         default: 'Weekly'
       }
     },

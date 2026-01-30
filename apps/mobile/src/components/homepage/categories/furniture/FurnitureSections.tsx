@@ -311,7 +311,7 @@ export const FurnitureTrendingNow = ({ data }: SectionProps) => {
                 {/* Static implementation for now as per design pattern, but could be dynamic */}
                 <TouchableOpacity style={[styles.trendingCard, styles.trendingCardYellow]} onPress={() => router.push(normalizeUrl('/category/furniture-new-launches') as any)}>
                     <View style={styles.trendingIconContainer}>
-                        <FontAwesome name="rocket" size={40} color="#2962FF" />
+                        <FontAwesome name="star" size={40} color="#2962FF" />
                     </View>
                     <Text style={styles.trendingText}>New</Text>
                     <Text style={styles.trendingText}>launches</Text>
@@ -508,6 +508,42 @@ export const FurnitureProductGrid = ({ data }: SectionProps) => {
 };
 
 
+// 19. Gym Accessories
+export const SportGymAccessories = ({ data }: SectionProps) => {
+    const router = useRouter();
+    const items = data?.items || [];
+    if (!items.length) return null;
+
+    return (
+        <View style={styles.gymAccessoriesSection}>
+            <SectionHeader title={data.title || 'Gym-approved accessories'} actionUrl={data.headerActionUrl} router={router} />
+            <View style={styles.gymAccessoriesGrid}>
+                {items.map((item: any, index: number) => (
+                    <TouchableOpacity key={index} style={styles.gymAccessoryCard} onPress={() => router.push(normalizeUrl(item.actionUrl) as any)}>
+                        <LinearGradient
+                            colors={['#3B82F6', '#172554']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.gymAccessoryBackground}
+                        >
+                            <View style={styles.gymAccessoryContent}>
+                                <Text style={styles.gymAccessoryTitle} numberOfLines={2}>{item.title}</Text>
+                                <View style={{ flex: 1 }} />
+                                <Text style={styles.gymAccessoryDiscount}>{item.discount}</Text>
+                            </View>
+
+                            {/* Decorative Line approximation */}
+                            <View style={styles.gymAccessoryLine} />
+
+                            <CachedImage source={{ uri: getOptimizedUrl(item.image, 300) }} style={styles.gymAccessoryImage} contentFit="contain" />
+                        </LinearGradient>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+    );
+};
+
 const styles = StyleSheet.create({
     sectionTitleBlack: { fontSize: 18, fontWeight: 'bold', color: '#000', marginBottom: 12 },
     horizontalScrollContent: { paddingHorizontal: 8 },
@@ -653,4 +689,16 @@ const styles = StyleSheet.create({
     statementLabelContainer: { position: 'absolute', bottom: 24, left: 0, right: 0, alignItems: 'center' },
     statementLabel: { backgroundColor: 'rgba(255, 255, 255, 0.85)', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 24 },
     statementText: { fontSize: 18, fontWeight: 'bold', color: '#000', fontFamily: 'serif' },
+
+    // Gym Accessories
+    gymAccessoriesSection: { marginBottom: 24, paddingLeft: 16 },
+    gymAccessoriesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingRight: 16 },
+    gymAccessoryCard: { width: '48%', height: 220, marginBottom: 12, borderRadius: 16, overflow: 'hidden' },
+    gymAccessoryBackground: { flex: 1, padding: 12, position: 'relative' },
+    gymAccessoryContent: { zIndex: 10, height: '100%', paddingBottom: 30 },
+    gymAccessoryTitle: { fontSize: 18, fontWeight: 'bold', color: '#fff', marginBottom: 4, lineHeight: 22, textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
+    gymAccessoryDiscount: { fontSize: 13, fontWeight: 'bold', color: '#CCFF00' },
+    gymAccessoryLine: { position: 'absolute', top: 60, left: 16, width: 40, height: 90, borderLeftWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.4)' },
+    gymAccessoryImage: { position: 'absolute', bottom: -10, right: -10, width: 130, height: 130 },
+
 });

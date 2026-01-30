@@ -1,0 +1,6 @@
+framework module Pods_Local_For_Vocal {
+  umbrella header "Pods-Local For Vocal-umbrella.h"
+
+  export *
+  module * { export * }
+}

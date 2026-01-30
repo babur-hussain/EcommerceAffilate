@@ -3,7 +3,14 @@ import SwiftUI
 struct FiftyPercentOffZoneView: View {
     @State private var products: [Product] = []
     private let api = APIService.shared
-    
+
+    // Props
+    var title: String = "50% OFF ZONE"
+    var subtitle: String = "Half the price, double the joy!"
+    var bannerImage: String =
+        "https://png.pngtree.com/png-vector/20240125/ourmid/pngtree-grocery-shopping-bag-isolated-png-image_11549419.png"  // Default fallback
+    var discountText: String = "50%"
+
     var body: some View {
         VStack(spacing: 0) {
             // Header Banner
@@ -13,15 +20,15 @@ struct FiftyPercentOffZoneView: View {
                     startPoint: .leading,
                     endPoint: .trailing
                 )
-                
+
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(alignment: .bottom, spacing: 4) {
-                            Text("50%")
+                            Text(discountText)
                                 .font(.system(size: 42, weight: .black))
                                 .italic()
                                 .foregroundColor(Color(hex: "#2563EB"))
-                            
+
                             VStack(alignment: .leading, spacing: 0) {
                                 Text("OFF")
                                     .font(.system(size: 14, weight: .heavy))
@@ -33,22 +40,21 @@ struct FiftyPercentOffZoneView: View {
                                     .foregroundColor(Color(hex: "#3B82F6"))
                             }
                             .padding(.bottom, 6)
-                            
+
                             Image(systemName: "sparkles")
                                 .foregroundColor(Color(hex: "#3B82F6"))
                                 .padding(.bottom, 12)
                         }
-                        
-                        Text("Half the price, double the joy!")
+
+                        Text(subtitle)
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(Color(hex: "#1F2937"))
                     }
                     .padding(.leading, 20)
-                    
+
                     Spacer()
-                    
-                    // Hardcoded banner image for matching visuals
-                    AsyncImage(url: URL(string: "https://png.pngtree.com/png-vector/20240125/ourmid/pngtree-grocery-shopping-bag-isolated-png-image_11549419.png")) { image in
+
+                    AsyncImage(url: URL(string: bannerImage)) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
@@ -60,7 +66,7 @@ struct FiftyPercentOffZoneView: View {
                 }
             }
             .frame(height: 140)
-            
+
             // Product List
             if products.isEmpty {
                 HStack {
@@ -80,7 +86,7 @@ struct FiftyPercentOffZoneView: View {
                     .padding(.vertical, 16)
                 }
             }
-            
+
             // See All Button
             Button(action: {
                 // Navigate to list
@@ -106,24 +112,14 @@ struct FiftyPercentOffZoneView: View {
             loadProducts()
         }
     }
-    
+
     private func loadProducts() {
         Task {
             do {
                 let fetchedProducts = try await api.fetchProducts(limit: 10)
-                // Filter for >50% discount mock
-                let discounted = fetchedProducts.map { p -> Product in
-                    var newP = p
-                    // Mock discount if missing
-                    /*
-                     In a real app, logic would match RN:
-                     const discount = ((p.mrp - p.price) / p.mrp) * 100;
-                     */
-                    // We just use the raw fetch for now
-                    return newP
-                }
+                // In a real app we might filter by discount here
                 DispatchQueue.main.async {
-                    self.products = discounted
+                    self.products = fetchedProducts
                 }
             } catch {
                 print("Error fetching products: \(error)")

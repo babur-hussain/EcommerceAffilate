@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { User, UserRole } from '../models/user.model';
 import { hashPassword, comparePassword, generateJWT } from '../utils/auth';
+import axios from 'axios';
+
 
 const router = Router();
 
@@ -75,6 +77,71 @@ router.post('/auth/login', async (req: Request, res: Response) => {
     res.json({ token, role: user.role });
   } catch (error: any) {
     res.status(500).json({ error: 'Login failed', message: error.message });
+  }
+});
+
+
+
+// POST /auth/google
+// Verifies Google ID Token and returns Backend JWT
+router.post('/auth/google', async (req: Request, res: Response) => {
+
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ error: 'Google ID Token is required' });
+    }
+
+    // Verify token with Google
+    const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+    const { email, name, sub, picture } = googleRes.data;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Invalid Google Token' });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Check if user exists
+    let user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      // Create new user
+      const { randomUUID } = require('crypto');
+      const passwordHash = await hashPassword(randomUUID()); // Random password for social login
+
+      user = await User.create({
+        uid: sub, // Use Google Subject ID as UID
+        email: normalizedEmail,
+        passwordHash,
+        role: 'CUSTOMER',
+        name: name || 'Google User',
+        profileImage: picture,
+        isActive: true
+      });
+    }
+
+    // Generate JWT
+    // Generate JWT
+    const jwtToken = generateJWT(user);
+
+    // Return same structure as login, but ensure user object has _id for Swift Codable
+    res.json({
+      token: jwtToken,
+      role: user.role,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        phone: user.phoneNumber
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Google Login Error:', error.message);
+    res.status(500).json({ error: 'Google Login failed', message: error.message });
   }
 });
 

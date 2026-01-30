@@ -7,9 +7,9 @@ enum TabType: String, CaseIterable, Identifiable {
     case services = "Services"
     case grocery = "Grocery"
     case influencers = "Influencers"
-    
+
     var id: String { rawValue }
-    
+
     var iconName: String {
         switch self {
         case .shopping: return "bag.fill"
@@ -18,7 +18,7 @@ enum TabType: String, CaseIterable, Identifiable {
         case .influencers: return "person.3.fill"
         }
     }
-    
+
     var color: Color {
         switch self {
         case .shopping: return Color(hex: "#2563EB")
@@ -32,7 +32,7 @@ enum TabType: String, CaseIterable, Identifiable {
 struct CategoryItem: Identifiable {
     let id: String
     let name: String
-    let icon: String // SF Symbol name
+    let icon: String  // SF Symbol name
 }
 
 // MARK: - TopCategoryBoxesView
@@ -43,76 +43,109 @@ struct CategoryItem: Identifiable {
 
 struct TopCategoryBoxesView: View {
     @Binding var activeTab: TabType
-    
+    var activeBgColor: Color = Color(hex: "#FFD700")
+    var inactiveBgColor: Color = Color.white
+    var activeTextColor: Color = Color(hex: "#111827")
+    var inactiveTextColor: Color = Color(hex: "#111827")
+
+    // Icon customization
+    var useTabColorForIcon: Bool = true
+    var activeIconColor: Color = .black
+    var inactiveIconColor: Color = .gray
+
+    // Layout customization
+    var forceEqualWidth: Bool = false
+
     var body: some View {
-        HStack(spacing: 0) { // Reduced spacing, using frame to distribute
-            ForEach(TabType.allCases) { tab in
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        activeTab = tab
-                    }
-                }) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(activeTab == tab ? Color(hex: "#FFD700") : Color.white)
-                            .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
-                        
-                        VStack(spacing: 2) {
-                            Image(systemName: tab.iconName)
-                                .font(.system(size: 24))
-                                .foregroundColor(activeTab == tab ? tab.color : tab.color)
-                            
-                            Text(tab.rawValue)
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(Color(hex: "#111827"))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
+        GeometryReader { geometry in
+            let horizontalPadding: CGFloat = 16  // 8 * 2 padding
+            let spacing: CGFloat = 24  // 8 * 3 gaps
+            let availableWidth = geometry.size.width - horizontalPadding - spacing
+            let itemWidth = max(availableWidth / 4, 60)  // Minimum 60 width
+
+            HStack(spacing: 8) {
+                ForEach(TabType.allCases) { tab in
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            activeTab = tab
                         }
-                        .padding(.vertical, 4)
+                    }) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(activeTab == tab ? activeBgColor : inactiveBgColor)
+                                .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
+
+                            VStack(spacing: 2) {
+                                Image(systemName: tab.iconName)
+                                    .font(.system(size: 20))
+                                    .foregroundColor(
+                                        useTabColorForIcon
+                                            ? tab.color
+                                            : (activeTab == tab
+                                                ? activeIconColor : inactiveIconColor)
+                                    )
+
+                                Text(tab.rawValue)
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundColor(
+                                        activeTab == tab ? activeTextColor : inactiveTextColor
+                                    )
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.6)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .frame(width: itemWidth, height: 50)
                     }
-                    .frame(height: 50)
-                    .padding(.horizontal, 4)
                 }
-                .frame(maxWidth: .infinity)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 8)
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 8)
+        .frame(height: 70)
     }
 }
 
 // MARK: - LocationBarView
 
 struct LocationBarView: View {
+    @ObservedObject var locationManager = LocationManager.shared
+
     var body: some View {
         HStack {
-            HStack(spacing: 8) {
-                // Pin Icon
-                Image(systemName: "location.fill")
-                    .foregroundColor(.white)
-                    .font(.system(size: 16))
-                    .rotationEffect(.degrees(45)) // Angled pin
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("CURRENT LOCATION")
-                        .font(.system(size: 9, weight: .heavy))
-                        .foregroundColor(Color(hex: "#FFD700"))
-                        .tracking(0.5)
-                    
-                    HStack(spacing: 4) {
-                        Text("New York, USA")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Image(systemName: "chevron.down")
-                            .foregroundColor(.white)
-                            .font(.system(size: 12, weight: .bold))
+            Button(action: {
+                locationManager.startUpdating()
+            }) {
+                HStack(spacing: 8) {
+                    // Pin Icon
+                    Image(systemName: "location.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 16))
+                        .rotationEffect(.degrees(45))  // Angled pin
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(locationManager.city)  // Dynamic City/State
+                            .font(.system(size: 9, weight: .heavy))
+                            .foregroundColor(Color(hex: "#FFD700"))
+                            .tracking(0.5)
+
+                        HStack(spacing: 4) {
+                            Text(locationManager.address)  // Dynamic Address
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+
+                            Image(systemName: "chevron.down")
+                                .foregroundColor(.white)
+                                .font(.system(size: 12, weight: .bold))
+                        }
                     }
+
+                    Spacer()
                 }
-                
-                Spacer()
             }
-            
+
             // Points Badge
             HStack(spacing: 6) {
                 Image(systemName: "star.circle.fill")
@@ -125,12 +158,12 @@ struct LocationBarView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Color.white.opacity(0.2))
-            .cornerRadius(20) // More rounded pill
+            .cornerRadius(20)  // More rounded pill
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10) // Taller bar
-        .background(Color(hex: "#A0522D"))
-        .cornerRadius(10) // Slightly more rounded corners
+        .padding(.vertical, 10)  // Taller bar
+        .background(Color.black.opacity(0.2))
+        .cornerRadius(10)  // Slightly more rounded corners
         .padding(.horizontal, 16)
         .padding(.vertical, 4)
     }
@@ -139,23 +172,30 @@ struct LocationBarView: View {
 // MARK: - SearchBarView
 
 struct SearchBarView: View {
+    @State private var isSearching = false
+
     var body: some View {
         HStack(spacing: 12) {
             // Main Search Input
-            HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(Color(hex: "#9CA3AF"))
-                Text("Search products...")
-                    .font(.system(size: 15))
-                    .foregroundColor(Color(hex: "#9CA3AF"))
-                Spacer()
+            Button(action: {
+                isSearching = true
+            }) {
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(Color(hex: "#9CA3AF"))
+                    Text("Search products...")
+                        .font(.system(size: 15))
+                        .foregroundColor(Color(hex: "#9CA3AF"))
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .frame(height: 46)  // Taller search bar
+                .background(Color.white)
+                .cornerRadius(10)
             }
-            .padding(.horizontal, 14)
-            .frame(height: 46) // Taller search bar
-            .background(Color.white)
-            .cornerRadius(10)
-            
+            .buttonStyle(PlainButtonStyle())
+
             // Scan Button
             Button(action: {}) {
                 Image(systemName: "qrcode.viewfinder")
@@ -168,6 +208,9 @@ struct SearchBarView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+        .fullScreenCover(isPresented: $isSearching) {
+            GlobalSearchView()
+        }
     }
 }
 
@@ -175,7 +218,8 @@ struct SearchBarView: View {
 
 struct CategoriesSliderView: View {
     @Binding var selectedCategory: String
-    
+    var showIcons: Bool = true
+
     // Updated icon mapping to look more premium
     let categories: [CategoryItem] = [
         CategoryItem(id: "1", name: "For You", icon: "tag.fill"),
@@ -190,12 +234,12 @@ struct CategoriesSliderView: View {
         CategoryItem(id: "10", name: "Auto", icon: "car.fill"),
         CategoryItem(id: "11", name: "Sports", icon: "sportscourt.fill"),
         CategoryItem(id: "12", name: "Books", icon: "book.fill"),
-        CategoryItem(id: "13", name: "Furniture", icon: "sofa.fill")
+        CategoryItem(id: "13", name: "Furniture", icon: "sofa.fill"),
     ]
-    
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 24) { // Increased spacing between items
+            HStack(spacing: 24) {  // Increased spacing between items
                 ForEach(categories) { category in
                     Button(action: {
                         withAnimation {
@@ -204,17 +248,26 @@ struct CategoriesSliderView: View {
                     }) {
                         VStack(spacing: 8) {
                             // Icon Container
-                            ZStack {
-                                Image(systemName: category.icon)
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.white)
+                            if showIcons {
+                                ZStack {
+                                    Image(systemName: category.icon)
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.white)
+                                }
+                                .frame(height: 30)  // Fixed height for icon area
+                                .transition(.opacity.combined(with: .scale))
                             }
-                            .frame(height: 30) // Fixed height for icon area
-                            
+
                             // Text
                             Text(category.name)
-                                .font(.system(size: 14, weight: selectedCategory == category.name ? .bold : .medium))
-                                .foregroundColor(selectedCategory == category.name ? .white : .white.opacity(0.8))
+                                .font(
+                                    .system(
+                                        size: 14,
+                                        weight: selectedCategory == category.name ? .bold : .medium)
+                                )
+                                .foregroundColor(
+                                    selectedCategory == category.name ? .white : .white.opacity(0.8)
+                                )
                         }
                         .padding(.horizontal, 4)
                         .padding(.bottom, 12)
@@ -241,42 +294,56 @@ struct CategoriesSliderView: View {
 
 struct HomeTopHeaderView: View {
     @Binding var activeTab: TabType
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Top Tab Switcher
             TopCategoryBoxesView(activeTab: $activeTab)
-                //.padding(.top, 54) // Moved handling to ContentView to avoid double padding logic
-            
+            //.padding(.top, 54) // Moved handling to ContentView to avoid double padding logic
+
             // Location Bar
             LocationBarView()
         }
         .background(
-           // Use the top part of the gradient or a solid color that matches
-           Color(hex: "#c21500")
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(hex: "#8A2387"),
+                    Color(hex: "#E94057"),
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
         )
     }
 }
 
 struct HomeStickyHeaderView: View {
     @Binding var selectedCategory: String
-    
+    @Binding var showIcons: Bool
+
     var body: some View {
         VStack(spacing: 0) {
             // Search Bar
             SearchBarView()
                 .padding(.top, 4)
-            
+
             // Categories Slider
-            CategoriesSliderView(selectedCategory: $selectedCategory)
+            CategoriesSliderView(selectedCategory: $selectedCategory, showIcons: showIcons)
         }
         .padding(.bottom, 8)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(hex: "#c21500"),
-                    Color(hex: "#E06D00")
-                ]),
+                gradient: Gradient(
+                    colors: showIcons
+                        ? [
+                            Color(hex: "#E94057"),
+                            Color(hex: "#F27121"),
+                        ]
+                        : [
+                            Color(hex: "#8A2387"),
+                            Color(hex: "#E94057"),
+                            Color(hex: "#F27121"),
+                        ]),
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -288,13 +355,13 @@ struct HomeStickyHeaderView: View {
 struct HomeHeaderView: View {
     @State private var activeTab: TabType = .shopping
     @State private var selectedCategory: String = "For You"
-    
+    @State private var showIcons: Bool = true
+
     var body: some View {
         VStack(spacing: 0) {
             HomeTopHeaderView(activeTab: $activeTab)
                 .padding(.top, 54)
-            HomeStickyHeaderView(selectedCategory: $selectedCategory)
+            HomeStickyHeaderView(selectedCategory: $selectedCategory, showIcons: $showIcons)
         }
     }
 }
-

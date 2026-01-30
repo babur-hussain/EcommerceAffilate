@@ -89,13 +89,17 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { items, addressId, couponCode, influencerCode, selectedOfferIds, paymentMethod } = req.body as {
+    const { items, addressId, couponCode, influencerCode, selectedOfferIds, paymentMethod, shippingFee, donation, protectPromiseFee, lastChanceOffers } = req.body as {
       items?: Array<{ productId: string; quantity: number }>;
       addressId?: string;
       couponCode?: string;
       influencerCode?: string;
       selectedOfferIds?: string[];
       paymentMethod?: string;
+      shippingFee?: number;
+      donation?: number;
+      protectPromiseFee?: number;
+      lastChanceOffers?: Array<{ id: string; name: string; price: number }>;
     };
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
@@ -103,6 +107,13 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
     if (!addressId || !mongoose.Types.ObjectId.isValid(addressId)) {
       return res.status(400).json({ error: 'addressId is required' });
     }
+
+    // DEBUG: Log what client sent
+    console.log(`[Order Create] Received shippingFee from client: ${shippingFee}`);
+    console.log(`[Order Create] Received donation from client: ${donation}`);
+    console.log(`[Order Create] Received protectPromiseFee from client: ${protectPromiseFee}`);
+    console.log(`[Order Create] Received lastChanceOffers from client:`, lastChanceOffers);
+    console.log(`[Order Create] Full req.body:`, JSON.stringify(req.body));
 
     // Validate item shapes
     for (const item of items) {
@@ -163,10 +174,12 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
           const shipping = Number(p.shippingCharges) || 0;
           const protect = Number(p.protectPromiseFee) || 0;
 
+          // Only accumulate DB shipping if client didn't provide one (logic handled below)
+          // But we calculate it anyway for fallback/validation if needed
           totalShipping += shipping;
           totalProtectFee += protect;
 
-          // Process Add-On Offers (Upsells)
+          // Process Add-On Offers (Upsells) - OLD WAY via selectedOfferIds
           if (Array.isArray(selectedOfferIds) && selectedOfferIds.length > 0 && p.lastChanceOffers) {
             p.lastChanceOffers.forEach((offer: any) => {
               // Check if this offer is selected (comparing IDs carefully)
@@ -183,7 +196,41 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
           }
         });
 
+        // OVERRIDE shipping if provided by client (which calculated it accurately via UI logic)
+        if (typeof shippingFee === 'number' && shippingFee >= 0) {
+          console.log(`[Order] Using client-provided shipping fee: ${shippingFee}`);
+          totalShipping = shippingFee;
+        }
+
+        // OVERRIDE protectPromiseFee if provided by client
+        if (typeof protectPromiseFee === 'number' && protectPromiseFee >= 0) {
+          console.log(`[Order] Using client-provided protectPromiseFee: ${protectPromiseFee}`);
+          totalProtectFee = protectPromiseFee;
+        }
+
         totalAmount += totalShipping + totalProtectFee;
+
+        // Add donation if provided
+        if (typeof donation === 'number' && donation > 0) {
+          console.log(`[Order] Adding donation: ${donation}`);
+          totalAmount += donation;
+        }
+
+        // Add client-provided lastChanceOffers (NEW WAY - iOS sends full offer objects)
+        if (Array.isArray(lastChanceOffers) && lastChanceOffers.length > 0) {
+          lastChanceOffers.forEach(offer => {
+            const offerPrice = Number(offer.price) || 0;
+            if (offerPrice > 0) {
+              console.log(`[Order] Adding lastChanceOffer: ${offer.name} = ${offerPrice}`);
+              totalAmount += offerPrice;
+              processedAddOns.push({
+                title: offer.name,
+                price: offerPrice,
+                offerId: offer.id
+              });
+            }
+          });
+        }
 
         // Apply coupon if provided
         let discountAmount = 0;
