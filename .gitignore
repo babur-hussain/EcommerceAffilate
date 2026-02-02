@@ -8,3 +8,7 @@ apps/backend/firebase-adminsdk.json
 # Heap dumps and traces
 *.hprof
 build_trace.txt
+
+# iOS dependencies and build
+Pods/
+DerivedData/
