@@ -16,9 +16,10 @@ struct ContentView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
 
-    // Header States (Home Tab)
-    @State private var activeTab: TabType = .shopping
-    @State private var selectedCategory: String = "For You"
+    // Navigation Manager
+    @StateObject private var navigationManager = NavigationManager()
+
+    // Header States (Home Tab) - Now using NavigationManager defaults
     @State private var showIcons: Bool = true
 
     // Main Tab State
@@ -26,7 +27,7 @@ struct ContentView: View {
 
     // Computed slug based on category (Home Tab)
     var currentSlug: String {
-        selectedCategory.lowercased().replacingOccurrences(of: " ", with: "-")
+        navigationManager.selectedCategory.lowercased().replacingOccurrences(of: " ", with: "-")
     }
 
     // Location Manager
@@ -58,12 +59,16 @@ struct ContentView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.bottom, (activeTab == .influencers && currentTab == .home) ? 0 : 60)  // Space for TabBar (hidden on Influencers)
+                .padding(
+                    .bottom,
+                    (navigationManager.activeTab == .influencers && currentTab == .home) ? 0 : 60
+                )  // Space for TabBar (hidden on Influencers)
                 .environmentObject(cartManager)
                 .environmentObject(basketManager)  // Inject BasketManager
+                .environmentObject(navigationManager)
 
                 // Layer 2: Custom Tab Bar (hidden on Influencers page)
-                if activeTab != .influencers || currentTab != .home {
+                if navigationManager.activeTab != .influencers || currentTab != .home {
                     TabBarView(currentTab: $currentTab)
                         .transition(.move(edge: .bottom))
                         .zIndex(200)
@@ -77,17 +82,45 @@ struct ContentView: View {
         .onAppear {
             locationManager.requestPermission()
         }
+        .fullScreenCover(isPresented: $navigationManager.showBeautyPage) {
+            BeautyProductView()
+                .environmentObject(navigationManager)
+        }
+        .fullScreenCover(isPresented: $navigationManager.showSpecialDealPage) {
+            SpecialDealNewStyleView()
+                .environmentObject(navigationManager)
+        }
+        .fullScreenCover(isPresented: $navigationManager.showBrandNewArrivalPage) {
+            BrandNewArrivalView()
+                .environmentObject(navigationManager)
+        }
+        .fullScreenCover(isPresented: $navigationManager.showMenFashionPage) {
+            MenFashionView()
+                .environmentObject(navigationManager)
+        }
+        .fullScreenCover(isPresented: $navigationManager.showGrandMobilesPage) {
+            GrandMobilesView()
+                .environmentObject(navigationManager)
+        }
+        .fullScreenCover(isPresented: $navigationManager.showShoesSalesPage) {
+            ShoesSalesView()
+                .environmentObject(navigationManager)
+        }
+        .fullScreenCover(isPresented: $navigationManager.showCyberSalePage) {
+            CyberSaleView()
+                .environmentObject(navigationManager)
+        }
     }
 
     @ViewBuilder
     private func homeContentView(geometry: GeometryProxy) -> some View {
-        if activeTab == .grocery {
-            GroceryPageView(activeTab: $activeTab)
-        } else if activeTab == .services {
-            ServicesPageView(activeTab: $activeTab)
+        if navigationManager.activeTab == .grocery {
+            GroceryPageView(activeTab: $navigationManager.activeTab)
+        } else if navigationManager.activeTab == .services {
+            ServicesPageView(activeTab: $navigationManager.activeTab)
                 .frame(maxWidth: .infinity)
-        } else if activeTab == .influencers {
-            InfluencersPageView(activeTab: $activeTab)
+        } else if navigationManager.activeTab == .influencers {
+            InfluencersPageView(activeTab: $navigationManager.activeTab)
                 .frame(maxWidth: .infinity)
         } else {
             ZStack(alignment: .top) {
@@ -107,7 +140,7 @@ struct ContentView: View {
                         ScrollViewReader { scrollProxy in  // Prepare for scroll to top
                             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                                 // Part 1: Top Header (Scrolls away)
-                                HomeTopHeaderView(activeTab: $activeTab)
+                                HomeTopHeaderView(activeTab: $navigationManager.activeTab)
                                     // Natural placement below safe area
                                     .background(
                                         GeometryReader { proxy in
@@ -121,7 +154,8 @@ struct ContentView: View {
                                 // Part 2: Sticky Header and Content
                                 Section(
                                     header: HomeStickyHeaderView(
-                                        selectedCategory: $selectedCategory, showIcons: $showIcons
+                                        selectedCategory: $navigationManager.selectedCategory,
+                                        showIcons: $showIcons
                                     ).zIndex(1)
                                 ) {
                                     // Page Content
@@ -129,7 +163,7 @@ struct ContentView: View {
                                         .zIndex(0)
                                 }
                             }
-                            .onChange(of: selectedCategory) { _ in
+                            .onChange(of: navigationManager.selectedCategory) { _ in
                                 // Scroll handling if needed
                             }
                         }
@@ -158,6 +192,7 @@ struct ContentView: View {
             ForYouPage()
         case "beauty":
             BeautyPage()
+        // beauty-product is now handled via fullScreenCover
         case "electronics":
             ElectronicsPage()
         case "sports":
@@ -167,7 +202,7 @@ struct ContentView: View {
         case "furniture":
             FurniturePage()
         case "grocery":
-            GroceryPageView(activeTab: $activeTab)
+            GroceryPageView(activeTab: $navigationManager.activeTab)
         default:
             SDUIPage(slug: slug)
         }

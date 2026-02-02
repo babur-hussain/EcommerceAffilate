@@ -1,0 +1,68 @@
+[
+    {
+        "id": "jewelry-hero",
+        "type": "jewelry_hero",
+        "props": {
+            "eyebrow": "PREMIUM JEWELRY",
+            "title": "Brand New Arrival",
+            "buttonText": "Shop Now",
+            "leftImageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuC4KtvNZTORM6BF7WAkUzAbaKl09ue0n4XSt6ZFhmQe3gYh8m0SZ1NHKJpTPfOxwuigPNHzhS9nRMrZfuAifbfaOG2zAQhjMU8qyKLeE9E2FDRN16v6_q702FUuJ-dutxAr76KivmUVGWmxBloUtjNpkx3WsZHfaTu4yXMKKWl3Cm5UyAnbhWIKHDMVjsL1g7vLGSmR6IkIyzmIdhYsttn8wy3nfWcF5Ou02J7IG3KQ932ShCE66qif0Z_MuSEqgcVQJ9m7hn_kdvt4",
+            "centerImageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuB7B_ORgrzMVAzn-htq7okk_sV2-zubknWmdeCPC5YyBnXTFB5-pEnGxLUhgJS8Mu8XcxoQ4ZH-GWTOBoMRWWLiCwGeadprCA_F4hbA3mnFIrAz3H6LkFUhsdiy6i8ZePH_hwqskMNFV6h0Pm9nQR17ekhVxDiTJCxg4odCD6G7M6XslfmWhVk34wim09gnQyTba1G3OiA5Eggl0yNDeUCmBtbJpu5tNfmMgHgLrVeoYInN_UrtTrhxc8Yb-k_CBwHaDPgfxcOGR3Yl",
+            "rightImageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuARyivEa4K73CagAaakss47BJek7ZbxTuZmMDySdKenheUK0E5wI9GdoxgvndWMAu3aWVcx5MaTIn4sPfu-er5gAon0bx1R7wlUbfrvIhljRNRFKnOHU7lcOSMDldYtWAQKtDTjyZlzchXiJZraBlxKKszDrHjbaLlS9Qj6ETxwU40H3bIc-2MoMfgPeypyV8Y8PYX6LJm9rSZVP9E8YEkyjgWxt6iiNcYvUsXIl9rl6qK5BrCc9MX7WOqRfby7L7OAtaEEB-XhNLCP"
+        }
+    },
+    {
+        "id": "jewelry-collection-header",
+        "type": "jewelry_collection_header",
+        "props": {
+            "eyebrow": "NEW COLLECTION",
+            "title": "The Pearl Series",
+            "filterText": "Filter"
+        }
+    },
+    {
+        "id": "jewelry-products",
+        "type": "jewelry_grid",
+        "props": {
+            "items": [
+                {
+                    "id": "prod-1",
+                    "title": "Aurore Pearl Necklace",
+                    "price": "$1,250",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAuiwcpPXDmhUygmvYubKksiP0Y8_fj1rSL6_1zIgbogTimzcnHsd9kRCuLF2y2kSMIlqYBW3lCCgIbr-mFaiIBQR-mLA5WYSwJM4iDLKS-8ryQVxtWguCra9krVFW5nzG2MFo_WHCtwpIvzIX9nc-1u5oXPU6DphALjEuSIUj10ighhbc7M6eP60Qz2wSfumpFoUw6sUBXC-F5HpiyZOxfzp04tbezIWTirkVs7XiN3Aje-Oz6pmvOIzDIlyMC0_TF6oFpl_v40NIQ",
+                    "isFavorite": false
+                },
+                {
+                    "id": "prod-2",
+                    "title": "Elysian Gold Ring",
+                    "price": "$890",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDT9tTc_dXcx5eu9-bm1kUAADeIUancDxc_QuPsXmIVMRKZL-wHGNrhjpXQ71JaXkOuTWFV-d64SeW-_eDwtT6SqcFkvKzB7wCQiLy5v825lEOWYyPlmYYtLIW1YuMSgVI8T961NXBTxivHktd_x5n1hqfuPDY5FAv7jkRzBzy-e9R5QF9nmDw5kzxrrvKKwlWJgg_yqaAAcHo3Ra45trZC0vCT0Fd3aHCdKBLTLN0FfAHqX7Q4HiYacCLURemnI4ykmRDWMo_Xva6f",
+                    "isFavorite": false
+                },
+                {
+                    "id": "prod-3",
+                    "title": "Celeste Diamond Studs",
+                    "price": "$2,100",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAs4RmqiRYhlEQQMR9z2KzonHOC2qzQnAn62H9Y44suSlUUqz6z3mhsb5da8nqXBctZ9EZUSY-h9znQup4MlSVPd6RsD8rby3ZyiKGjGx9QLx1jXt224-0R-xg8maF0ntudWhlrXpmKQaGpiPnq_yWa9WvgR9PYnL8vHWZz7sbzdzsIzXhOjQb6s0WFydalPa3VP5yMWv-cipSPZZFR6-BUr1dMt36rSpvwGzBmlBlvxLgFZJYcdOe6YoeiUtwRkSYUiXBr4MVqzb-y",
+                    "isFavorite": false
+                },
+                {
+                    "id": "prod-4",
+                    "title": "Luna Silk Choker",
+                    "price": "$450",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDB0fLr9vnjQkrCGfijCA7DWL213iYlcjb-9MkxwFhEOwsAouPTuIu7WmoVMv4yxrqitG7lHuERwdGAgqDvw1j2MINPnAQejmBxxV7smJ5_eERyqfhSpR9GWJKcwNYoSDNhLU6AVP9F7ikFLzgRqjoHnFIIDfpM9mcd3t7pbUwvHnZyCC--fGlLK4dnVlqV-Revfi0ND9Vs4h4bApEbLA3elOh_UdswtAOKTAR9tCtiaAJL7eJHY-71fcMfF_71ufWl96xSV8mm6NlP",
+                    "isFavorite": true
+                }
+            ]
+        }
+    },
+    {
+        "id": "jewelry-newsletter",
+        "type": "jewelry_newsletter",
+        "props": {
+            "title": "Join the Inner Circle",
+            "subtitle": "Early access to new arrivals and exclusive boutique events.",
+            "buttonText": "Subscribe"
+        }
+    }
+]

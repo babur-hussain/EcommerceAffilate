@@ -1,94 +1,82 @@
-{
-    "pageSlug": "cyber_sale",
-    "name": "Cyber Sale Fashion",
-    "isActive": true,
-    "sections": [
-        {
-            "id": "cyber_header",
-            "type": "cyber_header",
-            "priority": 10,
-            "content": {
-                "title_top": "CYBER",
-                "title_bottom": "SALE",
-                "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCwwtEkfE5LZS0HGuf1i4bWzACl2OBWJjf53W_JKaL2yhoF2v30yKpDVGhvSOt8d5BOQfrGpQZ_U5qEdUFEXuZCeFK_hF8QRcDqzIMzKc26ylNWBZKf6HFcNFdrmzVv5rRJx6qWEC3NjFaW4aXu_sLXhUfNbHCAfGHW8YYGe41hoJYX-MIwgPdg7yVB23oGbbaFMSWXAHSOpsz-40iNIAnO6ieYa81od1nU0MXa4s9tpRK2V92eE9WGPRcR3B7aIHH7ozCfktdTd4Ye",
-                "discount_text": {
-                    "prefix": "UP TO",
-                    "value": "50%"
-                }
-            }
-        },
-        {
-            "id": "cyber_categories",
-            "type": "cyber_categories",
-            "priority": 20,
-            "content": {
-                "items": [
-                    "Bags",
-                    "Shoes",
-                    "Accessories"
-                ]
-            }
-        },
-        {
-            "id": "cyber_grid",
-            "type": "cyber_grid",
-            "priority": 30,
-            "content": {
-                "items": [
-                    {
-                        "id": "prod_pop_tote",
-                        "title": "Pop Mini Tote",
-                        "subtitle": "Retro Collection",
-                        "price": "$45.00",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9VNfGumdBjVpKxrUSLk3hQ4ToTF51Q6OLaGTkHOo-nSW96m8wzvIXYuLFdZlgEHJ7GH5omjnxSplZHNKWrkF0aM4LC0knqGyjuenqLbA0tY0IxYRf3vhk5rVAroDKktcEWfhihMc-JHi0QTEBQqYf_KYHmmT4gW5dWyBW79i-T2X1RcYQHacPi70mjYGEXbWWVfui4eoCt7UpRxFPd5YS4QU9sdplGWp4IA6cTR86LxEHZJ1uSspe4aPZxfh2HyQzJX_PYh8hPEp5",
-                        "badge_rotate": "3deg"
-                    },
-                    {
-                        "id": "prod_blue_heels",
-                        "title": "Electric Blue Heels",
-                        "subtitle": "Night Out",
-                        "price": "$89.99",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDyosg-MU17m6xB3YuRBVDBofVv9XFXwFL2L4AaklS5xn8d_HxNmn8RNtrgsZXlc18Yduu5Mj3GH97XXDSOBklNq7Q3WTcSO4msdwjucr3Rdbzn-QuhwZrej6GQYfS2mVYfWDUurQJrBLMp6fFcT5SK8SFPIhG5aLFRQKCsmXMbhe62QvD_HBgQnArhkD_7PssOG8fioMOIxfNGhmWyMJ4U2mZBpyNqDty23HiAZ7lopEenyIxdjVq4U8dsA-Am-A9uHKk9sWrcZC0h",
-                        "badge_rotate": "-2deg"
-                    },
-                    {
-                        "id": "prod_retro_shades",
-                        "title": "Retro Shades",
-                        "subtitle": "Summer Essentials",
-                        "price": "$24.00",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9JD4IDoUHWUUY2QRQlZq7ZwbpeCJfiB2BMz02_t0G0REmiA7JVuotrelda_0VnrvZA6KGMLxbnKv7dzVsIZZRjH9pjne_yfsDK2_jI3fk5VT4JWPnA5j5-toXhvsEoT7tQQDuvOpgnb26K2wGvqqgei11Pv7-IUFVysPMp3XPHB8gt3l_nDswVu80CnYMarTSV1xSEsgGYfxWL559Mcw3tfKIWMjJ3sZTXxnaO50GtsCZNHYvTJvDrYG00rfk6Q9mJMLMpJjtoE54",
-                        "badge_text": "-20%",
-                        "badge_rotate": "1deg"
-                    },
-                    {
-                        "id": "prod_metal_clutch",
-                        "title": "Metallic Clutch",
-                        "subtitle": "Limited Edition",
-                        "price": "$120.00",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuA6IOi-3Vbj6m4M6gWtsPMbJqspCx0y514hh7FX66ZqY_P06wSuFf3V_VgQCUEdDO_xOwJEn-WSnuSHCKr_HNDXLBdVCraQJ1ihojnJRHykavPppapGLZbT-nQriqSknqgV_tDq5YB6VWnPlF1MgsuCn1N-K_09qSAW-efWarl-gijSZY9X7dE72MuWDIoW8ABO2kuOJZau9OdYpm3IXTJLpCQVw5cEbwTlxTY1HgMfucQW_qLucdRp0rkZk7tA9eiWy6DhgroTbLV8",
-                        "badge_rotate": "-3deg"
-                    }
-                ]
-            }
-        },
-
-
-
-
-        
-        {
-            "id": "cyber_flash_deal",
-            "type": "cyber_flash_deal",
-            "priority": 40,
-            "content": {
-                "end_time": "04:23:12"
-            }
-        },
-        {
-            "id": "cyber_bottom_nav",
-            "type": "cyber_bottom_nav",
-            "priority": 50,
-            "content": {}
+[
+    {
+        "id": "cyber-header",
+        "type": "cyber_sale_header",
+        "props": {
+            "title": "CYBER MONDAY",
+            "subtitle": "Special Offer",
+            "discountInfo": "Key Code: CYBER500"
         }
-    ]
-}
+    },
+    {
+        "id": "cyber-categories",
+        "type": "cyber_sale_categories",
+        "props": {
+            "categories": [
+                {
+                    "name": "Tech",
+                    "icon": "desktopcomputer",
+                    "color": "blue"
+                },
+                {
+                    "name": "Style",
+                    "icon": "tshirt",
+                    "color": "pink"
+                },
+                {
+                    "name": "Gaming",
+                    "icon": "gamecontroller",
+                    "color": "green"
+                },
+                {
+                    "name": "Active",
+                    "icon": "figure.walk",
+                    "color": "orange"
+                },
+                {
+                    "name": "Home",
+                    "icon": "house",
+                    "color": "purple"
+                }
+            ]
+        }
+    },
+    {
+        "id": "cyber-flash-grid",
+        "type": "cyber_sale_grid",
+        "props": {
+            "title": "FLASH DEALS",
+            "timer": "02:45:12",
+            "items": [
+                {
+                    "name": "Ultra Bass Headphones",
+                    "price": "$89",
+                    "oldPrice": "$149",
+                    "discount": "-40%",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBynHwbBIbW9WLBg061p80sdh4VbpRXq63bVsPzAlI5S6ajFsZxBWjB2_EK9JZt8upJmTEvikcxo9UauMLnG99HKHXOqJCfrkYKr3XbMwxoHL1SR56r8b7e7riofe9e9u3vQfXFIAhfDSF94TL2f4Vl7d7QkJIbcX_0C8M3U-HyNP1qwvh2RkT6Yk7w2kTT4mdV_FX65MhowFzN6FFJc5nIGSXxN6NzQttnfniSDtDaxhm_6bVMQ0PQrgsALBuansKWBBZ9WMQ6U-cl"
+                },
+                {
+                    "name": "Cyber Smart Watch",
+                    "price": "$45",
+                    "oldPrice": "$150",
+                    "discount": "-70%",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBKyo7oT2qUDEm03WU-n3BlKXSo9C7GFjtwPT1Nzwr4BxtYbRjFz87xQs0X8ZBJRb71qIMNpYkucLB0I10-PmCsQ0OIxh5Qp6Z_3FpVyyjbolxLCkrDxbiCy3zF2EGOkfBkbYiA11w-N9DElIyCPJcUk1FcToOo9X2QYdrOWJAALu8MuD4BzJ5AC-rF0rV1V08-cBeNh82raOpGHnUbm4rK1ee-OqXr5nEoN7HimcbuIkmG5HsIc0P22MMZSY8bDFhZtqgxhK4i4VDW"
+                },
+                {
+                    "name": "Gamer Keyboard RGB",
+                    "price": "$120",
+                    "oldPrice": "$160",
+                    "discount": "-25%",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAIyZ8lR0So1in-fb-UdKU9FWNB_HGZnD9pGnM4C8bVmePUJPw2hUfES0kQrBScFh9Ic8K0lGeF4e_AFFVY6JoWvVAZERWSsynejMCALgsXVJd4LhX_dAVYNEkAvqdGv7Vg_56rQdhee_AHFn0F5n91yZanqofaUvbY7pzdkxk1R2fVLZuK4V-wkVgiMzPYoAR7StFWz_W2yYIQQ4C9n5_ei_5l_CIafzUm912gsxbjAi8AUny-xVj2eITwpmIplzlVptvVyrtYqfS4"
+                },
+                {
+                    "name": "Wireless Gamepad",
+                    "price": "$29",
+                    "oldPrice": "$59",
+                    "discount": "-50%",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBMIbQ61_Ko2patxpNMwXKf6Uk0I5cSqJbw6k-9amZg1q1VVDUiSDoZda_XHLGI__Rt-_Er43XC5SsojqExgHZjrOKiyYFfJXVe1_aNbCegKx8w0TGCplwIH4h6FpovT3jxO4emg5DMCTQW1YsTwff7F3gyWJP37EQbpBGj_wdzj-VeSCGS0jnXP0pjEeXFA0b8Cyhyf_PXlKNNdfAw7y7XCd98ZUOe5640NrUg4Yvksx6HEoBPNevlGLaf9lM45URQERCbs14bt3_Q"
+                }
+            ]
+        }
+    }
+]

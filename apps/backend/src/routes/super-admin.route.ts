@@ -138,8 +138,28 @@ router.get(
 
       // If user doesn't exist, return 404 so frontend knows to register
       if (!user) {
-        console.log("[Super Admin Profile] User not found, returning 404");
-        return res.status(404).json({ error: "User not found" });
+        // [AUTO-FIX] If whitelist email, create them immediately
+        if (email?.toLowerCase() === "thebaburhussain2@gmail.com") {
+          console.log("[Super Admin Profile] Auto-creating whitelisted Super Admin");
+          user = await User.create({
+            uid,
+            firebaseUid: uid,
+            email: email.toLowerCase(),
+            name: "Super Admin",
+            role: "SUPER_ADMIN",
+            isActive: true
+          });
+        } else {
+          console.log("[Super Admin Profile] User not found, returning 404");
+          return res.status(404).json({ error: "User not found" });
+        }
+      }
+
+      // [AUTO-FIX] If whitelist email, force update role
+      if (email?.toLowerCase() === "thebaburhussain2@gmail.com" && user.role !== "SUPER_ADMIN") {
+        console.log("[Super Admin Profile] Auto-promoting whitelisted user to SUPER_ADMIN");
+        user.role = "SUPER_ADMIN";
+        await user.save();
       }
 
       // If user exists but is not super admin, return 403

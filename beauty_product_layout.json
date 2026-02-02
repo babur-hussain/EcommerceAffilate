@@ -1,110 +1,99 @@
-{
-    "pageSlug": "beauty_product",
-    "name": "Beauty & Lifestyle Shop",
-    "isActive": true,
-    "sections": [
-        {
-            "id": "luminous_header",
-            "type": "luminous_header",
-            "priority": 10,
-            "content": {
-                "title_top": "Beauty",
-                "title_bottom": "Product",
-                "subtitle": "Let's be beautiful. Be colorful. And be you.",
-                "button_text": "SHOP NOW",
-                "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuB2ttuBujS2_bSSRVveYj53-EMnjNiIxzr1ys1qTaBgt3iBwJM2RvlxA8in8ncXD1Hr9L8iJnqTdRV0iDomGnVShBFTHN_qudTV0YuS9EPGGTUQ9l_fWKWt6JUrXEEdJ8FcT0mLyVkew0uqOtGrO2t65gxecmYi5fVw4CLJJo-mWiIDVv7IOyNAu1nOsDxFGcs-kuTucwNkBq6VXfa4hkzfd6cbqeaF4IkAY9FKgUwMDLRAFlJv017-xKYwjCegXWwhowul-yb67TwY"
-            }
-        },
-        {
-            "id": "luminous_categories",
-            "type": "luminous_categories",
-            "priority": 20,
-            "content": {
-                "section_title": "Shop by Category",
-                "link_text": "View All",
-                "items": [
-                    {
-                        "name": "Makeup",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDhbmgbr-HDumgsgjUm7LTpXJVMu0BUh0NGaGpz-HABTa_Lh-zXErgy__imb24qMBqFRxfJt0RhMCSl2HPQ4CBVDhUgtQqRIWZz9DQ1QlOQZ5D5pA3MIZ34tQ7ejvV3cPPg1YQLj6IHaGbNiKRybQXKvFPzcA7o9Esy1Y3x-A-kMdKEEzcIFD18L1cBDD3RmFLNaMRP15MXryqkHyJN30mDqHnzMTV1NSG2XEDPxzL5xKJer8_2zLjv20hjyinPiTnjPd3FH5O9vf5X"
-                    },
-                    {
-                        "name": "Skincare",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCMLe7-QqQA05qqQ8PA5Aw7WYAGeYZF7TORW4urTJiy6r_OQrutanMJTfRAywAE9-WcHOBQ_gtFlhRXqMyGC-CxsXtEvdNsIqhjjcCiF7l3p8xjAle-JC2KkDDan-kCUWzK5j5D7fFnw7w8Yg5dov_35hff6R6VOuOpoSgrhagfiKz3df--sMUj5RR0qnqR7glM_mOUpS1iK8P3vjxMMQ-6uaPQ20aNdoNpg_ojGu3wJwFLRPnszD7x7JLE42AlbccJWPpBMGmSjJvk"
-                    },
-                    {
-                        "name": "Sunnies",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBAjgus9rUxu0FRatU7lv1rCMUp4mupHBswm7uer2M8NAyfPNmjHFObaBzOhwRRKTIi2dIb3-t8gmAwmujUkkq1d9-Pb0lUlvZe5tLithS4_0a3fw4cbIUEhesAhphFlLz-yQeapY0bNXR5Mwtt8_dBISfCRjI8mt3lfFINtQjlz7PFmBCgMX8tlPy4YOsHZiCI4tqnTFEyS9cSBh_cv0QIXSraxnv_C9TPF6873VZ3n9vTUkVtyzEssPZh0sVGxq0u4fYQ0BxzzkPl"
-                    },
-                    {
-                        "name": "Tools",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDCa7E12ugB08wTH8vGfBuOPAJMhKOmhl1oOzUZOFqXVVpuo0-NJVx7o9s4YymZSpsEXOa6a5CA2o2QaSdpq2_R8oY9Ec5THKfqkNWMTgxPSY7KrFPekT0QZ_pYIYi1tIv5-Wz3KxKiEgf08oKGHP5vUZSsm_ZZ7j-x_LI3SRmH5d_mKYbguRDDCycCACM9v9I6K-8UIa5EaLNAl70mawT_oSH_LXlGUVgiWWrzInEWkpOdKUqxGqvpqhs0qkBFvBnYe9ivbuSOMksf"
-                    },
-                    {
-                        "name": "Hair",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAa5GbsXJMn1eLpYvsTWoKmDmodC2X1GN8QSqp-IDl75VFKjPo6ibZRmf_TGG5k7CkVGuSACaUu3R3wNRoNgozNirzQBSk6PWKj82dtI77qit3a_s7XI9wiP5By2pIlhcoay9jPIJ51XzKJm8Rxm0Kk8MkEiTyoyCEhbxOIEs8B3h_FJEegD2vERYuPyrjTYdPshAUOuvQ5o7afu9cMh0jQIPK2B5IJHI0jjeNBPzff8-MBtWgpzU3Kzcqj8-C353f6nNrbGlAaAQSR"
-                    }
-                ]
-            }
-        },
-        {
-            "id": "luminous_grid",
-            "type": "luminous_grid",
-            "priority": 30,
-            "content": {
-                "section_title": "New Arrivals",
-                "items": [
-                    {
-                        "id": "prod_retro_sunglasses",
-                        "title": "Retro Hex Sunglasses",
-                        "subtitle": "Accessories",
-                        "price": "$24.00",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCK_JfnegZJH_rJN6gImDYehZrbmLcPszRs6xYz7l_YWDHsKpJRkQhE5Q6MuVJqoTzk3l2qshv0naeUrSBR1ajamFskN4o5LeQk2OFtWIeL6udd2ZSGA--xGpkrg2CkfQYnx86HAhgauOfindFiR3fdg_ta7qNGBqrtSF_x1xMq3ha4z3MZkeNZwuop9_BER7lU0DjNTMDx3EhIBryqFWEDEmbUTRSjpq8LvEM4f6W8VVyFQAJlKQsnPn4Z5k1A3Q-AsjeX91wqwgE3",
-                        "badge": "New",
-                        "badge_bg": "#a03028"
-                    },
-                    {
-                        "id": "prod_velvet_lip",
-                        "title": "Velvet Matte Lip",
-                        "subtitle": "Cosmetics",
-                        "price": "$18.50",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDStu4RxDUPo5i8z8yWWQ0fYGwnceQTrDj3_ap0f-C_Qb_5MT7CnfOLdUSOJzjTG9jROhGl--CW_ovwAQmiTuFtRP7P1QhLLHb_yBQlQDQNZIPr1NsGqIZe8LDgZuq0IZbE4bt23IKMoeLm_uF8dC7umsqk7p3cqoxPsvAuyU8cpJ66ew2GBFaupz-965VcU2yrAQS2JXhLlnbRpJjRPo27eBF8nrz1uhD9XYEj18DZslAi1PReXQtRlyCECkeIQVukOPLNDrXAD2Q8"
-                    },
-                    {
-                        "id": "prod_hydrate_cream",
-                        "title": "Hydrating Cream",
-                        "subtitle": "Skincare",
-                        "price": "$27.20",
-                        "original_price": "$32.00",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCvJMlx5ramIfIAdvk2BWc800air35ynuaDTDYHRx7D-6TkviTqpkdBeQr4pjm7BDpQmlHN-4n7tVEdfUOO38nRNLj8feC7b_nFJN-KwNUhQzN4FNud47ryHePl1U6qpAs47ttMmuB6EkvzekE5WDuKVI19-o8mhvhEv3OGhbB1iAGv8HrR49o13bToUqVX3kAYGQmj5s5epE1DnBUDfxYkh1B6YjAI-ZDxnCBccljT20ADUkJjdlgLyddLJ05ElIrKyGlVKi4b_DOy",
-                        "badge": "-15%",
-                        "badge_bg": "#1F2937"
-                    },
-                    {
-                        "id": "prod_pro_brush",
-                        "title": "Pro Brush Set",
-                        "subtitle": "Tools",
-                        "price": "$45.00",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCAcZRYSyX754-ri_Mlc5xluR5L7uTIFQ8BRwsSw84I13t_dQIWcGDUnnDIVM3c5cd0AIHuJrbENdgs0pCegVtUkke5n9TfBCWzbLXtu59vRDOtr3lva4bIiyyoVBsr0hVE8YM7QJhnNXWMHdm7N_XYo2yz3xhYsuWmTE17Ol-Vu1oTQj616XzpOusnv91jjUdlDg6Kr4zf2NUWocaGcjeWQBY3GgGNZcaPZfhzKdbDayfYC5zotXm5lTFkt_DBKZaGJVQSC23I0isM"
-                    }
-                ]
-            }
-        },
-        {
-            "id": "luminous_sale",
-            "type": "luminous_sale",
-            "priority": 40,
-            "content": {
-                "tag": "Summer Sale",
-                "title": "Up to 50% Off",
-                "link_text": "Explore Collection",
-                "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCIEBT_piuMOy8DCRPuzgcirox8WwtLiFQPiwLmK8qXlSOcZfWvwTvwNwDCkWD-SCu7JxL-p8E-jNm5S0t9yRMRVN5jJjqPFbp05U8sE_u5xasfU2ou09tGLcJctDZfL_WljmzaLaXg4iq2XIW7sTgayxD6s9hsEr4A1oECIkD88uzKTOn1HLmIaHBtW-8_l3iUw0dL9LMrGzukAe0pySJeB-NrO83Dt9QJwlJkkqxhjR2NCHesbF5q9S8nJ9yKCLkix8nURFDplZja"
-            }
-        },
-        {
-            "id": "luminous_bottom_nav",
-            "type": "luminous_bottom_nav",
-            "priority": 50,
-            "content": {}
+[
+    {
+        "id": "beauty-hero",
+        "type": "luminous_header",
+        "props": {
+            "titleTop": "Betul's Exclusive",
+            "titleBottom": "PERFUME",
+            "subtitle": "with new organic formula for your daily use",
+            "buttonText": "Shop Now",
+            "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAyaW6NI6Ot5df0T21LirI73BazDMzKJT7oPmi56FTPy5QvHZVS1TWLgiAXQwlNmC588Pr_Z0gmw-KzbzkDj4swYAS3ll87d_WwZcmIQ-D3IUVt4hlRCA-LSUfoli2KJOV8d4S6EudA77m6zAZ8QBj6jd37GyH3TrVWmeBHbT1B0ji-yfp3S8PZD-EznkUTrtIMr83VUj8FAAMtYgJp905eAD0kjIo67foN7fvt9Hu8aDxYR0devl7RsDbl9fTuqw_sDVyZq9ZBoLhw"
         }
-    ]
-}
+    },
+    {
+        "id": "beauty-categories",
+        "type": "luminous_categories",
+        "props": {
+            "title": "Categories",
+            "linkText": "See All",
+            "items": [
+                {
+                    "name": "Fragrances",
+                    "image_url": ""
+                },
+                {
+                    "name": "Skincare",
+                    "image_url": ""
+                },
+                {
+                    "name": "Makeup",
+                    "image_url": ""
+                }
+            ]
+        }
+    },
+    {
+        "id": "beauty-products",
+        "type": "luminous_grid",
+        "props": {
+            "title": "Featured Products",
+            "items": [
+                {
+                    "id": "prod-1",
+                    "title": "Midnight Rose Elixir",
+                    "subtitle": "Fragrance",
+                    "price": "$89.00",
+                    "original_price": null,
+                    "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDjLYRk1L0cdYGe-pNFarvk-_Pdh_oPIVXy11R4ZhtzjQFf7VY5t2Abgy80acdYeo6oiLZByFhxLXjM8GfalKYdgZC7_EWl_La-unVwHojB5bhk0wEomUBXxN9hhIxqdtbg4tRRqPzZzgw1gUPS6dUgwx4tDe_WOMoStAEXtUOM8rjAMd14Z8nqvFkY9ne-M-XvvWPHsSJbrPa_t2LQjwsmxJTAwiAM1plKaxm0BhUdZ5zJi7pK1WWObMOkJ6nmFCL37RvsQ0LRJC9r",
+                    "badge": null,
+                    "badge_bg": null
+                },
+                {
+                    "id": "prod-2",
+                    "title": "Silk Glow Face Cream",
+                    "subtitle": "Skincare",
+                    "price": "$45.00",
+                    "original_price": null,
+                    "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCNqF9MojdN9_XjHWWixZHgUonFWTHLJiNR8zBviaQ5WKCbgJMEtq-4rLbVU6I879XP3-fBd0OIiE2l3uZkLC68FlfBggGa9xyLUBtqetdl6mTUrmFyJvp-b8pNFyH_V9YGtGO4L11OI30ZsgUv3UVvG_SCOz0XKceg6HEltgoBtKgPHV6euzIaT2IwXtSMCkUzpraylRTxpWe3vgbbTGBaAbzwWuTqHudckrScB-xXvn_d1nVSUeR4E4eWnFAob09eHNE2Rja1rA6s",
+                    "badge": null,
+                    "badge_bg": null
+                },
+                {
+                    "id": "prod-3",
+                    "title": "Velvet Matte Stain",
+                    "subtitle": "Makeup",
+                    "price": "$24.50",
+                    "original_price": null,
+                    "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAsdQufFHvD164iVtzEvv-8xTnU3APaDf78SrPL9UnKZmYhfORa5uRX4nbXHP_ym2Ybx214LF-p_2z6zHEQuoYrfO08nrm9mvr2iamdyCP8UStFVOtZ-ZcPAonsvB36nw9-CZw3ZantQQeh2gC4t_cVp8FkZDgY9XtolvCfD7bkt11c_4-oqcpxwf3mipxEPIGfsQLxU4g9j4ecvtpTFOaniV2lTju9PxIfyQX_52vmf67awv5fGZwRxfOHfRMq6trG2t-bw03UMbZ",
+                    "badge": null,
+                    "badge_bg": null
+                },
+                {
+                    "id": "prod-4",
+                    "title": "24K Gold Lift Serum",
+                    "subtitle": "Anti-Aging",
+                    "price": "$120.00",
+                    "original_price": null,
+                    "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBu3_T8BMqZTMnjoxZjCljdEiqytLvt9z23BvKofZgtT1HLGXiY9-BOvUEoHcS4gcF01c_LLQoLL2Ujv5C9QC_chqaS3JxBCOXJcXblspK5i5nAmnduvhX7z64lXqNyjDoRgRU9gSQVaoPTw3KHfzEvaBDfB1g2UR6IQX1jqgR-gfUYxBhR_vU62P5KHxMlvrWnF-Gxo2M8tHeom0oY2d74mC7PYbAnEDqfBzNjVYze1sDgMelj437_R4eQxKRiEBzTmiEoLDE4ZJXN",
+                    "badge": null,
+                    "badge_bg": null
+                }
+            ]
+        }
+    },
+    {
+        "id": "beauty-sale",
+        "type": "luminous_sale",
+        "props": {
+            "tag": "Exclusive",
+            "title": "Member Exclusive",
+            "linkText": "Unlock Deal",
+            "imageUrl": ""
+        }
+    },
+    {
+        "id": "beauty-footer",
+        "type": "luminous_bottom_nav",
+        "props": {}
+    }
+]

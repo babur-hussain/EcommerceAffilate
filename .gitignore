@@ -4,3 +4,7 @@ apps/backend/firebase-adminsdk.json
 # Next.js build output
 .next/
 **/.next/
+
+# Heap dumps and traces
+*.hprof
+build_trace.txt

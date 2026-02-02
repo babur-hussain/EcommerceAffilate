@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SDUIComponentView: View {
     let component: SDUIComponent
+    @EnvironmentObject var navigationManager: NavigationManager
 
     var body: some View {
         switch component.type {
@@ -115,6 +116,77 @@ struct SDUIComponentView: View {
             renderFurnitureRareFinds()
         case .furnitureStatementPieces:
             renderFurnitureStatementPieces()
+
+        // --- 50 Percent Off Components ---
+        case .lumiereHeader:
+            renderLumiereHeader()
+        case .lumiereSection:
+            renderLumiereSection()
+        case .lumiereNewsletter:
+            renderLumiereNewsletter()
+        case .lumiereBottomNav:
+            renderLumiereBottomNav()
+
+        // --- Back to School 1 Components ---
+        case .backToSchoolHeader:
+            renderBackToSchoolHeader()
+        case .backToSchoolBanner:
+            renderBackToSchoolBanner()
+        case .backToSchoolCategories:
+            renderBackToSchoolCategories()
+        case .backToSchoolGrid:
+            renderBackToSchoolGrid()
+        case .backToSchoolFooter:
+            renderBackToSchoolFooter()
+
+        // --- Back to School 2 Components ---
+        case .schoolTwoHeader:
+            renderSchoolTwoHeader()
+        case .schoolTwoBanner:
+            renderSchoolTwoBanner()
+        case .schoolTwoCategories:
+            renderSchoolTwoCategories()
+        case .schoolTwoDeals:
+            renderSchoolTwoDeals()
+        case .schoolTwoGrid:
+            renderSchoolTwoGrid()
+        case .schoolTwoFooter:
+            renderSchoolTwoFooter()
+
+        // --- Back to School 3 Components ---
+        case .schoolThreeHeader:
+            renderSchoolThreeHeader()
+        case .schoolThreeBanner:
+            renderSchoolThreeBanner()
+        case .schoolThreeCategories:
+            renderSchoolThreeCategories()
+        case .schoolThreeEssentials:
+            renderSchoolThreeEssentials()
+        case .schoolThreeGrid:
+            renderSchoolThreeGrid()
+        case .schoolThreeFooter:
+            renderSchoolThreeFooter()
+
+        // --- Back to School 4 Components ---
+        case .schoolFourHeader:
+            renderSchoolFourHeader()
+        case .schoolFourCategories:
+            renderSchoolFourCategories()
+        case .schoolFourGrid:
+            renderSchoolFourGrid()
+        case .schoolFourFooter:
+            renderSchoolFourFooter()
+
+        // --- Back to School 5 Components ---
+        case .schoolFiveHeader:
+            renderSchoolFiveHeader()
+        case .schoolFiveCategories:
+            renderSchoolFiveCategories()
+        case .schoolFiveGrid:
+            renderSchoolFiveGrid()
+        case .schoolFiveFooter:
+            renderSchoolFiveFooter()
+
         // Service Hub Components
         case .serviceHeader:
             renderServiceHeader()
@@ -124,6 +196,18 @@ struct SDUIComponentView: View {
             renderServiceCategorySection()
         case .serviceBottomNav:
             renderServiceBottomNav()
+
+        // --- Beauty & Perfume (Luminous) Components ---
+        case .luminousHeader:
+            renderLuminousHeader()
+        case .luminousCategories:
+            renderLuminousCategories()
+        case .luminousGrid:
+            renderLuminousGrid()
+        case .luminousSale:
+            renderLuminousSale()
+        case .luminousBottomNav:
+            renderLuminousBottomNav()
         default:
             // Fallback for unknown or unimplemented types
             Text("Unknown Component: \(component.type.rawValue)")
@@ -133,6 +217,80 @@ struct SDUIComponentView: View {
     }
 
     // MARK: - Renderers
+
+    @ViewBuilder
+    private func renderLuminousHeader() -> some View {
+        let titleTop = component.prop(for: "titleTop") ?? "BEAUTY"
+        let titleBottom = component.prop(for: "titleBottom") ?? "PRODUCT"
+        let subtitle = component.prop(for: "subtitle") ?? "Subtitle"
+        let buttonText = component.prop(for: "buttonText") ?? "Shop Now"
+        let imageUrl = component.prop(for: "imageUrl") ?? "https://via.placeholder.com/500"
+
+        LuminousHeaderView(
+            titleTop: titleTop,
+            titleBottom: titleBottom,
+            subtitle: subtitle,
+            buttonText: buttonText,
+            imageUrl: imageUrl
+        )
+    }
+
+    @ViewBuilder
+    private func renderLuminousCategories() -> some View {
+        let title = component.prop(for: "title") ?? "Categories"
+        let linkText = component.prop(for: "linkText") ?? "View All"
+
+        let items: [LuminousCategoriesView.CategoryItem] = {
+            if let itemsValue = component.props?["items"]?.value,
+                let data = try? JSONSerialization.data(withJSONObject: itemsValue),
+                let decoded = try? JSONDecoder().decode(
+                    [LuminousCategoriesView.CategoryItem].self, from: data)
+            {
+                return decoded
+            }
+            return []
+        }()
+
+        LuminousCategoriesView(title: title, linkText: linkText, items: items)
+    }
+
+    @ViewBuilder
+    private func renderLuminousGrid() -> some View {
+        let title = component.prop(for: "title") ?? "Latest"
+
+        let items: [LuminousGridView.ProductItem] = {
+            if let itemsValue = component.props?["items"]?.value,
+                let data = try? JSONSerialization.data(withJSONObject: itemsValue),
+                let decoded = try? JSONDecoder().decode(
+                    [LuminousGridView.ProductItem].self, from: data)
+            {
+                return decoded
+            }
+            return []
+        }()
+
+        LuminousGridView(title: title, items: items)
+    }
+
+    @ViewBuilder
+    private func renderLuminousSale() -> some View {
+        let tag = component.prop(for: "tag") ?? "Sale"
+        let title = component.prop(for: "title") ?? "Offer"
+        let linkText = component.prop(for: "linkText") ?? "Shop"
+        let imageUrl = component.prop(for: "imageUrl") ?? "https://via.placeholder.com/600x300"
+
+        LuminousSaleView(
+            tag: tag,
+            title: title,
+            linkText: linkText,
+            imageUrl: imageUrl
+        )
+    }
+
+    @ViewBuilder
+    private func renderLuminousBottomNav() -> some View {
+        LuminousBottomNavView()
+    }
 
     @ViewBuilder
     private func renderContainer() -> some View {
@@ -792,6 +950,163 @@ struct SDUIComponentView: View {
     @ViewBuilder
     private func renderSportWishlist() -> some View {
         SportWishlistView(component: component)
+    }
+
+    // MARK: - Lumiere Renderers
+
+    @ViewBuilder
+    private func renderLumiereHeader() -> some View {
+        LumiereHeaderView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderLumiereSection() -> some View {
+        LumiereSectionView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderLumiereNewsletter() -> some View {
+        LumiereNewsletterView()
+    }
+
+    @ViewBuilder
+    private func renderLumiereBottomNav() -> some View {
+        LumiereBottomNavView()
+    }
+
+    // MARK: - Back To School 1 Renderers
+
+    @ViewBuilder
+    private func renderBackToSchoolHeader() -> some View {
+        BackToSchoolHeaderView(components: component)
+    }
+
+    @ViewBuilder
+    private func renderBackToSchoolBanner() -> some View {
+        BackToSchoolBannerView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderBackToSchoolCategories() -> some View {
+        BackToSchoolCategoriesView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderBackToSchoolGrid() -> some View {
+        BackToSchoolGridView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderBackToSchoolFooter() -> some View {
+        BackToSchoolFooterView()
+    }
+
+    // MARK: - Back To School 2 Renderers
+
+    @ViewBuilder
+    private func renderSchoolTwoHeader() -> some View {
+        SchoolTwoHeaderView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolTwoBanner() -> some View {
+        SchoolTwoBannerView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolTwoCategories() -> some View {
+        SchoolTwoCategoriesView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolTwoDeals() -> some View {
+        SchoolTwoDealsView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolTwoGrid() -> some View {
+        SchoolTwoGridView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolTwoFooter() -> some View {
+        SchoolTwoFooterView()
+    }
+
+    // MARK: - Back To School 3 Renderers
+
+    @ViewBuilder
+    private func renderSchoolThreeHeader() -> some View {
+        SchoolThreeHeaderView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolThreeBanner() -> some View {
+        SchoolThreeBannerView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolThreeCategories() -> some View {
+        SchoolThreeCategoriesView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolThreeEssentials() -> some View {
+        SchoolThreeEssentialsView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolThreeGrid() -> some View {
+        SchoolThreeGridView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolThreeFooter() -> some View {
+        SchoolThreeFooterView()
+    }
+
+    // MARK: - Back To School 4 Renderers
+
+    @ViewBuilder
+    private func renderSchoolFourHeader() -> some View {
+        SchoolFourHeaderView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolFourCategories() -> some View {
+        SchoolFourCategoriesView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolFourGrid() -> some View {
+        SchoolFourGridView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolFourFooter() -> some View {
+        SchoolFourFooterView()
+    }
+
+    // MARK: - Back To School 5 Renderers
+
+    @ViewBuilder
+    private func renderSchoolFiveHeader() -> some View {
+        SchoolFiveHeaderView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolFiveCategories() -> some View {
+        SchoolFiveCategoriesView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolFiveGrid() -> some View {
+        SchoolFiveGridView(component: component)
+    }
+
+    @ViewBuilder
+    private func renderSchoolFiveFooter() -> some View {
+        SchoolFiveFooterView()
     }
 
     @ViewBuilder

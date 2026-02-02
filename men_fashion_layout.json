@@ -1,102 +1,45 @@
-{
-    "pageSlug": "men_fashion_collection",
-    "name": "Men Fashion Collection",
-    "isActive": true,
-    "sections": [
-        {
-            "id": "men_header",
-            "type": "men_fashion_header",
-            "priority": 10,
-            "content": {
-                "title": "Streetwear\\nRedefined",
-                "subtitle": "Exclusive Man's Collection",
-                "background_text": "FASHION",
-                "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCHkUZeAZK0h_lRKQ_UyBJMRwP6p5AwVctd_Uq9FhUcGIP9Ty6IkifRZf7ONp3eMWF3UB7x7opmyiV9AjRtgY8wp823Kmf9q7TFT_saU3hLpASygMWoly105h5KMJqVLnNpNo_OvyozvJgG4E9Lcag2elj-L5ZsxlqiQYnKDW96k62SK-r9B5bUx8A_fT0higdJFoVbK1MWxSd-g2NBcTpK__b41OY_AlLjwgIL2-lu6ACrhsqU9bm17hnZd-43YQWmT_9A1aNuC7bo"
-            }
-        },
-        {
-            "id": "men_tabs",
-            "type": "men_fashion_tabs",
-            "priority": 20,
-            "content": {
-                "tabs": [
-                    "All Items",
-                    "Jackets",
-                    "Denim",
-                    "Eyewear"
-                ]
-            }
-        },
-        {
-            "id": "men_grid",
-            "type": "men_fashion_grid",
-            "priority": 30,
-            "content": {
-                "items": [
-                    {
-                        "id": "prod_crimson_jacket",
-                        "title": "Crimson Denim Overshirt",
-                        "subtitle": "Outerwear",
-                        "price": "$129",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBwNN_YDu1sojhc8BzkGNTWbvpqfHV14Gqe-0ioGdxjpRofsMWW8EsE71LBuRtIoHpJ9amVsk4ucrQqCzDAU-52BeDHB_lDBoqiyPGP-gfRmJ1WvQjeOwgGegY_P0z6KTnsOZvQNQ3Sxkaf75uveZGMHi7U_RVz34meXejZZanBWbMpqACEuK0sD63OgVOL607Vyd_XZRDolKvbm1FOi_2BdXHW_u7i1wWNipHEBP6tI_iJDWGiKRsPD0Ejnnn6Twe7oDDi07fR2-8A",
-                        "badge": "Limited",
-                        "badge_color": "primary"
-                    },
-                    {
-                        "id": "prod_matrix_glasses",
-                        "title": "Matrix Rectangular Shades",
-                        "subtitle": "Accessories",
-                        "price": "$45",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDOfHpAwjQOulWdQum0HEg4Y7fyPfoF7dhH-_rJkZho31WLLfvDKM4ZOCAbVQ3kHIa8fiw3s_ygAhIMMc1K-IZ_Km6OY0SPsn0tZ_vKtcWCEgyo-dANDUhINg04rcq4yZnK8ojS8XA9CuiIY3XBhvMTsNhsJ8At6KMDS0Lhm1giyeltvLzWl51UDTjRWT8iF2aMmhckmn8pe0rI0z63WgjVdVhLmq43gi_okWrzkJBSa7xEXTB1RQf7P6_ewO7lBrWZd8wAN2gZC5sZ"
-                    },
-                    {
-                        "id": "prod_urban_tee",
-                        "title": "Urban Bold Graphic Tee",
-                        "subtitle": "T-Shirts",
-                        "price": "$35",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCnTMLZpWdy5tuXZhdNa1dY0Tp1KbxPv4YnCIoqLVYb-Z2XCb4_3bM7IQniSsr-a-VwGeP8T6IcaNSgCrJMkoO8dDzuPXXlpKHKtd25J3kEQ_Z4y_3ADvi_el8Dtjl2gRyJ6DO_nox_IFvEFcRkoCOll75TseMzJ52CekqDiIh3Tdnm0IEG86lX4IMewjmymUGMPnLjwuQAuG1Yxpk7X742fRJ1A_9v_nPAO9j-_u7qMSpuw5iXJ8vlSLDNHjG_s2H3EB0-ugY07KEV",
-                        "badge": "New",
-                        "badge_color": "black"
-                    },
-                    {
-                        "id": "prod_distressed_denim",
-                        "title": "Black Distressed Denim",
-                        "subtitle": "Bottoms",
-                        "price": "$89",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAShmpQ8TEuYBXjgDOeq4jdZzikxPg3-tc73Yfm8FVZQBWgNi9nWfvB6MKm_7GcqD3XFyLKRy7mAKfhT-mu5y3VFh-qBbH__mUi7EO7Z16LY4llHBLfqTAjBRMSEupfH2uwj3qOB0OW1X4fwNqwhNQNiU8xtt83rJzuV8xFDZBbOE-Vvyrda7gLfR42GOpKx5t8yMytsu5UYM284cyiEsnJx_6YNdUEHZ065WB_dlP9zdn4u-eVn_WbnHIxMgdjmMvbR0ovUssuHO7-",
-                        "badge": "Sale",
-                        "badge_color": "primary"
-                    },
-                    {
-                        "id": "prod_tech_bomber",
-                        "title": "Tech Fleece Bomber",
-                        "subtitle": "Outerwear",
-                        "price": "$149",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuALYYY59bIUlu-0nx9Xs299SbsxdSVYx1nRIkAWrTOk5a-24Q7EWRHDGPY3FK8KwppIhryybOinY3ekN13okwBTK8t2h7LkjgYBW_IOP6iKJcEzqT-onQZEbYxLQbQsqZ-Ct_XH2Qp8q3SvJa_8DlWlOL0w2_U38FmCOLX_XyzJIEEW0VE5RDGI8DtM0SUgmjwN9Sk7GYaSoEs-uFPa2EQ0fGd7vF1gWR8kq4UDCRHB3Po2UKrfy_qvLjXZ5pwWM6v3p5hqKuKlzZGE"
-                    },
-                    {
-                        "id": "prod_retro_sneakers",
-                        "title": "Retro High Tops",
-                        "subtitle": "Footwear",
-                        "price": "$110",
-                        "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuATf3BnbMgcBxDy49dAhJWeUnUbwASSsVC3xnwSNEfx1IMsVJlGNYLelEH7DSf7LiX-flh0Bcwr-WQXOZflqkqJj4EXXGkIQDVo9OcuVn-Hgl4uGQsS8xQVcBho5B0fqnRwgwnTzduPNXDd3JXumkAW6TZrB-YWMZyCmZn42whha_yCBE1X23GcCyLqYZuUnen5qScrJh71p0ub9wIppfN0XjA9AntmWFLgjY8gtzQzVVyabcNGIe4Bl6aRHCetyWLwdmeXvqIkEGGD",
-                        "badge": "Limited",
-                        "badge_color": "primary"
-                    }
-                ]
-            }
-        },
-
-
-
-        
-        {
-            "id": "men_footer",
-            "type": "men_fashion_footer_cta",
-            "priority": 40,
-            "content": {
-                "text": "Shop Full Collection"
-            }
+[
+    {
+        "id": "men-hero",
+        "type": "men_fashion_hero",
+        "props": {
+            "eyebrow": "SPECIAL OFFER",
+            "titleLine1": "EXCLUSIVE",
+            "titleLine2": "MEN'S",
+            "discount": "50% OFF",
+            "buttonText": "Shop Now",
+            "heroImageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBEuynzBd2nHSibVQI3wT2OYzuGstbDMjzOywD0pt_QxjXpHf4Sn-EXbxLa9ojrY6nc-CXj_nu2V8y0UWPpgbVxheV_7T_ukIzlxMBFtHwowGS6GaAkhkttWdKYdw0CmDgvKPwwXZWQR3EsKXNX4vghu4zFFbdPI8D62V6G345f0167V1nk_bF6xJKMXNmdzPJeCoZrRKixa5xhop_Nprz311RU-GTtfw0RfiqsEV9U_z0RP6TqzBNSCxF1hnZ0aRTfnvpgn7uZdCtG"
         }
-    ]
-}
+    },
+    {
+        "id": "men-arrivals",
+        "type": "men_fashion_arrivals",
+        "props": {
+            "title": "New Arrivals",
+            "linkText": "View All",
+            "items": [
+                {
+                    "id": "arrival-1",
+                    "title": "Trench Collection",
+                    "subtitle": "Fall Essentials",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDMtzXmq0wI6gDRY_hBGNUfm-b_trSkxzVn9ArA1J4CMFnqe_Uove6oCroh5adkzea1aqRSEGNOyFO4lfwx7yviVb3_pkIO1HWjNWuISCLQ0nxE4AjwaKurjOVYrXh-yK9reFHAYFVxp5OViwSb2viLhaOKI1XjDULWEFSPnsYHUA-BMAyGlBK8hmhaoKeS2YIcBzxfec1N69aKkMeKpScSRqikqG2NpwmDVWWEqoujCqNssMcThYLsnI4zOilwLYaA1CT0HTbWpVKs"
+                },
+                {
+                    "id": "arrival-2",
+                    "title": "Street Style",
+                    "subtitle": "Urban Vibe",
+                    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAEGLDO4V75reSP9RTq555WTOj5nIHeN_uc5moNrDj_0j7GoC9Fj6lDry-FRMs3lnYlnmcnp5URcvEASGFTy1LKQZkZ4pi-peTIWMITozVnKokEfQs9gtRj4ZlhzPV1FI_vlgfUtOkkIsVvjPUhAmxKfvwYizhwzYddMwGbucK24SfJvy4RZIsP4z6CltYMJ1rPD3IALRlrsbh6khsOgAR92zGhj-nBYPv5Z-6Ur40uhC69_-nm5N1P_DNMHuZgRqmqWStqF2-IrvdJ"
+                }
+            ]
+        }
+    },
+    {
+        "id": "men-newsletter",
+        "type": "men_fashion_newsletter",
+        "props": {
+            "title": "Winter is coming.",
+            "subtitle": "Get first access to our limited winter drop.",
+            "buttonText": "Join"
+        }
+    }
+]

@@ -1,5 +1,5 @@
-import SwiftUI
 import Combine
+import SwiftUI
 
 struct HeroBannerView: View {
     // Model matching the API response structure
@@ -13,17 +13,19 @@ struct HeroBannerView: View {
         let subtitle: String?
         let backgroundColor: String?
     }
-    
+
     // Props passed from SDUIComponentView
     var bannersCallback: (() -> [BannerData])?
-    
+
     @State private var banners: [BannerData] = []
     @State private var isLoading = true
     @State private var selection = 0
-    
+
+    @EnvironmentObject var navigationManager: NavigationManager
+
     // Timer for auto-scroll
     let timer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
-    
+
     var body: some View {
         VStack {
             if isLoading {
@@ -38,6 +40,7 @@ struct HeroBannerView: View {
                         Button(action: {
                             if let action = banner.actionUrl {
                                 print("Navigate to: \(action)")
+                                navigationManager.navigate(to: action)
                             }
                         }) {
                             HeroBannerCard(banner: banner)
@@ -62,7 +65,7 @@ struct HeroBannerView: View {
                 self.banners = callback()
                 self.isLoading = false
             } else {
-                 self.isLoading = false
+                self.isLoading = false
             }
         }
     }
@@ -70,7 +73,7 @@ struct HeroBannerView: View {
 
 struct HeroBannerCard: View {
     let banner: HeroBannerView.BannerData
-    
+
     var body: some View {
         ZStack {
             if let url = URL(string: banner.image) {

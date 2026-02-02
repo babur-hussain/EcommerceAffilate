@@ -15,7 +15,7 @@ const getLocalUrl = () => {
   const hostUri = Constants.expoConfig?.hostUri;
   if (!hostUri) {
     // Fallback for simulators where hostUri might be null
-    return 'http://localhost:4000';
+    return 'http://192.168.43.184:4000';
   }
 
   // Use the same IP as the Expo Bundler
@@ -27,10 +27,10 @@ const LOCAL_URL = getLocalUrl();
 
 // Default to Local URL initially, but we will check health
 // Default to Live URL only as requested
-let currentBaseUrl = LIVE_URL;
-let isLive = true;
+let currentBaseUrl = LOCAL_URL;
+let isLive = currentBaseUrl === LIVE_URL;
 
-console.log('🚀 Initializing API with LIVE URL:', currentBaseUrl);
+console.log(`🚀 Initializing API with ${isLive ? 'LIVE' : 'LOCAL'} URL:`, currentBaseUrl);
 
 const api = axios.create({
   baseURL: currentBaseUrl,
