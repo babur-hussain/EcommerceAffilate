@@ -230,7 +230,7 @@ export default function SearchBar() {
                           width={48}
                           height={48}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
+                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                             const target = e.target as HTMLImageElement;
                             target.src = "/placeholder-product.png";
                           }}
