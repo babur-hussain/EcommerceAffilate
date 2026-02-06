@@ -90,7 +90,7 @@ async function searchProducts(query: string) {
         isActive: true,
         $text: { $search: query }
     })
-        .select('title price primaryImage category brand rating isActive slug')
+        .select('title price primaryImage image category brand rating isActive slug')
         .limit(20)
         .lean();
 
@@ -107,7 +107,7 @@ async function searchProducts(query: string) {
                 { category: regex }
             ]
         })
-            .select('title price primaryImage category brand rating isActive slug')
+            .select('title price primaryImage image category brand rating isActive slug')
             .limit(10)
             .lean();
 
@@ -124,7 +124,7 @@ async function searchProducts(query: string) {
             isActive: true,
             title: fuzzyRegex
         })
-            .select('title price primaryImage category brand rating isActive slug')
+            .select('title price primaryImage image category brand rating isActive slug')
             .limit(5)
             .lean();
 
@@ -134,7 +134,7 @@ async function searchProducts(query: string) {
     return results.map(p => ({
         id: p._id,
         title: p.title,
-        image: p.primaryImage,
+        image: p.primaryImage || p.image,
         price: p.price,
         rating: p.rating,
         brand: p.brand

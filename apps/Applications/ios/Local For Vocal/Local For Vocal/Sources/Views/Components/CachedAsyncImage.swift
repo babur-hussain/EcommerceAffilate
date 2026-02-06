@@ -1,16 +1,20 @@
+import Combine
 import SwiftUI
+import UIKit
 
 struct CachedAsyncImage<Content: View, Placeholder: View>: View {
-    @StateObject private var loader: ImageLoader
-    private let content: (Image) -> Content
-    private let placeholder: () -> Placeholder
+    let url: URL?
+    let content: (Image) -> Content
+    let placeholder: () -> Placeholder
+
+    @StateObject private var loader = ImageLoaderObservable()
 
     init(
         url: URL?,
         @ViewBuilder content: @escaping (Image) -> Content,
         @ViewBuilder placeholder: @escaping () -> Placeholder
     ) {
-        _loader = StateObject(wrappedValue: ImageLoader(url: url))
+        self.url = url
         self.content = content
         self.placeholder = placeholder
     }
@@ -19,15 +23,127 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         Group {
             if let image = loader.image {
                 content(Image(uiImage: image))
+            } else if loader.hasError {
+                // Show a fallback for failed images
+                ZStack {
+                    Color(hex: "#F3F4F6")
+                    Image(systemName: "photo")
+                        .font(.system(size: 40))
+                        .foregroundColor(Color(hex: "#9CA3AF"))
+                }
             } else {
                 placeholder()
             }
         }
         .onAppear {
-            loader.load()
+            loader.load(url: url)
         }
-        .onDisappear {
-            loader.cancel()
+        .onChange(of: url) { newURL in
+            loader.load(url: newURL)
         }
+    }
+}
+
+// Observable wrapper that can reload with new URLs
+class ImageLoaderObservable: ObservableObject {
+    @Published var image: UIImage?
+    @Published var isLoading = false
+    @Published var hasError = false
+
+    private var cancellable: AnyCancellable?
+    private var currentURL: URL?
+
+    func load(url: URL?) {
+        guard url != currentURL else { return }
+
+        // Reset state
+        self.image = nil
+        self.hasError = false
+        self.currentURL = url
+
+        guard let url = url else {
+            hasError = true
+            return
+        }
+
+        let originalString = url.absoluteString
+        var finalURL = url
+
+        // ---------------------------------------------------------
+        // URL SANITIZATION: Strict PNG Enforcement for placehold.co
+        // ---------------------------------------------------------
+        // Problem: placehold.co returns SVG by default. iOS UIImage cannot decode SVG.
+        // Solution: Force .png extension to request a raster image.
+        // Fix: Append .png to the END of the path, not mid-path.
+        if originalString.contains("placehold.co")
+            && !originalString.contains(".png")
+            && !originalString.contains("/png")
+        {
+            if var components = URLComponents(url: url, resolvingAgainstBaseURL: true) {
+                // Check if path already ends in .png (sanity check)
+                if !components.path.hasSuffix(".png") {
+                    components.path += ".png"
+                }
+
+                if let newURL = components.url {
+                    finalURL = newURL
+                    AppLogger.debug(
+                        "🔧 Enforced PNG (Correct Path) for placehold.co: \(newURL.absoluteString)")
+                }
+            }
+        }
+
+        let urlString = finalURL.absoluteString
+
+        // Check Cache
+        if let cachedImage = ImageCache.shared.get(forKey: urlString) {
+            AppLogger.debug("📦 Image found in cache: \(urlString)")
+            self.image = cachedImage
+            return
+        }
+
+        isLoading = true
+
+        cancellable = URLSession.shared.dataTaskPublisher(for: finalURL)
+            .tryMap { data, response -> UIImage in
+                if let httpResponse = response as? HTTPURLResponse {
+                    let contentType =
+                        httpResponse.value(forHTTPHeaderField: "Content-Type") ?? "unknown"
+                    AppLogger.debug(
+                        "Image response: status=\(httpResponse.statusCode), type=\(contentType), size=\(data.count), url=\(urlString)"
+                    )
+
+                    if httpResponse.statusCode != 200 {
+                        throw URLError(.badServerResponse)
+                    }
+                }
+
+                if let uiImage = UIImage(data: data) {
+                    return uiImage
+                }
+
+                // If we get here, it's not a valid image format (e.g. still SVG)
+                let prefix = data.prefix(20).map { String(format: "%02x", $0) }.joined(
+                    separator: " ")
+                AppLogger.error("Failed to decode image data. Header: \(prefix)")
+
+                throw URLError(.cannotDecodeContentData)
+            }
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    self?.isLoading = false
+                    if case .failure(let error) = completion {
+                        self?.hasError = true
+                        AppLogger.error(
+                            "Image load error: \(error.localizedDescription) for URL: \(urlString)")
+                    }
+                },
+                receiveValue: { [weak self] downloadedImage in
+                    ImageCache.shared.set(downloadedImage, forKey: urlString)
+                    self?.image = downloadedImage
+                    AppLogger.debug("✅ Image loaded successfully: \(urlString)")
+                }
+            )
     }
 }

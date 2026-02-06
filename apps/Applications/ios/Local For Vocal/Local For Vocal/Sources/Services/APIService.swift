@@ -160,6 +160,9 @@ public class APIService {
       throw APIError.serverError
     }
 
+    if let jsonString = String(data: data, encoding: .utf8) {
+      AppLogger.debug("🔍 fetchGlobalSearch Response: \(jsonString)")
+    }
     return try JSONDecoder().decode(GlobalSearchResponse.self, from: data)
   }
 

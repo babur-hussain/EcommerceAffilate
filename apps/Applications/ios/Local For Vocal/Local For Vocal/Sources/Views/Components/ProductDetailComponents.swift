@@ -74,7 +74,7 @@ struct ProductImageCarouselView: View {
     // Fallback if no images
     var displayImages: [String] {
         if !images.isEmpty { return images }
-        return ["https://via.placeholder.com/400"]
+        return ["https://picsum.photos/400/400?grayscale"]
     }
 
     var body: some View {
@@ -82,8 +82,8 @@ struct ProductImageCarouselView: View {
         ZStack(alignment: .bottom) {
             // Images
             TabView(selection: $currentIndex) {
-                ForEach(0..<displayImages.count, id: \.self) { index in
-                    if let url = URL(string: displayImages[index]) {
+                ForEach(Array(displayImages.enumerated()), id: \.element) { index, imageUrl in
+                    if let url = URL(string: imageUrl) {
                         CachedAsyncImage(url: url) { image in
                             image.resizable()
                                 .aspectRatio(contentMode: .fit)

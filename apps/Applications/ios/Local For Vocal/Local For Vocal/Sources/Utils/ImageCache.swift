@@ -1,5 +1,6 @@
 import Combine
 import SwiftUI
+import UIKit
 
 class ImageCache {
     static let shared = ImageCache()
@@ -23,40 +24,85 @@ class ImageCache {
 class ImageLoader: ObservableObject {
     @Published var image: UIImage?
     @Published var isLoading = false
+    @Published var hasError = false
 
     private var cancellable: AnyCancellable?
     private let url: URL?
+    private var hasLoaded = false
 
     init(url: URL?) {
         self.url = url
     }
 
     func load() {
-        guard let url = url else { return }
+        // Prevent duplicate loads
+        guard !hasLoaded else { return }
+        guard let url = url else {
+            hasError = true
+            return
+        }
+
         let urlString = url.absoluteString
 
         // Check Cache
         if let cachedImage = ImageCache.shared.get(forKey: urlString) {
             self.image = cachedImage
+            self.hasLoaded = true
             return
         }
 
         isLoading = true
+        hasLoaded = true
 
         cancellable = URLSession.shared.dataTaskPublisher(for: url)
-            .map { UIImage(data: $0.data) }
-            .replaceError(with: nil)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] downloadedImage in
-                self?.isLoading = false
-                if let image = downloadedImage {
-                    ImageCache.shared.set(image, forKey: urlString)
-                    self?.image = image
+            .tryMap { data, response -> UIImage in
+                // Log response details
+                if let httpResponse = response as? HTTPURLResponse {
+                    let contentType =
+                        httpResponse.value(forHTTPHeaderField: "Content-Type") ?? "unknown"
+                    AppLogger.debug(
+                        "Image response: status=\(httpResponse.statusCode), contentType=\(contentType), dataSize=\(data.count) bytes, URL=\(urlString)"
+                    )
+
+                    if httpResponse.statusCode != 200 {
+                        throw URLError(.badServerResponse)
+                    }
                 }
+
+                // Try to create UIImage
+                if let uiImage = UIImage(data: data) {
+                    return uiImage
+                }
+
+                // Log first few bytes to debug format
+                let prefix = data.prefix(20)
+                let hexString = prefix.map { String(format: "%02x", $0) }.joined(separator: " ")
+                AppLogger.error(
+                    "Failed to decode image. Data size: \(data.count), first bytes: \(hexString), URL: \(urlString)"
+                )
+
+                throw URLError(.cannotDecodeContentData)
             }
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    self?.isLoading = false
+                    if case .failure(let error) = completion {
+                        self?.hasError = true
+                        AppLogger.error(
+                            "Image load error: \(error.localizedDescription) for URL: \(urlString)")
+                    }
+                },
+                receiveValue: { [weak self] downloadedImage in
+                    ImageCache.shared.set(downloadedImage, forKey: urlString)
+                    self?.image = downloadedImage
+                    AppLogger.debug("✅ Image loaded successfully: \(urlString)")
+                }
+            )
     }
 
     func cancel() {
-        cancellable?.cancel()
+        // Don't cancel - let the image finish loading
+        // This fixes issues with view updates causing cancellation
     }
 }

@@ -22,6 +22,9 @@ struct GlobalSearchView: View {
         GridItem(.flexible(), spacing: 16),
     ]
 
+    // Explicit width relative to screen to match ProductCardView logic
+    private let itemWidth = (UIScreen.main.bounds.width - 48) / 2
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -264,7 +267,7 @@ struct GlobalSearchView: View {
                         destination: ProductDetailView(
                             productId: product.id, productFragment: mapToProduct(product))
                     ) {
-                        ModernProductCard(product: product)
+                        ModernProductCard(product: product, width: itemWidth)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
@@ -301,40 +304,41 @@ struct GlobalSearchView: View {
 
 struct ModernProductCard: View {
     let product: SearchResultItem
+    let width: CGFloat
 
     var body: some View {
+        let _ = AppLogger.debug(
+            "🎨 ModernProductCard Rendering: \(product.displayName), Image: \(product.image ?? "NIL")"
+        )
         VStack(alignment: .leading, spacing: 8) {
             // Image Container
             ZStack(alignment: .topTrailing) {
-                // Image
-                if let img = product.image, let url = getImageUrl(for: img) {
-                    AsyncImage(url: url) { phase in
-                        if let image = phase.image {
-                            image
-                                .resizable()
-                                .aspectRatio(3 / 4, contentMode: .fill)
-                                .layoutPriority(-1)
-                        } else if phase.error != nil {
-                            Color.gray.opacity(0.1)
-                                .aspectRatio(3 / 4, contentMode: .fit)
-                                .overlay(
-                                    Image(systemName: "photo")
-                                        .foregroundColor(.gray.opacity(0.5))
-                                )
-                        } else {
-                            Color.gray.opacity(0.1)
-                                .aspectRatio(3 / 4, contentMode: .fit)
-                                .overlay(
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                )
-                        }
+                // Image Logic (Synced with ProductCardView)
+                let imageUrl = product.image ?? ""
+                let cleanPath = imageUrl.replacingOccurrences(of: "\\", with: "/")
+                let fullUrl =
+                    cleanPath.hasPrefix("http")
+                    ? cleanPath
+                    : "\(APIService.shared.imageHost)/\(cleanPath.hasPrefix("/") ? String(cleanPath.dropFirst()) : cleanPath)"
+
+                if !imageUrl.isEmpty, let url = URL(string: fullUrl) {
+                    let _ = AppLogger.debug(
+                        "🔍 Search Result Image: \(url.absoluteString) for \(product.displayName)")
+                    CachedAsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color(hex: "#F3F4F6")
                     }
+                    .frame(width: width, height: 160)
                     .clipped()
+                    .cornerRadius(8)
                 } else {
-                    Color.gray.opacity(0.1)
-                        .aspectRatio(3 / 4, contentMode: .fit)
+                    Color(hex: "#F3F4F6")
+                        .frame(width: width, height: 160)
                         .overlay(Image(systemName: "photo").foregroundColor(.gray))
+                        .cornerRadius(8)
                 }
 
                 // Favorite Button
@@ -350,6 +354,7 @@ struct ModernProductCard: View {
             }
             .background(Color.gray.opacity(0.05))
             .cornerRadius(12)
+            .frame(width: width)
 
             // Details
             VStack(alignment: .leading, spacing: 4) {
@@ -397,7 +402,12 @@ struct ModernProductCard: View {
             fullUrlString = "\(host)/\(path)"
         }
 
-        // Handle spaces and other characters
+        // 1. Try direct creation (Fast path for valid URLs)
+        if let url = URL(string: fullUrlString) {
+            return url
+        }
+
+        // 2. Handle spaces and other characters if direct creation failed
         if let encoded = fullUrlString.addingPercentEncoding(
             withAllowedCharacters: .urlQueryAllowed),
             let url = URL(string: encoded)
@@ -405,6 +415,6 @@ struct ModernProductCard: View {
             return url
         }
 
-        return URL(string: fullUrlString)
+        return nil
     }
 }
