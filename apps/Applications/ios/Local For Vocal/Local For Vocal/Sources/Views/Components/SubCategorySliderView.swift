@@ -24,8 +24,10 @@ struct SubCategorySliderView: View {
                         }
                     }
                     .padding(.horizontal, 16)
+                    .padding(.vertical, 8)  // Add vertical padding inside scroll for shadow/spacing
                 }
                 .frame(height: 230)
+                .padding(.top, 10)  // Add spacing above the slider
             }
         }
         .task {
@@ -34,14 +36,38 @@ struct SubCategorySliderView: View {
     }
 
     private func fetchSubCategories() async {
-        do {
-            self.subCategories = try await APIService.shared.fetchSubCategories(
-                parentId: parentCategoryId)
-            self.isLoading = false
-        } catch {
-            print("Error loading subcategories: \(error)")
-            self.isLoading = false
+        let maxRetries = 3
+
+        for attempt in 0..<maxRetries {
+            do {
+                // Check if task is cancelled before attempting
+                try Task.checkCancellation()
+
+                self.subCategories = try await APIService.shared.fetchSubCategories(
+                    parentId: parentCategoryId)
+                self.isLoading = false
+                return  // Success - exit the function
+            } catch is CancellationError {
+                // Task was cancelled (e.g., view disappeared) - don't retry, just exit
+                return
+            } catch let error as NSError
+                where error.domain == NSURLErrorDomain && error.code == -999
+            {
+                // Request was cancelled - wait briefly and retry
+                if attempt < maxRetries - 1 {
+                    try? await Task.sleep(nanoseconds: UInt64(100_000_000 * (attempt + 1)))  // 100ms * attempt
+                }
+            } catch {
+                // Other errors - retry with exponential backoff
+                print("Error loading subcategories (attempt \(attempt + 1)): \(error)")
+                if attempt < maxRetries - 1 {
+                    try? await Task.sleep(nanoseconds: UInt64(500_000_000 * (attempt + 1)))  // 500ms * attempt
+                }
+            }
         }
+
+        // All retries failed - stop loading but don't show error (component just won't appear)
+        self.isLoading = false
     }
 }
 
@@ -72,7 +98,7 @@ struct SubCategoryCell: View {
                             Color.gray.opacity(0.1)
                         }
                         .frame(width: 70, height: 70)
-                        .cornerRadius(12)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))  // Ensure radius clips content
                     }
                 }
 

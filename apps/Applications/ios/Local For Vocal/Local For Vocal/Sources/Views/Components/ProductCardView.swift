@@ -4,20 +4,20 @@ struct ProductCardView: View {
     let product: Product
     let width: CGFloat
     var onAdd: (() -> Void)?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Image Container
             ZStack(alignment: .topTrailing) {
-                Color(hex: "#F3F4F6") // Placeholder background
-                
+                Color(hex: "#F3F4F6")  // Placeholder background
+
                 if let imageUrl = product.images.first, let url = URL(string: imageUrl) {
-                    AsyncImage(url: url) { image in
+                    CachedAsyncImage(url: url) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                     } placeholder: {
-                        ProgressView()
+                        Color(hex: "#F3F4F6")
                     }
                     .frame(width: width, height: 160)
                     .clipped()
@@ -27,9 +27,10 @@ struct ProductCardView: View {
                         .foregroundColor(.gray)
                         .frame(width: width, height: 160)
                 }
-                
+
                 // Wishlist Button
                 Button(action: {
+                    HapticManager.shared.impact(style: .medium)
                     // Wishlist action
                 }) {
                     Circle()
@@ -43,7 +44,7 @@ struct ProductCardView: View {
                         )
                 }
                 .padding(8)
-                
+
                 // Discount Badge
                 if let discount = product.discountPercentage, discount > 0 {
                     Text("-\(discount)%")
@@ -58,25 +59,25 @@ struct ProductCardView: View {
                 }
             }
             .frame(height: 160)
-            
+
             // Content
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.category.uppercased())
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(Color(hex: "#6B7280"))
-                
+
                 Text(product.name)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(Color(hex: "#111827"))
                     .lineLimit(2)
                     .frame(height: 40, alignment: .topLeading)
-                
+
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("₹\(Int(product.price))")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(Color(hex: "#4F46E5"))
-                        
+
                         if let mrp = product.mrp, mrp > product.price {
                             Text("₹\(Int(mrp))")
                                 .font(.system(size: 10))
@@ -84,9 +85,9 @@ struct ProductCardView: View {
                                 .strikethrough()
                         }
                     }
-                    
+
                     Spacer()
-                    
+
                     // Rating
                     if let rating = product.rating {
                         HStack(spacing: 2) {
@@ -111,5 +112,9 @@ struct ProductCardView: View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                HapticManager.shared.impact(style: .light)
+            })
     }
 }

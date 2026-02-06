@@ -127,7 +127,14 @@ struct SmartBasketView: View {
             do {
                 // Fetching large list to filter client-side, matching RN implementation logic
                 // In production, backend should support ?ids=... or ?category=...
-                let url = URL(string: "\(APIService.shared.baseURL)/products?limit=200")!
+                guard let url = URL(string: "\(APIService.shared.baseURL)/products?limit=200")
+                else {
+                    await MainActor.run {
+                        self.errorMessage = "Internal Error: Invalid URL"
+                        self.isLoading = false
+                    }
+                    return
+                }
                 let (data, _) = try await URLSession.shared.data(from: url)
                 let allProducts = try JSONDecoder().decode([Product].self, from: data)
 
@@ -138,7 +145,7 @@ struct SmartBasketView: View {
                     self.isLoading = false
                 }
             } catch {
-                print("Smart Basket fetch error: \(error)")
+                AppLogger.error("Smart Basket fetch error: \(error)")
                 await MainActor.run {
                     self.errorMessage = "Failed to load smart basket"
                     self.isLoading = false

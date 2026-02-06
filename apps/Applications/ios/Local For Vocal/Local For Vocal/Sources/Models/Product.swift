@@ -57,7 +57,19 @@ public struct Product: Identifiable, Codable, Hashable {
         protectPromiseFee = try container.decodeIfPresent(Double.self, forKey: .protectPromiseFee)
         sellerName = try container.decodeIfPresent(String.self, forKey: .sellerName)
         offers = try container.decodeIfPresent([ProductOffer].self, forKey: .offers)
-        trustBadges = try container.decodeIfPresent([TrustBadge].self, forKey: .trustBadges)
+
+        // Handle trustBadges - can be [TrustBadge] or [String]
+        if let badges = try? container.decodeIfPresent([TrustBadge].self, forKey: .trustBadges) {
+            trustBadges = badges
+        } else if let badgeStrings = try? container.decodeIfPresent(
+            [String].self, forKey: .trustBadges)
+        {
+            trustBadges = badgeStrings.enumerated().map { index, str in
+                TrustBadge(id: "badge_\(index)", name: str, icon: "checkmark.shield.fill")
+            }
+        } else {
+            trustBadges = nil
+        }
         lastChanceOffers = try container.decodeIfPresent(
             [LastChanceOffer].self, forKey: .lastChanceOffers)
         highlights = try container.decodeIfPresent([String].self, forKey: .highlights)
@@ -133,5 +145,6 @@ public struct Product: Identifiable, Codable, Hashable {
         try container.encodeIfPresent(trustBadges, forKey: .trustBadges)
         try container.encodeIfPresent(lastChanceOffers, forKey: .lastChanceOffers)
         try container.encodeIfPresent(highlights, forKey: .highlights)
+        try container.encodeIfPresent(shippingCharges, forKey: .shippingCharges)
     }
 }

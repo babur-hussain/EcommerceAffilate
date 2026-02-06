@@ -1,18 +1,15 @@
 import SwiftUI
 
 struct FurnitureTopBrandsView: View {
-    struct BrandItem: Decodable, Identifiable {
-        let id: String
-        let image: String
-        let logo: String?
-        let brandName: String?
-        let price: String
-        let actionUrl: String?
-    }
-
     let title: String
     let headerActionUrl: String?
-    let items: [BrandItem]
+    let items: [FBrandItem]
+
+    init(title: String, headerActionUrl: String?, items: [FBrandItem]) {
+        self.title = title
+        self.headerActionUrl = headerActionUrl
+        self.items = items
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -63,7 +60,7 @@ struct FurnitureTopBrandsView: View {
 }
 
 struct TopBrandOfferCard: View {
-    let item: FurnitureTopBrandsView.BrandItem
+    let item: FBrandItem
 
     var body: some View {
         Button(action: {
@@ -127,4 +124,13 @@ struct TopBrandOfferCard: View {
             .frame(width: 140)
         }
     }
+}
+
+struct FBrandItem: Decodable, Identifiable {
+    let id: String
+    let image: String
+    let logo: String?
+    let brandName: String?
+    let price: String
+    let actionUrl: String?
 }

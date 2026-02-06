@@ -38,6 +38,7 @@ import com.ecommerceearn.app.ui.components.HeroBannerView
 import com.ecommerceearn.app.ui.components.CuratedCollectionsView
 import com.ecommerceearn.app.ui.components.LightningDealsView
 import com.ecommerceearn.app.ui.components.ProductCardView
+import com.ecommerceearn.app.ui.components.bannerPages.*
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -99,6 +100,46 @@ fun SDUIRenderer(
         "books_stationery", "stationery" -> RenderBooksStationery(component)
         "books_banner", "book_banner" -> RenderBooksBanner(component)
         "books_reading_lists", "reading_lists" -> RenderBooksReadingLists(component)
+        // Luminous Banner Page Components
+        "luminous_header" -> LuminousHeaderView(component)
+        "luminous_grid" -> LuminousGridView(component)
+        "luminous_categories" -> LuminousCategoriesView(component)
+        "luminous_sale" -> LuminousSaleView(component)
+        // BackToSchool1 Components
+        "bts_header", "back_to_school_header" -> BackToSchoolHeaderView(component)
+        "bts_grid", "back_to_school_grid" -> BackToSchoolGridView(component)
+        "bts_banner", "back_to_school_banner" -> BackToSchoolBannerView(component)
+        "bts_categories", "back_to_school_categories" -> BackToSchoolCategoriesView(component)
+        "bts_footer", "back_to_school_footer" -> BackToSchoolFooterView()
+        // SchoolTwo Components
+        "school_two_header" -> SchoolTwoHeaderView(component)
+        "school_two_grid" -> SchoolTwoGridView(component)
+        "school_two_banner" -> SchoolTwoBannerView(component)
+        "school_two_categories" -> SchoolTwoCategoriesView(component)
+        "school_two_deals" -> SchoolTwoDealsView(component)
+        "school_two_footer" -> SchoolTwoFooterView()
+        // SchoolThree Components
+        "school_three_header" -> SchoolThreeHeaderView(component)
+        "school_three_grid" -> SchoolThreeGridView(component)
+        "school_three_banner" -> SchoolThreeBannerView(component)
+        "school_three_categories" -> SchoolThreeCategoriesView(component)
+        "school_three_essentials" -> SchoolThreeEssentialsView(component)
+        "school_three_footer" -> SchoolThreeFooterView()
+        // SchoolFour Components
+        "school_four_header" -> SchoolFourHeaderView(component)
+        "school_four_grid" -> SchoolFourGridView(component)
+        "school_four_categories" -> SchoolFourCategoriesView(component)
+        "school_four_footer" -> SchoolFourFooterView()
+        // SchoolFive Components
+        "school_five_header" -> SchoolFiveHeaderView(component)
+        "school_five_grid" -> SchoolFiveGridView(component)
+        "school_five_categories" -> SchoolFiveCategoriesView(component)
+        "school_five_footer" -> SchoolFiveFooterView()
+        // Lumiere/PercentOff Components
+        "lumiere_header", "percent_off_header" -> LumiereHeaderView(component)
+        "lumiere_section", "percent_off_section" -> LumiereSectionView(component)
+        "lumiere_newsletter", "percent_off_newsletter" -> LumiereNewsletterView(component)
+        "lumiere_bottom_nav", "percent_off_nav" -> LumiereBottomNavView()
         else -> {
             if (component.children?.isNotEmpty() == true) {
                  RenderContainer(component, onProductClick)

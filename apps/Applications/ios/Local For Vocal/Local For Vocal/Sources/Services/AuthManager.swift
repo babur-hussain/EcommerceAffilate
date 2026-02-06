@@ -44,22 +44,32 @@ public class AuthManager: ObservableObject {
 
     // MARK: - Load from Keychain/UserDefaults
     private func loadFromStorage() {
-        if let token = UserDefaults.standard.string(forKey: tokenKey) {
+        // Try Keychain first (new secure storage)
+        if let token = KeychainManager.shared.authToken {
             self.authToken = token
+        } else if let token = UserDefaults.standard.string(forKey: tokenKey) {
+            // Migration: Move token from UserDefaults to Keychain
+            self.authToken = token
+            KeychainManager.shared.authToken = token
+            UserDefaults.standard.removeObject(forKey: tokenKey)
+        }
 
-            if let userData = UserDefaults.standard.data(forKey: userKey),
-                let user = try? JSONDecoder().decode(User.self, from: userData)
-            {
-                self.currentUser = user
-                self.isLoggedIn = true
-            }
+        // User data still in UserDefaults (non-sensitive)
+        if authToken != nil,
+            let userData = UserDefaults.standard.data(forKey: userKey),
+            let user = try? JSONDecoder().decode(User.self, from: userData)
+        {
+            self.currentUser = user
+            self.isLoggedIn = true
         }
     }
 
     // MARK: - Save to Storage
     private func saveToStorage() {
-        UserDefaults.standard.set(authToken, forKey: tokenKey)
+        // Save token securely in Keychain
+        KeychainManager.shared.authToken = authToken
 
+        // User data (non-sensitive) can stay in UserDefaults
         if let user = currentUser,
             let userData = try? JSONEncoder().encode(user)
         {
@@ -69,7 +79,9 @@ public class AuthManager: ObservableObject {
 
     // MARK: - Login
     public func login(email: String, password: String) async throws {
-        let url = URL(string: "\(APIService.shared.baseURL)/auth/login")!
+        guard let url = URL(string: "\(APIService.shared.baseURL)/auth/login") else {
+            throw APIService.APIError.invalidURL
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -99,7 +111,9 @@ public class AuthManager: ObservableObject {
     public func register(name: String, email: String, phone: String, password: String)
         async throws
     {
-        let url = URL(string: "\(APIService.shared.baseURL)/auth/register")!
+        guard let url = URL(string: "\(APIService.shared.baseURL)/auth/register") else {
+            throw APIService.APIError.invalidURL
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -144,7 +158,9 @@ public class AuthManager: ObservableObject {
         guard let token = authToken else { throw AuthError.notAuthenticated }
 
         // Ensure URLs
-        let url = URL(string: "\(APIService.shared.baseURL)/influencer/register")!
+        guard let url = URL(string: "\(APIService.shared.baseURL)/influencer/register") else {
+            throw APIService.APIError.invalidURL
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -224,7 +240,7 @@ public class AuthManager: ObservableObject {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
             let rootViewController = windowScene.windows.first?.rootViewController
         else {
-            return
+            throw AuthError.googleLoginFailed  // Fixed: Was silent failure
         }
 
         let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController)
@@ -236,7 +252,9 @@ public class AuthManager: ObservableObject {
         }
 
         // Call backend
-        let url = URL(string: "\(APIService.shared.baseURL)/auth/google")!
+        guard let url = URL(string: "\(APIService.shared.baseURL)/auth/google") else {
+            throw APIService.APIError.invalidURL
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -256,12 +274,11 @@ public class AuthManager: ObservableObject {
 
         let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
 
-        await MainActor.run {
-            self.authToken = authResponse.token
-            self.currentUser = authResponse.user
-            self.isLoggedIn = true
-            saveToStorage()
-        }
+        // Already on MainActor, no need for MainActor.run
+        self.authToken = authResponse.token
+        self.currentUser = authResponse.user
+        self.isLoggedIn = true
+        saveToStorage()
     }
 
     // MARK: - Logout

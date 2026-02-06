@@ -10,6 +10,7 @@ struct FurnitureGrabOrGoneView: View {
     }
 
     let title: String
+    let headerActionUrl: String?
     let items: [GrabItem]
 
     let columns = [
@@ -24,9 +25,22 @@ struct FurnitureGrabOrGoneView: View {
                 Color(hex: "#FFCCBC")
 
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(title)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.black)
+                    HStack {
+                        Text(title)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.black)
+
+                        if let action = headerActionUrl {
+                            Spacer()
+                            Button(action: {
+                                print("Navigate to: \(action)")
+                            }) {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
 
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(items) { item in

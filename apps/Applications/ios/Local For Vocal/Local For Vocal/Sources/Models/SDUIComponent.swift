@@ -6,8 +6,8 @@ import SwiftUI
 public struct SDUIComponent: Identifiable, Decodable, Hashable {
     public let id: String
     public let type: ComponentType
-    public let props: [String: AnyCodable]?
-    public let style: [String: AnyCodable]?
+    public let props: [String: SDUIAnyCodable]?
+    public let style: [String: SDUIAnyCodable]?
     public let children: [SDUIComponent]?
 
     enum CodingKeys: String, CodingKey {
@@ -30,13 +30,13 @@ public struct SDUIComponent: Identifiable, Decodable, Hashable {
         self.type = try container.decode(ComponentType.self, forKey: .type)
 
         // Try decoding 'props', if that fails/nil, try 'content'
-        if let propsVal = try? container.decode([String: AnyCodable].self, forKey: .props) {
+        if let propsVal = try? container.decode([String: SDUIAnyCodable].self, forKey: .props) {
             self.props = propsVal
         } else {
-            self.props = try? container.decode([String: AnyCodable].self, forKey: .content)
+            self.props = try? container.decode([String: SDUIAnyCodable].self, forKey: .content)
         }
 
-        self.style = try? container.decode([String: AnyCodable].self, forKey: .style)
+        self.style = try? container.decode([String: SDUIAnyCodable].self, forKey: .style)
         self.children = try? container.decode([SDUIComponent].self, forKey: .children)
     }
 
@@ -44,6 +44,31 @@ public struct SDUIComponent: Identifiable, Decodable, Hashable {
     public func prop<T: Decodable>(for key: String, as type: T.Type = T.self) -> T? {
         guard let value = props?[key] else { return nil }
         return value.value as? T
+    }
+
+    // Helper to decode array of items from AnyCodable
+    public func decodeItems<T: Decodable>(for key: String, as type: [T].Type = [T].self) -> [T] {
+        guard let anyCodable = props?[key] else { return [] }
+
+        // If the value is already the expected array type
+        if let directValue = anyCodable.value as? [T] {
+            return directValue
+        }
+
+        // If it's an array of dictionaries (AnyCodable usually wraps [String: Any])
+        // We need to re-encode and decode to get strongly typed objects
+        if let dictArray = anyCodable.value as? [[String: Any]] {
+            do {
+                let data = try JSONSerialization.data(withJSONObject: dictArray)
+                let decoded = try JSONDecoder().decode([T].self, from: data)
+                return decoded
+            } catch {
+                print("Error decoding items for key \(key): \(error)")
+                return []
+            }
+        }
+
+        return []
     }
 
     // Hashable conformance
@@ -66,6 +91,11 @@ public enum ComponentType: String, Decodable {
     case gradient = "Gradient"
     case scrollView = "ScrollView"
     case productGrid = "ProductGrid"
+    case categoryCircles = "category_circles"
+    case banner = "banner"
+    case grid = "grid"
+    case horizontalList = "horizontal_list"
+    case productList = "product_list"
     case productListHorizontal = "product_list_horizontal"
     case heroCarousel = "hero_carousel"
     case curatedCollections = "curated_collections"
@@ -123,6 +153,10 @@ public enum ComponentType: String, Decodable {
     case lumiereNewsletter = "lumiere_newsletter"
     case lumiereBottomNav = "lumiere_bottom_nav"
 
+    // --- Luminous Page Components ---
+    case luminousSection = "luminous_section"
+    case luminousNewsletter = "luminous_newsletter"
+
     // --- Back to School 1 Components ---
     case backToSchoolHeader = "back_to_school_header"
     case backToSchoolBanner = "back_to_school_banner"
@@ -164,6 +198,71 @@ public enum ComponentType: String, Decodable {
     case serviceCategorySection = "service_category_section"
     case serviceBottomNav = "service_bottom_nav"
 
+    // --- Shopping Page Components ---
+    case brandSpotlight = "brand_spotlight"
+    case collectionGrid = "collection_grid"
+    case featuredProducts = "featured_products"
+    case seasonalShowcase = "seasonal_showcase"
+
+    // --- Banner Pages (Generic) ---
+    case bannerPageHeader = "banner_page_header"
+    case bannerPageGrid = "banner_page_grid"
+    case bannerPageFooter = "banner_page_footer"
+
+    // --- Fashion Page ---
+    case fashionHeader = "fashion_header"
+    case fashionCollections = "fashion_collections"
+    case fashionTrending = "fashion_trending"
+
+    // --- Electronics Page ---
+    case electronicsHeader = "electronics_header"
+    case electronicsDeals = "electronics_deals"
+    case electronicsCategories = "electronics_categories"
+
+    // --- Beauty Page (Old/Generic) ---
+    case beautyHeader = "beauty_header"
+    case beautyTopPicks = "beauty_top_picks"
+    case beautyNewArrivals = "beauty_new_arrivals"
+
+    // --- Beauty Page (New/Specific) ---
+    case beautyPremiumPick = "beauty_premium_pick"
+    case beautyLuxeLane = "beauty_luxe_lane"
+    case beautyEditorPick = "beauty_editor_pick"
+    case beautyGlamTop = "beauty_glam_top"
+    case beautyFragranceLuxe = "beauty_fragrance_luxe"
+    case beautyMakeupMania = "beauty_makeup_mania"
+    case beautySkinCareSanctuary = "beauty_skin_care_sanctuary"
+    case beautyHairCareHaven = "beauty_hair_care_haven"
+    case beautyBathBodyBliss = "beauty_bath_body_bliss"
+    case beautyWellnessWonders = "beauty_wellness_wonders"
+    case beautyGroomingGurus = "beauty_grooming_gurus"
+    case beautyBrandsWeLove = "beauty_brands_we_love"
+    // globallyLovedAlisters should be below
+    // beautyLaunchParty should be below
+    // beautyTrendMore should be below
+    // beautyKBeauty should be below
+    // beautyKBeauty should be below
+
+    // --- Home & Kitchen ---
+    case homeHeader = "home_header"
+    case homeDecor = "home_decor"
+    case kitchenEssentials = "kitchen_essentials"
+
+    // --- Sports & Fitness (Old/Generic) ---
+    case sportsHeader = "sports_header"
+    case sportsGear = "sports_gear"
+    case fitnessEquipment = "fitness_equipment"
+
+    // --- Toys & Baby ---
+    case toysHeader = "toys_header"
+    case toysTrending = "toys_trending"
+    case babyCare = "baby_care"
+
+    // --- Books & Stationery ---
+    case booksHeader = "books_header"
+    case bestSellers = "best_sellers"
+    case stationerySupplies = "stationery_supplies"
+
     // --- Beauty & Perfume (Luminous) Components ---
     case luminousHeader = "luminous_header"
     case luminousCategories = "luminous_categories"
@@ -177,5 +276,57 @@ public enum ComponentType: String, Decodable {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(String.self)
         self = ComponentType(rawValue: rawValue) ?? .unknown
+    }
+}
+
+// MARK: - Helper Type for Compilation
+public struct SDUIAnyCodable: Decodable, Encodable {
+    public let value: Any
+
+    public init(_ value: Any) {
+        self.value = value
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let x = try? container.decode(Bool.self) {
+            value = x
+        } else if let x = try? container.decode(Int.self) {
+            value = x
+        } else if let x = try? container.decode(Double.self) {
+            value = x
+        } else if let x = try? container.decode(String.self) {
+            value = x
+        } else if let x = try? container.decode([SDUIAnyCodable].self) {
+            value = x.map { $0.value }
+        } else if let x = try? container.decode([String: SDUIAnyCodable].self) {
+            value = x.mapValues { $0.value }
+        } else {
+            throw DecodingError.dataCorruptedError(
+                in: container, debugDescription: "AnyCodable value cannot be decoded")
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        if let x = value as? Bool {
+            try container.encode(x)
+        } else if let x = value as? Int {
+            try container.encode(x)
+        } else if let x = value as? Double {
+            try container.encode(x)
+        } else if let x = value as? String {
+            try container.encode(x)
+        } else if let x = value as? [SDUIAnyCodable] {
+            try container.encode(x)
+        } else if let x = value as? [String: SDUIAnyCodable] {
+            try container.encode(x)
+        } else {
+            throw EncodingError.invalidValue(
+                value,
+                EncodingError.Context(
+                    codingPath: container.codingPath,
+                    debugDescription: "AnyCodable value cannot be encoded"))
+        }
     }
 }

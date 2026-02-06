@@ -38,7 +38,7 @@ struct CategoriesPageView: View {
                 self.categories = try await APIService.shared.fetchCategories()
                 self.isLoading = false
             } catch {
-                print("Failed to load categories: \(error)")
+                AppLogger.error("Failed to load categories: \(error)")
                 self.isLoading = false
             }
         }

@@ -96,6 +96,7 @@ struct TopCategoryBoxesView: View {
                             .padding(.vertical, 4)
                         }
                         .frame(width: itemWidth, height: 50)
+                        .skeleton(isLoading: false)  // Placeholder boolean, in real app bind to ViewModel
                     }
                 }
             }
@@ -282,6 +283,7 @@ struct CategoriesSliderView: View {
                             }
                         )
                     }
+                    .skeleton(isLoading: false)  // Placeholder boolean
                 }
             }
             .padding(.horizontal, 20)

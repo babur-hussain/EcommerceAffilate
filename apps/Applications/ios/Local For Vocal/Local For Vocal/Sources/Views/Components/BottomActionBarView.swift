@@ -9,7 +9,10 @@ struct BottomActionBarView: View {
     var body: some View {
         HStack(spacing: 12) {
             // 1. Cart Icon Button (Square outline)
-            Button(action: onOpenCart) {
+            Button(action: {
+                HapticManager.shared.selection()
+                onOpenCart()
+            }) {
                 Image(systemName: "cart")
                     .font(.system(size: 20))  // Slightly larger icon
                     .foregroundColor(Color(hex: "#111827"))
@@ -23,7 +26,10 @@ struct BottomActionBarView: View {
             }
 
             // 2. Add to Cart Button (Outline)
-            Button(action: onAddToCart) {
+            Button(action: {
+                HapticManager.shared.impact(style: .heavy)
+                onAddToCart()
+            }) {
                 Text("Add to Cart")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundColor(Color(hex: "#111827"))
@@ -38,7 +44,10 @@ struct BottomActionBarView: View {
             }
 
             // 3. Buy Now Button (Yellow, with price)
-            Button(action: onBuyNow) {
+            Button(action: {
+                HapticManager.shared.impact(style: .heavy)
+                onBuyNow()
+            }) {
                 VStack(spacing: 0) {
                     Text("Buy now")
                         .font(.system(size: 15, weight: .black))

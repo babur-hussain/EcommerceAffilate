@@ -32,16 +32,8 @@ struct ProductDetailView: View {
 
     // UserAddress State
     @State private var isUserAddressSelectorVisible = false
-    @State private var selectedUserAddressId: String? = "1"  // Default mock
-    @State private var savedUserAddresses: [UserAddress] = [
-        UserAddress(
-            _id: "1", userId: "u1", name: "Babur Hussain", phone: "9876543210",
-            addressLine1: "Nilay Murarka Marg", city: "Nagpur", state: "MH", pincode: "440018",
-            isDefault: true),
-        UserAddress(
-            _id: "2", userId: "u1", name: "Office", phone: "9876543210", addressLine1: "IT Park",
-            city: "Nagpur", state: "MH", pincode: "440022", isDefault: false),
-    ]
+    @State private var selectedUserAddressId: String? = nil
+    @State private var savedUserAddresses: [UserAddress] = []
 
     var currentUserAddress: UserAddress? {
         savedUserAddresses.first { $0.id == selectedUserAddressId } ?? savedUserAddresses.first
@@ -57,7 +49,7 @@ struct ProductDetailView: View {
                     }) {
                         Image(systemName: "arrow.left")
                             .font(.system(size: 20))
-                            .foregroundColor(Color(hex: "#1F2937"))
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                     }
                     Spacer()
 
@@ -66,7 +58,7 @@ struct ProductDetailView: View {
                     }) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 20))
-                            .foregroundColor(Color(hex: "#1F2937"))
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                     }
 
                     // Wishlist Button
@@ -82,7 +74,7 @@ struct ProductDetailView: View {
                         .font(.system(size: 20))
                         .foregroundColor(
                             wishlistManager.isInWishlist(productId: productId)
-                                ? Color(hex: "#EF4444") : Color(hex: "#1F2937"))
+                                ? AppTheme.Colors.error : AppTheme.Colors.textPrimary)
                     }
                     .padding(.leading, 12)
 
@@ -92,7 +84,7 @@ struct ProductDetailView: View {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "cart")
                                 .font(.system(size: 20))
-                                .foregroundColor(Color(hex: "#1F2937"))
+                                .foregroundColor(AppTheme.Colors.textPrimary)
                             if cartManager.cartCount > 0 {
                                 Text("\(cartManager.cartCount)")
                                     .font(.system(size: 10, weight: .bold))
@@ -121,18 +113,18 @@ struct ProductDetailView: View {
                             }
 
                             // 2. Carousel
-                            let _ = print("ProductDetailView product.images: \(product.images)")
+                            let _ = AppLogger.debug(
+                                "ProductDetailView product.images: \(product.images)")
                             ProductImageCarouselView(images: product.images)
 
                             // 3. Price & Title
                             PriceAndTitleView(
-                                brand: "Brand",  // Placeholder or from product.category/brand
-                                name: product.name,  // using name as title
+                                brand: product.category,
+                                name: product.name,
                                 shortDescription: product.shortDescription ?? product.description,
                                 price: product.price,
                                 mrp: product.mrp,
-                                discount: product.discountPercentage != nil
-                                    ? "\(product.discountPercentage!)% off" : nil,
+                                discount: product.discountPercentage.map { "\($0)% off" },
                                 protectPromiseFee: product.protectPromiseFee
                             )
 
@@ -144,17 +136,17 @@ struct ProductDetailView: View {
                             )
 
                             // 3.8 UserAddress Bar
-                            Rectangle().fill(Color(hex: "#F3F4F6")).frame(height: 8)
+                            Rectangle().fill(AppTheme.Colors.background).frame(height: 8)
                             UserAddressBarView(currentUserAddress: currentUserAddress) {
                                 withAnimation { isUserAddressSelectorVisible = true }
                             }
 
                             // 5. Bank Offers
-                            Rectangle().fill(Color(hex: "#F3F4F6")).frame(height: 8)
+                            Rectangle().fill(AppTheme.Colors.background).frame(height: 8)
                             BankOffersView(offers: product.offers)
 
                             // 9. Delivery
-                            Rectangle().fill(Color(hex: "#F3F4F6")).frame(height: 8)
+                            Rectangle().fill(AppTheme.Colors.background).frame(height: 8)
                             DeliveryInfoView(
                                 sellerName: product.sellerName,
                                 trustBadges: product.trustBadges,
@@ -162,12 +154,12 @@ struct ProductDetailView: View {
                             )
 
                             // 10. Reviews Section
-                            Rectangle().fill(Color(hex: "#F3F4F6")).frame(height: 8)
+                            Rectangle().fill(AppTheme.Colors.background).frame(height: 8)
                             VStack(alignment: .leading, spacing: 16) {
                                 HStack {
                                     Text("Ratings & Reviews")
                                         .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(Color(hex: "#111827"))
+                                        .foregroundColor(AppTheme.Colors.textPrimary)
                                     Spacer()
                                     Button(action: {
                                         if AuthManager.shared.isLoggedIn {
@@ -178,7 +170,7 @@ struct ProductDetailView: View {
                                     }) {
                                         Text("Rate Product")
                                             .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(Color(hex: "#2563EB"))
+                                            .foregroundColor(AppTheme.Colors.primary)
                                     }
                                 }
 
@@ -200,7 +192,7 @@ struct ProductDetailView: View {
                             .background(Color.white)
 
                             // Spacer
-                            Color(hex: "#F3F4F6").frame(height: 20)
+                            AppTheme.Colors.background.frame(height: 20)
                         }
                     }
 
@@ -260,8 +252,20 @@ struct ProductDetailView: View {
                         isActive: $navigateToCheckout
                     ) { EmptyView() }
                 } else {
-                    Text("Product not found")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    VStack(spacing: 16) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 50))
+                            .foregroundColor(.gray)
+                        Text("Product not found")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Text("The product you are looking for does not exist or has been removed.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
 
@@ -301,7 +305,7 @@ struct ProductDetailView: View {
                 }
             }
         }
-        .background(Color(hex: "#F3F4F6"))
+        .background(AppTheme.Colors.background)
 
         .alert("Referral Link Generated", isPresented: $showReferralAlert) {
             Button("Copy", role: .cancel) {
@@ -314,15 +318,22 @@ struct ProductDetailView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            // Always fetch full details to ensure we have images
-            // Use fragment as initial display while loading
-            if let p = productFragment {
-                self.product = p
-            }
-            loadProduct()
-            Task {
-                await reviewManager.fetchReviews(productId: productId)
-            }
+            loadAllData()
+        }
+    }
+
+    private func loadAllData() {
+        // 1. Initial State from Fragment
+        if let p = productFragment {
+            self.product = p
+        }
+
+        // 2. Load Full Details
+        loadProduct()
+
+        // 3. Load Side Effects (Reviews, etc)
+        Task {
+            await reviewManager.fetchReviews(productId: productId)
         }
     }
 
@@ -331,11 +342,11 @@ struct ProductDetailView: View {
             isLoading = product == nil  // Only show loading if no fragment
             do {
                 if let fetched = try await APIService.shared.fetchProductDetails(id: productId) {
-                    print("🎯 Fetched product: \(fetched.name), images: \(fetched.images)")
+                    AppLogger.info("🎯 Fetched product: \(fetched.name), images: \(fetched.images)")
                     self.product = fetched
                 }
             } catch {
-                print("Error fetching product: \(error)")
+                AppLogger.error("Error fetching product: \(error)")
             }
             isLoading = false
         }

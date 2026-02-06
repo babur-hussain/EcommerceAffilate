@@ -1,16 +1,15 @@
 import SwiftUI
 
 struct FurnitureTopFurnitureBrandsView: View {
-    struct BrandGridItem: Decodable, Identifiable {
-        let id: String
-        let logo: String?
-        let isViewAll: Bool?
-        let actionUrl: String?
-    }
-
     let title: String
     let headerActionUrl: String?
-    let items: [BrandGridItem]
+    let items: [FBrandGridItem]
+
+    init(title: String, headerActionUrl: String?, items: [FBrandGridItem]) {
+        self.title = title
+        self.headerActionUrl = headerActionUrl
+        self.items = items
+    }
 
     let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -52,7 +51,7 @@ struct FurnitureTopFurnitureBrandsView: View {
 }
 
 struct BrandGridCard: View {
-    let item: FurnitureTopFurnitureBrandsView.BrandGridItem
+    let item: FBrandGridItem
 
     var body: some View {
         Button(action: {
@@ -92,4 +91,11 @@ struct BrandGridCard: View {
             .cornerRadius(12)
         }
     }
+}
+
+struct FBrandGridItem: Decodable, Identifiable {
+    let id: String
+    let logo: String?
+    let isViewAll: Bool?
+    let actionUrl: String?
 }

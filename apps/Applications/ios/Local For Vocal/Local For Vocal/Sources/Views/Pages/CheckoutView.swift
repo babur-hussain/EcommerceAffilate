@@ -2,111 +2,23 @@ import SwiftUI
 
 // MARK: - Order Summary View (Checkout Step 2)
 struct CheckoutView: View {
-    let product: Product
-    let quantity: Int
-    let selectedOfferIds: [String]
-
+    @StateObject private var viewModel: CheckoutViewModel
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var cartManager: CartManager
-    @StateObject private var locationManager = LocationManager()
     @ObservedObject private var authManager = AuthManager.shared
 
-    // Step State
-    @State private var currentStep = 2
-
-    // UserAddress State
-    @State private var isUserAddressSelectorVisible = false
-    @State private var selectedUserAddressId: String?
-    @State private var savedUserAddresses: [UserAddress] = []
-    @State private var isLoadingUserAddresses = true
-    @State private var useCurrentLocation = false
-
-    // Donation State
-    @State private var selectedDonation: Int? = nil
-
-    // Price Details Modal
-    @State private var isPriceDetailsVisible = false
-
-    // Location Picker
-    @State private var isLocationPickerVisible = false
-
-    // Payment View
-    @State private var isPaymentViewVisible = false
-
-    // Payment Result States
-    @State private var showPaymentSuccess = false
-    @State private var showPaymentFailed = false
-    @State private var showMyOrders = false
-    @State private var createdOrderId: String? = nil
-    @State private var createdOrderNumber: String? = nil
-    @State private var isProcessingPayment = false
-
-    // Login Required State
-    @State private var showLoginPrompt = false
-    @State private var showLoginView = false
-
-    // Selected upsell offers
-    @State private var selectedUpsells: Set<String> = []
-
-    var currentUserAddress: UserAddress? {
-        if useCurrentLocation, locationManager.address != "Locating..." {
-            return UserAddress(
-                _id: "current-location",
-                userId: "",
-                name: "Current Location",
-                phone: "",
-                addressLine1: locationManager.address,
-                city: locationManager.city,
-                state: "",
-                pincode: "",
-                isDefault: false
-            )
-        }
-        return savedUserAddresses.first { $0.id == selectedUserAddressId }
-            ?? savedUserAddresses.first
+    init(product: Product, quantity: Int, selectedOfferIds: [String]) {
+        _viewModel = StateObject(
+            wrappedValue: CheckoutViewModel(
+                product: product,
+                quantity: quantity,
+                selectedOfferIds: selectedOfferIds
+            ))
     }
 
-    // Bill Calculations
-    var itemTotal: Double { product.price * Double(quantity) }
-    var mrpTotal: Double { (product.mrp ?? product.price) * Double(quantity) }
-    var protectFee: Double { product.protectPromiseFee ?? 0 }
-    var shippingFee: Double { product.shippingCharges ?? 0 }
-    var discount: Double { mrpTotal - itemTotal }
-    var discountPercent: Int {
-        guard mrpTotal > 0 else { return 0 }
-        return Int(((mrpTotal - itemTotal) / mrpTotal) * 100)
-    }
-
-    // Calculate selected last chance offers total
-    var selectedOffersTotal: Double {
-        guard let offers = product.lastChanceOffers else { return 0 }
-        var total: Double = 0
-        for (index, offer) in offers.enumerated() {
-            let offerId = offer.tempId(index: index)
-            if selectedUpsells.contains(offerId) {
-                total += offer.offerPrice
-            }
-        }
-        return total
-    }
-
-    // Total amount includes: item price + shipping + protect fee + selected offers + donation
-    var totalAmount: Double {
-        itemTotal + shippingFee + protectFee + selectedOffersTotal + Double(selectedDonation ?? 0)
-    }
-
-    // Total fees (for display)
-    var totalFees: Double {
-        protectFee + shippingFee
-    }
-
-    // Delivery Date
-    var deliveryDate: String {
-        let date = Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, EEE"
-        return formatter.string(from: date)
-    }
+    // Derived for view compatibility
+    var product: Product { viewModel.product }
+    var quantity: Int { viewModel.quantity }
 
     var body: some View {
         ZStack {
@@ -116,7 +28,7 @@ struct CheckoutView: View {
                     Button(action: { presentationMode.wrappedValue.dismiss() }) {
                         Image(systemName: "arrow.left")
                             .font(.system(size: 20))
-                            .foregroundColor(Color(hex: "#1F2937"))
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                     }
                     .padding(4)
 
@@ -124,7 +36,7 @@ struct CheckoutView: View {
 
                     Text("Order Summary")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(Color(hex: "#1F2937"))
+                        .foregroundColor(AppTheme.Colors.textPrimary)
 
                     Spacer()
 
@@ -135,56 +47,56 @@ struct CheckoutView: View {
                 .background(Color.white)
                 .overlay(
                     Rectangle()
-                        .fill(Color(hex: "#E5E7EB"))
+                        .fill(AppTheme.Colors.border)
                         .frame(height: 1),
                     alignment: .bottom
                 )
 
                 // Progress Stepper
-                ProgressStepperView(currentStep: currentStep)
+                ProgressStepperView(currentStep: viewModel.currentStep)
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
                         // Deliver To Section
                         DeliverToSection(
-                            address: currentUserAddress,
+                            address: viewModel.currentUserAddress,
                             onChangeUserAddress: {
-                                withAnimation { isUserAddressSelectorVisible = true }
+                                withAnimation { viewModel.isUserAddressSelectorVisible = true }
                             }
                         )
 
                         // Product Card
                         ProductOrderCard(
-                            product: product,
-                            quantity: quantity,
-                            discountPercent: discountPercent
+                            product: viewModel.product,
+                            quantity: viewModel.quantity,
+                            discountPercent: viewModel.discountPercent
                         )
 
                         // Protection Plans (if any)
-                        if let lastChanceOffers = product.lastChanceOffers,
+                        if let lastChanceOffers = viewModel.product.lastChanceOffers,
                             !lastChanceOffers.isEmpty
                         {
                             ProtectionPlansSection(
                                 offers: lastChanceOffers,
-                                selectedOffers: $selectedUpsells
+                                selectedOffers: $viewModel.selectedUpsells
                             )
                         }
 
                         // Delivery Info
-                        DeliveryInfoRow(deliveryDate: deliveryDate)
+                        DeliveryInfoRow(deliveryDate: viewModel.deliveryDate)
 
                         // Rest Assured Section
-                        RestAssuredSection(productImageUrl: product.images.first)
+                        RestAssuredSection(productImageUrl: viewModel.product.images.first)
 
                         // Donation Section
-                        DonationSection(selectedDonation: $selectedDonation)
+                        DonationSection(selectedDonation: $viewModel.selectedDonation)
 
                         // Price Breakdown
                         PriceBreakdownSection(
-                            mrp: mrpTotal,
-                            fees: totalFees,
-                            discount: discount,
-                            total: totalAmount
+                            mrp: viewModel.mrpTotal,
+                            fees: viewModel.totalFees,
+                            discount: viewModel.discount,
+                            total: viewModel.totalAmount
                         )
 
                         // Terms
@@ -193,19 +105,19 @@ struct CheckoutView: View {
                         Color.clear.frame(height: 100)
                     }
                 }
-                .background(Color(hex: "#F9FAFB"))
+                .background(AppTheme.Colors.backgroundLight)
 
                 // Bottom Bar
                 OrderSummaryBottomBar(
-                    mrp: mrpTotal,
-                    total: totalAmount,
-                    onViewDetails: { isPriceDetailsVisible = true },
+                    mrp: viewModel.mrpTotal,
+                    total: viewModel.totalAmount,
+                    onViewDetails: { viewModel.isPriceDetailsVisible = true },
                     onContinue: {
                         // Check if user is logged in
                         if authManager.isAuthenticated {
-                            isPaymentViewVisible = true
+                            viewModel.isPaymentViewVisible = true
                         } else {
-                            showLoginPrompt = true
+                            viewModel.showLoginPrompt = true
                         }
                     }
                 )
@@ -213,291 +125,106 @@ struct CheckoutView: View {
 
             // UserAddress Selector Overlay
             UserAddressSelectorView(
-                isVisible: $isUserAddressSelectorVisible,
-                savedUserAddresses: savedUserAddresses,
-                selectedUserAddressId: $selectedUserAddressId,
+                isVisible: $viewModel.isUserAddressSelectorVisible,
+                savedUserAddresses: viewModel.savedUserAddresses,
+                selectedUserAddressId: $viewModel.selectedUserAddressId,
                 onSelectUserAddress: { addr in
-                    useCurrentLocation = false
-                    selectedUserAddressId = addr.id
+                    viewModel.useCurrentLocation = false
+                    viewModel.selectedUserAddressId = addr.id
                 },
                 onUseCurrentLocation: {
-                    isUserAddressSelectorVisible = false
-                    isLocationPickerVisible = true
+                    viewModel.isUserAddressSelectorVisible = false
+                    viewModel.isLocationPickerVisible = true
                 },
                 onAddNewUserAddress: {
-                    isUserAddressSelectorVisible = false
-                    isLocationPickerVisible = true
+                    viewModel.isUserAddressSelectorVisible = false
+                    viewModel.isLocationPickerVisible = true
                 }
             )
 
             // Price Details Modal
             PriceDetailsModal(
-                isVisible: $isPriceDetailsVisible,
-                itemTotal: itemTotal,
-                itemCount: quantity,
-                deliveryCharges: shippingFee,
-                protectFee: protectFee,
-                selectedOffersTotal: selectedOffersTotal,
-                discount: discount,
-                donation: Double(selectedDonation ?? 0),
-                total: totalAmount
+                isVisible: $viewModel.isPriceDetailsVisible,
+                itemTotal: viewModel.itemTotal,
+                itemCount: viewModel.quantity,
+                deliveryCharges: viewModel.shippingFee,
+                protectFee: viewModel.protectFee,
+                selectedOffersTotal: viewModel.selectedOffersTotal,
+                discount: viewModel.discount,
+                donation: Double(viewModel.selectedDonation ?? 0),
+                total: viewModel.totalAmount
             )
         }
         .navigationBarHidden(true)
-        .fullScreenCover(isPresented: $isLocationPickerVisible) {
+        .fullScreenCover(isPresented: $viewModel.isLocationPickerVisible) {
             LocationPickerView(onAddressSelected: { newUserAddress in
-                // Refresh addresses from server to get the saved one
-                Task {
-                    do {
-                        let addresses = try await APIService.shared.fetchAddresses()
-                        await MainActor.run {
-                            savedUserAddresses = addresses
-                            // Select the newly added address (or find it by matching)
-                            if let savedAddr = addresses.first(where: {
-                                $0.name == newUserAddress.name && $0.phone == newUserAddress.phone
-                            }) {
-                                selectedUserAddressId = savedAddr.id
-                            } else if !addresses.isEmpty {
-                                selectedUserAddressId = addresses.last?.id
-                            }
-                            useCurrentLocation = false
-                        }
-                    } catch {
-                        // Fallback: just add locally
-                        await MainActor.run {
-                            savedUserAddresses.append(newUserAddress)
-                            selectedUserAddressId = newUserAddress.id
-                            useCurrentLocation = false
-                        }
-                    }
-                }
+                viewModel.handleAddressSelection(newAddress: newUserAddress)
             })
         }
-        .fullScreenCover(isPresented: $isPaymentViewVisible) {
+        .fullScreenCover(isPresented: $viewModel.isPaymentViewVisible) {
             PaymentView(
-                totalAmount: totalAmount,
-                discount: discount,
-                itemCount: quantity,
+                totalAmount: viewModel.totalAmount,
+                discount: viewModel.discount,
+                itemCount: viewModel.quantity,
                 onBack: {
-                    isPaymentViewVisible = false
+                    viewModel.isPaymentViewVisible = false
                 },
                 onPaymentSelect: { method in
-                    processPayment(method: method)
+                    viewModel.processPayment(method: method)
                 },
-                isLoading: $isProcessingPayment
+                isLoading: $viewModel.isProcessingPayment
             )
         }
-        .fullScreenCover(isPresented: $showPaymentSuccess) {
+        .fullScreenCover(isPresented: $viewModel.showPaymentSuccess) {
             PaymentSuccessView(
-                orderNumber: createdOrderNumber,
-                amount: totalAmount,
+                orderNumber: viewModel.createdOrderNumber,
+                amount: viewModel.totalAmount,
                 onContinueShopping: {
-                    showPaymentSuccess = false
+                    viewModel.showPaymentSuccess = false
                     presentationMode.wrappedValue.dismiss()
                 },
                 onViewOrder: {
-                    showPaymentSuccess = false
+                    viewModel.showPaymentSuccess = false
                     // Show My Orders page
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showMyOrders = true
+                        viewModel.showMyOrders = true
                     }
                 }
             )
         }
-        .fullScreenCover(isPresented: $showMyOrders) {
+        .fullScreenCover(isPresented: $viewModel.showMyOrders) {
             MyOrdersView()
         }
-        .fullScreenCover(isPresented: $showPaymentFailed) {
+        .fullScreenCover(isPresented: $viewModel.showPaymentFailed) {
             PaymentFailedView(
-                orderId: createdOrderId,
-                amount: totalAmount,
+                orderId: viewModel.createdOrderId,
+                amount: viewModel.totalAmount,
                 onRetry: {
-                    showPaymentFailed = false
+                    viewModel.showPaymentFailed = false
                     // Re-show payment view
-                    isPaymentViewVisible = true
+                    viewModel.isPaymentViewVisible = true
                 },
                 onCancel: {
-                    showPaymentFailed = false
+                    viewModel.showPaymentFailed = false
                     presentationMode.wrappedValue.dismiss()
                 }
             )
         }
         .onAppear {
-            // Pre-select offers that came from LastChancePopup
-            selectedUpsells = Set(selectedOfferIds)
-
-            // Fetch saved addresses from API
             Task {
-                do {
-                    let addresses = try await APIService.shared.fetchAddresses()
-                    await MainActor.run {
-                        savedUserAddresses = addresses
-                        isLoadingUserAddresses = false
-
-                        // Auto-select default address or first one
-                        if let defaultAddr = addresses.first(where: { $0.isDefault }) {
-                            selectedUserAddressId = defaultAddr.id
-                        } else if let firstAddr = addresses.first {
-                            selectedUserAddressId = firstAddr.id
-                        }
-                    }
-                } catch {
-                    print("Error fetching addresses: \(error)")
-                    await MainActor.run {
-                        isLoadingUserAddresses = false
-                    }
-                }
+                await viewModel.fetchAddresses()
             }
         }
-        .alert("Login Required", isPresented: $showLoginPrompt) {
+        .alert("Login Required", isPresented: $viewModel.showLoginPrompt) {
             Button("Go to Login") {
-                showLoginView = true
+                viewModel.showLoginView = true
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Please log in to proceed with checkout.")
         }
-        .fullScreenCover(isPresented: $showLoginView) {
+        .fullScreenCover(isPresented: $viewModel.showLoginView) {
             LoginView()
-        }
-    }
-
-    // MARK: - Process Payment
-    private func processPayment(method: String) {
-        guard let address = currentUserAddress else {
-            print("No address selected")
-            return
-        }
-
-        isProcessingPayment = true
-
-        Task {
-            do {
-                // Prepare order items
-                let orderItems = [
-                    OrderService.OrderItem(
-                        productId: product._id,
-                        quantity: quantity,
-                        price: itemTotal / Double(quantity),
-                        name: product.name,
-                        image: product.images.first
-                    )
-                ]
-
-                // Prepare address payload
-                let addressPayload = OrderService.AddressPayload(
-                    name: address.name,
-                    phone: address.phone,
-                    addressLine1: address.addressLine1,
-                    addressLine2: address.addressLine2,
-                    city: address.city,
-                    state: address.state,
-                    pincode: address.pincode,
-                    country: address.country
-                )
-
-                // Prepare last chance offers if any
-                var lastChanceOfferPayloads: [OrderService.LastChanceOfferPayload]? = nil
-                if !selectedUpsells.isEmpty, let offers = product.lastChanceOffers {
-                    lastChanceOfferPayloads =
-                        offers
-                        .filter { selectedUpsells.contains($0.id) }
-                        .map {
-                            OrderService.LastChanceOfferPayload(
-                                id: $0.id, name: $0.title, price: $0.offerPrice)
-                        }
-                }
-
-                // Create order
-                guard let token = authManager.authToken else { return }
-
-                let orderResponse = try await OrderService.shared.createOrder(
-                    items: orderItems,
-                    address: addressPayload,
-                    addressId: address.id,  // Pass the address ID
-                    paymentMethod: method,
-                    authToken: token,
-                    donation: selectedDonation != nil ? Double(selectedDonation!) : nil,
-                    protectPromiseFee: protectFee,
-                    shippingFee: shippingFee,  // Pass shipping fee
-                    lastChanceOffers: lastChanceOfferPayloads
-                )
-
-                await MainActor.run {
-                    createdOrderId = orderResponse._id
-                    createdOrderNumber = orderResponse.orderNumber ?? orderResponse._id
-
-                    // Do NOT dismiss PaymentView yet if using Razorpay
-                    // isPaymentViewVisible = false
-
-                    if method == "COD" {
-                        // Cash on Delivery - show success immediately
-                        isProcessingPayment = false
-                        isPaymentViewVisible = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            showPaymentSuccess = true
-                        }
-                    } else {
-                        // Razorpay - initiate payment using the real service
-                        // Keep isProcessingPayment = true until Razorpay callback
-
-                        // Resolve the TOPMOST UIViewController to present the checkout
-                        var topVC = UIApplication.shared.connectedScenes
-                            .compactMap { $0 as? UIWindowScene }
-                            .first?.windows
-                            .filter { $0.isKeyWindow }.first?.rootViewController
-
-                        // Climb the hierarchy to find the topmost presented view controller
-                        // This will likely find the PaymentView's hosting controller
-                        while let presentedVC = topVC?.presentedViewController {
-                            topVC = presentedVC
-                        }
-
-                        guard let presentingVC = topVC else {
-                            print("Could not find root view controller to present Razorpay")
-                            isProcessingPayment = false
-                            showPaymentFailed = true
-                            return
-                        }
-
-                        print("📱 Presenting Razorpay on: \(presentingVC)")
-
-                        RazorpayService.shared.initiatePayment(
-                            orderId: orderResponse._id, from: presentingVC
-                        ) { result in
-                            Task { @MainActor in
-                                // Reset processing state
-                                isProcessingPayment = false
-
-                                // Dismiss PaymentView first
-                                isPaymentViewVisible = false
-
-                                // Wait for dismissal to complete before showing result
-                                try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5s
-
-                                switch result {
-                                case .success(let paymentData):
-                                    // Payment Verified by Service
-                                    print("✅ Payment success! ID: \(paymentData.razorpayPaymentId)")
-                                    showPaymentSuccess = true
-                                case .failure(let error):
-                                    print("❌ Payment failed: \(error)")
-                                    showPaymentFailed = true
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch {
-                print("Error creating order: \(error)")
-                await MainActor.run {
-                    isProcessingPayment = false
-                    isPaymentViewVisible = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        showPaymentFailed = true
-                    }
-                }
-            }
         }
     }
 }
@@ -541,7 +268,7 @@ struct ProgressStepperView: View {
         .background(Color.white)
         .overlay(
             Rectangle()
-                .fill(Color(hex: "#E5E7EB"))
+                .fill(AppTheme.Colors.border)
                 .frame(height: 1),
             alignment: .bottom
         )
@@ -558,7 +285,9 @@ struct StepItem: View {
         VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(isCompleted || isActive ? Color(hex: "#2563EB") : Color(hex: "#E5E7EB"))
+                    .fill(
+                        isCompleted || isActive ? AppTheme.Colors.primary : AppTheme.Colors.border
+                    )
                     .frame(width: 32, height: 32)
 
                 if isCompleted {
@@ -574,7 +303,8 @@ struct StepItem: View {
 
             Text(label)
                 .font(.system(size: 12, weight: isActive ? .semibold : .regular))
-                .foregroundColor(isActive ? Color(hex: "#1F2937") : Color(hex: "#6B7280"))
+                .foregroundColor(
+                    isActive ? AppTheme.Colors.textPrimary : AppTheme.Colors.textTertiary)
         }
     }
 }
@@ -584,7 +314,7 @@ struct StepLine: View {
 
     var body: some View {
         Rectangle()
-            .fill(isCompleted ? Color(hex: "#2563EB") : Color(hex: "#E5E7EB"))
+            .fill(isCompleted ? AppTheme.Colors.primary : AppTheme.Colors.border)
             .frame(height: 2)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 8)
@@ -602,14 +332,14 @@ struct DeliverToSection: View {
             HStack {
                 Text("Deliver to:")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Color(hex: "#1F2937"))
+                    .foregroundColor(AppTheme.Colors.textPrimary)
 
                 Spacer()
 
                 Button(action: onChangeUserAddress) {
                     Text(address != nil ? "Change" : "Add UserAddress")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Color(hex: "#2563EB"))
+                        .foregroundColor(AppTheme.Colors.primary)
                 }
             }
 
@@ -618,29 +348,29 @@ struct DeliverToSection: View {
                     HStack(spacing: 8) {
                         Text(addr.name)
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(Color(hex: "#1F2937"))
+                            .foregroundColor(AppTheme.Colors.textPrimary)
 
                         Text("HOME")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(Color(hex: "#6B7280"))
+                            .foregroundColor(AppTheme.Colors.textTertiary)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(Color(hex: "#F3F4F6"))
+                            .background(AppTheme.Colors.background)
                             .cornerRadius(4)
                     }
 
                     Text("\(addr.addressLine1), \(addr.city), \(addr.state) - \(addr.pincode)")
                         .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#4B5563"))
+                        .foregroundColor(AppTheme.Colors.textSecondary)
 
                     Text(addr.phone)
                         .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#4B5563"))
+                        .foregroundColor(AppTheme.Colors.textSecondary)
                 }
             } else {
                 Text("No address selected. Please add one.")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "#6B7280"))
+                    .foregroundColor(AppTheme.Colors.textTertiary)
             }
         }
         .padding(16)
@@ -664,10 +394,10 @@ struct ProductOrderCard: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                     } placeholder: {
-                        Color(hex: "#F9FAFB")
+                        AppTheme.Colors.backgroundLight
                     }
                     .frame(width: 80, height: 80)
-                    .background(Color(hex: "#F9FAFB"))
+                    .background(AppTheme.Colors.backgroundLight)
                     .cornerRadius(8)
                 }
 
@@ -675,7 +405,7 @@ struct ProductOrderCard: View {
                     // Title
                     Text(product.name)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color(hex: "#1F2937"))
+                        .foregroundColor(AppTheme.Colors.textPrimary)
                         .lineLimit(2)
 
                     // Rating
@@ -686,7 +416,7 @@ struct ProductOrderCard: View {
                                     .font(.system(size: 10))
                                     .foregroundColor(
                                         star <= Int(product.rating ?? 4)
-                                            ? Color(hex: "#16A34A") : Color(hex: "#D1D5DB")
+                                            ? AppTheme.Colors.success : Color(hex: "#D1D5DB")
                                     )
                             }
                         }
@@ -694,15 +424,15 @@ struct ProductOrderCard: View {
                             "\(String(format: "%.1f", product.rating ?? 4.7)) · (\(product.reviewCount ?? 0))"
                         )
                         .font(.system(size: 11))
-                        .foregroundColor(Color(hex: "#6B7280"))
+                        .foregroundColor(AppTheme.Colors.textTertiary)
 
                         HStack(spacing: 4) {
                             Image(systemName: "shield.checkmark")
                                 .font(.system(size: 12))
-                                .foregroundColor(Color(hex: "#2563EB"))
+                                .foregroundColor(AppTheme.Colors.primary)
                             Text("Assured")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(Color(hex: "#2563EB"))
+                                .foregroundColor(AppTheme.Colors.primary)
                         }
                     }
 
@@ -711,10 +441,10 @@ struct ProductOrderCard: View {
                         HStack(spacing: 2) {
                             Image(systemName: "arrow.down")
                                 .font(.system(size: 10))
-                                .foregroundColor(Color(hex: "#16A34A"))
+                                .foregroundColor(AppTheme.Colors.success)
                             Text("\(discountPercent)%")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(Color(hex: "#16A34A"))
+                                .foregroundColor(AppTheme.Colors.success)
                         }
 
                         if let mrp = product.mrp {
@@ -726,13 +456,13 @@ struct ProductOrderCard: View {
 
                         Text("₹\(Int(product.price))")
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(Color(hex: "#1F2937"))
+                            .foregroundColor(AppTheme.Colors.textPrimary)
                     }
 
                     // Quantity
                     Text("Qty: \(quantity)")
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#6B7280"))
+                        .foregroundColor(AppTheme.Colors.textTertiary)
                 }
 
                 Spacer()
@@ -765,11 +495,11 @@ struct ProtectionPlansSection: View {
                         HStack(spacing: 12) {
                             Image(systemName: "shield.checkmark")
                                 .font(.system(size: 18))
-                                .foregroundColor(Color(hex: "#6B7280"))
+                                .foregroundColor(AppTheme.Colors.textTertiary)
 
                             Text(offer.title)
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color(hex: "#1F2937"))
+                                .foregroundColor(AppTheme.Colors.textPrimary)
                         }
 
                         Spacer()
@@ -796,18 +526,18 @@ struct ProtectionPlansSection: View {
 
                     Text("₹\(Int(offer.offerPrice))")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color(hex: "#1F2937"))
+                        .foregroundColor(AppTheme.Colors.textPrimary)
 
                     if let discount = offer.discountPercentage {
                         Text("\(discount)% off")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Color(hex: "#16A34A"))
+                            .foregroundColor(AppTheme.Colors.success)
                     }
 
                     if let tag = offer.tag {
                         Text("· \(tag)")
                             .font(.system(size: 12))
-                            .foregroundColor(Color(hex: "#6B7280"))
+                            .foregroundColor(AppTheme.Colors.textTertiary)
                     }
                 }
                 .padding(.horizontal, 56)
@@ -816,7 +546,7 @@ struct ProtectionPlansSection: View {
 
                 if index < offers.count - 1 {
                     Rectangle()
-                        .fill(Color(hex: "#E5E7EB"))
+                        .fill(AppTheme.Colors.border)
                         .frame(height: 1)
                 }
             }
@@ -832,7 +562,7 @@ struct DeliveryInfoRow: View {
         HStack {
             Text("Delivery by \(deliveryDate)")
                 .font(.system(size: 14))
-                .foregroundColor(Color(hex: "#4B5563"))
+                .foregroundColor(AppTheme.Colors.textSecondary)
             Spacer()
         }
         .padding(16)
@@ -853,7 +583,7 @@ struct RestAssuredSection: View {
 
                 Text("Rest assured with Open Box Delivery")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color(hex: "#1F2937"))
+                    .foregroundColor(AppTheme.Colors.textPrimary)
             }
 
             if let imageUrl = productImageUrl, let url = URL(string: imageUrl) {
@@ -864,7 +594,7 @@ struct RestAssuredSection: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                     } placeholder: {
-                        Color(hex: "#F3F4F6")
+                        AppTheme.Colors.background
                     }
                     .frame(width: 80, height: 60)
                     Spacer()
@@ -875,10 +605,10 @@ struct RestAssuredSection: View {
                 "Delivery agent will open the package so you can check for correct product, damage or missing items. Share OTP to accept the delivery. "
             )
             .font(.system(size: 12))
-            .foregroundColor(Color(hex: "#6B7280"))
+            .foregroundColor(AppTheme.Colors.textTertiary)
                 + Text("Why?")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color(hex: "#2563EB"))
+                .foregroundColor(AppTheme.Colors.primary)
         }
         .padding(16)
         .background(Color.white)
@@ -898,18 +628,18 @@ struct DonationSection: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Donate to Support Education")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color(hex: "#1F2937"))
+                        .foregroundColor(AppTheme.Colors.textPrimary)
 
                     Text("Support transformative social work in India")
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#6B7280"))
+                        .foregroundColor(AppTheme.Colors.textTertiary)
                 }
 
                 Spacer()
 
                 // Placeholder image
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(hex: "#F3F4F6"))
+                    .fill(AppTheme.Colors.background)
                     .frame(width: 80, height: 50)
             }
 
@@ -930,13 +660,13 @@ struct DonationSection: View {
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(
-                                selectedDonation == amount ? Color(hex: "#2563EB") : Color.white
+                                selectedDonation == amount ? AppTheme.Colors.primary : Color.white
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(
                                         selectedDonation == amount
-                                            ? Color(hex: "#2563EB") : Color(hex: "#D1D5DB"),
+                                            ? AppTheme.Colors.primary : Color(hex: "#D1D5DB"),
                                         lineWidth: 1)
                             )
                             .cornerRadius(6)
@@ -967,11 +697,11 @@ struct PriceBreakdownSection: View {
             HStack {
                 Text("MRP(incl. of all taxes)")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "#4B5563"))
+                    .foregroundColor(AppTheme.Colors.textSecondary)
                 Spacer()
                 Text("₹\(Int(mrp))")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "#1F2937"))
+                    .foregroundColor(AppTheme.Colors.textPrimary)
             }
 
             DottedDivider()
@@ -981,15 +711,15 @@ struct PriceBreakdownSection: View {
                 HStack(spacing: 4) {
                     Text("Fees")
                         .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#4B5563"))
+                        .foregroundColor(AppTheme.Colors.textSecondary)
                     Image(systemName: "chevron.down")
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#6B7280"))
+                        .foregroundColor(AppTheme.Colors.textTertiary)
                 }
                 Spacer()
                 Text("₹\(Int(fees))")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "#1F2937"))
+                    .foregroundColor(AppTheme.Colors.textPrimary)
             }
 
             DottedDivider()
@@ -999,10 +729,10 @@ struct PriceBreakdownSection: View {
                 HStack(spacing: 4) {
                     Text("Discounts")
                         .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#4B5563"))
+                        .foregroundColor(AppTheme.Colors.textSecondary)
                     Image(systemName: "chevron.down")
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#6B7280"))
+                        .foregroundColor(AppTheme.Colors.textTertiary)
                 }
                 Spacer()
                 Text("-₹\(Int(discount))")
@@ -1016,11 +746,11 @@ struct PriceBreakdownSection: View {
             HStack {
                 Text("Total Amount")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Color(hex: "#1F2937"))
+                    .foregroundColor(AppTheme.Colors.textPrimary)
                 Spacer()
                 Text("₹\(Int(total))")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color(hex: "#1F2937"))
+                    .foregroundColor(AppTheme.Colors.textPrimary)
             }
 
             // Savings Box
@@ -1053,7 +783,7 @@ struct DottedDivider: View {
                     x += 8
                 }
             }
-            .stroke(Color(hex: "#E5E7EB"), lineWidth: 1)
+            .stroke(AppTheme.Colors.border, lineWidth: 1)
         }
         .frame(height: 1)
     }
@@ -1067,16 +797,16 @@ struct TermsSection: View {
                 "By continuing with the order, you confirm that you are above 18 years of age, and you agree to our "
             )
             .font(.system(size: 11))
-            .foregroundColor(Color(hex: "#6B7280"))
+            .foregroundColor(AppTheme.Colors.textTertiary)
                 + Text("Terms of Use")
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(Color(hex: "#2563EB"))
+                .foregroundColor(AppTheme.Colors.primary)
                 + Text(" and ")
                 .font(.system(size: 11))
-                .foregroundColor(Color(hex: "#6B7280"))
+                .foregroundColor(AppTheme.Colors.textTertiary)
                 + Text("Privacy Policy")
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(Color(hex: "#2563EB"))
+                .foregroundColor(AppTheme.Colors.primary)
         }
     }
 }
@@ -1098,12 +828,12 @@ struct OrderSummaryBottomBar: View {
 
                 Text("₹\(Int(total))")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color(hex: "#1F2937"))
+                    .foregroundColor(AppTheme.Colors.textPrimary)
 
                 Button(action: onViewDetails) {
                     Text("View price details")
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#2563EB"))
+                        .foregroundColor(AppTheme.Colors.primary)
                 }
             }
 
@@ -1116,7 +846,7 @@ struct OrderSummaryBottomBar: View {
                     .padding(.horizontal, 32)
                     .padding(.vertical, 14)
                     .background(Color(hex: "#FFD700"))
-                    .foregroundColor(Color(hex: "#1F2937"))
+                    .foregroundColor(AppTheme.Colors.textPrimary)
                     .cornerRadius(8)
             }
         }
@@ -1156,7 +886,7 @@ struct PriceDetailsModal: View {
                     HStack {
                         Text("Price Details")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(Color(hex: "#1F2937"))
+                            .foregroundColor(AppTheme.Colors.textPrimary)
 
                         Spacer()
 
@@ -1167,7 +897,7 @@ struct PriceDetailsModal: View {
                         }) {
                             Image(systemName: "xmark")
                                 .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(Color(hex: "#6B7280"))
+                                .foregroundColor(AppTheme.Colors.textTertiary)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -1180,7 +910,7 @@ struct PriceDetailsModal: View {
                         PriceDetailRow(
                             label: "Price (\(itemCount) item\(itemCount > 1 ? "s" : ""))",
                             value: "₹\(Int(itemTotal))",
-                            valueColor: Color(hex: "#1F2937")
+                            valueColor: AppTheme.Colors.textPrimary
                         )
 
                         // Delivery Charges
@@ -1188,7 +918,7 @@ struct PriceDetailsModal: View {
                             label: "Delivery Charges",
                             value: deliveryCharges > 0 ? "₹\(Int(deliveryCharges))" : "FREE",
                             valueColor: deliveryCharges > 0
-                                ? Color(hex: "#1F2937") : Color(hex: "#059669")
+                                ? AppTheme.Colors.textPrimary : Color(hex: "#059669")
                         )
 
                         // Protect Promise Fee (if any)
@@ -1196,7 +926,7 @@ struct PriceDetailsModal: View {
                             PriceDetailRow(
                                 label: "Protect Promise Fee",
                                 value: "₹\(Int(protectFee))",
-                                valueColor: Color(hex: "#1F2937")
+                                valueColor: AppTheme.Colors.textPrimary
                             )
                         }
 
@@ -1205,7 +935,7 @@ struct PriceDetailsModal: View {
                             PriceDetailRow(
                                 label: "Add-ons",
                                 value: "₹\(Int(selectedOffersTotal))",
-                                valueColor: Color(hex: "#1F2937")
+                                valueColor: AppTheme.Colors.textPrimary
                             )
                         }
 
@@ -1214,7 +944,7 @@ struct PriceDetailsModal: View {
                             PriceDetailRow(
                                 label: "Donation",
                                 value: "₹\(Int(donation))",
-                                valueColor: Color(hex: "#1F2937")
+                                valueColor: AppTheme.Colors.textPrimary
                             )
                         }
 
@@ -1227,7 +957,7 @@ struct PriceDetailsModal: View {
 
                         // Divider
                         Rectangle()
-                            .fill(Color(hex: "#E5E7EB"))
+                            .fill(AppTheme.Colors.border)
                             .frame(height: 1)
                             .padding(.vertical, 16)
                             .padding(.horizontal, 20)
@@ -1236,13 +966,13 @@ struct PriceDetailsModal: View {
                         HStack {
                             Text("Total Amount")
                                 .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(Color(hex: "#1F2937"))
+                                .foregroundColor(AppTheme.Colors.textPrimary)
 
                             Spacer()
 
                             Text("₹\(Int(total))")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(Color(hex: "#1F2937"))
+                                .foregroundColor(AppTheme.Colors.textPrimary)
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 16)
@@ -1286,7 +1016,7 @@ struct PriceDetailRow: View {
         HStack {
             Text(label)
                 .font(.system(size: 15))
-                .foregroundColor(Color(hex: "#4B5563"))
+                .foregroundColor(AppTheme.Colors.textSecondary)
 
             Spacer()
 

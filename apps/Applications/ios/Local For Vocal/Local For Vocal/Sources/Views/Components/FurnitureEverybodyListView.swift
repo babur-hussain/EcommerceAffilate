@@ -99,7 +99,7 @@ struct FurnitureEverybodyListView: View {
     }
 }
 
-private struct EverybodyItem: Identifiable {
+struct EverybodyItem: Identifiable {
     let id = UUID()
     let title: String
     let subtitle: String

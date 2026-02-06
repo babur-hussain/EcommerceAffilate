@@ -335,7 +335,7 @@ struct ProfileEditView: View {
                     showAlert = true
                     isLoading = false
                 }
-                print("Profile update error: \(error)")
+                AppLogger.error("Profile update error: \(error)")
             }
         }
     }

@@ -192,7 +192,7 @@ struct ServicesPageView: View {
                     }
                 }
             } catch {
-                print("Failed to fetch addresses: \(error)")
+                AppLogger.error("Failed to fetch addresses: \(error)")
             }
         }
     }
@@ -205,7 +205,7 @@ struct ServicesPageView: View {
                 self.layout = try await APIService.shared.fetchLayout(slug: "services")
                 self.isLoading = false
             } catch {
-                print("Error loading services layout: \(error)")
+                AppLogger.error("Error loading services layout: \(error)")
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
             }

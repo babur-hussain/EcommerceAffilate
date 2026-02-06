@@ -321,7 +321,7 @@ struct WalletView: View {
                     self.error = "Failed to load wallet history"
                     isLoading = false
                 }
-                print("Wallet fetch error: \(error)")
+                AppLogger.error("Wallet fetch error: \(error)")
             }
         }
     }
@@ -351,7 +351,7 @@ struct WalletView: View {
                 transactions = walletResponse.transactions
             }
         } catch {
-            print("Wallet refresh error: \(error)")
+            AppLogger.error("Wallet refresh error: \(error)")
         }
     }
 

@@ -34,7 +34,13 @@ class ReviewManager: ObservableObject {
         }
 
         do {
-            let url = URL(string: "\(APIService.shared.baseURL)/reviews/\(productId)")!
+            guard let url = URL(string: "\(APIService.shared.baseURL)/reviews/\(productId)") else {
+                await MainActor.run {
+                    self.error = "Invalid URL"
+                    self.isLoading = false
+                }
+                return
+            }
             var request = URLRequest(url: url)
 
             // Should be public endpoint, but good to add auth if available
@@ -71,7 +77,10 @@ class ReviewManager: ObservableObject {
         }
 
         do {
-            let url = URL(string: "\(APIService.shared.baseURL)/reviews")!
+            guard let url = URL(string: "\(APIService.shared.baseURL)/reviews") else {
+                print("Submit review error: Invalid URL")
+                return false
+            }
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

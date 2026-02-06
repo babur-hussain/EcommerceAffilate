@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Save, ArrowLeft, Code } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 export default function LayoutEditorPage({ params }: { params: { id: string } }) {
     const router = useRouter();
@@ -31,24 +32,17 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
 
     const fetchLayout = async () => {
         try {
-            const token = localStorage.getItem("authToken");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/layouts/${params.id}`, {
-                headers: { Authorization: `Bearer ${token}` }
+            const res = await api.get(`/api/admin/layouts/${params.id}`);
+            const data = res.data;
+            setFormData({
+                name: data.name,
+                slug: data.slug,
+                description: data.description || '',
+                isActive: data.isActive,
+                components: data.components,
+                meta: data.meta || {}
             });
-            if (res.ok) {
-                const data = await res.json();
-                setFormData({
-                    name: data.name,
-                    slug: data.slug,
-                    description: data.description || '',
-                    isActive: data.isActive,
-                    components: data.components,
-                    meta: data.meta || {}
-                });
-                setJsonContent(JSON.stringify(data.components, null, 2));
-            } else {
-                setError("Failed to load layout");
-            }
+            setJsonContent(JSON.stringify(data.components, null, 2));
         } catch (err) {
             console.error(err);
             setError("Error loading layout");
@@ -69,6 +63,13 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                 if (!Array.isArray(parsedComponents)) {
                     throw new Error("Root element must be an array of components");
                 }
+
+                // Validate schema locally to prevent 500 errors
+                parsedComponents.forEach((comp: any, index: number) => {
+                    if (!comp.id) throw new Error(`Component at index ${index} missing 'id'`);
+                    if (!comp.type) throw new Error(`Component at index ${index} missing 'type'`);
+                });
+
             } catch (e: any) {
                 setError(`Invalid JSON: ${e.message}`);
                 setSaving(false);
@@ -80,31 +81,23 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                 components: parsedComponents
             };
 
-            const token = localStorage.getItem("authToken");
             const url = isNew
-                ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/layouts`
-                : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/layouts/${params.id}`;
+                ? `/api/admin/layouts`
+                : `/api/admin/layouts/${params.id}`;
 
-            const method = isNew ? 'POST' : 'PUT';
+            const method = isNew ? 'post' : 'put';
 
-            const res = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
+            // @ts-ignore
+            const response = await api[method](url, payload);
+            console.log('Save response:', response.data);
 
-            if (res.ok) {
-                router.push('/admin/layout-manager');
-            } else {
-                const errData = await res.json();
-                setError(errData.error || "Failed to save layout");
-            }
+            router.push('/admin/layout-manager');
         } catch (err: any) {
-            console.error(err);
-            setError(err.message || "Error saving layout");
+            console.error('Full error:', err);
+            console.error('Response data:', err.response?.data);
+            console.error('Response status:', err.response?.status);
+            const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || "Error saving layout";
+            setError(errorMessage);
         } finally {
             setSaving(false);
         }

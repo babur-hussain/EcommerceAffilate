@@ -6,6 +6,7 @@ import SwiftUI
 // BasketContext uses BasketItem which is basically CartItem.
 // We can treat them similarly but BasketManager enforces category rules.
 
+@MainActor
 class BasketManager: ObservableObject {
     @Published var items: [CartItem] = []  // using CartItem for consistency
     @Published var isLoading = false
@@ -31,12 +32,10 @@ class BasketManager: ObservableObject {
     private func loadBasket() {
         if let data = UserDefaults.standard.data(forKey: saveKey) {
             if let decoded = try? JSONDecoder().decode([CartItem].self, from: data) {
-                // Filter validation logic from RN (BasketContext.tsx:50)
+                // Validate items belong to grocery category
                 let validItems = decoded.filter { item in
-                    // In a real app we check product category.
-                    // Since we don't have full category tree locally, we might skip strict validation on load
-                    // OR we assume stored items were validated on add.
-                    return true
+                    // Check if product's category name contains "grocery"
+                    return item.product.category.lowercased().contains("grocery")
                 }
                 self.items = validItems
                 return

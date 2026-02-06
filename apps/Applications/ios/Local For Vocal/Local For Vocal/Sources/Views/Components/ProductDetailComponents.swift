@@ -84,20 +84,12 @@ struct ProductImageCarouselView: View {
             TabView(selection: $currentIndex) {
                 ForEach(0..<displayImages.count, id: \.self) { index in
                     if let url = URL(string: displayImages[index]) {
-                        AsyncImage(url: url) { phase in
-                            if let image = phase.image {
-                                image.resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .padding(20)  // Match RN padding
-                            } else if phase.error != nil {
-                                Color(hex: "#F3F4F6")  // Error state
-                                    .overlay(
-                                        Image(systemName: "photo")
-                                            .foregroundColor(.gray)
-                                    )
-                            } else {
-                                ProgressView()  // Loading state
-                            }
+                        CachedAsyncImage(url: url) { image in
+                            image.resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .padding(20)  // Match RN padding
+                        } placeholder: {
+                            ProgressView()
                         }
                         .tag(index)
                     } else {
@@ -126,7 +118,9 @@ struct ProductImageCarouselView: View {
 
             // Floating Buttons (Top Right)
             VStack(spacing: 12) {
-                Button(action: {}) {
+                Button(action: {
+                    HapticManager.shared.impact(style: .medium)
+                }) {
                     Image(systemName: "heart")
                         .font(.system(size: 20))
                         .foregroundColor(Color(hex: "#374151"))
@@ -136,7 +130,9 @@ struct ProductImageCarouselView: View {
                         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                 }
 
-                Button(action: {}) {
+                Button(action: {
+                    HapticManager.shared.impact(style: .light)
+                }) {
                     Image(systemName: "square.and.arrow.up")  // Matched to standard share icon
                         .font(.system(size: 20))
                         .foregroundColor(Color(hex: "#374151"))

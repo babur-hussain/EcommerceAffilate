@@ -1,4 +1,33 @@
 import SwiftUI
+import UIKit
+
+// Configure tab bar with clear glass appearance
+private func configureTabBarAppearance() {
+    let appearance = UITabBarAppearance()
+    appearance.configureWithDefaultBackground()
+
+    // Background effect - translucent glass
+    appearance.backgroundEffect = UIBlurEffect(style: .systemChromeMaterial)
+    appearance.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.8)
+
+    // Shadow line
+    appearance.shadowColor = UIColor.separator.withAlphaComponent(0.3)
+
+    // Selected item appearance - Blue color
+    let selectedColor = UIColor(red: 40 / 255, green: 116 / 255, blue: 240 / 255, alpha: 1)  // Blue #2874F0
+    let normalColor = UIColor.secondaryLabel
+
+    appearance.stackedLayoutAppearance.selected.iconColor = selectedColor
+    appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+        .foregroundColor: selectedColor
+    ]
+
+    appearance.stackedLayoutAppearance.normal.iconColor = normalColor
+    appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]
+
+    UITabBar.appearance().standardAppearance = appearance
+    UITabBar.appearance().scrollEdgeAppearance = appearance
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scroll Offset Preference Key
@@ -39,45 +68,53 @@ struct ContentView: View {
     // Basket Manager (Groceries)
     @StateObject private var basketManager = BasketManager()
 
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .bottom) {
-                // Layer 1: Content
-                // We wrap content in ZStack to keep state alive if needed, or Switch for standard nav
-                Group {
-                    switch currentTab {
-                    case .home:
-                        homeContentView(geometry: geometry)
-                    case .categories:
-                        CategoriesPageView()
-                    case .cart:
-                        CartPageView()
-                    case .account:
-                        AccountView()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(hex: "#F3F4F6"))
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(
-                    .bottom,
-                    (navigationManager.activeTab == .influencers && currentTab == .home) ? 0 : 60
-                )  // Space for TabBar (hidden on Influencers)
-                .environmentObject(cartManager)
-                .environmentObject(basketManager)  // Inject BasketManager
-                .environmentObject(navigationManager)
+    // Configure tab bar appearance once at initialization
+    init() {
+        configureTabBarAppearance()
+    }
 
-                // Layer 2: Custom Tab Bar (hidden on Influencers page)
-                if navigationManager.activeTab != .influencers || currentTab != .home {
-                    TabBarView(currentTab: $currentTab)
-                        .transition(.move(edge: .bottom))
-                        .zIndex(200)
-                        .environmentObject(cartManager)
-                        .environmentObject(basketManager)
-                }
+    var body: some View {
+        TabView(selection: $currentTab) {
+            // Home Tab
+            GeometryReader { geometry in
+                homeContentView(geometry: geometry)
             }
-            .edgesIgnoringSafeArea(.bottom)  // Allow tab bar to sit at very bottom
+            .tabItem {
+                Image(systemName: "house")
+                Text("Home")
+            }
+            .tag(MainTab.home)
+
+            // Categories Tab
+            CategoriesPageView()
+                .tabItem {
+                    Image(systemName: "square.grid.2x2")
+                    Text("Categories")
+                }
+                .tag(MainTab.categories)
+
+            // Cart Tab
+            CartPageView()
+                .tabItem {
+                    Image(systemName: "cart")
+                    Text("Cart")
+                }
+                .tag(MainTab.cart)
+
+            // Account Tab
+            AccountView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(hex: "#F3F4F6"))
+                .tabItem {
+                    Image(systemName: "person")
+                    Text("Account")
+                }
+                .tag(MainTab.account)
         }
+        .accentColor(Color(hex: "#2874F0"))  // Blue theme color
+        .environmentObject(cartManager)
+        .environmentObject(basketManager)
+        .environmentObject(navigationManager)
         .environmentObject(locationManager)
         .onAppear {
             locationManager.requestPermission()
@@ -163,8 +200,9 @@ struct ContentView: View {
                                         .zIndex(0)
                                 }
                             }
-                            .onChange(of: navigationManager.selectedCategory) { _ in
-                                // Scroll handling if needed
+                            .onChange(of: navigationManager.selectedCategory) {
+                                oldValue, newValue in
+                                // Category changed from \(oldValue) to \(newValue)
                             }
                         }
                     }

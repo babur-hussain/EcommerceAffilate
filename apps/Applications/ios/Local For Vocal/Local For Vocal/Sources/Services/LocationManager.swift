@@ -7,16 +7,18 @@ public class LocationManager: NSObject, ObservableObject, CLLocationManagerDeleg
     private let geocoder = CLGeocoder()
 
     @Published var location: CLLocation?
-    @Published var address: String = "Locating..."
-    @Published var city: String = "Select Location"
+    @Published var address: String = NSLocalizedString(
+        "Locating...", comment: "Location loading state")
+    @Published var city: String = NSLocalizedString(
+        "Select Location", comment: "Default location prompt")
     @Published var permissionStatus: CLAuthorizationStatus = .notDetermined
     @Published var errorMessage: String?
 
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.distanceFilter = 100  // Update every 100 meters
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+        locationManager.distanceFilter = 10  // Update every 10 meters until stopped
         permissionStatus = locationManager.authorizationStatus
     }
 
@@ -25,21 +27,36 @@ public class LocationManager: NSObject, ObservableObject, CLLocationManagerDeleg
     }
 
     func startUpdating() {
-        if permissionStatus == .authorizedWhenInUse || permissionStatus == .authorizedAlways {
+        #if os(iOS)
+            if permissionStatus == .authorizedWhenInUse || permissionStatus == .authorizedAlways {
+                locationManager.startUpdatingLocation()
+            } else {
+                requestPermission()
+            }
+        #else
             locationManager.startUpdatingLocation()
-        } else {
-            requestPermission()
-        }
+        #endif
     }
 
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         permissionStatus = manager.authorizationStatus
-        if permissionStatus == .authorizedWhenInUse || permissionStatus == .authorizedAlways {
+
+        let isAuthorized: Bool
+        #if os(iOS)
+            isAuthorized =
+                permissionStatus == .authorizedWhenInUse || permissionStatus == .authorizedAlways
+        #else
+            isAuthorized = permissionStatus == .authorized
+        #endif
+
+        if isAuthorized {
             manager.startUpdatingLocation()
         } else if permissionStatus == .denied || permissionStatus == .restricted {
-            errorMessage = "Location access denied. Please enable it in Settings."
-            address = "Location Denied"
-            city = "Select Location"
+            errorMessage = NSLocalizedString(
+                "Location access denied. Please enable it in Settings.",
+                comment: "Location permission denied error")
+            address = NSLocalizedString("Location Denied", comment: "Location denied state")
+            city = NSLocalizedString("Select Location", comment: "Default location prompt")
         }
     }
 
@@ -53,42 +70,46 @@ public class LocationManager: NSObject, ObservableObject, CLLocationManagerDeleg
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
+        // print("Location error: \(error.localizedDescription)") // Using Logger suggested
         errorMessage = error.localizedDescription
-        address = "Failed to locate"
+        address = NSLocalizedString("Failed to locate", comment: "Location failure state")
     }
 
     private func reverseGeocode(location: CLLocation) {
         geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
             guard let self = self else { return }
 
-            if error != nil {
-                self.address = "Address not found"
-                return
-            }
-
-            if let placemark = placemarks?.first {
-                // Construct address string
-                let street = placemark.thoroughfare ?? ""
-                let subLocality = placemark.subLocality ?? ""
-                let city = placemark.locality ?? ""
-                let state = placemark.administrativeArea ?? ""
-                let country = placemark.isoCountryCode ?? ""
-
-                // Smart formatting
-                if !subLocality.isEmpty {
-                    self.address = "\(subLocality), \(city)"
-                    self.city = subLocality.uppercased()
-                } else if !street.isEmpty {
-                    self.address = "\(street), \(city)"
-                    self.city = city.uppercased()
-                } else {
-                    self.address = "\(city), \(state)"
-                    self.city = city.uppercased()
+            // CRITICAL: All @Published property updates must happen on main thread
+            DispatchQueue.main.async {
+                if error != nil {
+                    self.address = NSLocalizedString(
+                        "Address not found", comment: "Reverse geocoding failure")
+                    return
                 }
 
-                if self.city.isEmpty {
-                    self.city = "CURRENT LOCATION"
+                if let placemark = placemarks?.first {
+                    // Construct address string
+                    let street = placemark.thoroughfare ?? ""
+                    let subLocality = placemark.subLocality ?? ""
+                    let city = placemark.locality ?? ""
+                    let state = placemark.administrativeArea ?? ""
+
+                    // Smart formatting
+                    if !subLocality.isEmpty {
+                        self.address = "\(subLocality), \(city)"
+                        self.city = subLocality.uppercased()
+                    } else if !street.isEmpty {
+                        self.address = "\(street), \(city)"
+                        self.city = city.uppercased()
+                    } else {
+                        self.address = "\(city), \(state)"
+                        self.city = city.uppercased()
+                    }
+
+                    if self.city.isEmpty {
+                        self.city = NSLocalizedString(
+                            "CURRENT LOCATION", comment: "Fallback city name")
+                    }
                 }
             }
         }

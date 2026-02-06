@@ -14,6 +14,7 @@ public struct CartItem: Codable, Identifiable {
 }
 
 // MARK: - Cart Manager
+@MainActor
 public class CartManager: ObservableObject {
     @Published var items: [CartItem] = []
     @Published var isLoading = false

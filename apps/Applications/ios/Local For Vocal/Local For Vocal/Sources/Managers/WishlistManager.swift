@@ -3,6 +3,7 @@ import Foundation
 import SwiftUI
 
 // MARK: - Wishlist Manager
+@MainActor
 public class WishlistManager: ObservableObject {
     public static let shared = WishlistManager()
 
@@ -22,14 +23,12 @@ public class WishlistManager: ObservableObject {
     public func fetchWishlist() async {
         guard AuthManager.shared.isAuthenticated else { return }
 
-        await MainActor.run {
-            isLoading = true
-            error = nil
-        }
+        isLoading = true
+        error = nil
 
         do {
             guard let url = URL(string: "\(APIService.shared.baseURL)/wishlist") else {
-                throw APIError.invalidURL
+                throw APIService.APIError.invalidURL
             }
 
             var request = URLRequest(url: url)
@@ -44,33 +43,27 @@ public class WishlistManager: ObservableObject {
             guard let httpResponse = response as? HTTPURLResponse,
                 (200...299).contains(httpResponse.statusCode)
             else {
-                throw APIError.serverError
+                throw APIService.APIError.serverError
             }
 
             // Backend returns { wishlist: [Product] } or just [Product]
             let decoder = JSONDecoder()
 
             if let wrapper = try? decoder.decode(WishlistResponse.self, from: data) {
-                await MainActor.run {
-                    self.wishlistItems = wrapper.wishlist
-                    self.wishlistIds = Set(wrapper.wishlist.map { $0.id })
-                    self.isLoading = false
-                }
+                self.wishlistItems = wrapper.wishlist
+                self.wishlistIds = Set(wrapper.wishlist.map { $0.id })
+                self.isLoading = false
             } else if let products = try? decoder.decode([Product].self, from: data) {
-                await MainActor.run {
-                    self.wishlistItems = products
-                    self.wishlistIds = Set(products.map { $0.id })
-                    self.isLoading = false
-                }
+                self.wishlistItems = products
+                self.wishlistIds = Set(products.map { $0.id })
+                self.isLoading = false
             } else {
-                throw APIError.decodingError
+                throw APIService.APIError.decodingError
             }
         } catch {
             print("Wishlist fetch error: \(error)")
-            await MainActor.run {
-                self.error = error.localizedDescription
-                self.isLoading = false
-            }
+            self.error = error.localizedDescription
+            self.isLoading = false
         }
     }
 
@@ -100,9 +93,7 @@ public class WishlistManager: ObservableObject {
                 return false
             }
 
-            await MainActor.run {
-                self.wishlistIds.insert(productId)
-            }
+            self.wishlistIds.insert(productId)
 
             // Refresh wishlist to get full product data
             await fetchWishlist()
@@ -138,10 +129,8 @@ public class WishlistManager: ObservableObject {
                 return false
             }
 
-            await MainActor.run {
-                self.wishlistIds.remove(productId)
-                self.wishlistItems.removeAll { $0.id == productId }
-            }
+            self.wishlistIds.remove(productId)
+            self.wishlistItems.removeAll { $0.id == productId }
 
             return true
         } catch {

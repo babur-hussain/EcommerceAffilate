@@ -137,7 +137,7 @@ struct CommonCategoryPageView: View {
                 await loadProducts()
 
             } catch {
-                print("Error loading category data: \(error)")
+                AppLogger.error("Error loading category data: \(error)")
                 isLoading = false
             }
         }
@@ -163,7 +163,7 @@ struct CommonCategoryPageView: View {
             )
             self.isLoading = false
         } catch {
-            print("Error loading products: \(error)")
+            AppLogger.error("Error loading products: \(error)")
             self.isLoading = false
         }
     }

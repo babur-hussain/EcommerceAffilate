@@ -1,6 +1,6 @@
 import Combine
 import CoreLocation
-import FirebaseCore
+// import FirebaseCore
 import Foundation
 import SwiftUI
 
@@ -9,58 +9,22 @@ import SwiftUI
 #endif
 
 // MARK: - API Service
-// MARK: - API Service
 public class APIService {
   public static let shared = APIService()
 
-  // Change this to your local IP if running on device, or localhost for simulator
-  // For iOS Simulator: http://localhost:4000
-  // For iOS Simulator: Use LAN IP due to localhost issues
-  public let baseURL = "https://api.lfvs.in/api"
-  public let imageHost = "https://api.lfvs.in"
-
-  func fetchLayout(slug: String) async throws -> AdvancedLayoutResponse? {
-    // [OVERRIDE] Force the Fashion layout locally as the user skipped backend DB update.
-
-    guard let url = URL(string: "\(baseURL)/advanced-layout/\(slug)") else {
-      throw APIError.invalidURL
-    }
-
-    print("Fetching layout from: \(url.absoluteString)")
-
-    var request = URLRequest(url: url)
-    request.httpMethod = "GET"
-
-    let (data, response) = try await URLSession.shared.data(for: request)
-
-    if let jsonString = String(data: data, encoding: .utf8) {
-      print("Received JSON for \(slug): \(jsonString)")
-    }
-
-    guard let httpResponse = response as? HTTPURLResponse,
-      (200...299).contains(httpResponse.statusCode)
-    else {
-      print("Server Error: Status \((response as? HTTPURLResponse)?.statusCode ?? -1)")
-      throw APIError.serverError
-    }
-
-    do {
-      let decodedResponse = try JSONDecoder().decode(AdvancedLayoutResponse.self, from: data)
-      return decodedResponse
-    } catch {
-      print("Decoding Error: \(error)")
-      // Print JSON string for debugging
-      if let jsonString = String(data: data, encoding: .utf8) {
-        print("Received JSON: \(jsonString)")
-      }
-      throw APIError.decodingError
-    }
+  public enum APIError: Error {
+    case invalidURL
+    case serverError
+    case decodingError
+    case notAuthenticated
   }
 
+  // Use environment-based configuration for production/development switching
+  public var baseURL: String { AppEnvironment.current.apiBaseURL }
+  public var imageHost: String { AppEnvironment.current.imageHost }
+
   func fetchCategoryDetails(id: String) async throws -> CategoryModel {
-    guard let url = URL(string: "\(baseURL)/categories/\(id)") else {
-      throw APIError.invalidURL
-    }
+    let url = try makeURL("/categories/\(id)")
 
     let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
 
@@ -74,9 +38,7 @@ public class APIService {
   }
 
   func fetchProductDetails(id: String) async throws -> Product? {
-    guard let url = URL(string: "\(baseURL)/products/\(id)") else {
-      throw APIError.invalidURL
-    }
+    let url = try makeURL("/products/\(id)")
 
     let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
 
@@ -92,7 +54,7 @@ public class APIService {
 
     // Debug JSON
     if let jsonString = String(data: data, encoding: .utf8) {
-      print("Product JSON for ID \(id): \(jsonString)")
+      AppLogger.debug("Product JSON for ID \(id): \(jsonString)")
     }
 
     return try JSONDecoder().decode(Product.self, from: data)
@@ -101,21 +63,19 @@ public class APIService {
   func fetchProducts(limit: Int = 20, categoryId: String? = nil, subCategoryId: String? = nil)
     async throws -> [Product]
   {
-    var components = URLComponents(string: "\(baseURL)/products")
-    var queryItems = [URLQueryItem(name: "limit", value: "\(limit)")]
-
     // Logic matching RN: If subCat is present, use it. Else use categoryId.
-    // RN also has "filters" param but for now we stick to category.
+    var queryItems = [URLQueryItem(name: "limit", value: "\(limit)")]
     if let sub = subCategoryId {
       queryItems.append(URLQueryItem(name: "category", value: sub))
     } else if let cat = categoryId {
       queryItems.append(URLQueryItem(name: "category", value: cat))
     }
 
-    components?.queryItems = queryItems
+    let url = try makeURL("/products", queryItems: queryItems)
 
-    guard let url = components?.url else {
-      throw APIError.invalidURL
+    // Helper struct for decoding dictionary response
+    struct ProductResponse: Decodable {
+      let products: [Product]
     }
 
     let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
@@ -128,35 +88,49 @@ public class APIService {
 
     // Debug: Print raw JSON
     if let jsonString = String(data: data, encoding: .utf8) {
-      print("📦 fetchProducts JSON: \(jsonString.prefix(500))...")
+      AppLogger.debug("📦 fetchProducts JSON: \(jsonString.prefix(500))...")
     }
 
-    if let products = try? JSONDecoder().decode([Product].self, from: data) {
-      print("✅ Decoded \(products.count) products directly")
-      for p in products.prefix(2) {
-        print("  - \(p.name): images=\(p.images)")
-      }
+    // Try decoding as Array first (most common for this API)
+    do {
+      let products = try JSONDecoder().decode([Product].self, from: data)
+      AppLogger.info("✅ Decoded \(products.count) products directly")
       return products
-    } else {
-      struct ProductResponse: Decodable {
-        let products: [Product]
+    } catch let arrayError {
+      // If array decoding failed, check if it was because it's actually a dictionary
+      if (try? JSONDecoder().decode(ProductResponse.self, from: data)) != nil {
+        // It IS a dictionary, so re-try decoding as response (or just fall through)
+      } else {
+        // It was likely an array but with invalid items. Throw the ARRAY error.
+        // Unless the data is clearly a dictionary (starts with '{').
+        if let jsonStr = String(data: data, encoding: .utf8)?.trimmingCharacters(
+          in: .whitespacesAndNewlines), jsonStr.hasPrefix("{")
+        {
+          // Try decoding as ProductResponse
+          do {
+            let res = try JSONDecoder().decode(ProductResponse.self, from: data)
+            return res.products
+          } catch {
+            throw error/// Throw the dictionary error
+          }
+        }
+
+        // It looks like an array, so throw the array error to see WHICH field failed
+        AppLogger.error("❌ Failed to decode Product Array: \(arrayError)")
+        throw arrayError
       }
+
+      // Fallback for Dictionary (ProductResponse)
       let res = try JSONDecoder().decode(ProductResponse.self, from: data)
-      print("✅ Decoded \(res.products.count) products from wrapper")
-      for p in res.products.prefix(2) {
-        print("  - \(p.name): images=\(p.images)")
-      }
       return res.products
     }
   }
 
   func fetchSubCategories(parentId: String) async throws -> [SubCategory] {
     // Use the live endpoint: /categories/:idOrSlug/subcategories
-    guard let url = URL(string: "\(baseURL)/categories/\(parentId)/subcategories") else {
-      throw APIError.invalidURL
-    }
+    let url = try makeURL("/categories/\(parentId)/subcategories")
 
-    print("Fetching subcategories from: \(url.absoluteString)")
+    AppLogger.debug("Fetching subcategories from: \(url.absoluteString)")
 
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
@@ -166,7 +140,7 @@ public class APIService {
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)
     else {
-      print(
+      AppLogger.error(
         "Error fetching subcategories. Status: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
       // If strictly 404, maybe return empty list? For now throw error.
       throw APIError.serverError
@@ -176,11 +150,7 @@ public class APIService {
   }
 
   public func fetchGlobalSearch(query: String) async throws -> GlobalSearchResponse {
-    guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-      let url = URL(string: "\(baseURL)/search/global?q=\(encodedQuery)")
-    else {
-      throw APIError.invalidURL
-    }
+    let url = try makeURL("/search/global", queryItems: [URLQueryItem(name: "q", value: query)])
 
     let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
 
@@ -194,9 +164,7 @@ public class APIService {
   }
 
   public func fetchTrendingTerms() async throws -> [String] {
-    guard let url = URL(string: "\(baseURL)/search/trending") else {
-      throw APIError.invalidURL
-    }
+    let url = try makeURL("/search/trending")
 
     let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
 
@@ -211,9 +179,7 @@ public class APIService {
 
   func fetchCategories() async throws -> [CategoryModel] {
     // /api/categories endpoint returns all categories
-    guard let url = URL(string: "\(baseURL)/categories") else {
-      throw APIError.invalidURL
-    }
+    let url = try makeURL("/categories")
 
     let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
 
@@ -227,9 +193,7 @@ public class APIService {
   }
 
   func fetchAddresses() async throws -> [UserAddress] {
-    guard let url = URL(string: "\(baseURL)/addresses") else {
-      throw APIError.invalidURL
-    }
+    let url = try makeURL("/addresses")
 
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
@@ -255,9 +219,7 @@ public class APIService {
       throw APIError.notAuthenticated
     }
 
-    guard let url = URL(string: "\(baseURL)/addresses") else {
-      throw APIError.invalidURL
-    }
+    let url = try makeURL("/addresses")
 
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
@@ -280,6 +242,91 @@ public class APIService {
     }
 
     return try JSONDecoder().decode(UserAddress.self, from: data)
+  }
+  // MARK: - Private Helper
+  private func makeURL(_ path: String, queryItems: [URLQueryItem]? = nil) throws -> URL {
+    guard var components = URLComponents(string: baseURL) else {
+      AppLogger.error("Invalid base URL: \(baseURL)")
+      throw APIError.invalidURL
+    }
+
+    // Append path safely
+    // components.path deals with unencoded strings and will handle encoding when accessing .url
+    let cleanPath = path.hasPrefix("/") ? path : "/" + path
+    components.path.append(cleanPath)
+
+    if let items = queryItems {
+      components.queryItems = items
+    }
+
+    guard let url = components.url else {
+      AppLogger.error(
+        "Failed to construct URL with path: \(path) and query: \(String(describing: queryItems))")
+      throw APIError.invalidURL
+    }
+
+    return url
+  }
+
+  func fetchLayout(slug: String) async throws -> AdvancedLayoutResponse? {
+    // [OVERRIDE] Force the Fashion layout locally as the user skipped backend DB update.
+    let targetSlug = slug == "fashion-women" ? "women" : slug
+
+    // 1. Try Network Request
+    do {
+      let url = try makeURL("/advanced-layout/\(targetSlug)")
+      AppLogger.debug("Fetching layout from: \(url.absoluteString)")
+
+      var request = URLRequest(url: url)
+      request.httpMethod = "GET"
+
+      let (data, response) = try await URLSession.shared.data(for: request)
+
+      guard let httpResponse = response as? HTTPURLResponse,
+        (200...299).contains(httpResponse.statusCode)
+      else {
+        throw APIError.serverError
+      }
+
+      // Try decoding as Object (Standard)
+      if let responseObj = try? JSONDecoder().decode(AdvancedLayoutResponse.self, from: data) {
+        return responseObj
+      }
+
+      // Try decoding as Array (Legacy/Direct)
+      if let components = try? JSONDecoder().decode([SDUIComponent].self, from: data) {
+        return AdvancedLayoutResponse(
+          slug: slug,
+          name: slug,
+          isActive: true,
+          components: components
+        )
+      }
+
+      throw APIError.decodingError
+
+    } catch {
+      AppLogger.error("⚠️ Layout fetch failed for \(slug): \(error). Attempting local fallback.")
+
+      // 2. Local Fallback (If API is down or returns 404/Error)
+      // Hardcoded check for known pages
+      if slug == "women" || slug == "fashion-women" {
+        if let data = LocalData.womenLayoutJSON.data(using: .utf8),
+          let components = try? JSONDecoder().decode([SDUIComponent].self, from: data)
+        {
+          AppLogger.info("✅ Loaded local fallback layout for \(slug)")
+          return AdvancedLayoutResponse(
+            slug: slug,
+            name: slug,
+            isActive: true,
+            components: components
+          )
+        }
+      }
+
+      // If no fallback exists, return nil (which triggers "No content found")
+      return nil
+    }
   }
 }
 
@@ -321,7 +368,7 @@ public class SearchViewModel: ObservableObject {
     do {
       self.trendingTerms = try await APIService.shared.fetchTrendingTerms()
     } catch {
-      print("Failed to fetch trending: \(error)")
+      AppLogger.error("Failed to fetch trending: \(error)")
     }
   }
 
@@ -400,6 +447,7 @@ public struct SearchResultItem: Decodable, Identifiable {
   public let price: Double?
   public let rating: Double?
   public let brand: String?
+  public let category: String?
 
   // Computed helper for display name
   public var displayName: String {
@@ -408,19 +456,19 @@ public struct SearchResultItem: Decodable, Identifiable {
 }
 
 public struct SearchSuggestion: Decodable, Identifiable {
-  // Unique ID for SwiftUI List
-  public var uniqueId: String { text + type + id }
+  // Unique composite ID for SwiftUI List (satisfies Identifiable)
+  public var id: String { text + type + suggestionId }
 
   public let text: String
   public let type: String
-  public let id: String
-}
 
-enum APIError: Error {
-  case invalidURL
-  case serverError
-  case decodingError
-  case notAuthenticated
+  // Backend ID field (renamed to avoid conflict with Identifiable.id)
+  public let suggestionId: String
+
+  enum CodingKeys: String, CodingKey {
+    case text, type
+    case suggestionId = "id"
+  }
 }
 
 // MARK: - ==========================================

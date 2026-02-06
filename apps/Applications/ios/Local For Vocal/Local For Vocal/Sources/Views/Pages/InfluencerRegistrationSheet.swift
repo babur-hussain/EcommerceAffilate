@@ -155,7 +155,7 @@ struct InfluencerRegistrationSheet: View {
                 await MainActor.run {
                     isLoading = false
                     // TODO: Show error alert (reusing success alert var for now or add error alert)
-                    print("Registration error: \(error.localizedDescription)")
+                    AppLogger.error("Registration error: \(error.localizedDescription)")
                 }
             }
         }

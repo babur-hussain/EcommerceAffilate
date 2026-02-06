@@ -462,7 +462,7 @@ public struct LocationPickerView: View {
                     presentationMode.wrappedValue.dismiss()
                 }
             } catch {
-                print("Error saving address: \(error)")
+                AppLogger.error("Error saving address: \(error)")
                 // Still return the local address on error
                 await MainActor.run {
                     onAddressSelected?(newAddress)

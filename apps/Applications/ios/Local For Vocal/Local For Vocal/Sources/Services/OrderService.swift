@@ -115,7 +115,9 @@ public class OrderService {
         lastChanceOffers: [LastChanceOfferPayload]? = nil
     ) async throws -> OrderResponse {
 
-        let url = URL(string: "\(APIService.shared.baseURL)/orders")!
+        guard let url = URL(string: "\(APIService.shared.baseURL)/orders") else {
+            throw OrderError.creationFailed
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -161,7 +163,9 @@ public class OrderService {
 
     // MARK: - Update Order Status
     public func updateOrderStatus(orderId: String, status: String, authToken: String) async throws {
-        let url = URL(string: "\(APIService.shared.baseURL)/orders/\(orderId)/status")!
+        guard let url = URL(string: "\(APIService.shared.baseURL)/orders/\(orderId)/status") else {
+            throw OrderError.updateFailed
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

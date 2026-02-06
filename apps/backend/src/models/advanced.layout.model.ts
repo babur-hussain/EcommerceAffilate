@@ -45,7 +45,7 @@ const advancedComponentSchema = new Schema({
     // but often Mixed is easier for arbitrary nesting depth in SDUI. 
     // Let's use Mixed for children array to avoid complex recursive schema issues initially.
     children: { type: [Schema.Types.Mixed], default: [] }
-});
+}, { _id: false }); // Disable auto-generated _id for subdocuments
 
 const advancedLayoutSchema = new Schema<IAdvancedLayout>(
     {

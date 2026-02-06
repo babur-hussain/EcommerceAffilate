@@ -9,14 +9,7 @@ struct SDUIPage: View {
     var body: some View {
         Group {
             if isLoading {
-                VStack {
-                    ProgressView()
-                        .padding()
-                    Text("Loading \(slug)...")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                .frame(maxWidth: .infinity, minHeight: 200)
+                SDUIPageSkeleton()
             } else if let error = errorMessage {
                 VStack {
                     Text("Error loading page")
@@ -47,17 +40,45 @@ struct SDUIPage: View {
     private func loadLayout() async {
         isLoading = true
         errorMessage = nil
-        do {
-            let response = try await APIService.shared.fetchLayout(slug: slug)
-            await MainActor.run {
-                self.layout = response
-                self.isLoading = false
+
+        let maxRetries = 3
+        var lastError: Error?
+
+        for attempt in 0..<maxRetries {
+            do {
+                // Check if task is cancelled before attempting
+                try Task.checkCancellation()
+
+                let response = try await APIService.shared.fetchLayout(slug: slug)
+                await MainActor.run {
+                    self.layout = response
+                    self.isLoading = false
+                }
+                return  // Success - exit the function
+            } catch is CancellationError {
+                // Task was cancelled (e.g., view disappeared) - don't retry
+                return
+            } catch let error as NSError
+                where error.domain == NSURLErrorDomain && error.code == -999
+            {
+                // Request was cancelled - wait briefly and retry
+                lastError = error
+                if attempt < maxRetries - 1 {
+                    try? await Task.sleep(nanoseconds: UInt64(100_000_000 * (attempt + 1)))  // 100ms * attempt
+                }
+            } catch {
+                // Other errors - retry with exponential backoff
+                lastError = error
+                if attempt < maxRetries - 1 {
+                    try? await Task.sleep(nanoseconds: UInt64(500_000_000 * (attempt + 1)))  // 500ms * attempt
+                }
             }
-        } catch {
-            await MainActor.run {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
-            }
+        }
+
+        // All retries failed
+        await MainActor.run {
+            self.errorMessage = lastError?.localizedDescription ?? "Unknown error"
+            self.isLoading = false
         }
     }
 }

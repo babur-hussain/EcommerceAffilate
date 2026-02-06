@@ -44,7 +44,7 @@ struct FurnitureTrendingNowView: View {
             // Grid
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(items) { item in
-                    TrendingCard(item: item)
+                    FurnitureTrendingCard(item: item)
                 }
             }
             .padding(.horizontal, 16)
@@ -53,7 +53,7 @@ struct FurnitureTrendingNowView: View {
     }
 }
 
-struct TrendingCard: View {
+struct FurnitureTrendingCard: View {
     let item: FurnitureTrendingNowView.TrendingItem
 
     var body: some View {

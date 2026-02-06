@@ -16,7 +16,10 @@ public struct UserAddressBarView: View {
     }
 
     public var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            HapticManager.shared.selection()
+            onTap()
+        }) {
             HStack(spacing: 12) {
                 // Location Icon
                 Image(systemName: "mappin.and.ellipse")
@@ -296,6 +299,7 @@ struct UserAddressRow: View {
         )
         .contentShape(Rectangle())  // Make entire row tappable
         .onTapGesture {
+            HapticManager.shared.selection()
             onSelect()
         }
     }

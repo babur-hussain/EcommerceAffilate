@@ -8,8 +8,10 @@
     class RazorpayService: NSObject, RazorpayPaymentCompletionProtocolWithData {
         static let shared = RazorpayService()
 
-        // Your Razorpay Key ID (from dashboard)
-        private let keyId = "rzp_test_S2fkx4mZP0xAQm"  // User provided Key ID
+        // Razorpay Key ID - Configure via Info.plist RAZORPAY_KEY_ID for production
+        private let keyId: String =
+            Bundle.main.object(forInfoDictionaryKey: "RAZORPAY_KEY_ID") as? String
+            ?? "rzp_test_S2fkx4mZP0xAQm"
 
         // SDK instance
         private var razorpay: RazorpayCheckout!
@@ -84,7 +86,9 @@
 
         // MARK: - Create Razorpay Order via Backend
         private func createRazorpayOrder(orderId: String) async throws -> RazorpayOrderResponse {
-            let url = URL(string: "\(APIService.shared.baseURL)/orders/\(orderId)/pay")!
+            guard let url = URL(string: "\(APIService.shared.baseURL)/orders/\(orderId)/pay") else {
+                throw PaymentError.orderCreationFailed
+            }
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -181,7 +185,7 @@
             if let rootVC = presentingViewController {
                 razorpay.open(options, displayController: rootVC)
             } else {
-                print("Error: No presenting view controller for Razorpay")
+                AppLogger.error("Error: No presenting view controller for Razorpay")
                 completionHandler?(.failure(.failed("Internal UI Error")))
             }
         }
@@ -190,7 +194,7 @@
         func onPaymentError(
             _ code: Int32, description str: String, andData response: [AnyHashable: Any]?
         ) {
-            print("Razorpay Payment Error: \(code) - \(str)")
+            AppLogger.error("Razorpay Payment Error: \(code) - \(str)")
             // Extract error details if needed from response
             DispatchQueue.main.async {
                 self.completionHandler?(.failure(.failed(str)))
@@ -198,7 +202,7 @@
         }
 
         func onPaymentSuccess(_ payment_id: String, andData response: [AnyHashable: Any]?) {
-            print("Razorpay Payment Success: \(payment_id)")
+            AppLogger.info("Razorpay Payment Success: \(payment_id)")
 
             guard let response = response else {
                 DispatchQueue.main.async {
@@ -230,7 +234,10 @@
             razorpayPaymentId: String,
             razorpaySignature: String
         ) async throws -> Bool {
-            let url = URL(string: "\(APIService.shared.baseURL)/orders/\(orderId)/verify")!
+            guard let url = URL(string: "\(APIService.shared.baseURL)/orders/\(orderId)/verify")
+            else {
+                return false
+            }
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -265,23 +272,32 @@
             let viewController = UIViewController()
             // Make background transparent or suitable for overlay
             viewController.view.backgroundColor = .clear
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                RazorpayService.shared.initiatePayment(orderId: orderId, from: viewController) {
-                    result in
-                    switch result {
-                    case .success(let success):
-                        onSuccess(success)
-                    case .failure(let error):
-                        onFailure(error)
-                    }
-                }
-            }
-
             return viewController
         }
 
-        func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+        func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+            // Only initiate payment once when view appears with a valid controller
+            guard !context.coordinator.hasInitiated else { return }
+            context.coordinator.hasInitiated = true
+
+            RazorpayService.shared.initiatePayment(orderId: orderId, from: uiViewController) {
+                result in
+                switch result {
+                case .success(let success):
+                    onSuccess(success)
+                case .failure(let error):
+                    onFailure(error)
+                }
+            }
+        }
+
+        func makeCoordinator() -> Coordinator {
+            Coordinator()
+        }
+
+        class Coordinator {
+            var hasInitiated = false
+        }
     }
 
 #else

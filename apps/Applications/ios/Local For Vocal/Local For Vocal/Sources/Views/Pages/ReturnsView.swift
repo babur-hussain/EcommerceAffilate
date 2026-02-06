@@ -234,7 +234,7 @@ struct ReturnsView: View {
                     isLoading = false
                 }
             } catch {
-                print("Returns fetch error: \(error)")
+                AppLogger.error("Returns fetch error: \(error)")
                 await MainActor.run { isLoading = false }
             }
         }
@@ -265,7 +265,7 @@ struct ReturnsView: View {
                 returns = returnsResponse.returns
             }
         } catch {
-            print("Returns refresh error: \(error)")
+            AppLogger.error("Returns refresh error: \(error)")
         }
     }
 }

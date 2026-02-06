@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import api from "@/lib/api";
 
 interface ILayout {
     _id: string;
@@ -25,16 +26,8 @@ export default function AdvancedLayoutsPage() {
 
     const fetchLayouts = async () => {
         try {
-            const token = localStorage.getItem("authToken");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/layouts`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setLayouts(data);
-            }
+            const res = await api.get("/api/admin/layouts");
+            setLayouts(res.data);
         } catch (error) {
             console.error("Failed to fetch layouts", error);
         } finally {
@@ -46,21 +39,12 @@ export default function AdvancedLayoutsPage() {
         if (!confirm("Are you sure you want to delete this layout?")) return;
 
         try {
-            const token = localStorage.getItem("authToken");
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/layouts/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            if (res.ok) {
-                fetchLayouts();
-            } else {
-                const errData = await res.json().catch(() => ({}));
-                alert(`Failed to delete layout: ${errData.error || res.statusText}`);
-            }
-        } catch (error) {
+            await api.delete(`/api/admin/layouts/${id}`);
+            fetchLayouts();
+        } catch (error: any) {
             console.error("Error deleting layout", error);
+            const errData = error.response?.data || {};
+            alert(`Failed to delete layout: ${errData.error || error.message}`);
         }
     };
 

@@ -193,7 +193,13 @@ struct MyOrdersView: View {
 
         Task {
             do {
-                let url = URL(string: "\(APIService.shared.baseURL)/orders/mine")!
+                guard let url = URL(string: "\(APIService.shared.baseURL)/orders/mine") else {
+                    await MainActor.run {
+                        errorMessage = "Internal Error: Invalid URL"
+                        isLoading = false
+                    }
+                    return
+                }
                 var request = URLRequest(url: url)
                 request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
@@ -217,7 +223,7 @@ struct MyOrdersView: View {
                     errorMessage = "Failed to load orders"
                     isLoading = false
                 }
-                print("Error fetching orders: \(error)")
+                AppLogger.error("Error fetching orders: \(error)")
             }
         }
     }

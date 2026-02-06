@@ -282,7 +282,7 @@ struct CategoryRightPaneView: View {
                 await loadProducts()
 
             } catch {
-                print("Error loading category data: \(error)")
+                AppLogger.error("Error loading category data: \(error)")
                 await MainActor.run {
                     self.isLoading = false
                 }
@@ -311,7 +311,7 @@ struct CategoryRightPaneView: View {
                 self.isLoading = false
             }
         } catch {
-            print("Error loading products: \(error)")
+            AppLogger.error("Error loading products: \(error)")
         }
     }
 
