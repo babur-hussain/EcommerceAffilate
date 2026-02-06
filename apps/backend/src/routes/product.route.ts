@@ -428,7 +428,7 @@ router.get("/products/suggestions", async (req: Request, res: Response) => {
       isActive: true,
       $or: [{ title: regex }, { brand: regex }, { category: regex }],
     })
-      .select("title slug price primaryImage brand category")
+      .select("title slug price primaryImage image brand category")
       .limit(6)
       .lean();
 
@@ -439,7 +439,7 @@ router.get("/products/suggestions", async (req: Request, res: Response) => {
       slug: p.slug,
       price: p.price,
       brand: p.brand,
-      image: p.primaryImage,
+      image: p.primaryImage || p.image || "",
       type: "product",
     }));
 

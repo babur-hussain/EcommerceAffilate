@@ -141,9 +141,13 @@ export default function GlobalSearch() {
                                 >
                                     <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden shrink-0">
                                         <img
-                                            src={item.image}
+                                            src={item.image || "https://placehold.co/100x100?text=No+Image"}
                                             alt={item.title}
                                             className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.src = "https://placehold.co/100x100?text=No+Image";
+                                            }}
                                         />
                                     </div>
                                     <div className="flex flex-col flex-1 min-w-0">

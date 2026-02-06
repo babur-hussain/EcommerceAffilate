@@ -143,7 +143,21 @@ export default function SearchBar() {
   }, []);
 
   const getProductImage = (product: SearchProduct) => {
-    return product.primaryImage || product.image || "/placeholder-product.png";
+    // Prefer primaryImage, then image
+    const img = product.primaryImage || product.image;
+
+    // If no image, return placeholder immediately
+    if (!img) return "/placeholder-product.png";
+
+    // If it's a full URL (starts with http), return as is
+    if (img.startsWith("http")) return img;
+
+    // If it's a relative path/other, assume it might need the placeholder if it's not a valid local asset
+    // Ideally local assets should start with /
+    if (img.startsWith("/")) return img;
+
+    // Fallback for malformed strings
+    return "/placeholder-product.png";
   };
 
   return (
@@ -216,6 +230,10 @@ export default function SearchBar() {
                           width={48}
                           height={48}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder-product.png";
+                          }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
