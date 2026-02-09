@@ -95,23 +95,29 @@ class ImageLoaderObservable: ObservableObject {
 
         let urlString = finalURL.absoluteString
 
-        // Check Cache
-        if let cachedImage = ImageCache.shared.get(forKey: urlString) {
-            AppLogger.debug("📦 Image found in cache: \(urlString)")
+        // Check URLCache (Disk + Memory) via APIService session
+        let request = URLRequest(
+            url: finalURL, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 60)
+
+        if let cachedResponse = APIService.shared.session.configuration.urlCache?.cachedResponse(
+            for: request),
+            let cachedImage = UIImage(data: cachedResponse.data)
+        {
+            AppLogger.debug("📦 Image found in URLCache: \(urlString)")
             self.image = cachedImage
             return
         }
 
         isLoading = true
 
-        cancellable = URLSession.shared.dataTaskPublisher(for: finalURL)
+        cancellable = APIService.shared.session.dataTaskPublisher(for: request)
             .tryMap { data, response -> UIImage in
                 if let httpResponse = response as? HTTPURLResponse {
                     let contentType =
                         httpResponse.value(forHTTPHeaderField: "Content-Type") ?? "unknown"
-                    AppLogger.debug(
+                    /*AppLogger.debug(
                         "Image response: status=\(httpResponse.statusCode), type=\(contentType), size=\(data.count), url=\(urlString)"
-                    )
+                    )*/
 
                     if httpResponse.statusCode != 200 {
                         throw URLError(.badServerResponse)
@@ -121,11 +127,6 @@ class ImageLoaderObservable: ObservableObject {
                 if let uiImage = UIImage(data: data) {
                     return uiImage
                 }
-
-                // If we get here, it's not a valid image format (e.g. still SVG)
-                let prefix = data.prefix(20).map { String(format: "%02x", $0) }.joined(
-                    separator: " ")
-                AppLogger.error("Failed to decode image data. Header: \(prefix)")
 
                 throw URLError(.cannotDecodeContentData)
             }
@@ -140,9 +141,10 @@ class ImageLoaderObservable: ObservableObject {
                     }
                 },
                 receiveValue: { [weak self] downloadedImage in
-                    ImageCache.shared.set(downloadedImage, forKey: urlString)
                     self?.image = downloadedImage
-                    AppLogger.debug("✅ Image loaded successfully: \(urlString)")
+                    // URLSession automatically caches the response based on policy, no manual set needed usually
+                    // unless we want to force it. Configured session should handle it.
+                    // AppLogger.debug("✅ Image loaded successfully: \(urlString)")
                 }
             )
     }

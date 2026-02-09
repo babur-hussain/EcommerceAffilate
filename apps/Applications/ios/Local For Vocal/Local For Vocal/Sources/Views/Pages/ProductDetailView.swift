@@ -14,6 +14,7 @@ struct ProductDetailView: View {
     @EnvironmentObject var cartManager: CartManager
     @ObservedObject private var wishlistManager = WishlistManager.shared
     @ObservedObject private var reviewManager = ReviewManager.shared
+    @ObservedObject private var authManager = AuthManager.shared
 
     // State
     @State private var product: Product?
@@ -24,11 +25,14 @@ struct ProductDetailView: View {
     // Buy Now Flow State
     @State private var showLastChancePopup = false
     @State private var navigateToCheckout = false
+    @State private var navigateToCart = false
     @State private var selectedLastChanceOfferIds: [String] = []
 
     // Referral
     @State private var showReferralAlert = false
     @State private var generatedLink = ""
+    @State private var isGeneratingLink = false
+    @State private var linkCopied = false
 
     // UserAddress State
     @State private var isUserAddressSelectorVisible = false
@@ -39,10 +43,14 @@ struct ProductDetailView: View {
         savedUserAddresses.first { $0.id == selectedUserAddressId } ?? savedUserAddresses.first
     }
 
+    // Share Sheet State
+    @State private var isShareSheetPresented = false
+    @State private var shareItems: [Any] = []
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Header
+                // ... (Header code) ...
                 HStack {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
@@ -54,32 +62,7 @@ struct ProductDetailView: View {
                     Spacer()
 
                     Button(action: {
-                        // Share logic
-                    }) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 20))
-                            .foregroundColor(AppTheme.Colors.textPrimary)
-                    }
-
-                    // Wishlist Button
-                    Button(action: {
-                        Task {
-                            await wishlistManager.toggleWishlist(productId: productId)
-                        }
-                    }) {
-                        Image(
-                            systemName: wishlistManager.isInWishlist(productId: productId)
-                                ? "heart.fill" : "heart"
-                        )
-                        .font(.system(size: 20))
-                        .foregroundColor(
-                            wishlistManager.isInWishlist(productId: productId)
-                                ? AppTheme.Colors.error : AppTheme.Colors.textPrimary)
-                    }
-                    .padding(.leading, 12)
-
-                    Button(action: {
-                        // Cart logic
+                        navigateToCart = true
                     }) {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "cart")
@@ -127,6 +110,124 @@ struct ProductDetailView: View {
                                 discount: product.discountPercentage.map { "\($0)% off" },
                                 protectPromiseFee: product.protectPromiseFee
                             )
+
+                            // 3.2 Affiliate Link Section (Only for active influencers)
+                            if let user = authManager.currentUser,
+                                user.role == "INFLUENCER",
+                                user.isActive == true,
+                                user.referralCode != nil
+                            {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Affiliate Link")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.gray)
+
+                                    if generatedLink.isEmpty {
+                                        // Show Generate Button
+                                        Button(action: {
+                                            generateAffiliateLink()
+                                        }) {
+                                            HStack {
+                                                if isGeneratingLink {
+                                                    ProgressView()
+                                                        .progressViewStyle(
+                                                            CircularProgressViewStyle(tint: .white)
+                                                        )
+                                                        .scaleEffect(0.8)
+                                                } else {
+                                                    Image(systemName: "link.badge.plus")
+                                                }
+                                                Text(
+                                                    isGeneratingLink
+                                                        ? "Generating..."
+                                                        : "Generate Affiliate Link")
+                                            }
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(.white)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 12)
+                                            .background(Color.blue)
+                                            .cornerRadius(10)
+                                        }
+                                        .disabled(isGeneratingLink)
+                                    } else {
+                                        // Show Generated Link with Copy and Share buttons
+                                        VStack(spacing: 10) {
+                                            Text(generatedLink)
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.blue)
+                                                .lineLimit(2)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                                            HStack(spacing: 10) {
+                                                // Copy Button
+                                                Button(action: {
+                                                    UIPasteboard.general.string = generatedLink
+                                                    linkCopied = true
+                                                    DispatchQueue.main.asyncAfter(
+                                                        deadline: .now() + 2
+                                                    ) {
+                                                        linkCopied = false
+                                                    }
+                                                }) {
+                                                    HStack(spacing: 4) {
+                                                        Image(
+                                                            systemName: linkCopied
+                                                                ? "checkmark" : "doc.on.doc")
+                                                        Text(linkCopied ? "Copied!" : "Copy")
+                                                    }
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.white)
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(.vertical, 10)
+                                                    .background(
+                                                        linkCopied ? Color.green : Color.blue
+                                                    )
+                                                    .cornerRadius(8)
+                                                }
+
+                                                // Share Button
+                                                Button(action: {
+                                                    // Use plain text and present directly via UIKit for faster loading
+                                                    let shareText =
+                                                        "Check out this amazing product on Local For Vocal: \(product.name)\n\(generatedLink)"
+                                                    presentShareSheet(items: [shareText])
+                                                }) {
+                                                    HStack(spacing: 4) {
+                                                        Image(systemName: "square.and.arrow.up")
+                                                        Text("Share")
+                                                    }
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.white)
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(.vertical, 10)
+                                                    .background(Color.orange)
+                                                    .cornerRadius(8)
+                                                }
+                                            }
+                                        }
+                                        .padding(12)
+                                        .background(Color.blue.opacity(0.1))
+                                        .cornerRadius(10)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+
+                                // Commission Display
+                                if let commissionPercent = product.influencerCommission,
+                                    commissionPercent > 0
+                                {
+                                    let commissionAmount = (product.price * commissionPercent) / 100
+                                    Text(
+                                        "Earn ₹\(String(format: "%.2f", commissionAmount)) commission on this product"
+                                    )
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.green)
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 8)
+                                }
+                            }
 
                             // 3.5 Highlights / Description (Replaces hardcoded text)
                             // If no highlights, it shows description as a single spec item, effectively replacing the old text description
@@ -212,35 +313,9 @@ struct ProductDetailView: View {
                             }
                         },
                         onOpenCart: {
-                            // Open cart
+                            navigateToCart = true
                         }
                     )
-
-                    // Influencer Referral Link Button
-                    if let user = AuthManager.shared.currentUser, user.role == "INFLUENCER",
-                        let code = user.referralCode
-                    {
-                        Button(action: {
-                            let link = "https://localforvocal.com/product/\(productId)?ref=\(code)"
-                            generatedLink = link
-                            showReferralAlert = true
-                            #if canImport(UIKit)
-                                UIPasteboard.general.string = link
-                            #endif
-                        }) {
-                            HStack {
-                                Image(systemName: "link")
-                                Text("Generate Referral Link")
-                            }
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 8)
-                    }
 
                     // Hidden NavigationLink for checkout
                     NavigationLink(
@@ -250,6 +325,12 @@ struct ProductDetailView: View {
                             selectedOfferIds: selectedLastChanceOfferIds
                         ),
                         isActive: $navigateToCheckout
+                    ) { EmptyView() }
+
+                    // Hidden NavigationLink for Cart
+                    NavigationLink(
+                        destination: CartPageView(),
+                        isActive: $navigateToCart
                     ) { EmptyView() }
                 } else {
                     VStack(spacing: 16) {
@@ -306,19 +387,13 @@ struct ProductDetailView: View {
             }
         }
         .background(AppTheme.Colors.background)
-
-        .alert("Referral Link Generated", isPresented: $showReferralAlert) {
-            Button("Copy", role: .cancel) {
-                #if canImport(UIKit)
-                    UIPasteboard.general.string = generatedLink
-                #endif
-            }
-        } message: {
-            Text("Link copied to clipboard:\n\(generatedLink)")
-        }
         .navigationBarHidden(true)
         .onAppear {
             loadAllData()
+            // Refresh user profile to check for status updates (e.g. Influencer approval)
+            Task {
+                await AuthManager.shared.refreshUserProfile()
+            }
         }
     }
 
@@ -331,9 +406,46 @@ struct ProductDetailView: View {
         // 2. Load Full Details
         loadProduct()
 
-        // 3. Load Side Effects (Reviews, etc)
+        // 3. Load Side Effects (Reviews, Addresses)
         Task {
             await reviewManager.fetchReviews(productId: productId)
+            if AuthManager.shared.isLoggedIn {
+                await fetchAddresses()
+                checkForExistingAffiliateLink()
+            }
+        }
+    }
+
+    private func checkForExistingAffiliateLink() {
+        guard let user = AuthManager.shared.currentUser,
+            let links = user.affiliateLinks
+        else { return }
+
+        if let existingLink = links.first(where: { $0.productId == productId }) {
+            Task { @MainActor in
+                self.generatedLink = existingLink.link
+            }
+        }
+    }
+
+    private func fetchAddresses() async {
+        do {
+            let addresses = try await APIService.shared.fetchAddresses()
+
+            // UI update on main thread
+            await MainActor.run {
+                self.savedUserAddresses = addresses
+                // Default to 'isDefault' or first
+                if self.selectedUserAddressId == nil {
+                    if let def = addresses.first(where: { $0.isDefault }) {
+                        self.selectedUserAddressId = def.id
+                    } else {
+                        self.selectedUserAddressId = addresses.first?.id
+                    }
+                }
+            }
+        } catch {
+            AppLogger.error("Error fetching addresses in PDV: \(error)")
         }
     }
 
@@ -350,5 +462,67 @@ struct ProductDetailView: View {
             }
             isLoading = false
         }
+    }
+
+    private func generateAffiliateLink() {
+        guard let product = product else { return }
+
+        isGeneratingLink = true
+        Task {
+            do {
+                let link = try await APIService.shared.generateAffiliateLink(
+                    productId: productId,
+                    productName: product.name
+                )
+                await MainActor.run {
+                    generatedLink = link
+                    isGeneratingLink = false
+
+                    // Persist locally so it's available next time without refresh
+                    AuthManager.shared.addAffiliateLink(
+                        productId: productId,
+                        productName: product.name,
+                        link: link
+                    )
+                }
+            } catch {
+                await MainActor.run {
+                    isGeneratingLink = false
+                    AppLogger.error("Failed to generate affiliate link: \(error)")
+                }
+            }
+        }
+    }
+
+    private func presentShareSheet(items: [Any]) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+            let rootViewController = windowScene.windows.first?.rootViewController
+        else {
+            return
+        }
+
+        // Find the topmost presented view controller
+        var topController = rootViewController
+        while let presented = topController.presentedViewController {
+            topController = presented
+        }
+
+        let activityVC = UIActivityViewController(
+            activityItems: items,
+            applicationActivities: nil
+        )
+
+        // For iPad: configure popover presentation
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = topController.view
+            popover.sourceRect = CGRect(
+                x: topController.view.bounds.midX,
+                y: topController.view.bounds.midY,
+                width: 0, height: 0
+            )
+            popover.permittedArrowDirections = []
+        }
+
+        topController.present(activityVC, animated: true)
     }
 }

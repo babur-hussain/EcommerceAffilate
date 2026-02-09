@@ -39,7 +39,7 @@ struct CyberSaleView: View {
                             // Secret Deals Banner
                             secretDealsBanner
 
-                            Spacer().frame(height: 100)  // Bottom padding for nav
+                            Spacer().frame(height: 16)  // Bottom padding
                         }
                         .padding(.top, 32)
                         .padding(.horizontal, 16)
@@ -52,7 +52,7 @@ struct CyberSaleView: View {
             .ignoresSafeArea(.container, edges: .top)
 
             // Bottom Navigation
-            bottomNavBar
+
         }
         .navigationBarHidden(true)
         .gesture(
@@ -448,117 +448,4 @@ struct CyberSaleView: View {
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 
-    // MARK: - Bottom Nav
-    private var bottomNavBar: some View {
-        ZStack {
-            // Blurred background
-            // Blurred background using standard material
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-                .frame(height: 100)  // Height of bar including safe area
-                .border(width: 1, edges: [.top], color: Color.black.opacity(0.05))
-
-            HStack(alignment: .bottom) {
-                navItem(icon: "house.fill", title: "HOME", isActive: true)
-                Spacer()
-                navItem(icon: "magnifyingglass", title: "DISCOVER", isActive: false)
-                Spacer()
-
-                // Big Center Button
-                Button(action: {}) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(primaryYellow)
-                            .frame(width: 60, height: 60)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.black, lineWidth: 3)
-                            )
-                            .shadow(radius: 10)
-
-                        Image(systemName: "cart.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.black)
-
-                        // Badge
-                        Circle()
-                            .fill(cyberPink)
-                            .frame(width: 20, height: 20)
-                            .overlay(
-                                Text("3")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.white)
-                            )
-                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                            .offset(x: 20, y: -20)
-                    }
-                }
-                .offset(y: -30)
-
-                Spacer()
-                navItem(icon: "heart", title: "WISHLIST", isActive: false)
-                Spacer()
-                navItem(icon: "person", title: "PROFILE", isActive: false)
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 30)  // Standard safe area spacing
-        }
-        .frame(height: 100)
-    }
-
-    private func navItem(icon: String, title: String, isActive: Bool) -> some View {
-        Button(action: {}) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 24))
-                Text(title)
-                    .font(.system(size: 10, weight: .bold))
-            }
-            .foregroundColor(isActive ? cyberBlue : Color.gray)
-        }
-    }
-}
-
-// Helper for border
-extension View {
-    func border(width: CGFloat, edges: [Edge], color: Color) -> some View {
-        overlay(EdgeBorder(width: width, edges: edges).foregroundColor(color))
-    }
-}
-
-struct EdgeBorder: Shape {
-    var width: CGFloat
-    var edges: [Edge]
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        for edge in edges {
-            var x: CGFloat {
-                switch edge {
-                case .top, .bottom, .leading: return rect.minX
-                case .trailing: return rect.maxX - width
-                }
-            }
-            var y: CGFloat {
-                switch edge {
-                case .top, .leading, .trailing: return rect.minY
-                case .bottom: return rect.maxY - width
-                }
-            }
-            var w: CGFloat {
-                switch edge {
-                case .top, .bottom: return rect.width
-                case .leading, .trailing: return width
-                }
-            }
-            var h: CGFloat {
-                switch edge {
-                case .top, .bottom: return width
-                case .leading, .trailing: return rect.height
-                }
-            }
-            path.addRect(CGRect(x: x, y: y, width: w, height: h))
-        }
-        return path
-    }
 }

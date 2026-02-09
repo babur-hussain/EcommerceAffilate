@@ -95,6 +95,17 @@ app.use(
 // Body parsing with size limits (MUST come BEFORE multer for JSON requests)
 app.use(express.json({ limit: "100kb" }));
 
+// Serve static files from public directory (for AASA file)
+import path from "path";
+app.use('/.well-known', express.static(path.join(__dirname, '../public/.well-known'), {
+  setHeaders: (res, filePath) => {
+    // AASA file must be served with application/json content type
+    if (filePath.endsWith('apple-app-site-association')) {
+      res.setHeader('Content-Type', 'application/json');
+    }
+  }
+}));
+
 // File upload handling with multer (only for multipart/form-data)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -171,6 +182,8 @@ app.use("/api/partner", partnerRouter);
 app.use("/api", shiprocketRouter);
 app.use("/api", returnRouter);
 
+import storyRouter from "./routes/story.route";
+app.use("/api/stories", storyRouter);
 app.use('/api/super-admin', adminCategoryRouter);
 app.use('/api/super-admin', adminAttributeRouter);
 app.use('/api/super-admin', adminTrustBadgeRouter);

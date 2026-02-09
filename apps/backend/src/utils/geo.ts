@@ -38,7 +38,8 @@ export const geocodePincode = async (pincode: string): Promise<{ lat: number; ln
         const response = await axios.get(url, {
             headers: {
                 'User-Agent': 'Local For Vocal Startup/1.0 (internal-delivery-calc)'
-            }
+            },
+            timeout: 5000 // 5 seconds timeout
         });
 
         if (response.data && response.data.length > 0) {
@@ -75,7 +76,7 @@ export const getDistanceMatrix = async (
             origin
         )}&destinations=${encodeURIComponent(destination)}&key=${apiKey}`;
 
-        const response = await axios.get(url);
+        const response = await axios.get(url, { timeout: 5000 });
         const data = response.data;
 
         if (data.status !== 'OK') {

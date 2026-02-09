@@ -1,13 +1,13 @@
 import { Router, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { verifyFirebaseToken } from '../middlewares/firebaseAuth';
+import { requireAuth } from '../middlewares/rbac';
 import { getAttributionsByInfluencer, getTotalCommissionByInfluencer } from '../services/influencer.service';
-
-const router = Router();
-
 import { Business } from '../models/business.model';
 import { User } from '../models/user.model';
 import { adminAuth } from '../config/firebaseAdmin';
+
+const router = Router();
 
 // POST /influencer/register - Register a new influencer
 router.post('/influencer/register', verifyFirebaseToken, async (req: Request, res: Response) => {
@@ -160,6 +160,97 @@ router.get('/influencer/summary', verifyFirebaseToken, async (req: Request, res:
     });
   } catch (e: any) {
     res.status(500).json({ error: 'Failed to fetch summary', message: e.message });
+  }
+});
+
+// POST /influencer/affiliate-link - Generate and store an affiliate link for a product
+router.post('/influencer/affiliate-link', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { productId, productName } = req.body;
+    if (!productId || !productName) {
+      return res.status(400).json({ error: 'productId and productName are required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.role !== 'INFLUENCER' || !user.isActive) {
+      return res.status(403).json({ error: 'Only active influencers can generate affiliate links' });
+    }
+
+    if (!user.referralCode) {
+      return res.status(400).json({ error: 'User does not have a referral code' });
+    }
+
+    // Check if link already exists for this product
+    const existingLink = user.affiliateLinks?.find(
+      (link) => link.productId.toString() === productId
+    );
+
+    if (existingLink) {
+      return res.json({
+        success: true,
+        link: existingLink.link,
+        message: 'Affiliate link already exists',
+        isNew: false
+      });
+    }
+
+    // Generate the affiliate link
+    const affiliateLink = `https://localforvocalstartup.com/product/${productId}?ref=${user.referralCode}`;
+
+    // Store the link
+    if (!user.affiliateLinks) {
+      user.affiliateLinks = [];
+    }
+
+    user.affiliateLinks.push({
+      productId: new mongoose.Types.ObjectId(productId),
+      productName,
+      link: affiliateLink,
+      createdAt: new Date()
+    });
+
+    await user.save();
+
+    res.json({
+      success: true,
+      link: affiliateLink,
+      message: 'Affiliate link generated successfully',
+      isNew: true
+    });
+  } catch (e: any) {
+    console.error('Affiliate link generation error:', e);
+    res.status(500).json({ error: 'Failed to generate affiliate link', message: e.message });
+  }
+});
+
+// GET /influencer/affiliate-links - Get all stored affiliate links for the influencer
+router.get('/influencer/affiliate-links', verifyFirebaseToken, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await User.findById(userId).select('affiliateLinks');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      affiliateLinks: user.affiliateLinks || []
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: 'Failed to fetch affiliate links', message: e.message });
   }
 });
 

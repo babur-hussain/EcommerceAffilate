@@ -4,13 +4,19 @@ import SwiftUI
 @MainActor
 class CheckoutViewModel: ObservableObject {
     // MARK: - Input Data
-    let product: Product
-    let quantity: Int
+    struct CheckoutItem: Identifiable {
+        let id = UUID()
+        let product: Product
+        let quantity: Int
+        let selectedOfferIds: [String]
+    }
+
+    let items: [CheckoutItem]
+
+    // Convenience for single product access (e.g. if we want to show the first one or logic depends on it)
+    var firstProduct: Product? { items.first?.product }
 
     // MARK: - Dependencies
-    // We will keep LocationManager here or in the View?
-    // Ideally, the VM should handle address selection logic.
-    // For now, let's allow the View to inject or we initialize it here.
     @Published var locationManager = LocationManager()
 
     // MARK: - Step State
@@ -44,13 +50,26 @@ class CheckoutViewModel: ObservableObject {
     @Published var showLoginView = false
 
     // MARK: - Upsells
+    // We can track selected upsells globally or per item. For simplicity, let's assume global for now,
+    // or we might need to change how protection plans work.
+    // Assuming protection plans are per-product, we might need a more complex structure.
+    // For MVP/Speed, let's keep `selectedUpsells` as a set of Offer IDs across all products.
     @Published var selectedUpsells: Set<String> = []
 
     // MARK: - Initialization
+    // Init for Single Product (Buy Now)
     init(product: Product, quantity: Int, selectedOfferIds: [String]) {
-        self.product = product
-        self.quantity = quantity
+        self.items = [
+            CheckoutItem(product: product, quantity: quantity, selectedOfferIds: selectedOfferIds)
+        ]
         self.selectedUpsells = Set(selectedOfferIds)
+    }
+
+    // Init for Cart (Multiple Items)
+    init(items: [CheckoutItem]) {
+        self.items = items
+        // Initialize selectedUpsells from items if needed
+        self.selectedUpsells = Set(items.flatMap { $0.selectedOfferIds })
     }
 
     // MARK: - Computed Properties
@@ -74,23 +93,52 @@ class CheckoutViewModel: ObservableObject {
     }
 
     // Bill Calculations
-    var itemTotal: Double { product.price * Double(quantity) }
-    var mrpTotal: Double { (product.mrp ?? product.price) * Double(quantity) }
-    var protectFee: Double { product.protectPromiseFee ?? 0 }
-    var shippingFee: Double { product.shippingCharges ?? 0 }
+    var itemTotal: Double {
+        items.reduce(0) { sum, item in
+            sum + (item.product.price * Double(item.quantity))
+        }
+    }
+
+    var mrpTotal: Double {
+        items.reduce(0) { sum, item in
+            sum + ((item.product.mrp ?? item.product.price) * Double(item.quantity))
+        }
+    }
+
+    var protectFee: Double {
+        items.reduce(0) { sum, item in
+            sum + (item.product.protectPromiseFee ?? 0)
+        }
+    }
+
+    var shippingFee: Double {
+        items.reduce(0) { sum, item in
+            sum + (item.product.shippingCharges ?? 0)
+        }
+    }
+
     var discount: Double { mrpTotal - itemTotal }
+
     var discountPercent: Int {
         guard mrpTotal > 0 else { return 0 }
         return Int(((mrpTotal - itemTotal) / mrpTotal) * 100)
     }
 
+    var totalQuantity: Int {
+        items.reduce(0) { $0 + $1.quantity }
+    }
+
     var selectedOffersTotal: Double {
-        guard let offers = product.lastChanceOffers else { return 0 }
+        // This logic assumes offers are global or unique IDs.
+        // We'll iterate through all items and check their offers.
         var total: Double = 0
-        for (index, offer) in offers.enumerated() {
-            let offerId = offer.tempId(index: index)
-            if selectedUpsells.contains(offerId) {
-                total += offer.offerPrice
+        for item in items {
+            guard let offers = item.product.lastChanceOffers else { continue }
+            for (index, offer) in offers.enumerated() {
+                let offerId = offer.tempId(index: index)
+                if selectedUpsells.contains(offerId) {
+                    total += offer.offerPrice
+                }
             }
         }
         return total
@@ -144,6 +192,11 @@ class CheckoutViewModel: ObservableObject {
             // Disable current location when selecting a saved address
             self.useCurrentLocation = false
 
+            // Update list if new
+            if !self.savedUserAddresses.contains(where: { $0.id == addressId }) {
+                self.savedUserAddresses.append(newAddress)
+            }
+
             // Optimistically select the new address
             self.selectedUserAddressId = addressId
 
@@ -159,16 +212,20 @@ class CheckoutViewModel: ObservableObject {
                 // Original ID still valid
                 self.selectedUserAddressId = addressId
             } else if !self.savedUserAddresses.isEmpty {
-                // Fallback to last address
-                self.selectedUserAddressId = self.savedUserAddresses.last?.id
+                // Ensure we don't deselect if fetch fails or address matches
+                if self.selectedUserAddressId == nil {
+                    self.selectedUserAddressId = self.savedUserAddresses.last?.id
+                }
             }
         }
     }
 
+    @Published var showRazorpay = false
+
     func processPayment(method: String) {
         guard !isProcessingPayment else { return }
         guard let address = currentUserAddress else { return }
-        guard let token = AuthManager.shared.authToken else { return }  // Should be checked by View before calling
+        guard let token = AuthManager.shared.authToken else { return }
 
         isProcessingPayment = true
 
@@ -177,15 +234,15 @@ class CheckoutViewModel: ObservableObject {
 
             do {
                 // 1. Prepare Items
-                let items = [
+                let items = self.items.map { item in
                     OrderService.OrderItem(
-                        productId: product.id,
-                        quantity: quantity,
-                        price: product.price,
-                        name: product.name,
-                        image: product.images.first
+                        productId: item.product.id,
+                        quantity: item.quantity,
+                        price: item.product.price,
+                        name: item.product.name,
+                        image: item.product.images.first
                     )
-                ]
+                }
 
                 // 2. Prepare Address
                 let addrPayload = OrderService.AddressPayload(
@@ -199,29 +256,94 @@ class CheckoutViewModel: ObservableObject {
                     country: address.country
                 )
 
-                // 3. Create Order
+                // 3. Prepare Last Chance Offers
+                var selectedOffers: [OrderService.LastChanceOfferPayload] = []
+                for item in self.items {
+                    if let offers = item.product.lastChanceOffers {
+                        for (index, offer) in offers.enumerated() {
+                            let offerId = offer.tempId(index: index)
+                            if self.selectedUpsells.contains(offerId) {
+                                selectedOffers.append(
+                                    OrderService.LastChanceOfferPayload(
+                                        id: offer._id,
+                                        name: offer.title,
+                                        price: offer.offerPrice
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 4. Create Order
                 let response = try await OrderService.shared.createOrder(
                     items: items,
                     address: addrPayload,
+                    addressId: address.id,
                     paymentMethod: method,
                     authToken: token,
                     donation: Double(selectedDonation ?? 0),
                     protectPromiseFee: protectFee,
                     shippingFee: shippingFee,
-                    lastChanceOffers: nil
+                    lastChanceOffers: selectedOffers.isEmpty ? nil : selectedOffers
                 )
 
                 self.createdOrderId = response._id
                 self.createdOrderNumber = response.orderNumber
-                self.showPaymentSuccess = true
+
+                // Close Payment View First to avoid "Multiple sheets" error
+                self.isPaymentViewVisible = false
+
+                // Allow time for sheet dismissal animation
+                try? await Task.sleep(nanoseconds: 600_000_000)  // 0.6s
+
+                if method == "RAZORPAY" {
+                    self.showRazorpay = true
+                } else {
+                    self.showPaymentSuccess = true
+                }
 
             } catch {
                 AppLogger.error("Error creating order: \(error)")
                 self.isPaymentViewVisible = false
-                // Small delay to show failure
                 try? await Task.sleep(nanoseconds: 500_000_000)
                 self.showPaymentFailed = true
             }
+        }
+    }
+
+    func handleRazorpaySuccess(paymentId: String, orderId: String, signature: String) {
+        self.showRazorpay = false
+        Task {
+            do {
+                // Verify with backend
+                let isValid = try await RazorpayService.shared.verifyPayment(
+                    orderId: self.createdOrderId ?? "",
+                    razorpayOrderId: orderId,
+                    razorpayPaymentId: paymentId,
+                    razorpaySignature: signature
+                )
+
+                await MainActor.run {
+                    if isValid {
+                        self.showPaymentSuccess = true
+                    } else {
+                        self.showPaymentFailed = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.showPaymentFailed = true
+                }
+            }
+        }
+    }
+
+    func handleRazorpayFailure(error: String) {
+        self.showRazorpay = false
+        // Small delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.showPaymentFailed = true
         }
     }
 }

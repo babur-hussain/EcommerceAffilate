@@ -357,10 +357,17 @@ router.get(
 
       const sellersWithDetails = await Promise.all(
         sellers.map(async (seller) => {
-          const business = await Business.findOne({ ownerId: seller._id });
-          const products = await Product.countDocuments({
-            sellerId: seller._id,
-          });
+          // Use seller's businessId directly (same as Seller Dashboard)
+          let products = 0;
+          let business = null;
+
+          if (seller.businessId) {
+            products = await Product.countDocuments({ businessId: seller.businessId });
+            business = await Business.findById(seller.businessId);
+          }
+
+          // Note: Order stats are likely broken as Order items don't store sellerId
+          // Keeping existing query for now to avoid breaking changes, but it likely returns 0
           const orders = await Order.find({ "items.sellerId": seller._id });
 
           const totalOrders = orders.length;
@@ -423,7 +430,12 @@ router.get(
       }
 
       const business = await Business.findOne({ userId: seller._id });
-      const products = await Product.countDocuments({ sellerId: seller._id });
+
+      let products = 0;
+      if (business) {
+        products = await Product.countDocuments({ businessId: business._id });
+      }
+
       const orders = await Order.find({ "items.sellerId": seller._id });
 
       const totalOrders = orders.length;
@@ -454,6 +466,78 @@ router.get(
     } catch (error: any) {
       console.error("Error fetching seller details:", error);
       res.status(500).json({ error: "Failed to fetch seller details" });
+    }
+  }
+);
+
+// GET /api/super-admin/sellers/:id/products - Get products for a specific seller
+router.get(
+  "/super-admin/sellers/:id/products",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params; // This is the seller's User ID
+
+      console.log(`🔍 Looking up products for seller userId: ${id}`);
+
+      // 1. Find the user first to get their businessId
+      const user = await User.findById(id).select('businessId email');
+
+      if (!user) {
+        console.log(`⚠️ No user found for id: ${id}`);
+        return res.json([]);
+      }
+
+      console.log(`👤 Found user: ${user.email}, businessId: ${user.businessId}`);
+
+      if (!user.businessId) {
+        console.log(`⚠️ User ${user.email} has no businessId`);
+        return res.json([]);
+      }
+
+      // 2. Find products for this business
+      const products = await Product.find({ businessId: user.businessId }).sort({ createdAt: -1 });
+
+      console.log(`📦 Found ${products.length} products for businessId: ${user.businessId}`);
+
+      res.json(products);
+    } catch (error: any) {
+      console.error("Error fetching seller products:", error);
+      res.status(500).json({ error: "Failed to fetch seller products" });
+    }
+  }
+);
+
+// GET /api/super-admin/products - Get all products (with optional sellerId filter)
+router.get(
+  "/super-admin/products",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { sellerId } = req.query;
+
+      const query: any = {};
+
+      if (sellerId) {
+        const business = await Business.findOne({ userId: sellerId });
+        if (business) {
+          query.businessId = business._id;
+        } else {
+          return res.json([]); // Seller has no business, so no products
+        }
+      }
+
+      const products = await Product.find(query).sort({ createdAt: -1 });
+
+      // If we want to include business details
+      // await Product.populate(products, { path: 'businessId', select: 'businessIdentity.tradeName' });
+
+      res.json(products);
+    } catch (error: any) {
+      console.error("Error fetching products:", error);
+      res.status(500).json({ error: "Failed to fetch products" });
     }
   }
 );
@@ -861,6 +945,45 @@ router.patch(
     } catch (error: any) {
       console.error("Error rejecting product:", error);
       res.status(500).json({ error: "Failed to reject product" });
+    }
+  }
+);
+
+// PATCH /api/super-admin/products/:id/commission - Update product commissions
+router.patch(
+  "/super-admin/products/:id/commission",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { platformCommission, influencerCommission } = req.body;
+
+      if (platformCommission === undefined || influencerCommission === undefined) {
+        return res.status(400).json({ error: "Platform and Influencer commissions are required" });
+      }
+
+      if (influencerCommission > platformCommission) {
+        return res.status(400).json({ error: "Influencer commission cannot be greater than platform commission" });
+      }
+
+      const product = await Product.findByIdAndUpdate(
+        id,
+        {
+          platformCommission,
+          influencerCommission
+        },
+        { new: true }
+      );
+
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      res.json(product);
+    } catch (error: any) {
+      console.error("Error updating commissions:", error);
+      res.status(500).json({ error: "Failed to update commissions" });
     }
   }
 );

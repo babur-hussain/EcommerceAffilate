@@ -11,57 +11,61 @@ struct LightningDealsView: View {
     var productIds: [String] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Color(hex: "#BE123C"))  // Rose 700
+        Group {
+            if !products.isEmpty || isLoading {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(Color(hex: "#BE123C"))  // Rose 700
 
-                if !subtitle.isEmpty {
-                    Text(subtitle)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color(hex: "#4B5563"))  // Gray 600
-                }
-            }
-            .padding(.horizontal, 16)
-
-            // Horizontal List
-            if isLoading {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(0..<3) { _ in
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.gray.opacity(0.1))
-                                .frame(width: 160, height: 260)
+                        if !subtitle.isEmpty {
+                            Text(subtitle)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color(hex: "#4B5563"))  // Gray 600
                         }
                     }
                     .padding(.horizontal, 16)
-                }
-            } else if !products.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(products) { product in
-                            LightningDealCard(product: product)
+
+                    // Horizontal List
+                    if isLoading {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(0..<3) { _ in
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color.gray.opacity(0.1))
+                                        .frame(width: 160, height: 260)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                        }
+                    } else if !products.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(products) { product in
+                                    LightningDealCard(product: product)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
                 }
+                .padding(.vertical, 24)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color(hex: "#FFF0F5"),
+                            Color(hex: "#FFE4E1"),
+                            Color(hex: "#FDF2F8"),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
             }
         }
-        .padding(.vertical, 24)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(hex: "#FFF0F5"),
-                    Color(hex: "#FFE4E1"),
-                    Color(hex: "#FDF2F8"),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
         .task {
             await loadProducts()
         }

@@ -2,39 +2,61 @@ import SwiftUI
 
 struct SpecialDealNewStyleView: View {
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var manager = SpecialDealManager()
+
+    // Environment & State
+    @EnvironmentObject var cartManager: CartManager
+    @EnvironmentObject var beautyManager: BeautyManager
+    @EnvironmentObject var basketManager: BasketManager
+    @State private var showSearch = false
+    @State private var navigateToCart = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Background
-            Color(red: 0.97, green: 0.97, blue: 0.97)
-                .ignoresSafeArea()
+        NavigationView {  // Added NavigationView wrapper
+            ZStack(alignment: .bottom) {
+                // Background
+                Color(red: 0.97, green: 0.97, blue: 0.97)
+                    .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Yellow Status Bar
-                statusBarView
+                VStack(spacing: 0) {
+                    // Yellow Status Bar
+                    statusBarView
 
-                // Scrollable Content
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        // Hero Banner
-                        heroBannerView
+                    // Scrollable Content
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            // Hero Banner
+                            heroBannerView
 
-                        // Categories
-                        categoriesView
+                            // Categories
+                            categoriesView
 
-                        // Product Grid
-                        productGridView
+                            // Product Grid
+                            productGridView
 
-                        Spacer().frame(height: 120)
+                            Spacer().frame(height: 120)
+                        }
                     }
                 }
-            }
 
-            // Fixed Bottom Nav
-            bottomNavView
+                // Navigation Link for Cart
+                NavigationLink(destination: CartPageView(), isActive: $navigateToCart) {
+                    EmptyView()
+                }
+            }
+            .navigationBarHidden(true)
+            .ignoresSafeArea(.all, edges: .bottom)
         }
-        .navigationBarHidden(true)
-        .ignoresSafeArea(.all, edges: .bottom)
+        .navigationViewStyle(StackNavigationViewStyle())  // Ensure full screen behavior
+        .onAppear {
+            manager.fetchInitialData()
+        }
+        .fullScreenCover(isPresented: $showSearch) {
+            GlobalSearchView()
+                .environmentObject(cartManager)
+                .environmentObject(beautyManager)
+                .environmentObject(basketManager)
+        }
     }
 
     // MARK: - Status Bar (Yellow)
@@ -56,13 +78,40 @@ struct SpecialDealNewStyleView: View {
 
             Spacer()
 
-            Image(systemName: "bag")
-                .font(.system(size: 18))
-                .foregroundColor(.black)
+            // Search Icon
+            Button(action: {
+                showSearch = true
+            }) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 18))
+                    .foregroundColor(.black)
+            }
+            .padding(.trailing, 16)
+
+            // Cart Icon
+            Button(action: {
+                navigateToCart = true
+            }) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "bag")
+                        .font(.system(size: 18))
+                        .foregroundColor(.black)
+
+                    if cartManager.cartCount > 0 {
+                        Text("\(cartManager.cartCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 14, height: 14)
+                            .background(Color.red)
+                            .clipShape(Circle())
+                            .offset(x: 6, y: -6)
+                    }
+                }
+            }
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .background(Color(red: 0.96, green: 0.62, blue: 0.04))  // Amber/Yellow
+        .padding(.vertical, 8)  // Reduced vertical padding to decrease header spacing
+        .background(Color(red: 0.98, green: 0.75, blue: 0.14))  // Unified Yellow
     }
 
     // MARK: - Hero Banner
@@ -81,7 +130,7 @@ struct SpecialDealNewStyleView: View {
                 ) { image in
                     image.resizable()
                         .aspectRatio(contentMode: .fit)
-                        .opacity(0.8)
+                        .blendMode(.multiply)  // Fix opacity/white bg
                 } placeholder: {
                     Color.clear
                 }
@@ -98,7 +147,7 @@ struct SpecialDealNewStyleView: View {
                 ) { image in
                     image.resizable()
                         .aspectRatio(contentMode: .fit)
-                        .opacity(0.8)
+                        .blendMode(.multiply)  // Fix opacity/white bg
                 } placeholder: {
                     Color.clear
                 }
@@ -135,20 +184,35 @@ struct SpecialDealNewStyleView: View {
             .padding(.vertical, 30)
             .padding(.horizontal, 40)
             .background(Color.white)
+            .cornerRadius(12)
             .rotationEffect(.degrees(-2))
             .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
         }
         .frame(height: 280)
+        .cornerRadius(16)
+        .padding(.horizontal, 16)
     }
 
     // MARK: - Categories
     private var categoriesView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                categoryPill("All Items", isActive: true)
-                categoryPill("Floral", isActive: false)
-                categoryPill("Denim", isActive: false)
-                categoryPill("Dresses", isActive: false)
+                // All Items Button
+                Button(action: {
+                    manager.selectCategory(nil)
+                }) {
+                    categoryPill("All Items", isActive: manager.selectedCategoryId == nil)
+                }
+
+                // Dynamic Categories
+                ForEach(manager.subCategories) { category in
+                    Button(action: {
+                        manager.selectCategory(category.id)
+                    }) {
+                        categoryPill(
+                            category.name, isActive: manager.selectedCategoryId == category.id)
+                    }
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -172,120 +236,105 @@ struct SpecialDealNewStyleView: View {
 
     // MARK: - Product Grid
     private var productGridView: some View {
-        let products: [(String, String, String, String?, String, Bool)] = [
-            (
-                "Tropical Floral Shirt", "Men's Summer", "$24.00", "$60.00",
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuBlQD9lZXYQQXLs8TvAXTIHlUI9-9ZKWSxfRiYS8EFD5ECwVo1xblM8-lXgYjxWJWqVvo8xoJm_7xVekIkkJYTyS3vhusEmhSey0-dbk3b6lqI2TI_-QjZDpPvPKkqx4opqtfFF0LdhpKW2Dny8T7uoVniiovqnRqG1MrcFUYkspWO_1zvG36kD56D4TyDmwQSsVbvNNu7w5xCGtAMI45McEJgW982EzwYUbHyb0osB7M42DMzvm3yGra_nqqAwAoLGWEyTZnVAVpsQ",
-                true
-            ),
-            (
-                "Boho Mini Dress", "Women's Style", "$45.00", nil,
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuA99JRQY8uejhzJpX0c98eaWozoX7eEhLAxy00pyv6KjYNKfmFMlG2rMBErNITBo3x0fAL5n80l6k3B45prkz7bqfJqRWay7PMDsqHHDQ7GbVVO9fq1Mb1-LcyCmYhV8P9Yax8T_qrNsbzaAwfQ6QF-zesR0G3gbGtDmohxNDXabiCpDmDvHiEeAUa01H_oUahtMiuvDdlo7elXksC_peEYUHZbxgl8-rh941c7n6p-HKYlWFmWvLvJrcJRexG4Kgyrj-VJDBH23C8r",
-                false
-            ),
-            (
-                "Classic Raw Denim", "Denim Essential", "$32.00", "$80.00",
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuAXSeRlVvlQebnbrWnusc3SxRYNfhtUTv364cKQGVDBJ5_vp9jYWx5E0qvSHdEEwz2ra42ZjvD3TviyewTRuoaNdqFNlZcpNzq5W2_bI02iZrSfpbB6CSoj2orhyHnHwLmigu4JL0Vu-ch0VtnhmlRn_xzURJyBh7L7Owcl4KkzQbaNfl4rdQoyNCk8GlseqtXFdYg9BwhIhrXJ7M1WVEeb0HaMpiS6KB6IS4TkgmhtGgX7OLQhD_RSYZf8UBDx6KF7qk61ijBstYJY",
-                true
-            ),
-            (
-                "Retro Wayfarer", "Accessories", "$18.00", nil,
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuDKt7HCwiWoAm6DEo4I_cmJcvcQs2pCHcIoDf7Rvkv8ZATzeQcvrVuEbolWxPxXLnuITLwJQ9CuGlAsCSYkz6ySImnzMoSZceFQPNznZ8kbL9Loi5wKEMyrkVicLr_A4VSQqpVBbljsyUQMXOwbdqSQ9pYTEp_dGvhpx3ZsX1y4e-m9qge0blA7Dkq3MSeBuxp-eXryFt6BDaRqmUrckoFFgJYuWd2LyVCfMH1omnvR_5c9iYOrADtjWYWIu823Y4LzEuQ-NJ1YEvNf",
-                false
-            ),
-        ]
-
-        return LazyVGrid(
+        LazyVGrid(
             columns: [
                 GridItem(.flexible(), spacing: 16),
                 GridItem(.flexible(), spacing: 16),
             ], spacing: 16
         ) {
-            ForEach(0..<products.count, id: \.self) { index in
-                productCard(
-                    title: products[index].0,
-                    category: products[index].1,
-                    price: products[index].2,
-                    originalPrice: products[index].3,
-                    imageUrl: products[index].4,
-                    hasDiscount: products[index].5
-                )
+            if manager.isLoading {
+                // Skeleton Loading
+                ForEach(0..<6, id: \.self) { _ in
+                    ProductCardSkeleton()
+                }
+            } else {
+                ForEach(manager.products) { product in
+                    productCard(product: product)
+                }
             }
         }
         .padding(.horizontal, 16)
     }
 
-    private func productCard(
-        title: String, category: String, price: String, originalPrice: String?, imageUrl: String,
-        hasDiscount: Bool
-    ) -> some View {
+    private func productCard(product: Product) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Image with Badge
-            ZStack(alignment: .topTrailing) {
-                AsyncImage(url: URL(string: imageUrl)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(3 / 4, contentMode: .fill)
-                    default:
-                        Color.gray.opacity(0.1)
-                    }
-                }
-                .frame(height: 200)
-                .frame(maxWidth: .infinity)
-                .clipped()
-
-                if hasDiscount {
-                    Text("60% OFF")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color(red: 0.98, green: 0.45, blue: 0.09))
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(category.uppercased())
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(Color.gray)
-
-                Text(title)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.black)
-                    .lineLimit(1)
-
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(price)
-                        .font(.system(size: 18, weight: .black))
-                        .foregroundColor(
-                            hasDiscount ? Color(red: 0.98, green: 0.45, blue: 0.09) : .black)
-
-                    if let original = originalPrice {
-                        Text(original)
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray)
-                            .strikethrough()
-                    }
-                }
-                .padding(.bottom, 12)
-
-                // Shop Now Button
-                Button(action: {}) {
-                    Text("SHOP NOW")
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(2)
-                        .foregroundColor(.black)
+            // Clickable Area (Navigates to Detail)
+            NavigationLink(
+                destination: ProductDetailView(productId: product.id, productFragment: product)
+            ) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Image with Badge
+                    ZStack(alignment: .topTrailing) {
+                        AsyncImage(url: URL(string: product.images.first ?? "")) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(3 / 4, contentMode: .fill)
+                            default:
+                                Color.gray.opacity(0.1)
+                            }
+                        }
+                        .frame(height: 200)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.black, lineWidth: 2)
-                        )
+                        .clipped()
+
+                        // Calculated Discount Logic
+                        if let discount = product.discountPercentage, discount > 0 {
+                            discountBadge(text: "\(discount)% OFF")
+                        } else if let mrp = product.mrp, mrp > product.price {
+                            let discount = Int(((mrp - product.price) / mrp) * 100)
+                            if discount > 0 {
+                                discountBadge(text: "\(discount)% OFF")
+                            }
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(product.name)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.black)
+                            .lineLimit(1)
+                            .padding(.top, 4)
+
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            // Integer Pricing (No decimals)
+                            Text("₹\(String(format: "%.0f", product.price))")
+                                .font(.system(size: 18, weight: .black))
+                                .foregroundColor(.black)
+
+                            if let mrp = product.mrp, mrp > product.price {
+                                Text("₹\(String(format: "%.0f", mrp))")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.gray)
+                                    .strikethrough()
+                            }
+                        }
+                    }
+                    .padding(16)
+                    .padding(.bottom, 8)
                 }
             }
-            .padding(16)
+            .buttonStyle(PlainButtonStyle())
+
+            // Add to Cart Button (Action Only)
+            Button(action: {
+                cartManager.addToCart(product: product)
+                // Haptic feedback is handled inside addToCart
+            }) {
+                Text("ADD TO CART")
+                    .font(.system(size: 10, weight: .bold))
+                    .tracking(1)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.black, lineWidth: 1.5)
+                    )
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
         .background(Color.white)
         .overlay(
@@ -294,38 +343,15 @@ struct SpecialDealNewStyleView: View {
         )
     }
 
-    // MARK: - Bottom Nav
-    private var bottomNavView: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                navItem(icon: "house", title: "Home", isActive: true)
-                Spacer()
-                navItem(icon: "magnifyingglass", title: "Search", isActive: false)
-                Spacer()
-                navItem(icon: "heart", title: "Saved", isActive: false)
-                Spacer()
-                navItem(icon: "bag", title: "Cart", isActive: false)
-                Spacer()
-                navItem(icon: "person", title: "Profile", isActive: false)
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            .background(Color.white)
-            .overlay(
-                Rectangle()
-                    .frame(height: 1)
-                    .foregroundColor(Color(red: 0.9, green: 0.9, blue: 0.9)),
-                alignment: .top
-            )
-
-            // Home Indicator
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
-                .frame(width: 128, height: 4)
-                .padding(.bottom, 8)
-                .padding(.top, 4)
-        }
-        .background(Color.white)
+    private func discountBadge(text: String) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .bold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.red)
+            .cornerRadius(4)
+            .padding(8)
     }
 
     private func navItem(icon: String, title: String, isActive: Bool) -> some View {

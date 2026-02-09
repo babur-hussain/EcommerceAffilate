@@ -2,10 +2,15 @@ import { Router, Request, Response } from 'express';
 import { AdvancedLayout } from '../models/advanced.layout.model';
 import { AuditLog } from '../models/auditLog.model';
 import { Product } from '../models/product.model';
+import { redis } from '../services/redis.service';
+import { CacheTTL } from '../config/redis.config';
 import mongoose from 'mongoose';
 
 const router = Router();
-// Force Restart 2
+
+// Cache key helpers
+const cacheKey = (slug: string, userId?: string) =>
+    userId ? `adv-layout:${slug}:user:${userId}` : `adv-layout:${slug}:guest`;
 
 // Helper to resolve dynamic data
 const resolveDynamicData = async (component: any, userId?: string) => {
@@ -86,12 +91,32 @@ const resolveDynamicData = async (component: any, userId?: string) => {
     }
 };
 
-// GET /api/advanced-layout/:slug
+// GET /api/advanced-layout/:slug - WITH REDIS CACHING
 router.get('/advanced-layout/:slug', async (req: Request, res: Response) => {
     try {
         const { slug } = req.params;
-        const userId = (req as any).user?.id || req.query.userId; // Support query param for anonymous/testing
+        const userId = (req as any).user?.id || req.query.userId;
+        const key = cacheKey(slug, userId?.toString());
 
+        // 1. Try Redis cache first (skip for personalized/dynamic content)
+        const hasDynamicContent = slug === 'for-you' || userId;
+        if (!hasDynamicContent) {
+            try {
+                const cached = await redis.get(key);
+                if (cached) {
+                    console.log(`[Advanced Layout] Cache HIT for ${key}`);
+                    res.setHeader('X-Cache', 'HIT');
+                    res.setHeader('X-Cache-Key', key);
+                    return res.json(JSON.parse(cached));
+                }
+                console.log(`[Advanced Layout] Cache MISS for ${key}`);
+            } catch (err) {
+                console.error(`[Advanced Layout] Redis error:`, err);
+                // Continue to MongoDB
+            }
+        }
+
+        // 2. Fetch from MongoDB
         const layout = await AdvancedLayout.findOne({ slug, isActive: true });
 
         if (!layout) {
@@ -127,10 +152,34 @@ router.get('/advanced-layout/:slug', async (req: Request, res: Response) => {
             await resolveDynamicData(component, userId?.toString());
         }
 
+        // 3. Cache non-personalized content in Redis
+        if (!hasDynamicContent) {
+            redis.setex(key, CacheTTL.CATEGORY_LAYOUT, JSON.stringify(layoutObj))
+                .then(() => console.log(`[Advanced Layout] Cached ${key}`))
+                .catch(err => console.error(`[Advanced Layout] Cache write failed:`, err));
+        }
+
+        res.setHeader('X-Cache', 'MISS');
+        res.setHeader('X-Cache-Key', key);
         res.json(layoutObj);
     } catch (error: any) {
         console.error('Advanced Layout Error:', error);
         res.status(500).json({ error: 'Failed to fetch layout', message: error.message });
+    }
+});
+
+// POST /api/advanced-layout/:slug/invalidate - Cache invalidation
+router.post('/advanced-layout/:slug/invalidate', async (req: Request, res: Response) => {
+    try {
+        const { slug } = req.params;
+
+        // Delete all cache keys for this slug
+        const count = await redis.delPattern(`adv-layout:${slug}:*`);
+        console.log(`[Advanced Layout] Invalidated ${count} cache keys for ${slug}`);
+
+        res.json({ success: true, invalidated: count, slug });
+    } catch (error: any) {
+        res.status(500).json({ error: 'Failed to invalidate cache', message: error.message });
     }
 });
 

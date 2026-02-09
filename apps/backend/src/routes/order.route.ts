@@ -275,6 +275,7 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
             // Fallback to Business Address pincode
             const business = await Business.findById(firstProduct.businessId).select('addresses').session(session);
             if (business) {
+              // Safe navigation for addresses which might be undefined/null if schema allows it
               originPincode = business.addresses?.operational?.pincode || business.addresses?.registered?.pincode || null;
               console.log('[Order Shipping] Business pincode:', originPincode);
 

@@ -16,9 +16,15 @@ struct CheckoutView: View {
             ))
     }
 
-    // Derived for view compatibility
-    var product: Product { viewModel.product }
-    var quantity: Int { viewModel.quantity }
+    init(items: [CheckoutViewModel.CheckoutItem]) {
+        _viewModel = StateObject(
+            wrappedValue: CheckoutViewModel(items: items)
+        )
+    }
+
+    // Derived properties removed as they don't make sense for multi-item cart
+    // var product: Product { viewModel.product }
+    // var quantity: Int { viewModel.quantity }
 
     var body: some View {
         ZStack {
@@ -65,28 +71,36 @@ struct CheckoutView: View {
                             }
                         )
 
-                        // Product Card
-                        ProductOrderCard(
-                            product: viewModel.product,
-                            quantity: viewModel.quantity,
-                            discountPercent: viewModel.discountPercent
-                        )
-
-                        // Protection Plans (if any)
-                        if let lastChanceOffers = viewModel.product.lastChanceOffers,
-                            !lastChanceOffers.isEmpty
-                        {
-                            ProtectionPlansSection(
-                                offers: lastChanceOffers,
-                                selectedOffers: $viewModel.selectedUpsells
+                        // Product Cards Loop
+                        ForEach(viewModel.items) { item in
+                            ProductOrderCard(
+                                product: item.product,
+                                quantity: item.quantity,
+                                discountPercent: Int(
+                                    ((item.product.mrp ?? item.product.price) - item.product.price)
+                                        / (item.product.mrp ?? item.product.price) * 100)
                             )
+
+                            // Protection Plans (if any)
+                            if let lastChanceOffers = item.product.lastChanceOffers,
+                                !lastChanceOffers.isEmpty
+                            {
+                                ProtectionPlansSection(
+                                    offers: lastChanceOffers,
+                                    selectedOffers: $viewModel.selectedUpsells
+                                )
+                            }
+
+                            Rectangle()
+                                .fill(AppTheme.Colors.border)
+                                .frame(height: 1)
                         }
 
                         // Delivery Info
                         DeliveryInfoRow(deliveryDate: viewModel.deliveryDate)
 
                         // Rest Assured Section
-                        RestAssuredSection(productImageUrl: viewModel.product.images.first)
+                        RestAssuredSection(productImageUrl: viewModel.firstProduct?.images.first)
 
                         // Donation Section
                         DonationSection(selectedDonation: $viewModel.selectedDonation)
@@ -146,7 +160,7 @@ struct CheckoutView: View {
             PriceDetailsModal(
                 isVisible: $viewModel.isPriceDetailsVisible,
                 itemTotal: viewModel.itemTotal,
-                itemCount: viewModel.quantity,
+                itemCount: viewModel.totalQuantity,
                 deliveryCharges: viewModel.shippingFee,
                 protectFee: viewModel.protectFee,
                 selectedOffersTotal: viewModel.selectedOffersTotal,
@@ -154,6 +168,25 @@ struct CheckoutView: View {
                 donation: Double(viewModel.selectedDonation ?? 0),
                 total: viewModel.totalAmount
             )
+
+            // Razorpay Checkout Trigger
+            if viewModel.showRazorpay, let orderId = viewModel.createdOrderId {
+                RazorpayCheckoutView(
+                    orderId: orderId,
+                    onSuccess: { success in
+                        viewModel.handleRazorpaySuccess(
+                            paymentId: success.razorpayPaymentId,
+                            orderId: success.razorpayOrderId,
+                            signature: success.razorpaySignature
+                        )
+                    },
+                    onFailure: { error in
+                        AppLogger.error("Razorpay failure: \(error)")
+                        viewModel.handleRazorpayFailure(error: "Payment Failed")
+                    }
+                )
+                .frame(width: 0, height: 0)
+            }
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $viewModel.isLocationPickerVisible) {
@@ -165,7 +198,7 @@ struct CheckoutView: View {
             PaymentView(
                 totalAmount: viewModel.totalAmount,
                 discount: viewModel.discount,
-                itemCount: viewModel.quantity,
+                itemCount: viewModel.totalQuantity,
                 onBack: {
                     viewModel.isPaymentViewVisible = false
                 },

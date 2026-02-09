@@ -270,6 +270,14 @@ public enum ComponentType: String, Decodable {
     case luminousSale = "luminous_sale"
     case luminousBottomNav = "luminous_bottom_nav"
 
+    // --- Shoes Sales Components ---
+    case shoesSalesHeader = "shoes_sales_header"
+    case shoesSalesFeatured = "shoes_sales_featured"
+    case shoesSalesGrid = "shoes_sales_grid"
+    case textBlock = "text_block"
+    case flashSaleGrid = "flash_sale_grid"
+    case featuredCarousel = "featured_carousel"
+
     case unknown
 
     public init(from decoder: Decoder) throws {

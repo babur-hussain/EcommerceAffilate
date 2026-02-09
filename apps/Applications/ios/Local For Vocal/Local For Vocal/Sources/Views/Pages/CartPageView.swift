@@ -85,6 +85,7 @@ struct CartPageView: View {
 
 struct ShoppingView: View {
     @ObservedObject var cartManager: CartManager
+    @State private var isCheckoutActive = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -179,7 +180,8 @@ struct ShoppingView: View {
                         Spacer()
 
                         Button(action: {
-                            // Place Order
+                            // Place Order Action
+                            isCheckoutActive = true
                         }) {
                             Text("Place Order")
                                 .font(.system(size: 16, weight: .semibold))
@@ -190,6 +192,20 @@ struct ShoppingView: View {
                                 .cornerRadius(4)
                         }
                         .frame(width: UIScreen.main.bounds.width * 0.45)
+                        .background(
+                            NavigationLink(
+                                destination: CheckoutView(
+                                    items: cartManager.items.map { item in
+                                        CheckoutViewModel.CheckoutItem(
+                                            product: item.product,
+                                            quantity: item.quantity,
+                                            selectedOfferIds: []  // Cart items don't have selected offers yet in this flow
+                                        )
+                                    }
+                                ),
+                                isActive: $isCheckoutActive
+                            ) { EmptyView() }
+                        )
                     }
                     .padding(10)
                     .background(Color.white)

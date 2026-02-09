@@ -79,6 +79,8 @@ export interface IProduct extends Document {
     name: string;
     amount: number;
   }[];
+  platformCommission?: number; // Percentage
+  influencerCommission?: number; // Percentage (part of platform commission)
   weight?: number;
   dimensions?: {
     length: number;
@@ -248,6 +250,18 @@ const productSchema = new Schema<IProduct>(
       name: { type: String, required: true },
       amount: { type: Number, required: true, default: 0 }
     }],
+    platformCommission: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    influencerCommission: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
     primaryImage: {
       type: String,
       trim: true,

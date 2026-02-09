@@ -5,6 +5,7 @@ struct SDUIComponentView: View {
     let component: SDUIComponent
     @EnvironmentObject var cartManager: CartManager
     @EnvironmentObject var wishlistManager: WishlistManager
+    @EnvironmentObject var beautyManager: BeautyManager
 
     // Add observed object for dynamic updates
     @StateObject var viewModel = SDUIComponentViewModel()
@@ -61,7 +62,7 @@ struct SDUIComponentView: View {
                 }
             }
         case .productGrid:
-            Text("Product Grid Placeholder")
+            renderProductGrid()
         case .heroCarousel:
             renderHeroCarousel()
         case .categoryCircles:
@@ -376,6 +377,22 @@ struct SDUIComponentView: View {
             renderLumiereNewsletter()
         case .lumiereBottomNav:
             renderLumiereBottomNav()
+
+        // MARK: - Shoes Sales Page
+        case .shoesSalesHeader:
+            renderShoesSalesHeader()
+        case .shoesSalesFeatured:
+            renderShoesSalesFeatured()
+        case .shoesSalesGrid:
+            renderShoesSalesGrid()
+
+        // MARK: - Dry Fruits / Generic Components
+        case .textBlock:
+            renderTextBlock()
+        case .flashSaleGrid:
+            renderFlashSaleGrid()
+        case .featuredCarousel:
+            renderFeaturedCarousel()
 
         case .unknown:
             Text("Unknown: \(component.type.rawValue)")

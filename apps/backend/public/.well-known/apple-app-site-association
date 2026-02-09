@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "BPGFX54J8U.com.ecommerceearn.Local-For-Vocal",
+        "paths": [
+          "/product/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "BPGFX54J8U.com.ecommerceearn.Local-For-Vocal"
+    ]
+  }
+}

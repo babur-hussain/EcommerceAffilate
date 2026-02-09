@@ -65,6 +65,9 @@ struct ContentView: View {
     // Cart Manager
     @StateObject private var cartManager = CartManager()
 
+    // Beauty Manager
+    @StateObject private var beautyManager = BeautyManager()
+
     // Basket Manager (Groceries)
     @StateObject private var basketManager = BasketManager()
 
@@ -113,6 +116,7 @@ struct ContentView: View {
         }
         .accentColor(Color(hex: "#2874F0"))  // Blue theme color
         .environmentObject(cartManager)
+        .environmentObject(beautyManager)
         .environmentObject(basketManager)
         .environmentObject(navigationManager)
         .environmentObject(locationManager)
@@ -120,12 +124,20 @@ struct ContentView: View {
             locationManager.requestPermission()
         }
         .fullScreenCover(isPresented: $navigationManager.showBeautyPage) {
-            BeautyProductView()
-                .environmentObject(navigationManager)
+            NavigationView {
+                BeautyProductView()
+            }
+            .environmentObject(navigationManager)
+            .environmentObject(cartManager)
+            .environmentObject(beautyManager)
+            .environmentObject(basketManager)
         }
         .fullScreenCover(isPresented: $navigationManager.showSpecialDealPage) {
             SpecialDealNewStyleView()
                 .environmentObject(navigationManager)
+                .environmentObject(cartManager)
+                .environmentObject(beautyManager)
+                .environmentObject(basketManager)
         }
         .fullScreenCover(isPresented: $navigationManager.showBrandNewArrivalPage) {
             BrandNewArrivalView()
@@ -134,6 +146,9 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $navigationManager.showMenFashionPage) {
             MenFashionView()
                 .environmentObject(navigationManager)
+                .environmentObject(cartManager)
+                .environmentObject(beautyManager)
+                .environmentObject(basketManager)
         }
         .fullScreenCover(isPresented: $navigationManager.showGrandMobilesPage) {
             GrandMobilesView()

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { User, UserRole } from '../models/user.model';
+import { Business } from '../models/business.model';
 import { hashPassword, comparePassword, generateJWT } from '../utils/auth';
 import axios from 'axios';
 
@@ -74,7 +75,31 @@ router.post('/auth/login', async (req: Request, res: Response) => {
     }
 
     const token = generateJWT(user);
-    res.json({ token, role: user.role });
+
+    // Fetch business status if user is a business user or influencer
+    let businessStatus: string | undefined;
+    if (user.businessId) {
+      const business = await Business.findById(user.businessId).select('status').lean();
+      businessStatus = business?.status;
+    }
+
+    res.json({
+      token,
+      role: user.role,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phoneNumber,
+        role: user.role,
+        profileImage: user.profileImage,
+        referralCode: user.referralCode,
+        businessId: user.businessId,
+        businessStatus,
+        isActive: user.isActive,
+        affiliateLinks: user.affiliateLinks
+      }
+    });
   } catch (error: any) {
     res.status(500).json({ error: 'Login failed', message: error.message });
   }
@@ -125,6 +150,13 @@ router.post('/auth/google', async (req: Request, res: Response) => {
     // Generate JWT
     const jwtToken = generateJWT(user);
 
+    // Fetch business status if user has businessId
+    let businessStatus: string | undefined;
+    if (user.businessId) {
+      const business = await Business.findById(user.businessId).select('status').lean();
+      businessStatus = business?.status;
+    }
+
     // Return same structure as login, but ensure user object has _id for Swift Codable
     res.json({
       token: jwtToken,
@@ -135,7 +167,12 @@ router.post('/auth/google', async (req: Request, res: Response) => {
         email: user.email,
         role: user.role,
         profileImage: user.profileImage,
-        phone: user.phoneNumber
+        phone: user.phoneNumber,
+        referralCode: user.referralCode,
+        businessId: user.businessId,
+        businessStatus,
+        isActive: user.isActive,
+        affiliateLinks: user.affiliateLinks
       }
     });
 

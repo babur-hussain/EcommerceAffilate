@@ -3,9 +3,9 @@ import { verifyFirebaseToken } from '../middlewares/firebaseAuth';
 import { User } from '../models/user.model';
 import { Business } from '../models/business.model';
 
-const router = Router();
-// Imports fixed, only router declaration here
 import { getAuth } from 'firebase-admin/auth';
+
+const router = Router();
 
 // GET /me - returns authenticated user profile and basic authorization context
 router.get('/me', verifyFirebaseToken, async (req: Request, res: Response) => {
@@ -45,6 +45,8 @@ router.get('/me', verifyFirebaseToken, async (req: Request, res: Response) => {
         businessActive,
         coins: user.coins || 0,
         membershipStatus: user.membershipStatus || 'Classic',
+        businessStatus: (user.businessId && businessActive !== undefined) ? (await Business.findById(user.businessId).select('status').lean())?.status : undefined,
+        affiliateLinks: user.affiliateLinks,
       },
     });
   } catch (e) {
@@ -127,7 +129,8 @@ router.put('/me', verifyFirebaseToken, async (req: Request, res: Response) => {
         membershipStatus: updatedUser.membershipStatus || 'Classic',
         phoneNumber: updatedUser.phoneNumber,
         bio: updatedUser.bio,
-        socialMedia: updatedUser.socialMedia
+        socialMedia: updatedUser.socialMedia,
+        affiliateLinks: updatedUser.affiliateLinks
       }
     });
 

@@ -3,51 +3,65 @@ import SwiftUI
 struct LuminousCategoriesView: View {
     let title: String
     let linkText: String
-
-    struct CategoryItem: Decodable, Identifiable {
-        let id = UUID()
-        let name: String
-        let image_url: String
-
-        private enum CodingKeys: String, CodingKey {
-            case name, image_url
-        }
-    }
-
-    let items: [CategoryItem]
-    @State private var selectedIndex: Int = 0
+    let items: [SubCategory]
+    let selectedId: String?
+    let onSelect: (String?) -> Void
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                // "All Products" button (always first, always active style)
-                Button(action: { selectedIndex = 0 }) {
+                // "All Products" button
+                Button(action: { onSelect(nil) }) {
                     Text("All Products")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(
+                            selectedId == nil ? .white : Color(red: 0.06, green: 0.09, blue: 0.16)
+                        )
                         .padding(.horizontal, 20)
                         .padding(.vertical, 10)
-                        .background(Color(red: 0.91, green: 0.64, blue: 0.66))
+                        .background(
+                            selectedId == nil
+                                ? Color(red: 0.91, green: 0.64, blue: 0.66) : Color.white
+                        )
                         .cornerRadius(999)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 999)
+                                .stroke(
+                                    Color.pink.opacity(0.15), lineWidth: selectedId == nil ? 0 : 1)
+                        )
                         .shadow(
-                            color: Color(red: 0.91, green: 0.64, blue: 0.66).opacity(0.3),
+                            color: selectedId == nil
+                                ? Color(red: 0.91, green: 0.64, blue: 0.66).opacity(0.3) : .clear,
                             radius: 8, y: 4)
                 }
 
                 // Dynamic category items
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    Button(action: { selectedIndex = index + 1 }) {
+                ForEach(items) { item in
+                    Button(action: { onSelect(item.id) }) {
                         Text(item.name)
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color(red: 0.06, green: 0.09, blue: 0.16))
+                            .foregroundColor(
+                                selectedId == item.id
+                                    ? .white : Color(red: 0.06, green: 0.09, blue: 0.16)
+                            )
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
-                            .background(Color.white)
+                            .background(
+                                selectedId == item.id
+                                    ? Color(red: 0.91, green: 0.64, blue: 0.66) : Color.white
+                            )
                             .cornerRadius(999)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 999)
-                                    .stroke(Color.pink.opacity(0.15), lineWidth: 1)
+                                    .stroke(
+                                        Color.pink.opacity(0.15),
+                                        lineWidth: selectedId == item.id ? 0 : 1)
                             )
+                            .shadow(
+                                color: selectedId == item.id
+                                    ? Color(red: 0.91, green: 0.64, blue: 0.66).opacity(0.3)
+                                    : .clear,
+                                radius: 8, y: 4)
                     }
                 }
             }

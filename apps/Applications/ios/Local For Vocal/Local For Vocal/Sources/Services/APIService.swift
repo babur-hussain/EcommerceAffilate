@@ -7,16 +7,34 @@ import SwiftUI
 #if canImport(UIKit)
   import UIKit
 #endif
+// Note: AppLogger, AppEnvironment, Product, etc. are assumed to be available in the module scope.
 
 // MARK: - API Service
 public class APIService {
   public static let shared = APIService()
+
+  public let session: URLSession
+
+  private init() {
+    // Configure Cache (50 MB Memory, 200 MB Disk)
+    let cacheSizeMemory = 50 * 1024 * 1024
+    let cacheSizeDisk = 200 * 1024 * 1024
+    let cache = URLCache(
+      memoryCapacity: cacheSizeMemory, diskCapacity: cacheSizeDisk, diskPath: "api_cache")
+
+    let config = URLSessionConfiguration.default
+    config.urlCache = cache
+    config.requestCachePolicy = .useProtocolCachePolicy  // Default to protocol (server headers)
+
+    self.session = URLSession(configuration: config)
+  }
 
   public enum APIError: Error {
     case invalidURL
     case serverError
     case decodingError
     case notAuthenticated
+    case custom(message: String)
   }
 
   // Use environment-based configuration for production/development switching
@@ -26,21 +44,36 @@ public class APIService {
   func fetchCategoryDetails(id: String) async throws -> CategoryModel {
     let url = try makeURL("/categories/\(id)")
 
-    let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+    // Create Request
+    var request = URLRequest(url: url)
+    request.cachePolicy = .useProtocolCachePolicy  // Try network, fallback to cache if server allows
 
-    guard let httpResponse = response as? HTTPURLResponse,
-      (200...299).contains(httpResponse.statusCode)
-    else {
-      throw APIError.serverError
+    // Attempt Network Request with Fallback
+    do {
+      let (data, response) = try await session.data(for: request)
+
+      guard let httpResponse = response as? HTTPURLResponse,
+        (200...299).contains(httpResponse.statusCode)
+      else {
+        throw APIError.serverError
+      }
+      return try JSONDecoder().decode(CategoryModel.self, from: data)
+    } catch {
+      // Network failed, try strictly from cache
+      AppLogger.warning("Network failed for \(url). Attempting to load from cache.")
+      request.cachePolicy = .returnCacheDataDontLoad
+      if let cachedResponse = session.configuration.urlCache?.cachedResponse(for: request) {
+        AppLogger.info("✅ Loaded cached response for \(url)")
+        return try JSONDecoder().decode(CategoryModel.self, from: cachedResponse.data)
+      }
+      throw error  // Rethrow original network error if no cache
     }
-
-    return try JSONDecoder().decode(CategoryModel.self, from: data)
   }
 
   func fetchProductDetails(id: String) async throws -> Product? {
     let url = try makeURL("/products/\(id)")
 
-    let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+    let (data, response) = try await session.data(for: URLRequest(url: url))
 
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)
@@ -78,7 +111,25 @@ public class APIService {
       let products: [Product]
     }
 
-    let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+    var request = URLRequest(url: url)
+    request.cachePolicy = .useProtocolCachePolicy
+
+    let data: Data
+    let response: URLResponse
+
+    do {
+      (data, response) = try await session.data(for: request)
+    } catch {
+      AppLogger.warning("Network failed for \(url). Attempting cache.")
+      request.cachePolicy = .returnCacheDataDontLoad
+      if let cached = session.configuration.urlCache?.cachedResponse(for: request) {
+        data = cached.data
+        response = cached.response
+        AppLogger.info("✅ Loaded cached products")
+      } else {
+        throw error
+      }
+    }
 
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)
@@ -134,8 +185,24 @@ public class APIService {
 
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
+    request.cachePolicy = .useProtocolCachePolicy
 
-    let (data, response) = try await URLSession.shared.data(for: request)
+    let data: Data
+    let response: URLResponse
+
+    do {
+      (data, response) = try await session.data(for: request)
+    } catch {
+      // Fallback to cache
+      request.cachePolicy = .returnCacheDataDontLoad
+      if let cached = session.configuration.urlCache?.cachedResponse(for: request) {
+        data = cached.data
+        response = cached.response
+        AppLogger.info("✅ Loaded cached subcategories")
+      } else {
+        throw error
+      }
+    }
 
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)
@@ -152,7 +219,7 @@ public class APIService {
   public func fetchGlobalSearch(query: String) async throws -> GlobalSearchResponse {
     let url = try makeURL("/search/global", queryItems: [URLQueryItem(name: "q", value: query)])
 
-    let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+    let (data, response) = try await session.data(for: URLRequest(url: url))
 
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)
@@ -169,7 +236,7 @@ public class APIService {
   public func fetchTrendingTerms() async throws -> [String] {
     let url = try makeURL("/search/trending")
 
-    let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+    let (data, response) = try await session.data(for: URLRequest(url: url))
 
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)
@@ -184,7 +251,7 @@ public class APIService {
     // /api/categories endpoint returns all categories
     let url = try makeURL("/categories")
 
-    let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+    let (data, response) = try await session.data(for: URLRequest(url: url))
 
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)
@@ -206,7 +273,7 @@ public class APIService {
       request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 
-    let (data, response) = try await URLSession.shared.data(for: request)
+    let (data, response) = try await session.data(for: request)
 
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)
@@ -236,15 +303,81 @@ public class APIService {
     let encoder = JSONEncoder()
     request.httpBody = try encoder.encode(address)
 
-    let (data, response) = try await URLSession.shared.data(for: request)
+    let (data, response) = try await session.data(for: request)
 
-    guard let httpResponse = response as? HTTPURLResponse,
-      (200...299).contains(httpResponse.statusCode)
-    else {
+    guard let httpResponse = response as? HTTPURLResponse else {
+      throw APIError.serverError
+    }
+
+    if httpResponse.statusCode == 401 {
+      AppLogger.error("Session expired (401). Logging out.")
+      await AuthManager.shared.logout()
+      throw APIError.custom(message: "Session expired. Please log in again.")
+    }
+
+    if !(200...299).contains(httpResponse.statusCode) {
+      if let responseString = String(data: data, encoding: .utf8) {
+        AppLogger.error(
+          "Save Address Failed: Status \(httpResponse.statusCode), Body: \(responseString)")
+      } else {
+        AppLogger.error("Save Address Failed: Status \(httpResponse.statusCode)")
+      }
       throw APIError.serverError
     }
 
     return try JSONDecoder().decode(UserAddress.self, from: data)
+  }
+
+  // MARK: - Affiliate Links
+  struct AffiliateLinkResponse: Decodable {
+    let success: Bool
+    let link: String
+    let message: String?
+    let isNew: Bool?
+  }
+
+  func generateAffiliateLink(productId: String, productName: String) async throws -> String {
+    guard AuthManager.shared.isAuthenticated else {
+      throw APIError.notAuthenticated
+    }
+
+    let url = try makeURL("/influencer/affiliate-link")
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    if let token = AuthManager.shared.authToken {
+      request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let body: [String: Any] = [
+      "productId": productId,
+      "productName": productName,
+    ]
+    request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+    let (data, response) = try await session.data(for: request)
+
+    guard let httpResponse = response as? HTTPURLResponse else {
+      throw APIError.serverError
+    }
+
+    if httpResponse.statusCode == 401 {
+      throw APIError.custom(message: "Authentication failed. Please try again.")
+    }
+
+    if !(200...299).contains(httpResponse.statusCode) {
+      if let responseString = String(data: data, encoding: .utf8) {
+        AppLogger.error(
+          "Generate Affiliate Link Failed: Status \(httpResponse.statusCode), Body: \(responseString)"
+        )
+      }
+      throw APIError.serverError
+    }
+
+    let result = try JSONDecoder().decode(AffiliateLinkResponse.self, from: data)
+    return result.link
   }
   // MARK: - Private Helper
   private func makeURL(_ path: String, queryItems: [URLQueryItem]? = nil) throws -> URL {
@@ -276,60 +409,66 @@ public class APIService {
     let targetSlug = slug == "fashion-women" ? "women" : slug
 
     // 1. Try Network Request
-    do {
-      let url = try makeURL("/advanced-layout/\(targetSlug)")
-      AppLogger.debug("Fetching layout from: \(url.absoluteString)")
+    let url = try makeURL("/advanced-layout/\(targetSlug)")
+    AppLogger.debug("Fetching layout from: \(url.absoluteString)")
 
-      var request = URLRequest(url: url)
-      request.httpMethod = "GET"
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
 
-      let (data, response) = try await URLSession.shared.data(for: request)
+    let (data, response) = try await session.data(for: request)
 
-      guard let httpResponse = response as? HTTPURLResponse,
-        (200...299).contains(httpResponse.statusCode)
-      else {
-        throw APIError.serverError
-      }
-
-      // Try decoding as Object (Standard)
-      if let responseObj = try? JSONDecoder().decode(AdvancedLayoutResponse.self, from: data) {
-        return responseObj
-      }
-
-      // Try decoding as Array (Legacy/Direct)
-      if let components = try? JSONDecoder().decode([SDUIComponent].self, from: data) {
-        return AdvancedLayoutResponse(
-          slug: slug,
-          name: slug,
-          isActive: true,
-          components: components
-        )
-      }
-
-      throw APIError.decodingError
-
-    } catch {
-      AppLogger.error("⚠️ Layout fetch failed for \(slug): \(error). Attempting local fallback.")
-
-      // 2. Local Fallback (If API is down or returns 404/Error)
-      // Hardcoded check for known pages
-      if slug == "women" || slug == "fashion-women" {
-        if let data = LocalData.womenLayoutJSON.data(using: .utf8),
-          let components = try? JSONDecoder().decode([SDUIComponent].self, from: data)
-        {
-          AppLogger.info("✅ Loaded local fallback layout for \(slug)")
-          return AdvancedLayoutResponse(
-            slug: slug,
-            name: slug,
-            isActive: true,
-            components: components
-          )
-        }
-      }
-
-      // If no fallback exists, return nil (which triggers "No content found")
-      return nil
+    guard let httpResponse = response as? HTTPURLResponse,
+      (200...299).contains(httpResponse.statusCode)
+    else {
+      throw APIError.serverError
     }
+
+    // Try decoding as Object (Standard)
+    if let responseObj = try? JSONDecoder().decode(AdvancedLayoutResponse.self, from: data) {
+      return responseObj
+    }
+
+    // Try decoding as Array (Legacy/Direct)
+    if let components = try? JSONDecoder().decode([SDUIComponent].self, from: data) {
+      return AdvancedLayoutResponse(
+        slug: slug,
+        name: slug,
+        isActive: true,
+        components: components
+      )
+    }
+
+    throw APIError.decodingError
+  }
+  // MARK: - Stories
+  func fetchMyStories() async throws -> [Story] {
+    guard AuthManager.shared.isAuthenticated else {
+      throw APIError.notAuthenticated
+    }
+
+    let url = try makeURL("/stories/my")
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+
+    if let token = AuthManager.shared.authToken {
+      request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let (data, response) = try await session.data(for: request)
+
+    guard let httpResponse = response as? HTTPURLResponse,
+      (200...299).contains(httpResponse.statusCode)
+    else {
+      throw APIError.serverError
+    }
+
+    struct StoryResponse: Decodable {
+      let success: Bool
+      let data: [Story]
+    }
+
+    let result = try JSONDecoder().decode(StoryResponse.self, from: data)
+    return result.data
   }
 }
 
@@ -551,7 +690,6 @@ public struct SubCategory: Identifiable, Decodable {
     self.slug = slug
   }
 }
-
 // MARK: - Address Model
 
 public struct UserAddress: Identifiable, Codable, Hashable {
@@ -605,3 +743,15 @@ public struct UserAddress: Identifiable, Codable, Hashable {
 // SDUI Component Model moved to Models/SDUIComponent.swift
 
 // AnyCodable moved to Utils/AnyCodable.swift
+
+extension APIService.APIError: LocalizedError {
+  public var errorDescription: String? {
+    switch self {
+    case .custom(let message): return message
+    case .notAuthenticated: return "Please log in to continue."
+    case .serverError: return "Server error. Please try again."
+    case .decodingError: return "Data processing error."
+    case .invalidURL: return "Invalid URL."
+    }
+  }
+}

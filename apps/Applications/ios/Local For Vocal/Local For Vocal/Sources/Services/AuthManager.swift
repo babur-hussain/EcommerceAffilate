@@ -4,16 +4,87 @@ import GoogleSignIn
 import SwiftUI
 
 // MARK: - User Model
+public struct AffiliateLink: Codable, Hashable {
+    public let productId: String
+    public let productName: String
+    public let link: String
+    public let createdAt: String?
+}
+
 public struct User: Codable, Identifiable {
     public let _id: String
     public let name: String
     public let email: String
     public let phone: String?
-    public var role: String?  // Changed to var to allow local update
+    public var role: String?
     public let profileImage: String?
     public let referralCode: String?
+    public let businessStatus: String?
+    public let isActive: Bool?
+    public var affiliateLinks: [AffiliateLink]?
 
     public var id: String { _id }
+
+    enum CodingKeys: String, CodingKey {
+        case _id
+        case id
+        case name
+        case email
+        case phone
+        case phoneNumber  // Handle potential discrepancy
+        case role
+        case profileImage
+        case referralCode
+        case businessStatus
+        case isActive
+        case affiliateLinks
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        // Handle ID mismatch (Backend /me sends 'id', /login sends '_id')
+        if let idVal = try? container.decode(String.self, forKey: ._id) {
+            self._id = idVal
+        } else if let idVal = try? container.decode(String.self, forKey: .id) {
+            self._id = idVal
+        } else {
+            // Fallback or throw
+            self._id = ""
+        }
+
+        self.name = try container.decode(String.self, forKey: .name)
+        self.email = try container.decode(String.self, forKey: .email)
+
+        // Handle phone (might be phone or phoneNumber)
+        if let phoneVal = try? container.decodeIfPresent(String.self, forKey: .phone) {
+            self.phone = phoneVal
+        } else {
+            self.phone = try? container.decodeIfPresent(String.self, forKey: .phoneNumber)
+        }
+
+        self.role = try container.decodeIfPresent(String.self, forKey: .role)
+        self.profileImage = try container.decodeIfPresent(String.self, forKey: .profileImage)
+        self.referralCode = try container.decodeIfPresent(String.self, forKey: .referralCode)
+        self.businessStatus = try container.decodeIfPresent(String.self, forKey: .businessStatus)
+        self.isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive)
+        self.affiliateLinks = try container.decodeIfPresent(
+            [AffiliateLink].self, forKey: .affiliateLinks)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(_id, forKey: ._id)
+        try container.encode(name, forKey: .name)
+        try container.encode(email, forKey: .email)
+        try container.encodeIfPresent(phone, forKey: .phone)
+        try container.encodeIfPresent(role, forKey: .role)
+        try container.encodeIfPresent(profileImage, forKey: .profileImage)
+        try container.encodeIfPresent(referralCode, forKey: .referralCode)
+        try container.encodeIfPresent(businessStatus, forKey: .businessStatus)
+        try container.encodeIfPresent(isActive, forKey: .isActive)
+        try container.encodeIfPresent(affiliateLinks, forKey: .affiliateLinks)
+    }
 }
 
 // MARK: - Auth Response
@@ -29,6 +100,7 @@ public class AuthManager: ObservableObject {
     @Published public var isLoggedIn: Bool = false
     @Published public var currentUser: User? = nil
     @Published public var authToken: String? = nil
+    @Published public var lastError: String? = nil  // Debugging
 
     private let tokenKey = "authToken"
     private let userKey = "currentUser"
@@ -144,6 +216,48 @@ public class AuthManager: ObservableObject {
         }
     }
 
+    // MARK: - Refresh User Profile
+    @MainActor
+    public func refreshUserProfile() async {
+        guard authToken != nil else { return }
+
+        guard let url = URL(string: "\(APIService.shared.baseURL)/me") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        // Add auth header manually since we are inside AuthManager
+        if let token = authToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                (200...299).contains(httpResponse.statusCode)
+            else {
+                return
+            }
+
+            // Decode response which has { user: User } structure
+            struct MeResponse: Decodable {
+                let user: User
+            }
+
+            let meResponse = try JSONDecoder().decode(MeResponse.self, from: data)
+            self.currentUser = meResponse.user
+            saveToStorage()
+            AppLogger.info(
+                "✅ User profile refreshed. Business Status: \(meResponse.user.businessStatus ?? "nil")"
+            )
+
+        } catch {
+            AppLogger.error("Failed to refresh user profile: \(error)")
+            await MainActor.run {
+                self.lastError = "Refresh Failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
     // MARK: - Register Influencer
     public func registerInfluencer(
         name: String,
@@ -230,7 +344,10 @@ public class AuthManager: ObservableObject {
         // On success, update local user role
         await MainActor.run {
             self.currentUser?.role = "INFLUENCER"
-            saveToStorage()
+            // Also refresh profile to get businessStatus (which starts as PENDING)
+            Task {
+                await self.refreshUserProfile()
+            }
         }
     }
 
@@ -282,6 +399,7 @@ public class AuthManager: ObservableObject {
     }
 
     // MARK: - Logout
+    @MainActor
     public func logout() {
         authToken = nil
         currentUser = nil
@@ -315,6 +433,29 @@ public class AuthManager: ObservableObject {
             case .googleLoginFailed:
                 return "Google Sign-In failed."
             }
+        }
+    }
+
+    // MARK: - Add Affiliate Link Locally
+    @MainActor
+    public func addAffiliateLink(productId: String, productName: String, link: String) {
+        guard var user = currentUser else { return }
+
+        // Create new link object
+        let newLink = AffiliateLink(
+            productId: productId,
+            productName: productName,
+            link: link,
+            createdAt: nil
+        )
+
+        var currentLinks = user.affiliateLinks ?? []
+        // Avoid duplicates
+        if !currentLinks.contains(where: { $0.productId == productId }) {
+            currentLinks.append(newLink)
+            user.affiliateLinks = currentLinks
+            self.currentUser = user
+            saveToStorage()
         }
     }
 }

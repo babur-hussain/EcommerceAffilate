@@ -48,6 +48,12 @@ export interface IUser extends Document {
     coordinates: number[]; // [longitude, latitude]
   };
   fcmToken?: string;
+  affiliateLinks?: {
+    productId: mongoose.Types.ObjectId;
+    productName: string;
+    link: string;
+    createdAt: Date;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -165,7 +171,26 @@ const userSchema = new Schema<IUser>(
     fcmToken: {
       type: String,
       trim: true
-    }
+    },
+    affiliateLinks: [{
+      productId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Product',
+        required: true
+      },
+      productName: {
+        type: String,
+        required: true
+      },
+      link: {
+        type: String,
+        required: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   },
   {
     timestamps: true,

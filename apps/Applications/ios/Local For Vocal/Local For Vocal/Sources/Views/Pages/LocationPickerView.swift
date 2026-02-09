@@ -18,6 +18,8 @@ public struct LocationPickerView: View {
     @State private var regionName = "Locating..."
     @State private var fullAddress = ""
     @State private var isLoading = false
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     // Map Region
     @State private var region = MKCoordinateRegion(
@@ -399,6 +401,11 @@ public struct LocationPickerView: View {
             }
         }
         .background(Color.white)
+        .alert(isPresented: $showError) {
+            Alert(
+                title: Text("Error"), message: Text(errorMessage),
+                dismissButton: .default(Text("OK")))
+        }
     }
 
     // MARK: - Helper Methods
@@ -463,10 +470,9 @@ public struct LocationPickerView: View {
                 }
             } catch {
                 AppLogger.error("Error saving address: \(error)")
-                // Still return the local address on error
                 await MainActor.run {
-                    onAddressSelected?(newAddress)
-                    presentationMode.wrappedValue.dismiss()
+                    errorMessage = error.localizedDescription
+                    showError = true
                 }
             }
         }
@@ -480,14 +486,24 @@ struct FormTextField: View {
     var keyboardType: UIKeyboardType = .default
 
     var body: some View {
-        TextField(placeholder, text: $text)
-            .keyboardType(keyboardType)
-            .font(.system(size: 14))
-            .padding(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(hex: "#D1D5DB"), lineWidth: 1)
-            )
+        ZStack(alignment: .leading) {
+            if text.isEmpty {
+                Text(placeholder)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#6B7280"))
+                    .padding(.horizontal, 12)
+            }
+
+            TextField("", text: $text)
+                .keyboardType(keyboardType)
+                .foregroundColor(Color(hex: "#111827"))
+                .font(.system(size: 14))
+                .padding(12)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(hex: "#D1D5DB"), lineWidth: 1)
+        )
     }
 }
 

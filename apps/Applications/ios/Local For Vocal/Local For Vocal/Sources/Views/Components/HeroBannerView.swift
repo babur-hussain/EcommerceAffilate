@@ -44,6 +44,7 @@ struct HeroBannerView: View {
                             }
                         }) {
                             HeroBannerCard(banner: banner)
+                                .padding(.vertical, 8)  // Space for shadow
                         }
                         .tag(index)
                         .buttonStyle(PlainButtonStyle())
@@ -58,8 +59,7 @@ struct HeroBannerView: View {
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 16)  // Even left/right spacing applied to container
         .onAppear {
             if let callback = bannersCallback {
                 self.banners = callback()
@@ -75,19 +75,16 @@ struct HeroBannerCard: View {
     let banner: HeroBannerView.BannerData
 
     var body: some View {
-        ZStack {
-            if let url = URL(string: banner.image) {
-                AsyncImage(url: url) { image in
-                    image.resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.2)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        if let url = URL(string: banner.image) {
+            AsyncImage(url: url) { image in
+                image.resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.gray.opacity(0.1))
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-        .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
     }
 }

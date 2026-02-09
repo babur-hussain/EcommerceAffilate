@@ -23,12 +23,13 @@ public struct Product: Identifiable, Codable, Hashable {
     public let lastChanceOffers: [LastChanceOffer]?
     public let highlights: [String]?
     public let shippingCharges: Double?
+    public let influencerCommission: Double?
 
     enum CodingKeys: String, CodingKey {
         case _id, name, price, images, category, rating, reviewCount, stock, mrp,
             discountPercentage, subtitle, title, description, shortDescription,
             saleEndDate, protectPromiseFee, sellerName, offers, trustBadges,
-            lastChanceOffers, highlights, shippingCharges
+            lastChanceOffers, highlights, shippingCharges, influencerCommission
     }
 
     public init(from decoder: Decoder) throws {
@@ -74,6 +75,7 @@ public struct Product: Identifiable, Codable, Hashable {
             [LastChanceOffer].self, forKey: .lastChanceOffers)
         highlights = try container.decodeIfPresent([String].self, forKey: .highlights)
         shippingCharges = try container.decodeIfPresent(Double.self, forKey: .shippingCharges)
+        influencerCommission = try container.decodeIfPresent(Double.self, forKey: .influencerCommission)
     }
 
     // Memberwise Initializer for manual creation
@@ -98,7 +100,8 @@ public struct Product: Identifiable, Codable, Hashable {
         trustBadges: [TrustBadge]? = nil,
         lastChanceOffers: [LastChanceOffer]? = nil,
         highlights: [String]? = nil,
-        shippingCharges: Double? = nil
+        shippingCharges: Double? = nil,
+        influencerCommission: Double? = nil
     ) {
         self._id = _id
         self.name = name
@@ -121,6 +124,7 @@ public struct Product: Identifiable, Codable, Hashable {
         self.lastChanceOffers = lastChanceOffers
         self.highlights = highlights
         self.shippingCharges = shippingCharges
+        self.influencerCommission = influencerCommission
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -146,5 +150,6 @@ public struct Product: Identifiable, Codable, Hashable {
         try container.encodeIfPresent(lastChanceOffers, forKey: .lastChanceOffers)
         try container.encodeIfPresent(highlights, forKey: .highlights)
         try container.encodeIfPresent(shippingCharges, forKey: .shippingCharges)
+        try container.encodeIfPresent(influencerCommission, forKey: .influencerCommission)
     }
 }

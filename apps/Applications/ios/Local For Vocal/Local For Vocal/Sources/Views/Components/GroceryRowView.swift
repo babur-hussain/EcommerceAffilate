@@ -3,9 +3,9 @@ import SwiftUI
 struct GroceryRowView: View {
     @State private var products: [Product] = []
     @State private var isLoading = true
-    
+
     var categoryId: String = "DUMMY_GROCERY_ID"
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -14,9 +14,9 @@ struct GroceryRowView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(Color(hex: "#1F2937"))
                     .lineLimit(2)
-                
+
                 Spacer()
-                
+
                 Button(action: {}) {
                     Image(systemName: "arrow.right")
                         .foregroundColor(.white)
@@ -27,24 +27,26 @@ struct GroceryRowView: View {
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 16)
-            
+
             // Grid
             if isLoading {
                 ProgressView()
                     .frame(height: 200)
             } else {
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8)
-                ], spacing: 8) {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 8),
+                        GridItem(.flexible(), spacing: 8),
+                        GridItem(.flexible(), spacing: 8),
+                    ], spacing: 8
+                ) {
                     ForEach(products) { product in
                         GroceryProductCard(product: product)
                     }
                 }
                 .padding(.horizontal, 12)
             }
-            
+
             // More Button
             Button(action: {}) {
                 HStack(spacing: 4) {
@@ -71,7 +73,7 @@ struct GroceryRowView: View {
             await fetchProducts()
         }
     }
-    
+
     private func fetchProducts() async {
         do {
             let fetched = try await APIService.shared.fetchProducts(limit: 6)
@@ -86,7 +88,7 @@ struct GroceryRowView: View {
 
 struct GroceryProductCard: View {
     let product: Product
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ZStack {
@@ -101,19 +103,19 @@ struct GroceryProductCard: View {
             }
             .frame(height: 100)
             .frame(maxWidth: .infinity)
-            
+
             Text(product.name)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(Color(hex: "#374151"))
                 .lineLimit(2)
                 .frame(height: 30, alignment: .topLeading)
-            
+
             HStack {
                 Text("₹\(Int(product.price))")
                     .font(.system(size: 12, weight: .bold))
-                
+
                 Spacer()
-                
+
                 Button(action: {}) {
                     Image(systemName: "cart.badge.plus")
                         .font(.system(size: 12))

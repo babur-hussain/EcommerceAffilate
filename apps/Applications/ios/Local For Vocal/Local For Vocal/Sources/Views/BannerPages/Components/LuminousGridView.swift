@@ -2,19 +2,7 @@ import SwiftUI
 
 struct LuminousGridView: View {
     let title: String
-
-    struct ProductItem: Decodable, Identifiable {
-        let id: String
-        let title: String
-        let subtitle: String
-        let price: String
-        let original_price: String?
-        let image_url: String
-        let badge: String?
-        let badge_bg: String?
-    }
-
-    let items: [ProductItem]
+    let items: [Product]
 
     var body: some View {
         LazyVGrid(
@@ -33,26 +21,20 @@ struct LuminousGridView: View {
 }
 
 struct BeautyProductCard: View {
-    let item: LuminousGridView.ProductItem
+    let item: Product
     @State private var isFavorite: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Image Container
             ZStack(alignment: .topTrailing) {
-                AsyncImage(url: URL(string: item.image_url)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    case .failure:
-                        Color(red: 0.99, green: 0.96, blue: 0.96)
-                    case .empty:
-                        Color(red: 0.99, green: 0.96, blue: 0.96)
-                    @unknown default:
-                        Color(red: 0.99, green: 0.96, blue: 0.96)
-                    }
+                // Use first image or empty string
+                let imageUrl = item.images.first ?? ""
+
+                CachedAsyncImage(url: URL(string: imageUrl)) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color(red: 0.99, green: 0.96, blue: 0.96)
                 }
                 .frame(height: 140)
                 .frame(maxWidth: .infinity)
@@ -77,26 +59,27 @@ struct BeautyProductCard: View {
             // Content
             VStack(alignment: .leading, spacing: 4) {
                 // Category Tag
-                Text(item.subtitle.uppercased())
+                Text(item.category.uppercased())
                     .font(.system(size: 10, weight: .bold))
                     .tracking(2)
                     .foregroundColor(Color(red: 0.91, green: 0.64, blue: 0.66))
 
                 // Title
-                Text(item.title)
+                Text(item.name)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(Color(red: 0.12, green: 0.14, blue: 0.17))
                     .lineLimit(1)
 
-                // Details
-                Text("50ml • Organic formula")
+                // Details (Placeholder for now as Product doesn't have exact fields like "50ml")
+                Text(item.subtitle ?? "Premium Quality")
                     .font(.system(size: 12))
                     .foregroundColor(Color(red: 0.39, green: 0.45, blue: 0.55))
                     .padding(.bottom, 12)
+                    .lineLimit(1)
 
                 // Price Row
                 HStack {
-                    Text(item.price)
+                    Text("₹\(Int(item.price))")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(Color(red: 0.06, green: 0.09, blue: 0.16))
 

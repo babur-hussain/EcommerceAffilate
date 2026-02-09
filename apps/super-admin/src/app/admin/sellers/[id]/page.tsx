@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Loader2, Smartphone, Mail, MapPin, Building2, Calendar
 import toast from "react-hot-toast";
 import { Seller } from "@/types";
 import { formatDate } from "@/lib/utils";
+import SellerProducts from "./SellerProducts";
 
 export default function SellerDetailPage() {
     const params = useParams();
@@ -20,6 +21,7 @@ export default function SellerDetailPage() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newBadge, setNewBadge] = useState({ id: '', name: '', description: '', icon: 'shield-checkmark' });
     const [creating, setCreating] = useState(false);
+    const [activeTab, setActiveTab] = useState<'details' | 'products'>('details');
 
     useEffect(() => {
         if (params.id) {
@@ -182,7 +184,7 @@ export default function SellerDetailPage() {
                     </button>
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{seller.name}</h1>
-                        <p className="text-gray-500">Seller ID: {seller._id}</p>
+                        <p className="text-sm text-gray-500">Seller ID: {seller._id}</p>
                     </div>
                 </div>
 
@@ -192,8 +194,8 @@ export default function SellerDetailPage() {
                         onClick={handleActivateAccount}
                         disabled={activating}
                         className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors ${business.status === 'APPROVED'
-                                ? 'bg-red-600 hover:bg-red-700 text-white'
-                                : 'bg-green-600 hover:bg-green-700 text-white'
+                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                            : 'bg-green-600 hover:bg-green-700 text-white'
                             } disabled:opacity-50`}
                     >
                         {activating ? (
@@ -213,7 +215,38 @@ export default function SellerDetailPage() {
                 )}
             </div>
 
-            {!business ? (
+            {/* Tabs */}
+            <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button
+                        onClick={() => setActiveTab('details')}
+                        className={`
+                            whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+                            ${activeTab === 'details'
+                                ? 'border-primary-500 text-primary-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                        `}
+                    >
+                        Seller Profile
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('products')}
+                        className={`
+                            whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+                            ${activeTab === 'products'
+                                ? 'border-primary-500 text-primary-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                        `}
+                    >
+                        Products
+                    </button>
+                    {/* Add other tabs like 'Orders', 'Transactions' here in future */}
+                </nav>
+            </div>
+
+            {activeTab === 'products' ? (
+                <SellerProducts sellerId={params.id as string} />
+            ) : !business ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
                     <p className="text-gray-500 text-lg">No business registration found for this seller</p>
                 </div>

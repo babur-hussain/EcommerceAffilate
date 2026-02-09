@@ -62,6 +62,7 @@ struct GlobalSearchView: View {
                         }
                         .padding(.bottom, 20)
                     }
+                    .scrollDismissesKeyboard(.interactively)
                 }
             }
             .navigationBarHidden(true)
@@ -270,6 +271,13 @@ struct GlobalSearchView: View {
                         ModernProductCard(product: product, width: itemWidth)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            // Dismiss keyboard before navigation to prevent visual glitch
+                            UIApplication.shared.sendAction(
+                                #selector(UIResponder.resignFirstResponder), to: nil, from: nil,
+                                for: nil)
+                        })
                 }
             }
             .padding(.horizontal, 16)

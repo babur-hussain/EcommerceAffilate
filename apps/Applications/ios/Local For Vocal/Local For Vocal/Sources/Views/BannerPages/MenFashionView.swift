@@ -1,53 +1,74 @@
 import SwiftUI
 
+#if canImport(UIKit)
+    import UIKit
+#endif
+
 struct MenFashionView: View {
     @Environment(\.presentationMode) var presentationMode
 
+    @EnvironmentObject var cartManager: CartManager
+    @EnvironmentObject var beautyManager: BeautyManager
+    @EnvironmentObject var basketManager: BasketManager
+    @State private var showSearch = false
+    @State private var navigateToCart = false
+
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Background
-            Color.white
-                .ignoresSafeArea()
+        NavigationView {
+            ZStack(alignment: .bottom) {
+                // Background
+                Color.white
+                    .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Fixed Header
-                headerView
+                VStack(spacing: 0) {
+                    // Fixed Header
+                    headerView
 
-                // Scrollable Content
-                ScrollView(showsIndicators: false) {
-                    ZStack {
-                        // Background MEN watermark
-                        VStack(spacing: 0) {
-                            ForEach(0..<3, id: \.self) { _ in
-                                Text("MEN")
-                                    .font(.system(size: 120, weight: .black))
-                                    .foregroundColor(
-                                        Color(red: 0.1, green: 0.1, blue: 0.1).opacity(0.05))
+                    // Scrollable Content
+                    ScrollView(showsIndicators: false) {
+                        ZStack {
+                            // Background MEN watermark
+                            VStack(spacing: 0) {
+                                ForEach(0..<3, id: \.self) { _ in
+                                    Text("MEN")
+                                        .font(.system(size: 120, weight: .black))
+                                        .foregroundColor(
+                                            Color(red: 0.1, green: 0.1, blue: 0.1).opacity(0.05))
+                                }
                             }
-                        }
-                        .offset(x: 80, y: 100)
+                            .offset(x: 80, y: 100)
 
-                        VStack(spacing: 0) {
-                            // Hero Section
-                            heroSectionView
+                            VStack(spacing: 0) {
+                                // Hero Section
+                                heroSectionView
 
-                            // New Arrivals Section
-                            newArrivalsSection
+                                // New Arrivals Section
+                                newArrivalsSection
 
-                            // Newsletter Section
-                            newsletterSection
+                                // Newsletter Section
+                                newsletterSection
 
-                            Spacer().frame(height: 120)
+                                Spacer().frame(height: 120)
+                            }
                         }
                     }
                 }
-            }
 
-            // Fixed Bottom Nav
-            bottomNavView
+                // Navigation Link for Cart
+                NavigationLink(destination: CartPageView(), isActive: $navigateToCart) {
+                    EmptyView()
+                }
+            }
+            .navigationBarHidden(true)
+            .ignoresSafeArea(.all, edges: .bottom)
         }
-        .navigationBarHidden(true)
-        .ignoresSafeArea(.all, edges: .bottom)
+        .navigationViewStyle(StackNavigationViewStyle())
+        .fullScreenCover(isPresented: $showSearch) {
+            GlobalSearchView()
+                .environmentObject(cartManager)
+                .environmentObject(beautyManager)
+                .environmentObject(basketManager)
+        }
     }
 
     // MARK: - Header
@@ -70,13 +91,34 @@ struct MenFashionView: View {
 
             Spacer()
 
+            // Search Icon
             Button(action: {
-                // TODO: Implement cart navigation
-                print("Navigate to cart")
+                showSearch = true
             }) {
-                Image(systemName: "bag")
-                    .font(.system(size: 24))
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 20))  // Matched size with other icons roughly or kept consistent
                     .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.14))
+            }
+            .padding(.trailing, 16)
+
+            Button(action: {
+                navigateToCart = true
+            }) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "bag")
+                        .font(.system(size: 24))
+                        .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.14))
+
+                    if cartManager.cartCount > 0 {
+                        Text("\(cartManager.cartCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 14, height: 14)
+                            .background(Color.red)
+                            .clipShape(Circle())
+                            .offset(x: 6, y: -6)
+                    }
+                }
             }
         }
         .padding(.horizontal, 24)
@@ -116,6 +158,7 @@ struct MenFashionView: View {
                 Text("EXCLUSIVE")
                     .font(.system(size: 48, weight: .heavy))
                     .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.14))
+                    .padding(.top, 40)  // Added padding to downshift
                 Text("MEN'S")
                     .font(.system(size: 48, weight: .heavy))
                     .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.14))
@@ -293,54 +336,6 @@ struct MenFashionView: View {
         .padding(.top, 48)
     }
 
-    // MARK: - Bottom Nav
-    private var bottomNavView: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                navItem(icon: "house", title: "Home", isActive: true)
-                Spacer()
-                navItem(icon: "safari", title: "Discover", isActive: false)
-                Spacer()
-                navItem(icon: "heart", title: "Saved", isActive: false)
-                Spacer()
-                navItem(icon: "person", title: "Profile", isActive: false)
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
-            .background(Color.white.opacity(0.95))
-            .background(.ultraThinMaterial)
-            .overlay(
-                Rectangle()
-                    .frame(height: 1)
-                    .foregroundColor(Color(red: 0.9, green: 0.9, blue: 0.9)),
-                alignment: .top
-            )
-
-            // Home Indicator
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
-                .frame(width: 128, height: 4)
-                .padding(.bottom, 8)
-                .padding(.top, 4)
-        }
-        .background(Color.white)
-    }
-
-    private func navItem(icon: String, title: String, isActive: Bool) -> some View {
-        Button(action: {}) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                Text(title.uppercased())
-                    .font(.system(size: 10, weight: .bold))
-                    .tracking(1)
-            }
-            .foregroundColor(
-                isActive
-                    ? Color(red: 0.85, green: 0.47, blue: 0.02)
-                    : Color(red: 0.6, green: 0.6, blue: 0.6))
-        }
-    }
 }
 
 struct MenFashionView_Previews: PreviewProvider {

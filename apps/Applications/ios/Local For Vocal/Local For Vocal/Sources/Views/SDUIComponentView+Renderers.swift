@@ -39,19 +39,64 @@ extension SDUIComponentView {
         let title = component.prop(for: "title") ?? "Categories"
         let linkText = component.prop(for: "linkText") ?? "View All"
 
-        // Decode items directly since LuminousCategoriesView.CategoryItem is Decodable
-        let items: [LuminousCategoriesView.CategoryItem] = component.decodeItems(for: "items")
+        // 1. Try to get items from component props first (Static/JSON)
+        var displayItems: [SubCategory] = []
 
-        LuminousCategoriesView(title: title, linkText: linkText, items: items)
+        if let itemsValue = component.props?["items"]?.value,
+            let itemsArray = itemsValue as? [[String: Any]]
+        {
+            displayItems = itemsArray.compactMap { dict in
+                // Handle various key possibilities from JSON (id vs _id, image vs image_url)
+                guard let name = dict["name"] as? String else { return nil }
+
+                // Prefer 'id', fallback to '_id', fallback to generated
+                let id = (dict["id"] as? String) ?? (dict["_id"] as? String) ?? UUID().uuidString
+
+                let image = (dict["image"] as? String) ?? (dict["image_url"] as? String)
+                let icon = dict["icon"] as? String
+                let slug = dict["slug"] as? String
+
+                return SubCategory(
+                    id: id,
+                    name: name,
+                    image: image,
+                    icon: icon,
+                    slug: slug
+                )
+            }
+        }
+
+        // 2. Fallback to BeautyManager data if no props items
+        if displayItems.isEmpty {
+            displayItems = beautyManager.subCategories
+        }
+
+        return LuminousCategoriesView(
+            title: title,
+            linkText: linkText,
+            items: displayItems,
+            selectedId: beautyManager.selectedCategoryId,
+            onSelect: { id in
+                beautyManager.selectCategory(id)
+            }
+        )
     }
 
     @ViewBuilder
     func renderLuminousGrid() -> some View {
         let title = component.prop(for: "title") ?? "Recommended"
 
-        let items: [LuminousGridView.ProductItem] = component.decodeItems(for: "items")
-
-        LuminousGridView(title: title, items: items)
+        // Use data from BeautyManager
+        if beautyManager.isLoading {
+            ProgressView()
+                .frame(maxWidth: .infinity, minHeight: 200)
+        } else if let error = beautyManager.errorMessage {
+            Text("Error: \(error)")
+                .foregroundColor(.red)
+                .padding()
+        } else {
+            LuminousGridView(title: title, items: beautyManager.products)
+        }
     }
 
     @ViewBuilder
@@ -109,7 +154,7 @@ extension SDUIComponentView {
         // Use HeroBannerView which is the specific implementation for the main carousel
         let items: [HeroBannerView.BannerData] = component.decodeItems(for: "items")
         HeroBannerView(bannersCallback: { items })
-            .frame(height: 200)
+            .frame(height: 240)
     }
 
     @ViewBuilder
@@ -134,6 +179,8 @@ extension SDUIComponentView {
         }
         .frame(height: height)
         .clipped()
+        .cornerRadius(16)
+        .padding(.horizontal, 16)
     }
 
     @ViewBuilder
@@ -194,17 +241,74 @@ extension SDUIComponentView {
     func renderProductListHorizontal() -> some View {
         // Horizontal product list - similar to product list but scrolls horizontally
         let items = (viewModel.data as? [Product]) ?? []
+        let title = component.prop(for: "title") ?? ""
 
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(items) { product in
-                    ProductCardView(product: product, width: 160)
+        VStack(alignment: .leading, spacing: 16) {
+            if !title.isEmpty {
+                Text(title)
+                    .font(.system(size: 18, weight: .bold))
+                    .padding(.horizontal, 16)
+            }
+
+            if viewModel.isLoading {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(0..<4) { _ in
+                            ProductCardSkeleton()
+                                .frame(width: 160)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+            } else if !items.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(items) { product in
+                            ProductCardView(product: product, width: 160)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+            } else {
+                // Fallback or Empty State
+                Text("No products found")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 16)
+            }
+        }
+        .padding(.vertical, 8)
+        .onAppear {
+            // Check if we have static items first
+            if let itemsValue = component.props?["items"]?.value {
+                viewModel.decodeItems(from: component, type: Product.self)
+            } else {
+                // If no static items, try fetching from API (e.g. Trending)
+                loadDynamicProducts()
+            }
+        }
+    }
+
+    private func loadDynamicProducts() {
+        guard !viewModel.isLoading, viewModel.data == nil else { return }
+        viewModel.isLoading = true
+
+        Task {
+            do {
+                // Default to trending/global fetch if no specific endpoint props
+                // For "Trending near you", we can use a general fetch or specific trending endpoint
+                let products = try await APIService.shared.fetchProducts(limit: 10)
+
+                await MainActor.run {
+                    viewModel.data = products
+                    viewModel.isLoading = false
+                }
+            } catch {
+                print("Failed to load dynamic products: \(error)")
+                await MainActor.run {
+                    viewModel.isLoading = false
                 }
             }
-            .padding(.horizontal)
-        }
-        .onAppear {
-            viewModel.decodeItems(from: component, type: Product.self)
         }
     }
 
@@ -952,7 +1056,6 @@ extension SDUIComponentView {
             items.isEmpty ? component.decodeItems(for: "banners") : items
 
         HeroBannerView(bannersCallback: { finalItems })
-            .frame(height: 200)
     }
 
     @ViewBuilder
@@ -1179,4 +1282,83 @@ extension SDUIComponentView {
     @ViewBuilder
     func renderSchoolFiveFooter() -> some View { Text("School 5 Footer") }
 
+    // MARK: - Dry Fruits / Generic Renderers (New)
+
+    @ViewBuilder
+    func renderTextBlock() -> some View {
+        let text = component.prop(for: "text") ?? ""
+        Text(text)
+            .padding()
+    }
+
+    @ViewBuilder
+    func renderProductGrid() -> some View {
+        let title = component.prop(for: "title") ?? ""
+        let items = (viewModel.data as? [Product]) ?? []
+
+        ProductCardGrid(products: items, title: title)
+            .onAppear {
+                // Try static props first, then dynamic
+                if let itemsValue = component.props?["items"]?.value {
+                    viewModel.decodeItems(from: component, type: Product.self)
+                } else {
+                    loadDynamicProducts()
+                }
+            }
+    }
+
+    @ViewBuilder
+    func renderFlashSaleGrid() -> some View {
+        // Renders a grid of flash sale items
+        let title = component.prop(for: "title") ?? "Flash Sale"
+        let subtitle = component.prop(for: "subtitle") ?? ""
+        // Use ProductCardGrid for the grid layout
+        // Decode items from props
+        let items: [Product] = component.decodeItems(for: "items")
+
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Color(hex: "#BE123C"))
+
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(hex: "#4B5563"))
+                }
+            }
+            .padding(.horizontal, 16)
+
+            ProductCardGrid(products: items, title: nil)
+        }
+        .padding(.vertical, 16)
+        .background(Color(hex: "#FFF7ED"))  // Light orange bg
+    }
+
+    @ViewBuilder
+    func renderFeaturedCarousel() -> some View {
+        // Horizontal list of products
+        let title = component.prop(for: "title") ?? "Featured"
+        let items: [Product] = component.decodeItems(for: "items")
+
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 18, weight: .bold))
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(items) { product in
+                        ProductCardView(product: product, width: 160)
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+        .padding(.vertical, 16)
+    }
 }

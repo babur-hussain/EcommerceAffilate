@@ -232,10 +232,12 @@ struct CategoriesSliderView: View {
         CategoryItem(id: "7", name: "Appliances", icon: "washer"),
         CategoryItem(id: "8", name: "Toys", icon: "gamecontroller.fill"),
         CategoryItem(id: "9", name: "Food & Health", icon: "fork.knife"),
-        CategoryItem(id: "10", name: "Auto", icon: "car.fill"),
-        CategoryItem(id: "11", name: "Sports", icon: "sportscourt.fill"),
-        CategoryItem(id: "12", name: "Books", icon: "book.fill"),
-        CategoryItem(id: "13", name: "Furniture", icon: "sofa.fill"),
+        CategoryItem(id: "10", name: "Dry Fruits", icon: "leaf.fill"),
+        CategoryItem(id: "11", name: "Auto", icon: "car.fill"),
+        CategoryItem(id: "12", name: "Sports", icon: "sportscourt.fill"),
+        CategoryItem(id: "13", name: "Books", icon: "book.fill"),
+        CategoryItem(id: "14", name: "Furniture", icon: "sofa.fill"),
+        CategoryItem(id: "15", name: "Jewellery", icon: "sparkles"),
     ]
 
     var body: some View {
@@ -243,6 +245,7 @@ struct CategoriesSliderView: View {
             HStack(spacing: 24) {  // Increased spacing between items
                 ForEach(categories) { category in
                     Button(action: {
+                        HapticManager.shared.selection()
                         withAnimation {
                             selectedCategory = category.name
                         }
