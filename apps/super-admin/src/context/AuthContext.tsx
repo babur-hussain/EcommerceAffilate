@@ -5,7 +5,7 @@ import {
   User as FirebaseUser,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
-  onAuthStateChanged,
+  onIdTokenChanged,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import api from "@/lib/api";
@@ -36,12 +36,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       console.log("Profile fetched:", response.data);
-      
+
       // Verify the user has SUPER_ADMIN role
       if (response.data.role !== "SUPER_ADMIN") {
         throw new Error("Access denied: Not a super admin");
       }
-      
+
       setProfile(response.data);
     } catch (error: any) {
       console.error("Error fetching profile:", error);
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error.response?.status === 403 || error.response?.status === 404) {
         throw new Error("Access denied: Not a super admin");
       }
-      
+
       throw error;
     }
   };
@@ -72,7 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // onIdTokenChanged fires on sign-in, sign-out, AND token refresh
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const token = await firebaseUser.getIdToken();
         localStorage.setItem("authToken", token);
@@ -80,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Fetch profile to verify if user is a super admin
         try {
           await fetchProfile(token, firebaseUser);
-          
+
           // Set user only if profile fetch succeeds (meaning user is SUPER_ADMIN)
           const userData: User = {
             uid: firebaseUser.uid,
@@ -92,13 +93,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(userData);
         } catch (error: any) {
           console.error("Profile fetch error:", error);
-          
+
           // If not a super admin, sign out
           if (error.message?.includes("Not a super admin")) {
             toast.error("Access denied: Not a super admin");
             await firebaseSignOut(auth);
           }
-          
+
           setUser(null);
           setProfile(null);
         }
@@ -110,7 +111,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+
+
+    // Auto-refresh token every 10 minutes to prevent expiry
+    const REFRESH_INTERVAL = 10 * 60 * 1000;
+    const intervalId = setInterval(async () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        try {
+          console.log("🔄 Auto-refreshing token...");
+          const token = await currentUser.getIdToken(true);
+          localStorage.setItem("authToken", token);
+          console.log("✅ Token auto-refreshed");
+        } catch (error) {
+          console.error("❌ Token auto-refresh failed:", error);
+        }
+      }
+    }, REFRESH_INTERVAL);
+
+    return () => {
+      unsubscribe();
+      clearInterval(intervalId);
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -126,7 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fetch profile immediately to verify super admin access and set user state
       try {
         await fetchProfile(token, userCredential.user);
-        
+
         // Set user only if profile fetch succeeds (meaning user is SUPER_ADMIN)
         const userData: User = {
           uid: userCredential.user.uid,
@@ -136,18 +158,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isActive: true,
         };
         setUser(userData);
-        
+
         toast.success("Signed in successfully!");
       } catch (profileError: any) {
         console.error("Profile fetch error during sign in:", profileError);
-        
+
         // If not a super admin, sign out
         if (profileError.message?.includes("Not a super admin")) {
           await firebaseSignOut(auth);
           toast.error("Access denied: Not a super admin");
           throw new Error("Access denied: Not a super admin");
         }
-        
+
         throw profileError;
       }
     } catch (error: any) {

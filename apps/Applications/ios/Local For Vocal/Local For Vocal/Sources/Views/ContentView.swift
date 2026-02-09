@@ -162,6 +162,21 @@ struct ContentView: View {
             CyberSaleView()
                 .environmentObject(navigationManager)
         }
+        .fullScreenCover(isPresented: $navigationManager.showCategoryPage) {
+            if let params = navigationManager.categoryNavigation {
+                NavigationView {
+                    CommonCategoryPageView(
+                        categoryId: params.categoryId,
+                        categoryName: params.categoryName,
+                        initialSubCategoryId: params.subCategoryId,
+                        initialFilters: params.filters
+                    )
+                }
+                .environmentObject(navigationManager)
+                .environmentObject(cartManager)
+                .environmentObject(WishlistManager.shared)
+            }
+        }
     }
 
     @ViewBuilder

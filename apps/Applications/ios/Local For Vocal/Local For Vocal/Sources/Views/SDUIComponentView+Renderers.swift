@@ -1361,4 +1361,31 @@ extension SDUIComponentView {
         }
         .padding(.vertical, 16)
     }
+
+    @ViewBuilder
+    func renderBestQuality() -> some View {
+        let title = component.prop(for: "title") ?? "Best quality"
+        let headerActionUrl = component.prop(for: "headerActionUrl") as String?
+        let headerImage = component.prop(for: "headerImage") as String?
+        let backgroundColor = component.prop(for: "backgroundColor") ?? "#FFE4E6"
+
+        let items: [BestQualityView.BestQualityItem] = {
+            if let itemsValue = component.props?["items"]?.value,
+                let data = try? JSONSerialization.data(withJSONObject: itemsValue),
+                let decoded = try? JSONDecoder().decode(
+                    [BestQualityView.BestQualityItem].self, from: data)
+            {
+                return decoded
+            }
+            return []
+        }()
+
+        BestQualityView(
+            title: title,
+            headerActionUrl: headerActionUrl,
+            headerImage: headerImage,
+            backgroundColor: backgroundColor,
+            items: items
+        )
+    }
 }

@@ -32,6 +32,10 @@ async function handleProxy(request: NextRequest, params: { path: string[] }) {
         const headers = new Headers(request.headers);
         headers.delete("host"); // Important: let fetch set the host
         headers.delete("connection");
+        headers.delete("content-length"); // Let fetch calculate content-length
+
+        const auth = headers.get("authorization");
+        console.log(`🔑 Auth Header Present: ${!!auth}, Length: ${auth?.length || 0}`);
 
         // Copy body if not GET/HEAD
         const body = (request.method !== "GET" && request.method !== "HEAD")
@@ -60,6 +64,11 @@ async function handleProxy(request: NextRequest, params: { path: string[] }) {
 
     } catch (error: any) {
         console.error("❌ Proxy Error:", error);
-        return NextResponse.json({ error: "Proxy Failed", details: error.message }, { status: 500 });
+        return NextResponse.json({
+            error: "Proxy Failed",
+            details: error.message,
+            stack: error.stack,
+            url: `https://api.lfvs.in/${params.path.join("/")}`
+        }, { status: 502 });
     }
 }

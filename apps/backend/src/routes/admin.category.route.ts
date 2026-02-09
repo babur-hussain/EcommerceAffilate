@@ -90,7 +90,8 @@ router.post('/categories', ...auth, async (req, res) => {
 // Update category
 router.put('/categories/:id', ...auth, async (req, res) => {
   try {
-    const { name, description, image, icon, posters, parentCategory, order, isActive, group, attributes, subCategoryGroupOrder } = req.body;
+    console.log(`📝 [PUT] Updating category ${req.params.id}`, { bodyKeys: Object.keys(req.body) });
+    const { name, description, image, icon, posters, parentCategory, order, isActive, group, attributes, subCategoryGroupOrder, filterConfig } = req.body;
 
     const category = await Category.findById(req.params.id);
 
@@ -141,6 +142,7 @@ router.put('/categories/:id', ...auth, async (req, res) => {
     if (group !== undefined) category.group = group;
     if (attributes !== undefined) category.attributes = attributes;
     if (subCategoryGroupOrder !== undefined) category.subCategoryGroupOrder = subCategoryGroupOrder;
+    if (filterConfig !== undefined) category.filterConfig = filterConfig;
 
     await category.save();
 

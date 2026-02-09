@@ -613,233 +613,187 @@ router.get("/products/meta", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/products - Get all active products
+// GET /api/products - Get all products with filtering, sorting, and pagination
 router.get("/products", async (req: Request, res: Response) => {
   try {
-    const { category, limit, search, pincode, ids } = req.query;
+    const {
+      category,
+      search,
+      brand,
+      subCategory,
+      ids,
+      minPrice,
+      maxPrice,
+      sort: sortParam,
+      page: pageParam,
+      limit: limitParam,
+      filters // Dynamic filters: color:Red,size:M
+    } = req.query;
 
-    const filter: any = { isActive: true };
+    const pipeline: any[] = [];
+    const matchStage: any = { isActive: true };
 
-    // Support filtering by specific IDs (comma separated or array)
+    // 1. Basic Filters
     if (ids) {
       const idArray = (ids as string).split(',').map(id => id.trim()).filter(id => mongoose.Types.ObjectId.isValid(id));
-      if (idArray.length > 0) {
-        filter._id = { $in: idArray };
-      }
+      if (idArray.length > 0) matchStage._id = { $in: idArray.map(id => new mongoose.Types.ObjectId(id)) };
     }
 
     if (category) {
       if (mongoose.Types.ObjectId.isValid(category as string)) {
         const categoryDoc = await Category.findById(category);
         if (categoryDoc) {
-          filter.category = { $regex: categoryDoc.name, $options: 'i' };
+          matchStage.category = categoryDoc.name;
         } else {
-          // If ID provided but not found, likely no matches
-          filter.category = category;
+          matchStage.category = category;
         }
       } else {
-        filter.category = { $regex: category, $options: 'i' };
+        matchStage.category = { $regex: category, $options: 'i' };
       }
     }
 
     if (search) {
-      filter.title = { $regex: search, $options: 'i' };
+      matchStage.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { brand: { $regex: search, $options: 'i' } }
+      ];
     }
 
-    // Generic filtering for direct matches
-    const { brand, subCategory, minPrice, maxPrice } = req.query;
-    if (brand) {
-      filter.brand = brand;
-    }
-    if (subCategory) {
-      filter.subCategory = subCategory;
-    }
+    if (brand) matchStage.brand = brand;
+    if (subCategory) matchStage.subCategory = subCategory;
+
     if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
+      matchStage.price = {};
+      if (minPrice) matchStage.price.$gte = Number(minPrice);
+      if (maxPrice) matchStage.price.$lte = Number(maxPrice);
     }
 
-    const maxLimit = parseInt(limit as string) || 0;
+    // 2. Dynamic Filters Logic
+    if (filters) {
+      const filterString = filters as string;
+      const filterPairs = filterString.split(',');
+      const filterMap: Record<string, string[]> = {};
 
-    // Create query with filter
-    const query = Product.find(filter).lean();
+      // Group values by key (e.g. Color -> [Red, Blue])
+      filterPairs.forEach(pair => {
+        const [key, value] = pair.split(':');
+        if (key && value) {
+          if (!filterMap[key]) filterMap[key] = [];
+          filterMap[key].push(value);
+        }
+      });
 
-    // Sorting Logic
-    const sortParam = (req.query.sort as string) || 'popularity';
-    let sort: any = {};
+      // Apply conditions: (Color=Red OR Color=Blue) AND (Size=M)
+      Object.entries(filterMap).forEach(([key, values]) => {
+        const valueConditions = values.map(val => ({
+          $or: [
+            // Check direct filterable attribute
+            { [`filterableAttributes.${key}`]: val },
+            // Check formatted string match format
+            { [`filterableAttributes.${key}`]: { $regex: new RegExp(`^${val}$`, 'i') } },
+            // Check if ANY variant has this attribute
+            { [`variants.attributes.${key}`]: val },
+            // Check legacy attributes (loose match)
+            { attributes: { $elemMatch: { value: val } } }
+          ]
+        }));
 
+        // Add to global AND list
+        if (!matchStage.$and) matchStage.$and = [];
+        matchStage.$and.push({ $or: valueConditions.flat() });
+      });
+    }
+
+    pipeline.push({ $match: matchStage });
+
+    // 3. Sorting
+    let sort: any = { popularityScore: -1 };
     switch (sortParam) {
-      case 'trending':
-        sort = { popularityScore: -1, views: -1 };
-        break;
-      case 'most_viewed':
-        sort = { views: -1 };
-        break;
-      case 'top_rated':
-        sort = { rating: -1, ratingCount: -1 };
-        break;
-      case 'newest':
-        sort = { createdAt: -1 };
-        break;
-      case 'price_low':
-        sort = { price: 1 };
-        break;
-      case 'price_high':
-        sort = { price: -1 };
-        break;
-      default:
-        sort = { popularityScore: -1 }; // Default to popularity/trending
+      case 'price_low': sort = { price: 1 }; break;
+      case 'price_high': sort = { price: -1 }; break;
+      case 'newest': sort = { createdAt: -1 }; break;
+      case 'top_rated': sort = { rating: -1, ratingCount: -1 }; break;
+      case 'relevance': sort = { score: { $meta: "textScore" } }; break;
+      default: sort = { popularityScore: -1 };
     }
-    query.sort(sort);
+    pipeline.push({ $sort: sort });
 
-    // Apply limit if specified
-    if (maxLimit > 0) {
-      query.limit(maxLimit);
-    }
+    // 4. Pagination & Facets
+    const page = parseInt(pageParam as string) || 1;
+    const limit = parseInt(limitParam as string) || 20;
+    const skip = (page - 1) * limit;
 
-    const products = await query.exec();
+    pipeline.push({
+      $facet: {
+        products: [{ $skip: skip }, { $limit: limit }],
+        totalCount: [{ $count: "count" }],
 
-    // Fetch category details
-    const categoryNames = [...new Set(products.map((p) => p.category))];
+        // Facets for sidebar
+        brands: [
+          { $group: { _id: "$brand", count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+        ],
+        priceRange: [
+          { $group: { _id: null, min: { $min: "$price" }, max: { $max: "$price" } } }
+        ],
+        attributes: [
+          { $project: { filterableAttributes: { $objectToArray: "$filterableAttributes" } } },
+          { $unwind: "$filterableAttributes" },
+          {
+            $group: {
+              _id: { key: "$filterableAttributes.k", value: "$filterableAttributes.v" },
+              count: { $sum: 1 }
+            }
+          },
+          {
+            $group: {
+              _id: "$_id.key",
+              values: { $push: { value: "$_id.value", count: "$count" } }
+            }
+          }
+        ]
+      }
+    });
+
+    const results = await Product.aggregate(pipeline);
+
+    const productsData = results[0].products;
+    const total = results[0].totalCount[0]?.count || 0;
+    const availableFilters = {
+      brands: results[0].brands,
+      price: results[0].priceRange[0] || { min: 0, max: 0 },
+      attributes: results[0].attributes
+    };
+
+    // Post-process products
+    const categoryNames = [...new Set(productsData.map((p: any) => p.category))];
     const categories = await Category.find({ name: { $in: categoryNames } }).lean();
     const categoryMap = categories.reduce((acc, cat) => {
-      acc[cat.name] = {
-        _id: cat._id,
-        name: cat.name,
-        parentCategory: cat.parentCategory,
-      };
+      acc[cat.name] = { id: cat._id, name: cat.name, parentCategory: cat.parentCategory };
       return acc;
     }, {} as Record<string, any>);
 
-    const formatted = products.map((p) => {
+    const formattedProducts = productsData.map((p: any) => {
       const primaryImageResolved = resolvePrimaryImage(p);
-
-      let deliveryEstimate = null;
-      if (pincode) {
-        // Determine origin
-        let origin = '110001'; // Default warehouse Delhi
-        if (p.pickupLocation) {
-          origin = p.pickupLocation;
-        } else if (p.businessId && (p.businessId as any).addresses) {
-          const biz = p.businessId as any;
-          origin = biz.addresses?.operational?.pincode
-            || biz.addresses?.registered?.pincode
-            || '110001';
-        }
-        deliveryEstimate = estimateDeliveryTime(origin, String(pincode));
-      }
-
       return {
         ...p,
         primaryImage: primaryImageResolved,
         optimizedImages: buildOptimizedVariants(primaryImageResolved),
-        seoTitle: p.metaTitle || p.title,
-        seoDescription: p.metaDescription || p.description,
-        seoKeywords: p.metaKeywords || [],
-        categoryMeta: getCategoryMeta(p.category),
-        categoryDetails: categoryMap[p.category],
-        deliveryEstimate // Attach estimated time
+        categoryDetails: categoryMap[p.category]
       };
     });
 
-    if (formatted.length === 0 && !category) {
-      // Serve a small public placeholder catalog when DB is empty so the storefront is never blank
-      const placeholders = [
-        {
-          _id: "placeholder-1",
-          title: "Noise Cancelling Headphones",
-          slug: "demo-noise-cancelling-headphones",
-          price: 129.99,
-          category: "Electronics",
-          brand: "Demo Audio",
-          image:
-            "https://images.unsplash.com/photo-1518441902117-f6dbe7c38e8c?auto=format&fit=crop&w=900&q=80",
-          images: [],
-          primaryImage:
-            "https://images.unsplash.com/photo-1518441902117-f6dbe7c38e8c?auto=format&fit=crop&w=900&q=80",
-          optimizedImages: buildOptimizedVariants(
-            "https://images.unsplash.com/photo-1518441902117-f6dbe7c38e8c?auto=format&fit=crop&w=900&q=80"
-          ),
-          rating: 4.6,
-          ratingCount: 842,
-          isActive: true,
-          isSponsored: false,
-          sponsoredScore: 0,
-          popularityScore: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          seoTitle: "Noise Cancelling Headphones",
-          seoDescription:
-            "Wireless over-ear headphones with ANC and 30h battery life",
-          seoKeywords: ["headphones", "wireless", "audio"],
-          categoryMeta: getCategoryMeta("Electronics"),
-        },
-        {
-          _id: "placeholder-2",
-          title: "Smartwatch Fitness Edition",
-          slug: "demo-smartwatch-fitness",
-          price: 89.99,
-          category: "Electronics",
-          brand: "Demo Wearables",
-          image:
-            "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
-          images: [],
-          primaryImage:
-            "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
-          optimizedImages: buildOptimizedVariants(
-            "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80"
-          ),
-          rating: 4.4,
-          ratingCount: 621,
-          isActive: true,
-          isSponsored: false,
-          sponsoredScore: 0,
-          popularityScore: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          seoTitle: "Smartwatch Fitness Edition",
-          seoDescription:
-            "Track workouts, heart rate, and sleep with 7-day battery",
-          seoKeywords: ["smartwatch", "fitness", "wearable"],
-          categoryMeta: getCategoryMeta("Electronics"),
-        },
-        {
-          _id: "placeholder-3",
-          title: "Minimalist Office Chair",
-          slug: "demo-minimalist-office-chair",
-          price: 159.0,
-          category: "Home & Furniture",
-          brand: "Demo Living",
-          image:
-            "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
-          images: [],
-          primaryImage:
-            "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
-          optimizedImages: buildOptimizedVariants(
-            "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80"
-          ),
-          rating: 4.5,
-          ratingCount: 312,
-          isActive: true,
-          isSponsored: false,
-          sponsoredScore: 0,
-          popularityScore: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          seoTitle: "Minimalist Office Chair",
-          seoDescription:
-            "Ergonomic mesh back with adjustable height and lumbar support",
-          seoKeywords: ["chair", "office", "furniture"],
-          categoryMeta: getCategoryMeta("Home & Furniture"),
-        },
-      ];
+    res.json({
+      products: formattedProducts,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      filters: availableFilters
+    });
 
-      return res.json(placeholders);
-    }
-
-    res.json(formatted);
   } catch (error: any) {
+    console.error("Error fetching products:", error);
     res.status(500).json({
       error: "Failed to fetch products",
       message: error.message,

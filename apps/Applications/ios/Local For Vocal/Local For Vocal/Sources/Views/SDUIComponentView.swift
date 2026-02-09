@@ -393,6 +393,8 @@ struct SDUIComponentView: View {
             renderFlashSaleGrid()
         case .featuredCarousel:
             renderFeaturedCarousel()
+        case .bestQuality:
+            renderBestQuality()
 
         case .unknown:
             Text("Unknown: \(component.type.rawValue)")

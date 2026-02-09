@@ -10,6 +10,17 @@ const generateSlug = (title: string): string => {
     .replace(/-+/g, '-');     // Replace multiple hyphens with single hyphen
 };
 
+// Product Variant Schema
+const VariantSchema = new Schema({
+  sku: { type: String, required: true },
+  attributes: { type: Map, of: String }, // e.g., { "color": "Red", "size": "M" }
+  price: { type: Number, required: true },
+  mrp: { type: Number },
+  stock: { type: Number, default: 0 },
+  images: [{ type: String }],
+  isActive: { type: Boolean, default: true }
+}, { _id: false });
+
 export interface IProduct extends Document {
   title: string;
   slug: string;
@@ -21,6 +32,22 @@ export interface IProduct extends Document {
   brand?: string;
   image: string;          // Keep for backward compatibility
   images: string[];       // New array field
+
+  // Variants
+  variantConfig?: string[]; // e.g. ["color", "size"]
+  variants?: {
+    sku: string;
+    attributes: Map<string, string>;
+    price: number;
+    mrp?: number;
+    stock: number;
+    images: string[];
+    isActive: boolean;
+  }[];
+
+  // Filterable Attributes (Key-Value map for easy filtering)
+  filterableAttributes?: Map<string, any>; // e.g. { "brand": "Nike", "material": "Cotton" }
+
   rating: number;
   ratingCount: number;
   views: number;
@@ -53,10 +80,13 @@ export interface IProduct extends Document {
   warrantyDuration?: string;
   pickupLocation?: string;
   pickupLocationCoordinates?: { lat: number; lng: number };
+
+  // Deprecated - kept for backward compatibility if needed, but filterableAttributes is preferred
   attributes?: {
     attributeId: mongoose.Types.ObjectId;
     value: any;
   }[];
+
   trustBadges?: string[];
   offers?: {
     type: string; // 'Bank' | 'Exchange' | 'EMI' | 'Special'
@@ -298,15 +328,26 @@ const productSchema = new Schema<IProduct>(
       lat: { type: Number },
       lng: { type: Number }
     },
+
+    // Variants
+    variantConfig: [{ type: String }],
+    variants: [VariantSchema],
+
+    // Filterable Attributes
+    filterableAttributes: {
+      type: Map,
+      of: Schema.Types.Mixed
+    },
+
     attributes: [{
       attributeId: {
         type: Schema.Types.ObjectId,
         ref: 'Attribute',
-        required: true
+        //        required: true // Making optional to support new system
       },
       value: {
         type: Schema.Types.Mixed, // Can be string, number, boolean, or array
-        required: true
+        //        required: true
       }
     }],
     weight: {

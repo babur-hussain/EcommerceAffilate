@@ -1,5 +1,16 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface IFilterConfig {
+  key: string;
+  label: string;
+  type: 'select' | 'multiselect' | 'variant' | 'range' | 'text';
+  required: boolean;
+  options?: string[];
+  min?: number;
+  max?: number;
+  unit?: string;
+}
+
 export interface ICategory extends Document {
   name: string;
   slug: string;
@@ -8,13 +19,18 @@ export interface ICategory extends Document {
   icon?: string;
   posters?: string[];
   parentCategory?: mongoose.Types.ObjectId;
+  group?: string;
+  subCategoryGroupOrder?: string[]; // Groups ordering for subcategories (only relevant for Parent Categories)
+
+  // Dynamic Filter Configuration
+  filterConfig?: IFilterConfig[];
+
   attributes: {
     attributeId: mongoose.Types.ObjectId;
     position: number;
     isRequired: boolean;
   }[];
-  group?: string;
-  subCategoryGroupOrder?: string[]; // Groups ordering for subcategories (only relevant for Parent Categories)
+
   isActive: boolean;
   order: number;
   metaTitle?: string;
@@ -22,6 +38,22 @@ export interface ICategory extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Filter Configuration Schema
+const FilterConfigSchema = new Schema({
+  key: { type: String, required: true },
+  label: { type: String, required: true },
+  type: {
+    type: String,
+    required: true,
+    enum: ['select', 'multiselect', 'variant', 'range', 'text']
+  },
+  required: { type: Boolean, default: false },
+  options: [{ type: String }], // Predefined options
+  min: { type: Number },       // For range
+  max: { type: Number },       // For range
+  unit: { type: String }       // e.g., "GB", "kg", "cm"
+}, { _id: false });
 
 const categorySchema = new Schema<ICategory>(
   {
@@ -64,6 +96,13 @@ const categorySchema = new Schema<ICategory>(
       type: [String], // Array of group names in order
       default: [],
     },
+
+    // Dynamic Filter Configuration
+    filterConfig: {
+      type: [FilterConfigSchema],
+      default: []
+    },
+
     attributes: [{
       attributeId: {
         type: Schema.Types.ObjectId,

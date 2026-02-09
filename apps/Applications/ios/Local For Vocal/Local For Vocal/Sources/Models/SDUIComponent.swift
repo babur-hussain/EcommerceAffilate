@@ -277,6 +277,7 @@ public enum ComponentType: String, Decodable {
     case textBlock = "text_block"
     case flashSaleGrid = "flash_sale_grid"
     case featuredCarousel = "featured_carousel"
+    case bestQuality = "best_quality"
 
     case unknown
 

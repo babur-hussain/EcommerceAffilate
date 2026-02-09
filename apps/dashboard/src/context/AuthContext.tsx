@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as FirebaseUser, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth';
+import { User as FirebaseUser, onIdTokenChanged, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { apiClient } from '@/lib/api';
 import { User } from '@/types';
@@ -38,22 +38,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+
+    const unsubscribe = onIdTokenChanged(auth, async (fbUser) => {
       if (!mounted) return;
-      
+
       setFirebaseUser(fbUser);
       if (fbUser) {
-        await fetchUserProfile(fbUser);
+        // If this is a token refresh, we might not need to fetch profile again if already loaded?
+        // But to be safe and simple, let's just ensure we have the user.
+        // Optimally we could check if user is already set.
+        if (!user) {
+          await fetchUserProfile(fbUser);
+        }
       } else {
         setUser(null);
       }
       setLoading(false);
     });
 
+    // Auto-refresh token every 10 minutes to prevent expiry
+    const REFRESH_INTERVAL = 10 * 60 * 1000;
+    const intervalId = setInterval(async () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        try {
+          console.log("🔄 [AuthContext] Auto-refreshing token...");
+          await currentUser.getIdToken(true);
+          console.log("✅ [AuthContext] Token auto-refreshed");
+        } catch (error) {
+          console.error("❌ [AuthContext] Token auto-refresh failed:", error);
+        }
+      }
+    }, REFRESH_INTERVAL);
+
     return () => {
       mounted = false;
       unsubscribe();
+      clearInterval(intervalId);
     };
   }, []);
 

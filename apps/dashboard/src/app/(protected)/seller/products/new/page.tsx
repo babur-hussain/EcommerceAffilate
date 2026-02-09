@@ -8,6 +8,8 @@ import { apiClient } from "@/lib/api";
 import toast from "react-hot-toast";
 import { ArrowLeft, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
 import Link from "next/link";
+import VariantGenerator from "@/components/products/VariantGenerator";
+import { IFilterConfig, IVariant } from "@/types/product";
 
 interface Brand {
   _id: string;
@@ -23,14 +25,7 @@ interface Category {
   parentCategory?: string;
 }
 
-interface Variant {
-  type: string;
-  value: string;
-  sku: string;
-  priceOverride: string;
-  stock: string;
-  image: string;
-}
+// Removed local Variant interface
 
 interface Attribute {
   _id: string;
@@ -109,6 +104,9 @@ export default function NewProductPage() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  const [filterConfig, setFilterConfig] = useState<IFilterConfig[]>([]);
+  const [fetchingConfig, setFetchingConfig] = useState(false);
+
   const [formData, setFormData] = useState({
     // 1. Product Basics
     title: "",
@@ -149,7 +147,7 @@ export default function NewProductPage() {
     skuStatus: "Active",
 
     // 5. Variants
-    variants: [] as Variant[],
+    variants: [] as IVariant[],
 
     // 6. Product Description
     shortDescription: "",
@@ -246,6 +244,31 @@ export default function NewProductPage() {
     fetchAttributes();
     fetchTrustBadges();
   }, []);
+
+  // Fetch Category Config when Category Changes
+  useEffect(() => {
+    const fetchCategoryConfig = async () => {
+      if (!formData.category) {
+        setFilterConfig([]);
+        return;
+      }
+
+      const categoryObj = categories.find(c => c.name === formData.category);
+      if (!categoryObj) return;
+
+      setFetchingConfig(true);
+      try {
+        const response = await apiClient.get<any>(`/api/categories/${categoryObj._id}`);
+        setFilterConfig(response.data.filterConfig || []);
+      } catch (error) {
+        console.error("Failed to fetch category config:", error);
+      } finally {
+        setFetchingConfig(false);
+      }
+    };
+
+    fetchCategoryConfig();
+  }, [formData.category, categories]);
 
   const fetchBrands = async () => {
     try {
@@ -408,6 +431,7 @@ export default function NewProductPage() {
         modelName: formData.modelName,
         status: "draft", // Always draft
         visibility: formData.visibility,
+        variants: formData.variants, // Add variants
       };
 
       await apiClient.post("/api/products", productData);
@@ -501,6 +525,15 @@ export default function NewProductPage() {
           discountAmount: parseFloat(offer.discountAmount) || 0
         })),
         attributes: formData.attributes.filter(a => a.attributeId && a.value),
+
+        // Dynamic Variants and Config
+        variantConfig: filterConfig.filter(f => f.type === 'variant' || f.isVariant).map(f => f.key),
+        variants: formData.variants.map(v => ({
+          ...v,
+          attributes: v.attributes, // Already in Record<string, string> format
+          price: Number(v.price),
+          stock: Number(v.stock),
+        })),
       };
 
       await apiClient.post("/api/products", productData);
@@ -533,37 +566,7 @@ export default function NewProductPage() {
     setFormData({ ...formData, keyFeatures: newFeatures });
   };
 
-  const addVariant = () => {
-    setFormData({
-      ...formData,
-      variants: [
-        ...formData.variants,
-        {
-          type: "",
-          value: "",
-          sku: "",
-          priceOverride: "",
-          stock: "",
-          image: "",
-        },
-      ],
-    });
-  };
-
-  const removeVariant = (index: number) => {
-    const newVariants = formData.variants.filter((_, i) => i !== index);
-    setFormData({ ...formData, variants: newVariants });
-  };
-
-  const handleVariantChange = (
-    index: number,
-    field: keyof Variant,
-    value: string
-  ) => {
-    const newVariants = [...formData.variants];
-    newVariants[index][field] = value;
-    setFormData({ ...formData, variants: newVariants });
-  };
+  // Old variant handlers removed
 
   const addOffer = () => {
     setFormData({
@@ -1187,7 +1190,7 @@ export default function NewProductPage() {
 
             {/* 5. Product Variants */}
             <Section
-              title="5️⃣ Product Variants (Optional)"
+              title="5️⃣ Product Variants (Dynamic)"
               name="variants"
               isActive={activeSection === "variants"}
               onToggle={toggleSection}
@@ -1195,118 +1198,20 @@ export default function NewProductPage() {
                 sectionRefs.current["variants"] = el;
               }}
             >
-              <div className="space-y-4">
-                {formData.variants.map((variant, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border border-gray-200 rounded-lg"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Variant Type
-                        </label>
-                        <select
-                          value={variant.type}
-                          onChange={(e) =>
-                            handleVariantChange(index, "type", e.target.value)
-                          }
-                          className={textareaClass}
-                        >
-                          <option value="">Select type</option>
-                          <option value="Size">Size</option>
-                          <option value="Color">Color</option>
-                          <option value="Weight">Weight</option>
-                          <option value="Pack Size">Pack Size</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Value
-                        </label>
-                        <input
-                          type="text"
-                          value={variant.value}
-                          onChange={(e) =>
-                            handleVariantChange(index, "value", e.target.value)
-                          }
-                          className={textareaClass}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Variant SKU
-                        </label>
-                        <input
-                          type="text"
-                          value={variant.sku}
-                          onChange={(e) =>
-                            handleVariantChange(index, "sku", e.target.value)
-                          }
-                          className={textareaClass}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Price Override
-                        </label>
-                        <input
-                          type="number"
-                          value={variant.priceOverride}
-                          onChange={(e) =>
-                            handleVariantChange(
-                              index,
-                              "priceOverride",
-                              e.target.value
-                            )
-                          }
-                          className={textareaClass}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Stock
-                        </label>
-                        <input
-                          type="number"
-                          value={variant.stock}
-                          onChange={(e) =>
-                            handleVariantChange(index, "stock", e.target.value)
-                          }
-                          className={textareaClass}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Image URL
-                        </label>
-                        <input
-                          type="url"
-                          value={variant.image}
-                          onChange={(e) =>
-                            handleVariantChange(index, "image", e.target.value)
-                          }
-                          className={textareaClass}
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeVariant(index)}
-                      className="mt-2 text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Remove Variant
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addVariant}
-                  className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-                >
-                  + Add Variant
-                </button>
-              </div>
+              {fetchingConfig ? (
+                <div className="p-8 flex justify-center text-gray-500">
+                  Loading category settings...
+                </div>
+              ) : (
+                <VariantGenerator
+                  filterConfig={filterConfig}
+                  basePrice={parseFloat(formData.price) || 0}
+                  baseStock={parseInt(formData.stock) || 0}
+                  baseSku={formData.sku}
+                  onVariantsGenerated={(variants) => setFormData({ ...formData, variants })}
+                  existingVariants={formData.variants}
+                />
+              )}
             </Section>
 
             {/* 7. Offers & Discounts (New Section) */}

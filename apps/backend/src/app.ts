@@ -93,7 +93,8 @@ app.use(
 );
 
 // Body parsing with size limits (MUST come BEFORE multer for JSON requests)
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Serve static files from public directory (for AASA file)
 import path from "path";

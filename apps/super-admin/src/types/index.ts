@@ -368,3 +368,34 @@ export interface Product {
   approvalStatus?: string;
   isSponsored?: boolean;
 }
+
+export interface FilterConfig {
+  key: string;
+  label: string;
+  type: 'select' | 'multiselect' | 'variant' | 'range' | 'text';
+  options?: string[];
+  min?: number;
+  max?: number;
+  unit?: string;
+  required?: boolean;
+}
+
+// Ensure Category matches backend schema
+export interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  icon?: string;
+  isActive: boolean;
+  order: number;
+  parentCategory?: {
+    _id: string;
+    name: string;
+  };
+  group?: string;
+  posters?: string[];
+  filterConfig?: FilterConfig[];
+  subCategoryGroupOrder?: string[];
+}
