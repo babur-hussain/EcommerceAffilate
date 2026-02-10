@@ -8,21 +8,45 @@ import mongoose from 'mongoose';
 export class DispatchService {
     // Cron job instance
     private static task: cron.ScheduledTask;
+    private static isProcessingTimeouts = false;
+    private static isProcessingPending = false;
 
     static init() {
         console.log('🚀 Initializing Dispatch Service...');
 
-        // Run every 10 seconds to check for timed-out requests
-        this.task = cron.schedule('*/10 * * * * *', () => {
-            this.processTimeouts();
+        // Run every 60 seconds (was 10s) to check for timed-out requests
+        this.task = cron.schedule('*/60 * * * * *', async () => {
+            if (this.isProcessingTimeouts) {
+                console.log('⚠️ Skipping processTimeouts - previous run still active');
+                return;
+            }
+            this.isProcessingTimeouts = true;
+            try {
+                await this.processTimeouts();
+            } catch (err) {
+                console.error('❌ Error in processTimeouts:', err);
+            } finally {
+                this.isProcessingTimeouts = false;
+            }
         });
 
-        // Run every 30 seconds to retry/catch-up on pending orders (SHIPPED but no request)
-        cron.schedule('*/30 * * * * *', () => {
-            this.processPendingOrders();
+        // Run every 5 minutes (was 30s) to retry/catch-up on pending orders
+        cron.schedule('*/5 * * * *', async () => {
+            if (this.isProcessingPending) {
+                console.log('⚠️ Skipping processPendingOrders - previous run still active');
+                return;
+            }
+            this.isProcessingPending = true;
+            try {
+                await this.processPendingOrders();
+            } catch (err) {
+                console.error('❌ Error in processPendingOrders:', err);
+            } finally {
+                this.isProcessingPending = false;
+            }
         });
 
-        console.log('✅ Dispatch Service initialized and cron job started.');
+        console.log('✅ Dispatch Service initialized and cron job started (Optimization Mode).');
     }
 
     /**
@@ -138,13 +162,13 @@ export class DispatchService {
     }
 
     /**
-     * The Loop: Check for timeouts (30s) and rotate
+     * The Loop: Check for timeouts (60s) and rotate
      */
     private static async processTimeouts() {
         const now = new Date();
-        const timeoutThreshold = new Date(now.getTime() - 30000); // 30 seconds ago
+        const timeoutThreshold = new Date(now.getTime() - 60000); // 60 seconds ago (increased from 30)
 
-        // Find requests that are PENDING and assignment started > 30s ago
+        // Find requests that are PENDING and assignment started > 60s ago
         const expiredRequests = await DeliveryRequest.find({
             status: 'PENDING',
             assignmentStartTime: { $lt: timeoutThreshold }

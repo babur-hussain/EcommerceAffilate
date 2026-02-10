@@ -225,5 +225,6 @@ const orderSchema = new Schema<IOrder>(
 );
 
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ status: 1, deliveryStatus: 1, shippingMethod: 1 }); // Optimize DispatchService Query
 
 export const Order = mongoose.model<IOrder>('Order', orderSchema);
