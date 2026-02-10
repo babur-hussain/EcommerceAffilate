@@ -238,7 +238,7 @@ export default function NewProductPage() {
     trustBadges: [] as string[],
 
     // --- New Grocery Fields State ---
-    manufacturerName: "",
+
     manufacturerAddress: "",
     importerName: "",
     customerCare: "",
