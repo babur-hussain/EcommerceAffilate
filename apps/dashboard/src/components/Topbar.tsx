@@ -39,6 +39,9 @@ export default function Topbar() {
               {user?.firstName || user?.email}
             </div>
             <div className="text-xs text-gray-500">{user?.role}</div>
+            <div className="text-[10px] text-gray-400">
+              ID: {user?.businessId || user?.id}
+            </div>
           </div>
         </div>
 

@@ -24,6 +24,8 @@ const VariantSchema = new Schema({
 export interface IProduct extends Document {
   title: string;
   slug: string;
+  productType: 'Physical' | 'Digital' | 'Service'; // Added
+  foodType?: 'Veg' | 'Non-Veg' | 'Egg' | 'Vegan'; // Added for Grocery
   description?: string;
   shortDescription?: string;
   price: number;
@@ -117,6 +119,85 @@ export interface IProduct extends Document {
     breadth: number;
     height: number;
   };
+  // --- New Grocery Fields ---
+  hsnCode?: string;
+  gstRate?: number;
+  countryOfOrigin?: string;
+  manufacturer?: {
+    name: string;
+    address: string;
+  };
+  importer?: {
+    name: string;
+  };
+  customerCare?: string;
+
+  // Inventory Extended
+  barcode?: string;
+  inventoryType?: 'Seller' | 'Platform';
+  maxOrderQty?: number;
+  minOrderQty?: number; // Override base?
+  restockLeadTime?: number;
+  warehouseLocation?: string;
+
+  // Packaging
+  packSize?: number;
+  packUnit?: string;
+  totalWeight?: number;
+  netQuantity?: string;
+  unitsInPack?: number;
+  isLoose?: boolean;
+  packagingType?: string;
+
+  // Shelf Life & Storage
+  shelfLife?: {
+    value: number;
+    unit: 'Days' | 'Months' | 'Years';
+  };
+  manufacturingDate?: Date;
+  expiryDate?: Date;
+  bestBefore?: Date;
+  storageInstructions?: string;
+  temperatureRequirement?: string; // e.g. "Refrigerated (0-4°C)"
+  isPerishable?: boolean;
+  isColdChain?: boolean; // delivery req
+
+  // Food Safety
+  fssaiLicense?: string;
+  fssaiLogo?: string;
+  allergens?: string[];
+  preservatives?: boolean;
+  artificialColors?: boolean;
+  isOrganic?: boolean;
+  certifications?: string[]; // e.g. ["FSSAI", "USDA"]
+  certificateImage?: string;
+
+  // Nutrition
+  nutrition?: {
+    servingSize: string;
+    servingsPerPack: number;
+    energy?: number;
+    protein?: number;
+    carbohydrates?: number;
+    sugars?: number;
+    fat?: number; // Total Fat
+    saturatedFat?: number;
+    transFat?: number;
+    cholesterol?: number;
+    sodium?: number;
+    fiber?: number;
+    vitamins?: Map<string, string>; // e.g. "Vitamin C": "10mg"
+  };
+
+  // Ingredients
+  ingredientList?: string; // Full text list
+  keyIngredients?: string[];
+  additives?: string;
+  isGMO?: boolean;
+
+  // Logistics Extended
+  volumetricWeight?: number;
+  isFragile?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -139,6 +220,15 @@ const productSchema = new Schema<IProduct>(
     shortDescription: {
       type: String,
       trim: true,
+    },
+    productType: {
+      type: String,
+      enum: ['Physical', 'Digital', 'Service'],
+      default: 'Physical'
+    },
+    foodType: {
+      type: String,
+      enum: ['Veg', 'Non-Veg', 'Egg', 'Vegan'],
     },
     price: {
       type: Number,
@@ -360,6 +450,79 @@ const productSchema = new Schema<IProduct>(
       height: { type: Number, default: 10 }
     },
     trustBadges: [{ type: String }],
+
+    // --- Grocery Fields Schema ---
+    hsnCode: { type: String, trim: true },
+    gstRate: { type: Number, default: 0 },
+    countryOfOrigin: { type: String, trim: true },
+    manufacturer: {
+      name: String,
+      address: String
+    },
+    importer: {
+      name: String
+    },
+    customerCare: { type: String },
+
+    barcode: { type: String, trim: true },
+    inventoryType: { type: String, enum: ['Seller', 'Platform'], default: 'Seller' },
+    maxOrderQty: { type: Number },
+    minOrderQty: { type: Number, default: 1 },
+    restockLeadTime: { type: Number },
+    warehouseLocation: { type: String },
+
+    packSize: { type: Number },
+    packUnit: { type: String }, // g, kg, ml, L, pcs
+    totalWeight: { type: Number }, // Gross
+    netQuantity: { type: String },
+    unitsInPack: { type: Number },
+    isLoose: { type: Boolean, default: false },
+    packagingType: { type: String },
+
+    shelfLife: {
+      value: Number,
+      unit: { type: String, enum: ['Days', 'Months', 'Years'] }
+    },
+    manufacturingDate: Date,
+    expiryDate: Date,
+    bestBefore: Date,
+    storageInstructions: String,
+    temperatureRequirement: String,
+    isPerishable: { type: Boolean, default: false },
+    isColdChain: { type: Boolean, default: false },
+
+    fssaiLicense: String,
+    fssaiLogo: String,
+    allergens: [String],
+    preservatives: { type: Boolean, default: false },
+    artificialColors: { type: Boolean, default: false },
+    isOrganic: { type: Boolean, default: false },
+    certifications: [String],
+    certificateImage: String,
+
+    nutrition: {
+      servingSize: String,
+      servingsPerPack: Number,
+      energy: Number,
+      protein: Number,
+      carbohydrates: Number,
+      sugars: Number,
+      fat: Number,
+      saturatedFat: Number,
+      transFat: Number,
+      cholesterol: Number,
+      sodium: Number,
+      fiber: Number,
+      vitamins: { type: Map, of: String }
+    },
+
+    ingredientList: String,
+    keyIngredients: [String],
+    additives: String,
+    isGMO: { type: Boolean, default: false },
+
+    volumetricWeight: Number,
+    isFragile: { type: Boolean, default: false },
   },
   {
     timestamps: true,

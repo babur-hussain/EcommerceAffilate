@@ -25,7 +25,7 @@ export const generateJWT = (user: Pick<IUser, '_id' | 'role'>): string => {
       role: user.role,
     },
     secret,
-    { expiresIn: '7d' }
+    { expiresIn: '365d' }
   );
 };
 

@@ -1367,7 +1367,7 @@ extension SDUIComponentView {
         let title = component.prop(for: "title") ?? "Best quality"
         let headerActionUrl = component.prop(for: "headerActionUrl") as String?
         let headerImage = component.prop(for: "headerImage") as String?
-        let backgroundColor = component.prop(for: "backgroundColor") ?? "#FFE4E6"
+        let backgroundColor = component.prop(for: "backgroundColor") ?? "#DD1717"
 
         let items: [BestQualityView.BestQualityItem] = {
             if let itemsValue = component.props?["items"]?.value,

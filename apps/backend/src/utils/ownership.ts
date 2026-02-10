@@ -8,9 +8,25 @@ export const verifyProductOwnership = async (
 ): Promise<boolean> => {
   if (user.role === 'ADMIN') return true;
   if (!mongoose.Types.ObjectId.isValid(productId)) return false;
+
+  // 1. Check main products collection
   const product = await Product.findById(productId).select('businessId');
-  if (!product) return false;
-  return !!user.businessId && product.businessId?.toString() === user.businessId;
+  if (product) {
+    return !!user.businessId && product.businessId?.toString() === user.businessId;
+  }
+
+  // 2. Check grocery_products collection
+  if (mongoose.connection.db) {
+    const groceryProduct = await mongoose.connection.db
+      .collection('grocery_products')
+      .findOne({ _id: new mongoose.Types.ObjectId(productId) }, { projection: { businessId: 1 } });
+
+    if (groceryProduct) {
+      return !!user.businessId && groceryProduct.businessId?.toString() === user.businessId;
+    }
+  }
+
+  return false;
 };
 
 export const requireProductOwnership = (paramKey = 'id') => {

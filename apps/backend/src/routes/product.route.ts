@@ -38,6 +38,46 @@ router.post("/products", requireBrand, async (req: Request, res: Response) => {
       offers,
       lastChanceOffers,
       fees,
+      // Grocery Fields
+      isGrocery,
+      foodType,
+      manufacturerName, // Already accepted in update, accept here too? No, it's 'manufacturer' object in schema? Let's check schema.
+      // Wait, 'manufacturer' in schema is object { name, address }. 'manufacturerName' was used in existing code?
+      // Existing code has 'manufacturerName' in update? Yes line 152.
+      // But new schema has 'manufacturer: { name, address }'.
+      // Frontend sends: manufacturer: { name: ..., address: ... }
+      manufacturer,
+      importer,
+      customerCare,
+      barcode,
+      restockLeadTime,
+      shelfLife,
+      manufacturingDate,
+      expiryDate,
+      storageInstructions,
+      temperatureRequirement,
+      isPerishable,
+      isColdChain,
+      fssaiLicense,
+      allergens,
+      certifications,
+      preservatives,
+      artificialColors,
+      isOrganic,
+      nutrition,
+      ingredientList,
+      keyIngredients,
+      additives,
+      isGMO,
+      volumetricWeight,
+      isFragile,
+      packSize,
+      packUnit,
+      netQuantity,
+      unitsInPack,
+      totalWeight,
+      packagingType,
+      isLoose
     } = req.body;
 
     const authUser = (req as any).user as
@@ -113,12 +153,62 @@ router.post("/products", requireBrand, async (req: Request, res: Response) => {
       offers: offers || [],
       lastChanceOffers: lastChanceOffers || [],
       fees: fees || [],
+      // Grocery Fields
+      foodType,
+      manufacturer,
+      importer,
+      customerCare,
+      barcode,
+      restockLeadTime,
+      shelfLife,
+      manufacturingDate,
+      expiryDate,
+      storageInstructions,
+      temperatureRequirement,
+      isPerishable,
+      isColdChain,
+      fssaiLicense,
+      allergens,
+      certifications,
+      preservatives,
+      artificialColors,
+      isOrganic,
+      nutrition,
+      ingredientList,
+      keyIngredients,
+      additives,
+      isGMO,
+      volumetricWeight,
+      isFragile,
+      packSize,
+      packUnit,
+      netQuantity,
+      unitsInPack,
+      totalWeight,
+      packagingType,
+      isLoose,
       // sponsoredScore and popularityScore will use defaults (0)
       // These are controlled by admin/system logic only
     });
 
     // Invalidate ranking caches because product catalog changed.
+    // Invalidate ranking caches because product catalog changed.
     clearCacheByPrefix(RANKING_CACHE_PREFIX);
+
+    // --- Dual Storage for Grocery Products ---
+    if (isGrocery) {
+      try {
+        if (mongoose.connection.db) {
+          const groceryCollection = mongoose.connection.db.collection("grocery_products");
+          await groceryCollection.insertOne(product.toObject());
+          console.log(`✅ Product ${product._id} also saved to grocery_products collection`);
+        }
+      } catch (groceryError) {
+        console.error("⚠️ Failed to save to grocery_products (non-critical):", groceryError);
+        // We don't fail the request, just log it.
+      }
+    }
+
     res.status(201).json(product);
   } catch (error: any) {
     res.status(500).json({
@@ -356,6 +446,100 @@ router.patch(
     } catch (error: any) {
       res.status(500).json({
         error: "Failed to resubmit product",
+        message: error.message,
+      });
+    }
+  }
+);
+
+// PATCH /api/products/:id/image - Rapidly update product primary image (and sync to grocery)
+router.patch(
+  "/products/:id/image",
+  requireBrand,
+  requireProductOwnership(),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { imageUrl } = req.body;
+
+      if (!imageUrl || typeof imageUrl !== "string") {
+        return res.status(400).json({ error: "imageUrl is required" });
+      }
+
+      console.log(`🖼️ Updating image for product ${id}: ${imageUrl}`);
+
+      // 1. Update Main Product
+      // We push to images array AND set as primaryImage/image
+      let product = await Product.findByIdAndUpdate(
+        id,
+        {
+          $push: { images: { $each: [imageUrl], $position: 0 } }, // Prepend to array
+          $set: {
+            image: imageUrl,
+            primaryImage: imageUrl,
+            thumbnailImage: imageUrl
+          }
+        },
+        { new: true }
+      );
+
+      // 2. Sync to/Update Grocery Products
+      let groceryUpdated = false;
+      try {
+        if (mongoose.connection.db) {
+          const groceryCollection = mongoose.connection.db.collection("grocery_products");
+
+          const result = await groceryCollection.findOneAndUpdate(
+            { _id: new mongoose.Types.ObjectId(id) }, // Same ID
+            {
+              $push: { images: { $each: [imageUrl], $position: 0 } }, // Prepend
+              $set: {
+                image: imageUrl,
+                primaryImage: imageUrl,
+                thumbnailImage: imageUrl
+              }
+            } as any,
+            { returnDocument: 'after' }
+          );
+
+          if (result) {
+            // Handle both driver versions: result.value or result as doc
+            const updatedDoc = (result as any).value || result;
+
+            if (updatedDoc) {
+              groceryUpdated = true;
+              console.log(`✅ Updated image in grocery_products for ${id}`);
+              // If product was null (not in main collection), use grocery data for response
+              if (!product) {
+                product = updatedDoc as any;
+              }
+            }
+          }
+        }
+      } catch (syncError) {
+        console.error("⚠️ Failed to sync/update image to grocery_products:", syncError);
+      }
+
+      if (!product && !groceryUpdated) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      clearCacheByPrefix(RANKING_CACHE_PREFIX);
+
+      res.json({
+        message: "Image updated successfully",
+        product: {
+          _id: (product as any)._id,
+          image: (product as any).image,
+          primaryImage: (product as any).primaryImage,
+          images: (product as any).images
+        }
+      });
+
+    } catch (error: any) {
+      console.error("❌ Failed to update product image:", error);
+      res.status(500).json({
+        error: "Failed to update product image",
         message: error.message,
       });
     }
@@ -975,6 +1159,60 @@ router.get(
     } catch (error: any) {
       res.status(500).json({
         error: "Failed to fetch seller products",
+        message: error.message,
+      });
+    }
+  }
+);
+
+// DELETE /api/products/:id - Delete a product
+router.delete(
+  "/products/:id",
+  requireBrand,
+  requireProductOwnership(),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      console.log(`🗑️ DELETE request for product: ${id}`);
+
+      // 1. Try to delete from main products collection
+      const product = await Product.findByIdAndDelete(id);
+      console.log(`TRACER: Main product delete result: ${product ? 'FOUND & DELETED' : 'NOT FOUND'}`);
+
+      // 2. Try to delete from grocery_products collection
+      let groceryDeleted = false;
+      try {
+        if (mongoose.connection.db) {
+          const result = await mongoose.connection.db.collection('grocery_products').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+          console.log(`TRACER: Grocery delete count: ${result.deletedCount}`);
+          if (result.deletedCount > 0) {
+            groceryDeleted = true;
+            console.log(`✅ Deleted product from grocery_products: ${id}`);
+          }
+        } else {
+          console.log('TRACER: No DB connection for grocery delete');
+        }
+      } catch (err) {
+        console.error("⚠️ Failed to delete from grocery_products:", err);
+      }
+
+      if (!product && !groceryDeleted) {
+        console.log('TRACER: Product not found in either collection, returning 404');
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      // Clear caches
+      clearCacheByPrefix(RANKING_CACHE_PREFIX);
+
+      res.json({ message: "Product deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({
+        error: "Failed to delete product",
         message: error.message,
       });
     }

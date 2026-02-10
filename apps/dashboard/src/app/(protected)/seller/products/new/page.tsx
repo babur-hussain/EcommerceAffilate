@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api";
 import toast from "react-hot-toast";
-import { ArrowLeft, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Upload, X, ShoppingBasket } from "lucide-react";
 import Link from "next/link";
 import VariantGenerator from "@/components/products/VariantGenerator";
+import GroceryProductForm from "@/components/products/GroceryProductForm";
 import { IFilterConfig, IVariant } from "@/types/product";
 
 interface Brand {
@@ -99,6 +100,7 @@ export default function NewProductPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeSection, setActiveSection] = useState<string>("basics");
+  const [formType, setFormType] = useState<'regular' | 'grocery'>('regular'); // Toggle State
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -121,6 +123,7 @@ export default function NewProductPage() {
     sku: "",
     hsnCode: "",
     productCondition: "New",
+    foodType: "Veg", // New Grocery Field
 
     // 2. Product Identifiers
     upc: "",
@@ -233,6 +236,55 @@ export default function NewProductPage() {
     offers: [], // Array of { type, title, description, discountAmount, code }
     attributes: [] as { attributeId: string; value: string }[],
     trustBadges: [] as string[],
+
+    // --- New Grocery Fields State ---
+    manufacturerName: "",
+    manufacturerAddress: "",
+    importerName: "",
+    customerCare: "",
+    barcode: "",
+    restockLeadTime: "",
+    packSize: "",
+    packUnit: "g",
+    netQuantity: "",
+    unitsInPack: "",
+    totalWeight: "",
+    packagingType: "Pouch",
+    isLoose: false,
+    shelfLifeValue: "",
+    shelfLifeUnit: "Days",
+    storageInstructions: "",
+    storageType: "Room Temperature",
+    temperatureRequirement: "",
+    fssaiLicense: "",
+    allergens: "",
+    certifications: "",
+    preservatives: false,
+    artificialColors: false,
+    isOrganic: false,
+    isGMO: false,
+    nutrition: {
+      servingSize: "",
+      servingsPerPack: "",
+      energy: "",
+      protein: "",
+      carbohydrates: "",
+      sugars: "",
+      fat: "",
+      saturatedFat: "",
+      transFat: "",
+      cholesterol: "",
+      sodium: "",
+      fiber: "",
+      vitamins: {}
+    },
+    ingredientList: "",
+    keyIngredients: "",
+    additives: "",
+    volumetricWeight: "",
+    isFragile: false,
+    isPerishable: false,
+    isColdChain: false,
   });
 
   const [availableAttributes, setAvailableAttributes] = useState<Attribute[]>([]);
@@ -470,11 +522,13 @@ export default function NewProductPage() {
       const uploadedImageUrls = await uploadImagesToCloudinary();
 
       const productData = {
+        isGrocery: formType === 'grocery',
         title: formData.title,
         subtitle: formData.subtitle,
         price: parseFloat(formData.price),
         mrp: parseFloat(formData.mrp),
         category: formData.category,
+        categoryId: categories.find(c => c.name === formData.category)?._id,
         subCategory: formData.subCategory,
         image: uploadedImageUrls[0], // First image as main
         images: uploadedImageUrls,
@@ -534,6 +588,56 @@ export default function NewProductPage() {
           price: Number(v.price),
           stock: Number(v.stock),
         })),
+
+        // --- Grocery Fields Mapping for Backend ---
+        foodType: formData.foodType,
+        manufacturer: {
+          name: formData.manufacturerName,
+          address: formData.manufacturerAddress
+        },
+        importer: {
+          name: formData.importerName
+        },
+        customerCare: formData.customerCare,
+        barcode: formData.barcode,
+        restockLeadTime: formData.restockLeadTime ? parseFloat(formData.restockLeadTime) : undefined,
+        inventoryType: formData.inventoryType,
+        warehouseLocation: formData.warehouseLocation,
+
+        packSize: parseFloat(formData.packSize),
+        packUnit: formData.packUnit,
+        netQuantity: formData.netQuantity,
+        unitsInPack: formData.unitsInPack ? parseInt(formData.unitsInPack) : undefined,
+        totalWeight: parseFloat(formData.totalWeight),
+        packagingType: formData.packagingType,
+        isLoose: formData.isLoose,
+
+        shelfLife: {
+          value: parseFloat(formData.shelfLifeValue),
+          unit: formData.shelfLifeUnit
+        },
+        manufacturingDate: formData.manufacturingDate,
+        expiryDate: formData.expiryDate,
+        storageInstructions: formData.storageInstructions,
+        temperatureRequirement: formData.temperatureRequirement,
+        isPerishable: formData.isPerishable,
+        isColdChain: formData.isColdChain,
+
+        fssaiLicense: formData.fssaiLicense,
+        allergens: formData.allergens ? formData.allergens.split(',').map((s: string) => s.trim()) : [],
+        certifications: formData.certifications ? formData.certifications.split(',').map((s: string) => s.trim()) : [],
+        preservatives: formData.preservatives,
+        artificialColors: formData.artificialColors,
+        isOrganic: formData.isOrganic,
+
+        nutrition: formData.nutrition, // Already object
+        ingredientList: formData.ingredientList,
+        keyIngredients: formData.keyIngredients ? formData.keyIngredients.split(',').map((s: string) => s.trim()) : [],
+        additives: formData.additives,
+        isGMO: formData.isGMO,
+        volumetricWeight: formData.volumetricWeight ? parseFloat(formData.volumetricWeight) : undefined,
+        isFragile: formData.isFragile,
+
       };
 
       await apiClient.post("/api/products", productData);
@@ -668,6 +772,30 @@ export default function NewProductPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Form Type Toggle */}
+              <div className="flex bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setFormType('regular')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${formType === 'regular'
+                    ? 'bg-white text-primary-700 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  Regular Product
+                </button>
+                <button
+                  onClick={() => setFormType('grocery')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${formType === 'grocery'
+                    ? 'bg-white text-green-700 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  <ShoppingBasket className="w-4 h-4" />
+                  Grocery & Food
+                </button>
+              </div>
+
               <div className="hidden md:flex items-center space-x-2 text-sm">
                 <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full font-medium">
                   Step 1 of 15
@@ -680,1761 +808,1745 @@ export default function NewProductPage() {
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 1. Product Basics */}
-            <Section
-              title="1️⃣ Product Basics (Mandatory)"
-              name="basics"
-              isActive={activeSection === "basics"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["basics"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className={labelClass}>Product Title *</label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter product title"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Product Subtitle</label>
-                  <input
-                    type="text"
-                    name="subtitle"
-                    value={formData.subtitle}
-                    onChange={handleChange}
-                    placeholder="Brief subtitle or tagline"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Category *</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    required
-                    className={selectClass}
-                  >
-                    <option value="">Select category</option>
-                    {categories.map((category) => (
-                      <option key={category._id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Sub-Category</label>
-                  <input
-                    type="text"
-                    name="subCategory"
-                    value={formData.subCategory}
-                    onChange={handleChange}
-                    placeholder="e.g., Smartphones, T-Shirts"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Product Type *</label>
-                  <select
-                    name="productType"
-                    value={formData.productType}
-                    onChange={handleChange}
-                    className={selectClass}
-                  >
-                    <option value="Physical">Physical</option>
-                    <option value="Digital">Digital</option>
-                    <option value="Service">Service</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Brand *</label>
-                  <select
-                    name="brandId"
-                    value={formData.brandId}
-                    onChange={handleChange}
-                    required
-                    className={selectClass}
-                  >
-                    <option value="">Select brand</option>
-                    {brands.map((brand) => (
-                      <option key={brand._id} value={brand._id}>
-                        {brand.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Brand Name</label>
-                  <input
-                    type="text"
-                    name="brandName"
-                    value={formData.brandName}
-                    onChange={handleChange}
-                    placeholder="Brand display name"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Manufacturer Name</label>
-                  <input
-                    type="text"
-                    name="manufacturerName"
-                    value={formData.manufacturerName}
-                    onChange={handleChange}
-                    placeholder="Manufacturer company name"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Country of Origin *</label>
-                  <input
-                    type="text"
-                    name="countryOfOrigin"
-                    value={formData.countryOfOrigin}
-                    onChange={handleChange}
-                    placeholder="e.g., India, USA, China"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Model Name / Number</label>
-                  <input
-                    type="text"
-                    name="modelName"
-                    value={formData.modelName}
-                    onChange={handleChange}
-                    placeholder="Product model identifier"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>SKU</label>
-                  <input
-                    type="text"
-                    name="sku"
-                    value={formData.sku}
-                    onChange={handleChange}
-                    placeholder="Stock Keeping Unit"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>HSN / SAC Code</label>
-                  <input
-                    type="text"
-                    name="hsnCode"
-                    value={formData.hsnCode}
-                    onChange={handleChange}
-                    placeholder="Tax classification code"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Product Condition</label>
-                  <select
-                    name="productCondition"
-                    value={formData.productCondition}
-                    onChange={handleChange}
-                    className={selectClass}
-                  >
-                    <option value="New">New</option>
-                    <option value="Refurbished">Refurbished</option>
-                    <option value="Used">Used</option>
-                  </select>
-                </div>
-              </div>
-            </Section>
 
-            {/* 2. Product Identifiers */}
-            <Section
-              title="2️⃣ Product Identifiers"
-              name="identifiers"
-              isActive={activeSection === "identifiers"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["identifiers"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    UPC / EAN / ISBN
-                  </label>
-                  <input
-                    type="text"
-                    name="upc"
-                    value={formData.upc}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Internal Product Code
-                  </label>
-                  <input
-                    type="text"
-                    name="internalCode"
-                    value={formData.internalCode}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Batch Number
-                  </label>
-                  <input
-                    type="text"
-                    name="batchNumber"
-                    value={formData.batchNumber}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div className="flex items-center pt-7">
-                  <input
-                    type="checkbox"
-                    name="serialNumberRequired"
-                    checked={formData.serialNumberRequired}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Serial Number Required
-                  </label>
-                </div>
-              </div>
-            </Section>
-
-            {/* 3. Sale Configuration (New Section) */}
-            <Section
-              title="3️⃣ Sale Configuration"
-              name="saleConfig"
-              isActive={activeSection === "saleConfig"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["saleConfig"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className={labelClass}>Sale Start Date</label>
-                  <input
-                    type="datetime-local"
-                    name="saleStartDate"
-                    value={formData.saleStartDate}
-                    onChange={handleChange}
-                    className={inputClass}
-                  />
-                  <p className="text-xs text-gray-500">Optional: Determine when the sale price becomes active.</p>
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Sale End Date</label>
-                  <input
-                    type="datetime-local"
-                    name="saleEndDate"
-                    value={formData.saleEndDate}
-                    onChange={handleChange}
-                    className={inputClass}
-                  />
-                  <p className="text-xs text-gray-500">Required for the countdown timer to appear.</p>
-                </div>
-              </div>
-            </Section>
-
-            {/* 4. Pricing & Taxation (Renumbered) */}
-            <Section
-              title="4️⃣ Pricing & Taxation"
-              name="pricing"
-              isActive={activeSection === "pricing"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["pricing"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    MRP (Maximum Retail Price) *
-                  </label>
-                  <input
-                    type="number"
-                    name="mrp"
-                    value={formData.mrp}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Selling Price *
-                  </label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cost Price (Internal)
-                  </label>
-                  <input
-                    type="number"
-                    name="costPrice"
-                    value={formData.costPrice}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Discount Type
-                  </label>
-                  <select
-                    name="discountType"
-                    value={formData.discountType}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="Flat">Flat</option>
-                    <option value="Percentage">Percentage</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Discount Value
-                  </label>
-                  <input
-                    type="number"
-                    name="discountValue"
-                    value={formData.discountValue}
-                    onChange={handleChange}
-                    min="0"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Protect Promise Fee
-                  </label>
-                  <input
-                    type="number"
-                    name="protectPromiseFee"
-                    value={formData.protectPromiseFee}
-                    onChange={handleChange}
-                    min="0"
-                    className={textareaClass}
-                    placeholder="Optional service fee"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    GST Rate (%) *
-                  </label>
-                  <select
-                    name="gstRate"
-                    value={formData.gstRate}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="0">0%</option>
-                    <option value="5">5%</option>
-                    <option value="12">12%</option>
-                    <option value="18">18%</option>
-                    <option value="28">28%</option>
-                  </select>
-                </div>
-                <div className="flex items-center pt-7">
-                  <input
-                    type="checkbox"
-                    name="taxInclusive"
-                    checked={formData.taxInclusive}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Tax Inclusive Price
-                  </label>
-                </div>
-              </div>
-            </Section>
-
-            {/* 4. Inventory & Stock */}
-            <Section
-              title="4️⃣ Inventory & Stock"
-              name="inventory"
-              isActive={activeSection === "inventory"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["inventory"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Stock Quantity *
-                  </label>
-                  <input
-                    type="number"
-                    name="stock"
-                    value={formData.stock}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Minimum Order Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="minOrderQty"
-                    value={formData.minOrderQty}
-                    onChange={handleChange}
-                    min="1"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Maximum Order Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="maxOrderQty"
-                    value={formData.maxOrderQty}
-                    onChange={handleChange}
-                    min="1"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Low Stock Alert Threshold
-                  </label>
-                  <input
-                    type="number"
-                    name="lowStockThreshold"
-                    value={formData.lowStockThreshold}
-                    onChange={handleChange}
-                    min="0"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Inventory Type
-                  </label>
-                  <select
-                    name="inventoryType"
-                    value={formData.inventoryType}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="Seller Managed">Seller Managed</option>
-                    <option value="Platform Managed">Platform Managed</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Warehouse Location
-                  </label>
-                  <input
-                    type="text"
-                    name="warehouseLocation"
-                    value={formData.warehouseLocation}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SKU Status
-                  </label>
-                  <select
-                    name="skuStatus"
-                    value={formData.skuStatus}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Out of Stock">Out of Stock</option>
-                  </select>
-                </div>
-              </div>
-            </Section>
-
-            {/* 5. Product Variants */}
-            <Section
-              title="5️⃣ Product Variants (Dynamic)"
-              name="variants"
-              isActive={activeSection === "variants"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["variants"] = el;
-              }}
-            >
-              {fetchingConfig ? (
-                <div className="p-8 flex justify-center text-gray-500">
-                  Loading category settings...
-                </div>
-              ) : (
-                <VariantGenerator
-                  filterConfig={filterConfig}
-                  basePrice={parseFloat(formData.price) || 0}
-                  baseStock={parseInt(formData.stock) || 0}
-                  baseSku={formData.sku}
-                  onVariantsGenerated={(variants) => setFormData({ ...formData, variants })}
-                  existingVariants={formData.variants}
-                />
-              )}
-            </Section>
-
-            {/* 7. Offers & Discounts (New Section) */}
-            <Section
-              title="7️⃣ Offers & Discounts"
-              name="offers"
-              isActive={activeSection === "offers"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["offers"] = el;
-              }}
-            >
-              <div className="space-y-4">
-                {formData.offers.map((offer, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border border-gray-200 rounded-lg bg-gray-50"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className={labelClass}>Offer Type</label>
-                        <select
-                          value={offer.type}
-                          onChange={(e) => handleOfferChange(index, "type", e.target.value)}
-                          className={selectClass}
-                        >
-                          <option value="Bank">Bank Offer</option>
-                          <option value="Exchange">Exchange Offer</option>
-                          <option value="EMI">EMI Plan</option>
-                          <option value="Special">Special Discount</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={labelClass}>Offer Title *</label>
-                        <input
-                          type="text"
-                          value={offer.title}
-                          onChange={(e) => handleOfferChange(index, "title", e.target.value)}
-                          placeholder="e.g., 10% off on SBI Cards"
-                          className={inputClass}
-                        />
-                      </div>
-                      <div>
-                        <label className={labelClass}>Discount Amount (₹) *</label>
-                        <input
-                          type="number"
-                          value={offer.discountAmount}
-                          onChange={(e) => handleOfferChange(index, "discountAmount", e.target.value)}
-                          min="0"
-                          className={inputClass}
-                        />
-                      </div>
-                      <div>
-                        <label className={labelClass}>Coupon Code (Optional)</label>
-                        <input
-                          type="text"
-                          value={offer.code}
-                          onChange={(e) => handleOfferChange(index, "code", e.target.value)}
-                          className={inputClass}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className={labelClass}>Description</label>
-                        <textarea
-                          rows={2}
-                          value={offer.description}
-                          onChange={(e) => handleOfferChange(index, "description", e.target.value)}
-                          className={textareaClass}
-                          placeholder="Details about the offer..."
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeOffer(index)}
-                      className="mt-2 text-red-600 hover:text-red-700 text-sm font-medium"
-                    >
-                      Remove Offer
-                    </button>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={addOffer}
-                  className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
+            {/* Conditional Rendering based on Form Type */}
+            {formType === 'grocery' ? (
+              <GroceryProductForm
+                formData={formData}
+                handleChange={handleChange}
+                setFormData={setFormData}
+                brands={brands}
+                categories={categories}
+              />
+            ) : (
+              <>
+                {/* 1. Product Basics */}
+                <Section
+                  title="1️⃣ Product Basics (Mandatory)"
+                  name="basics"
+                  isActive={activeSection === "basics"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["basics"] = el;
+                  }}
                 >
-                  + Add New Offer
-                </button>
-              </div>
-            </Section>
-
-            {/* 6. Product Description */}
-            <Section
-              title="6️⃣ Product Description & Content"
-              name="description"
-              isActive={activeSection === "description"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["description"] = el;
-              }}
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Short Description
-                  </label>
-                  <textarea
-                    name="shortDescription"
-                    value={formData.shortDescription}
-                    onChange={handleChange}
-                    rows={2}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Long Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Key Features (Min 5)
-                  </label>
-                  {formData.keyFeatures.map((feature, index) => (
-                    <input
-                      key={index}
-                      type="text"
-                      value={feature}
-                      onChange={(e) =>
-                        handleFeatureChange(index, e.target.value)
-                      }
-                      placeholder={`Feature ${index + 1}`}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 mb-2 bg-white text-gray-900"
-                    />
-                  ))}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Box Contents
-                    </label>
-                    <textarea
-                      name="boxContents"
-                      value={formData.boxContents}
-                      onChange={handleChange}
-                      rows={2}
-                      className={textareaClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Usage Instructions
-                    </label>
-                    <textarea
-                      name="usageInstructions"
-                      value={formData.usageInstructions}
-                      onChange={handleChange}
-                      rows={2}
-                      className={textareaClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Care Instructions
-                    </label>
-                    <textarea
-                      name="careInstructions"
-                      value={formData.careInstructions}
-                      onChange={handleChange}
-                      rows={2}
-                      className={textareaClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Warranty Details
-                    </label>
-                    <textarea
-                      name="warrantyDetails"
-                      value={formData.warrantyDetails}
-                      onChange={handleChange}
-                      rows={2}
-                      className={textareaClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Warranty Duration
-                    </label>
-                    <input
-                      type="text"
-                      name="warrantyDuration"
-                      value={formData.warrantyDuration}
-                      onChange={handleChange}
-                      placeholder="e.g., 1 Year"
-                      className={textareaClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Return Window (Days)
-                    </label>
-                    <input
-                      type="number"
-                      name="returnWindow"
-                      value={formData.returnWindow}
-                      onChange={handleChange}
-                      min="0"
-                      className={textareaClass}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="returnable"
-                    checked={formData.returnable}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Returnable Product
-                  </label>
-                </div>
-              </div>
-            </Section>
-
-            {/* Attributes Section */}
-            <Section
-              title="✨ Product Attributes"
-              name="attributes"
-              isActive={activeSection === "attributes"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["attributes"] = el;
-              }}
-            >
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500">
-                  Add specific attributes like Material, Color, Fabric, etc.
-                </p>
-                {formData.attributes.map((attr, index) => (
-                  <div key={index} className="flex gap-4 items-start">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Attribute Name
-                      </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className={labelClass}>Product Title *</label>
+                      <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                        required
+                        placeholder="Enter product title"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Product Subtitle</label>
+                      <input
+                        type="text"
+                        name="subtitle"
+                        value={formData.subtitle}
+                        onChange={handleChange}
+                        placeholder="Brief subtitle or tagline"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Category *</label>
                       <select
-                        value={attr.attributeId}
-                        onChange={(e) =>
-                          handleAttributeChange(index, "attributeId", e.target.value)
-                        }
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        required
                         className={selectClass}
                       >
-                        <option value="">Select Attribute</option>
-                        {availableAttributes.map((a) => (
-                          <option key={a._id} value={a._id}>
-                            {a.name}
+                        <option value="">Select category</option>
+                        {categories.map((category) => (
+                          <option key={category._id} value={category.name}>
+                            {category.name}
                           </option>
                         ))}
                       </select>
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Value
-                      </label>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Sub-Category</label>
                       <input
                         type="text"
-                        value={attr.value}
-                        onChange={(e) =>
-                          handleAttributeChange(index, "value", e.target.value)
-                        }
-                        placeholder="Value (e.g. Cotton, Blue)"
+                        name="subCategory"
+                        value={formData.subCategory}
+                        onChange={handleChange}
+                        placeholder="e.g., Smartphones, T-Shirts"
                         className={inputClass}
                       />
                     </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Product Type *</label>
+                      <select
+                        name="productType"
+                        value={formData.productType}
+                        onChange={handleChange}
+                        className={selectClass}
+                      >
+                        <option value="Physical">Physical</option>
+                        <option value="Digital">Digital</option>
+                        <option value="Service">Service</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Brand *</label>
+                      <select
+                        name="brandId"
+                        value={formData.brandId}
+                        onChange={handleChange}
+                        required
+                        className={selectClass}
+                      >
+                        <option value="">Select brand</option>
+                        {brands.map((brand) => (
+                          <option key={brand._id} value={brand._id}>
+                            {brand.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Brand Name</label>
+                      <input
+                        type="text"
+                        name="brandName"
+                        value={formData.brandName}
+                        onChange={handleChange}
+                        placeholder="Brand display name"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Manufacturer Name</label>
+                      <input
+                        type="text"
+                        name="manufacturerName"
+                        value={formData.manufacturerName}
+                        onChange={handleChange}
+                        placeholder="Manufacturer company name"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Country of Origin *</label>
+                      <input
+                        type="text"
+                        name="countryOfOrigin"
+                        value={formData.countryOfOrigin}
+                        onChange={handleChange}
+                        placeholder="e.g., India, USA, China"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Model Name / Number</label>
+                      <input
+                        type="text"
+                        name="modelName"
+                        value={formData.modelName}
+                        onChange={handleChange}
+                        placeholder="Product model identifier"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>SKU</label>
+                      <input
+                        type="text"
+                        name="sku"
+                        value={formData.sku}
+                        onChange={handleChange}
+                        placeholder="Stock Keeping Unit"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>HSN / SAC Code</label>
+                      <input
+                        type="text"
+                        name="hsnCode"
+                        value={formData.hsnCode}
+                        onChange={handleChange}
+                        placeholder="Tax classification code"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Product Condition</label>
+                      <select
+                        name="productCondition"
+                        value={formData.productCondition}
+                        onChange={handleChange}
+                        className={selectClass}
+                      >
+                        <option value="New">New</option>
+                        <option value="Refurbished">Refurbished</option>
+                        <option value="Used">Used</option>
+                      </select>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 2. Product Identifiers */}
+                <Section
+                  title="2️⃣ Product Identifiers"
+                  name="identifiers"
+                  isActive={activeSection === "identifiers"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["identifiers"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        UPC / EAN / ISBN
+                      </label>
+                      <input
+                        type="text"
+                        name="upc"
+                        value={formData.upc}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Internal Product Code
+                      </label>
+                      <input
+                        type="text"
+                        name="internalCode"
+                        value={formData.internalCode}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Batch Number
+                      </label>
+                      <input
+                        type="text"
+                        name="batchNumber"
+                        value={formData.batchNumber}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div className="flex items-center pt-7">
+                      <input
+                        type="checkbox"
+                        name="serialNumberRequired"
+                        checked={formData.serialNumberRequired}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Serial Number Required
+                      </label>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 3. Sale Configuration (New Section) */}
+                <Section
+                  title="3️⃣ Sale Configuration"
+                  name="saleConfig"
+                  isActive={activeSection === "saleConfig"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["saleConfig"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className={labelClass}>Sale Start Date</label>
+                      <input
+                        type="datetime-local"
+                        name="saleStartDate"
+                        value={formData.saleStartDate}
+                        onChange={handleChange}
+                        className={inputClass}
+                      />
+                      <p className="text-xs text-gray-500">Optional: Determine when the sale price becomes active.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelClass}>Sale End Date</label>
+                      <input
+                        type="datetime-local"
+                        name="saleEndDate"
+                        value={formData.saleEndDate}
+                        onChange={handleChange}
+                        className={inputClass}
+                      />
+                      <p className="text-xs text-gray-500">Required for the countdown timer to appear.</p>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 4. Pricing & Taxation (Renumbered) */}
+                <Section
+                  title="4️⃣ Pricing & Taxation"
+                  name="pricing"
+                  isActive={activeSection === "pricing"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["pricing"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        MRP (Maximum Retail Price) *
+                      </label>
+                      <input
+                        type="number"
+                        name="mrp"
+                        value={formData.mrp}
+                        onChange={handleChange}
+                        required
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Selling Price *
+                      </label>
+                      <input
+                        type="number"
+                        name="price"
+                        value={formData.price}
+                        onChange={handleChange}
+                        required
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Cost Price (Internal)
+                      </label>
+                      <input
+                        type="number"
+                        name="costPrice"
+                        value={formData.costPrice}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Type
+                      </label>
+                      <select
+                        name="discountType"
+                        value={formData.discountType}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      >
+                        <option value="Flat">Flat</option>
+                        <option value="Percentage">Percentage</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Value
+                      </label>
+                      <input
+                        type="number"
+                        name="discountValue"
+                        value={formData.discountValue}
+                        onChange={handleChange}
+                        min="0"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Protect Promise Fee
+                      </label>
+                      <input
+                        type="number"
+                        name="protectPromiseFee"
+                        value={formData.protectPromiseFee}
+                        onChange={handleChange}
+                        min="0"
+                        className={textareaClass}
+                        placeholder="Optional service fee"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        GST Rate (%) *
+                      </label>
+                      <select
+                        name="gstRate"
+                        value={formData.gstRate}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      >
+                        <option value="0">0%</option>
+                        <option value="5">5%</option>
+                        <option value="12">12%</option>
+                        <option value="18">18%</option>
+                        <option value="28">28%</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center pt-7">
+                      <input
+                        type="checkbox"
+                        name="taxInclusive"
+                        checked={formData.taxInclusive}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Tax Inclusive Price
+                      </label>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 4. Inventory & Stock */}
+                <Section
+                  title="4️⃣ Inventory & Stock"
+                  name="inventory"
+                  isActive={activeSection === "inventory"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["inventory"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Stock Quantity *
+                      </label>
+                      <input
+                        type="number"
+                        name="stock"
+                        value={formData.stock}
+                        onChange={handleChange}
+                        required
+                        min="0"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Minimum Order Quantity
+                      </label>
+                      <input
+                        type="number"
+                        name="minOrderQty"
+                        value={formData.minOrderQty}
+                        onChange={handleChange}
+                        min="1"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Maximum Order Quantity
+                      </label>
+                      <input
+                        type="number"
+                        name="maxOrderQty"
+                        value={formData.maxOrderQty}
+                        onChange={handleChange}
+                        min="1"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Low Stock Alert Threshold
+                      </label>
+                      <input
+                        type="number"
+                        name="lowStockThreshold"
+                        value={formData.lowStockThreshold}
+                        onChange={handleChange}
+                        min="0"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Inventory Type
+                      </label>
+                      <select
+                        name="inventoryType"
+                        value={formData.inventoryType}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      >
+                        <option value="Seller Managed">Seller Managed</option>
+                        <option value="Platform Managed">Platform Managed</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Warehouse Location
+                      </label>
+                      <input
+                        type="text"
+                        name="warehouseLocation"
+                        value={formData.warehouseLocation}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        SKU Status
+                      </label>
+                      <select
+                        name="skuStatus"
+                        value={formData.skuStatus}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                      </select>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 5. Product Variants */}
+                <Section
+                  title="5️⃣ Product Variants (Dynamic)"
+                  name="variants"
+                  isActive={activeSection === "variants"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["variants"] = el;
+                  }}
+                >
+                  {fetchingConfig ? (
+                    <div className="p-8 flex justify-center text-gray-500">
+                      Loading category settings...
+                    </div>
+                  ) : (
+                    <VariantGenerator
+                      filterConfig={filterConfig}
+                      basePrice={parseFloat(formData.price) || 0}
+                      baseStock={parseInt(formData.stock) || 0}
+                      baseSku={formData.sku}
+                      onVariantsGenerated={(variants) => setFormData({ ...formData, variants })}
+                      existingVariants={formData.variants}
+                    />
+                  )}
+                </Section>
+
+                {/* 7. Offers & Discounts (New Section) */}
+                <Section
+                  title="7️⃣ Offers & Discounts"
+                  name="offers"
+                  isActive={activeSection === "offers"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["offers"] = el;
+                  }}
+                >
+                  <div className="space-y-4">
+                    {formData.offers.map((offer, index) => (
+                      <div
+                        key={index}
+                        className="p-4 border border-gray-200 rounded-lg bg-gray-50"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className={labelClass}>Offer Type</label>
+                            <select
+                              value={offer.type}
+                              onChange={(e) => handleOfferChange(index, "type", e.target.value)}
+                              className={selectClass}
+                            >
+                              <option value="Bank">Bank Offer</option>
+                              <option value="Exchange">Exchange Offer</option>
+                              <option value="EMI">EMI Plan</option>
+                              <option value="Special">Special Discount</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelClass}>Offer Title *</label>
+                            <input
+                              type="text"
+                              value={offer.title}
+                              onChange={(e) => handleOfferChange(index, "title", e.target.value)}
+                              placeholder="e.g., 10% off on SBI Cards"
+                              className={inputClass}
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Discount Amount (₹) *</label>
+                            <input
+                              type="number"
+                              value={offer.discountAmount}
+                              onChange={(e) => handleOfferChange(index, "discountAmount", e.target.value)}
+                              min="0"
+                              className={inputClass}
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Coupon Code (Optional)</label>
+                            <input
+                              type="text"
+                              value={offer.code}
+                              onChange={(e) => handleOfferChange(index, "code", e.target.value)}
+                              className={inputClass}
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className={labelClass}>Description</label>
+                            <textarea
+                              rows={2}
+                              value={offer.description}
+                              onChange={(e) => handleOfferChange(index, "description", e.target.value)}
+                              className={textareaClass}
+                              placeholder="Details about the offer..."
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeOffer(index)}
+                          className="mt-2 text-red-600 hover:text-red-700 text-sm font-medium"
+                        >
+                          Remove Offer
+                        </button>
+                      </div>
+                    ))}
+
                     <button
                       type="button"
-                      onClick={() => removeAttribute(index)}
-                      className="mt-7 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      onClick={addOffer}
+                      className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
                     >
-                      <X className="h-5 w-5" />
+                      + Add New Offer
                     </button>
                   </div>
-                ))}
+                </Section>
 
-                <button
-                  type="button"
-                  onClick={addAttribute}
-                  className="mt-2 text-sm text-primary-600 font-medium hover:text-primary-700 flex items-center"
+                {/* 6. Product Description */}
+                <Section
+                  title="6️⃣ Product Description & Content"
+                  name="description"
+                  isActive={activeSection === "description"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["description"] = el;
+                  }}
                 >
-                  + Add New Attribute
-                </button>
-              </div>
-            </Section>
-
-            {/* 7. Media & Assets */}
-            <Section
-              title="7️⃣ Media & Assets"
-              name="media"
-              isActive={activeSection === "media"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["media"] = el;
-              }}
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product Images (Max 7) *
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => handleImageUpload(e.target.files)}
-                      className="hidden"
-                      id="image-upload"
-                      disabled={imageFiles.length >= 7}
-                    />
-                    <label
-                      htmlFor="image-upload"
-                      className={`flex flex-col items-center justify-center cursor-pointer ${imageFiles.length >= 7
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                        }`}
-                    >
-                      <svg
-                        className="w-12 h-12 text-gray-400 mb-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Short Description
+                      </label>
+                      <textarea
+                        name="shortDescription"
+                        value={formData.shortDescription}
+                        onChange={handleChange}
+                        rows={2}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Long Description
+                      </label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        rows={4}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Key Features (Min 5)
+                      </label>
+                      {formData.keyFeatures.map((feature, index) => (
+                        <input
+                          key={index}
+                          type="text"
+                          value={feature}
+                          onChange={(e) =>
+                            handleFeatureChange(index, e.target.value)
+                          }
+                          placeholder={`Feature ${index + 1}`}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 mb-2 bg-white text-gray-900"
                         />
-                      </svg>
-                      <p className="text-sm text-gray-600 mb-1">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, JPEG up to 5MB ({imageFiles.length}/7
-                        uploaded)
-                      </p>
-                    </label>
-                  </div>
-
-                  {imagePreview.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                      {imagePreview.map((preview, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={preview}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                          {index === 0 && (
-                            <span className="absolute bottom-2 left-2 bg-primary-600 text-white text-xs px-2 py-1 rounded">
-                              Main
-                            </span>
-                          )}
-                        </div>
                       ))}
                     </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Video URL
-                  </label>
-                  <input
-                    type="url"
-                    name="productVideo"
-                    value={formData.productVideo}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Datasheet / Manual (URL)
-                  </label>
-                  <input
-                    type="url"
-                    name="datasheet"
-                    value={formData.datasheet}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-            </Section>
-
-            {/* 8. Physical Attributes */}
-            <Section
-              title="8️⃣ Physical Attributes & Dimensions"
-              name="physical"
-              isActive={activeSection === "physical"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["physical"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Net Weight (kg)
-                  </label>
-                  <input
-                    type="number"
-                    name="netWeight"
-                    value={formData.netWeight}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Gross Weight (kg)
-                  </label>
-                  <input
-                    type="number"
-                    name="grossWeight"
-                    value={formData.grossWeight}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Length (cm)
-                  </label>
-                  <input
-                    type="number"
-                    name="length"
-                    value={formData.length}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Width (cm)
-                  </label>
-                  <input
-                    type="number"
-                    name="width"
-                    value={formData.width}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Height (cm)
-                  </label>
-                  <input
-                    type="number"
-                    name="height"
-                    value={formData.height}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="fragile"
-                    checked={formData.fragile}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Fragile Item
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="liquid"
-                    checked={formData.liquid}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Liquid Item
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="hazardous"
-                    checked={formData.hazardous}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Hazardous Item
-                  </label>
-                </div>
-              </div>
-            </Section>
-
-            {/* 9. Shipping & Logistics */}
-            <Section
-              title="9️⃣ Shipping & Logistics"
-              name="shipping"
-              isActive={activeSection === "shipping"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["shipping"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Shipping Class
-                  </label>
-                  <select
-                    name="shippingClass"
-                    value={formData.shippingClass}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="Standard">Standard</option>
-                    <option value="Heavy">Heavy</option>
-                    <option value="Oversized">Oversized</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Pickup Location
-                  </label>
-                  <input
-                    type="text"
-                    name="pickupLocation"
-                    value={formData.pickupLocation}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Processing Time (Days)
-                  </label>
-                  <input
-                    type="number"
-                    name="processingTime"
-                    value={formData.processingTime}
-                    onChange={handleChange}
-                    min="0"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Shipping Charges
-                  </label>
-                  <select
-                    name="shippingCharges"
-                    value={formData.shippingCharges}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="Free">Free</option>
-                    <option value="Flat">Flat Rate</option>
-                    <option value="Weight-based">Weight-based</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="codAvailable"
-                    checked={formData.codAvailable}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    COD Available
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="internationalShipping"
-                    checked={formData.internationalShipping}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    International Shipping
-                  </label>
-                </div>
-              </div>
-            </Section>
-
-            {/* 10. Compliance & Legal */}
-            <Section
-              title="🔟 Compliance & Legal"
-              name="compliance"
-              isActive={activeSection === "compliance"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["compliance"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    FSSAI Number (Food Products)
-                  </label>
-                  <input
-                    type="text"
-                    name="fssaiNumber"
-                    value={formData.fssaiNumber}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Drug License Number (Medical)
-                  </label>
-                  <input
-                    type="text"
-                    name="drugLicenseNumber"
-                    value={formData.drugLicenseNumber}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    BIS / ISI Certification
-                  </label>
-                  <input
-                    type="text"
-                    name="bisCertification"
-                    value={formData.bisCertification}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div className="flex items-center pt-7">
-                  <input
-                    type="checkbox"
-                    name="expiryDateRequired"
-                    checked={formData.expiryDateRequired}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Expiry Date Required
-                  </label>
-                </div>
-                {formData.expiryDateRequired && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Manufacturing Date
-                      </label>
-                      <input
-                        type="date"
-                        name="manufacturingDate"
-                        value={formData.manufacturingDate}
-                        onChange={handleChange}
-                        className={textareaClass}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Box Contents
+                        </label>
+                        <textarea
+                          name="boxContents"
+                          value={formData.boxContents}
+                          onChange={handleChange}
+                          rows={2}
+                          className={textareaClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Usage Instructions
+                        </label>
+                        <textarea
+                          name="usageInstructions"
+                          value={formData.usageInstructions}
+                          onChange={handleChange}
+                          rows={2}
+                          className={textareaClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Care Instructions
+                        </label>
+                        <textarea
+                          name="careInstructions"
+                          value={formData.careInstructions}
+                          onChange={handleChange}
+                          rows={2}
+                          className={textareaClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Warranty Details
+                        </label>
+                        <textarea
+                          name="warrantyDetails"
+                          value={formData.warrantyDetails}
+                          onChange={handleChange}
+                          rows={2}
+                          className={textareaClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Warranty Duration
+                        </label>
+                        <input
+                          type="text"
+                          name="warrantyDuration"
+                          value={formData.warrantyDuration}
+                          onChange={handleChange}
+                          placeholder="e.g., 1 Year"
+                          className={textareaClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Return Window (Days)
+                        </label>
+                        <input
+                          type="number"
+                          name="returnWindow"
+                          value={formData.returnWindow}
+                          onChange={handleChange}
+                          min="0"
+                          className={textareaClass}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Expiry Date
-                      </label>
+                    <div className="flex items-center">
                       <input
-                        type="date"
-                        name="expiryDate"
-                        value={formData.expiryDate}
+                        type="checkbox"
+                        name="returnable"
+                        checked={formData.returnable}
                         onChange={handleChange}
-                        className={textareaClass}
+                        className="h-4 w-4 text-primary-600 rounded"
                       />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Returnable Product
+                      </label>
                     </div>
-                  </>
-                )}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Safety Disclaimer
-                  </label>
-                  <textarea
-                    name="safetyDisclaimer"
-                    value={formData.safetyDisclaimer}
-                    onChange={handleChange}
-                    rows={2}
-                    className={textareaClass}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Legal Disclaimer
-                  </label>
-                  <textarea
-                    name="legalDisclaimer"
-                    value={formData.legalDisclaimer}
-                    onChange={handleChange}
-                    rows={2}
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-            </Section>
+                  </div>
+                </Section>
 
-            {/* 11. SEO & Discoverability */}
-            <Section
-              title="1️⃣1️⃣ SEO & Discoverability"
-              name="seo"
-              isActive={activeSection === "seo"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["seo"] = el;
-              }}
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SEO Title
-                  </label>
-                  <input
-                    type="text"
-                    name="seoTitle"
-                    value={formData.seoTitle}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SEO Meta Description
-                  </label>
-                  <textarea
-                    name="seoDescription"
-                    value={formData.seoDescription}
-                    onChange={handleChange}
-                    rows={2}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SEO Keywords (comma separated)
-                  </label>
-                  <input
-                    type="text"
-                    name="seoKeywords"
-                    value={formData.seoKeywords}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Search Keywords (Backend)
-                  </label>
-                  <input
-                    type="text"
-                    name="searchKeywords"
-                    value={formData.searchKeywords}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    URL Slug
-                  </label>
-                  <input
-                    type="text"
-                    name="urlSlug"
-                    value={formData.urlSlug}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-            </Section>
-
-            {/* 12. Offers & Promotions */}
-            <Section
-              title="1️⃣2️⃣ Offers & Promotions"
-              name="offers"
-              isActive={activeSection === "offers"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["offers"] = el;
-              }}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="eligibleForOffers"
-                    checked={formData.eligibleForOffers}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Eligible for Platform Offers
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="bankOfferEnabled"
-                    checked={formData.bankOfferEnabled}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Bank Offer Enabled
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="flashSaleEligible"
-                    checked={formData.flashSaleEligible}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Flash Sale Eligible
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="dealOfDayEligible"
-                    checked={formData.dealOfDayEligible}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Deal of the Day Eligible
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="bulkDiscountEnabled"
-                    checked={formData.bulkDiscountEnabled}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Bulk Purchase Discount (B2B)
-                  </label>
-                </div>
-              </div>
-            </Section>
-
-            {/* 13. B2B / Wholesale */}
-            <Section
-              title="1️⃣3️⃣ B2B / Wholesale (Optional)"
-              name="b2b"
-              isActive={activeSection === "b2b"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["b2b"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Wholesale Price
-                  </label>
-                  <input
-                    type="number"
-                    name="wholesalePrice"
-                    value={formData.wholesalePrice}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Minimum Wholesale Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="minWholesaleQty"
-                    value={formData.minWholesaleQty}
-                    onChange={handleChange}
-                    min="0"
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="tieredPricing"
-                    checked={formData.tieredPricing}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Tiered Pricing
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="businessOnlyVisibility"
-                    checked={formData.businessOnlyVisibility}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    Business-only Visibility
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="gstInvoiceMandatory"
-                    checked={formData.gstInvoiceMandatory}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 rounded"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    GST Invoice Mandatory
-                  </label>
-                </div>
-              </div>
-            </Section>
-
-            {/* 14. Quality & Moderation */}
-            <Section
-              title="1️⃣4️⃣ Quality & Moderation"
-              name="quality"
-              isActive={activeSection === "quality"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["quality"] = el;
-              }}
-            >
-              <div className="space-y-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="qualityCheckConfirmed"
-                    checked={formData.qualityCheckConfirmed}
-                    onChange={handleChange}
-                    required
-                    className="h-4 w-4 text-primary-600 rounded mt-1"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    <span className="font-semibold">
-                      * I confirm that I have performed a self quality check
-                    </span>{" "}
-                    on this product and it meets all quality standards.
-                  </label>
-                </div>
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="authenticityConfirmed"
-                    checked={formData.authenticityConfirmed}
-                    onChange={handleChange}
-                    required
-                    className="h-4 w-4 text-primary-600 rounded mt-1"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    <span className="font-semibold">
-                      * Product Authenticity Declaration:
-                    </span>{" "}
-                    I declare that this product is genuine and authentic.
-                  </label>
-                </div>
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="brandAuthorizationConfirmed"
-                    checked={formData.brandAuthorizationConfirmed}
-                    onChange={handleChange}
-                    required
-                    className="h-4 w-4 text-primary-600 rounded mt-1"
-                  />
-                  <label className="ml-2 text-sm text-gray-700">
-                    <span className="font-semibold">
-                      * Brand Authorization:
-                    </span>{" "}
-                    I confirm that I am authorized to sell products under this
-                    brand.
-                  </label>
-                </div>
-              </div>
-            </Section>
-
-            {/* 15. Product Status */}
-            <Section
-              title="1️⃣5️⃣ Product Status & Publishing"
-              name="status"
-              isActive={activeSection === "status"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                sectionRefs.current["status"] = el;
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Status
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="draft">Save as Draft</option>
-                    <option value="pending">Submit for Approval</option>
-                    <option value="active">Publish Immediately</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Schedule Publish Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="publishDate"
-                    value={formData.publishDate}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Visibility
-                  </label>
-                  <select
-                    name="visibility"
-                    value={formData.visibility}
-                    onChange={handleChange}
-                    className={textareaClass}
-                  >
-                    <option value="Public">Public</option>
-                    <option value="Business Only">Business Only</option>
-                    <option value="Private">Private</option>
-                  </select>
-                </div>
-              </div>
-            </Section>
-
-            {/* 1️⃣6️⃣ Trust Badges */}
-            <Section
-              title="1️⃣6️⃣ Trust Badges"
-              name="trustBadges"
-              isActive={activeSection === "trustBadges"}
-              onToggle={toggleSection}
-              sectionRef={(el) => {
-                if (el) sectionRefs.current["trustBadges"] = el;
-              }}
-            >
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  Select trust badges to display on this product (assigned by admin)
-                </p>
-
-                {availableTrustBadges.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic">
-                    No trust badges assigned to your business yet. Contact admin to get badges assigned.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {availableTrustBadges.map((badge) => {
-                      const isSelected = formData.trustBadges.includes(badge.id);
-                      return (
-                        <div
-                          key={badge.id}
-                          onClick={() => {
-                            if (isSelected) {
-                              setFormData(prev => ({
-                                ...prev,
-                                trustBadges: prev.trustBadges.filter(id => id !== badge.id)
-                              }));
-                            } else {
-                              setFormData(prev => ({
-                                ...prev,
-                                trustBadges: [...prev.trustBadges, badge.id]
-                              }));
+                {/* Attributes Section */}
+                <Section
+                  title="✨ Product Attributes"
+                  name="attributes"
+                  isActive={activeSection === "attributes"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["attributes"] = el;
+                  }}
+                >
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500">
+                      Add specific attributes like Material, Color, Fabric, etc.
+                    </p>
+                    {formData.attributes.map((attr, index) => (
+                      <div key={index} className="flex gap-4 items-start">
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Attribute Name
+                          </label>
+                          <select
+                            value={attr.attributeId}
+                            onChange={(e) =>
+                              handleAttributeChange(index, "attributeId", e.target.value)
                             }
-                          }}
-                          className={`cursor-pointer border rounded-lg p-4 transition-all duration-200 flex items-start gap-3
+                            className={selectClass}
+                          >
+                            <option value="">Select Attribute</option>
+                            {availableAttributes.map((a) => (
+                              <option key={a._id} value={a._id}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Value
+                          </label>
+                          <input
+                            type="text"
+                            value={attr.value}
+                            onChange={(e) =>
+                              handleAttributeChange(index, "value", e.target.value)
+                            }
+                            placeholder="Value (e.g. Cotton, Blue)"
+                            className={inputClass}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeAttribute(index)}
+                          className="mt-7 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={addAttribute}
+                      className="mt-2 text-sm text-primary-600 font-medium hover:text-primary-700 flex items-center"
+                    >
+                      + Add New Attribute
+                    </button>
+                  </div>
+                </Section>
+
+                {/* 7. Media & Assets */}
+                <Section
+                  title="7️⃣ Media & Assets"
+                  name="media"
+                  isActive={activeSection === "media"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["media"] = el;
+                  }}
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Product Images (Max 7) *
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => handleImageUpload(e.target.files)}
+                          className="hidden"
+                          id="image-upload"
+                          disabled={imageFiles.length >= 7}
+                        />
+                        <label
+                          htmlFor="image-upload"
+                          className={`flex flex-col items-center justify-center cursor-pointer ${imageFiles.length >= 7
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                            }`}
+                        >
+                          <svg
+                            className="w-12 h-12 text-gray-400 mb-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                            />
+                          </svg>
+                          <p className="text-sm text-gray-600 mb-1">
+                            Click to upload or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            PNG, JPG, JPEG up to 5MB ({imageFiles.length}/7
+                            uploaded)
+                          </p>
+                        </label>
+                      </div>
+
+                      {imagePreview.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                          {imagePreview.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                              {index === 0 && (
+                                <span className="absolute bottom-2 left-2 bg-primary-600 text-white text-xs px-2 py-1 rounded">
+                                  Main
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Video URL
+                      </label>
+                      <input
+                        type="url"
+                        name="productVideo"
+                        value={formData.productVideo}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Datasheet / Manual (URL)
+                      </label>
+                      <input
+                        type="url"
+                        name="datasheet"
+                        value={formData.datasheet}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 8. Physical Attributes */}
+                <Section
+                  title="8️⃣ Physical Attributes & Dimensions"
+                  name="physical"
+                  isActive={activeSection === "physical"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["physical"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Net Weight (kg)
+                      </label>
+                      <input
+                        type="number"
+                        name="netWeight"
+                        value={formData.netWeight}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Gross Weight (kg)
+                      </label>
+                      <input
+                        type="number"
+                        name="grossWeight"
+                        value={formData.grossWeight}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Length (cm)
+                      </label>
+                      <input
+                        type="number"
+                        name="length"
+                        value={formData.length}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Width (cm)
+                      </label>
+                      <input
+                        type="number"
+                        name="width"
+                        value={formData.width}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Height (cm)
+                      </label>
+                      <input
+                        type="number"
+                        name="height"
+                        value={formData.height}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="fragile"
+                        checked={formData.fragile}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Fragile Item
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="liquid"
+                        checked={formData.liquid}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Liquid Item
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="hazardous"
+                        checked={formData.hazardous}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Hazardous Item
+                      </label>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 9. Shipping & Logistics */}
+                <Section
+                  title="9️⃣ Shipping & Logistics"
+                  name="shipping"
+                  isActive={activeSection === "shipping"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["shipping"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Shipping Class
+                      </label>
+                      <select
+                        name="shippingClass"
+                        value={formData.shippingClass}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      >
+                        <option value="Standard">Standard</option>
+                        <option value="Heavy">Heavy</option>
+                        <option value="Oversized">Oversized</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Pickup Location
+                      </label>
+                      <input
+                        type="text"
+                        name="pickupLocation"
+                        value={formData.pickupLocation}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Processing Time (Days)
+                      </label>
+                      <input
+                        type="number"
+                        name="processingTime"
+                        value={formData.processingTime}
+                        onChange={handleChange}
+                        min="0"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Shipping Charges
+                      </label>
+                      <select
+                        name="shippingCharges"
+                        value={formData.shippingCharges}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      >
+                        <option value="Free">Free</option>
+                        <option value="Flat">Flat Rate</option>
+                        <option value="Weight-based">Weight-based</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="codAvailable"
+                        checked={formData.codAvailable}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        COD Available
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="internationalShipping"
+                        checked={formData.internationalShipping}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        International Shipping
+                      </label>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 10. Compliance & Legal */}
+                <Section
+                  title="🔟 Compliance & Legal"
+                  name="compliance"
+                  isActive={activeSection === "compliance"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["compliance"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        FSSAI Number (Food Products)
+                      </label>
+                      <input
+                        type="text"
+                        name="fssaiNumber"
+                        value={formData.fssaiNumber}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Drug License Number (Medical)
+                      </label>
+                      <input
+                        type="text"
+                        name="drugLicenseNumber"
+                        value={formData.drugLicenseNumber}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        BIS / ISI Certification
+                      </label>
+                      <input
+                        type="text"
+                        name="bisCertification"
+                        value={formData.bisCertification}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div className="flex items-center pt-7">
+                      <input
+                        type="checkbox"
+                        name="expiryDateRequired"
+                        checked={formData.expiryDateRequired}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Expiry Date Required
+                      </label>
+                    </div>
+                    {formData.expiryDateRequired && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Manufacturing Date
+                          </label>
+                          <input
+                            type="date"
+                            name="manufacturingDate"
+                            value={formData.manufacturingDate}
+                            onChange={handleChange}
+                            className={textareaClass}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Expiry Date
+                          </label>
+                          <input
+                            type="date"
+                            name="expiryDate"
+                            value={formData.expiryDate}
+                            onChange={handleChange}
+                            className={textareaClass}
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Safety Disclaimer
+                      </label>
+                      <textarea
+                        name="safetyDisclaimer"
+                        value={formData.safetyDisclaimer}
+                        onChange={handleChange}
+                        rows={2}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Legal Disclaimer
+                      </label>
+                      <textarea
+                        name="legalDisclaimer"
+                        value={formData.legalDisclaimer}
+                        onChange={handleChange}
+                        rows={2}
+                        className={textareaClass}
+                      />
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 11. SEO & Discoverability */}
+                <Section
+                  title="1️⃣1️⃣ SEO & Discoverability"
+                  name="seo"
+                  isActive={activeSection === "seo"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["seo"] = el;
+                  }}
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        SEO Title
+                      </label>
+                      <input
+                        type="text"
+                        name="seoTitle"
+                        value={formData.seoTitle}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        SEO Meta Description
+                      </label>
+                      <textarea
+                        name="seoDescription"
+                        value={formData.seoDescription}
+                        onChange={handleChange}
+                        rows={2}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        SEO Keywords (comma separated)
+                      </label>
+                      <input
+                        type="text"
+                        name="seoKeywords"
+                        value={formData.seoKeywords}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Search Keywords (Backend)
+                      </label>
+                      <input
+                        type="text"
+                        name="searchKeywords"
+                        value={formData.searchKeywords}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        URL Slug
+                      </label>
+                      <input
+                        type="text"
+                        name="urlSlug"
+                        value={formData.urlSlug}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 12. Offers & Promotions */}
+                <Section
+                  title="1️⃣2️⃣ Offers & Promotions"
+                  name="offers"
+                  isActive={activeSection === "offers"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["offers"] = el;
+                  }}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="eligibleForOffers"
+                        checked={formData.eligibleForOffers}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Eligible for Platform Offers
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="bankOfferEnabled"
+                        checked={formData.bankOfferEnabled}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Bank Offer Enabled
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="flashSaleEligible"
+                        checked={formData.flashSaleEligible}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Flash Sale Eligible
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="dealOfDayEligible"
+                        checked={formData.dealOfDayEligible}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Deal of the Day Eligible
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="bulkDiscountEnabled"
+                        checked={formData.bulkDiscountEnabled}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Bulk Purchase Discount (B2B)
+                      </label>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 13. B2B / Wholesale */}
+                <Section
+                  title="1️⃣3️⃣ B2B / Wholesale (Optional)"
+                  name="b2b"
+                  isActive={activeSection === "b2b"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["b2b"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Wholesale Price
+                      </label>
+                      <input
+                        type="number"
+                        name="wholesalePrice"
+                        value={formData.wholesalePrice}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Minimum Wholesale Quantity
+                      </label>
+                      <input
+                        type="number"
+                        name="minWholesaleQty"
+                        value={formData.minWholesaleQty}
+                        onChange={handleChange}
+                        min="0"
+                        className={textareaClass}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="tieredPricing"
+                        checked={formData.tieredPricing}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Tiered Pricing
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="businessOnlyVisibility"
+                        checked={formData.businessOnlyVisibility}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        Business-only Visibility
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="gstInvoiceMandatory"
+                        checked={formData.gstInvoiceMandatory}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-600 rounded"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        GST Invoice Mandatory
+                      </label>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 14. Quality & Moderation */}
+                <Section
+                  title="1️⃣4️⃣ Quality & Moderation"
+                  name="quality"
+                  isActive={activeSection === "quality"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["quality"] = el;
+                  }}
+                >
+                  <div className="space-y-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        name="qualityCheckConfirmed"
+                        checked={formData.qualityCheckConfirmed}
+                        onChange={handleChange}
+                        required
+                        className="h-4 w-4 text-primary-600 rounded mt-1"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        <span className="font-semibold">
+                          * I confirm that I have performed a self quality check
+                        </span>{" "}
+                        on this product and it meets all quality standards.
+                      </label>
+                    </div>
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        name="authenticityConfirmed"
+                        checked={formData.authenticityConfirmed}
+                        onChange={handleChange}
+                        required
+                        className="h-4 w-4 text-primary-600 rounded mt-1"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        <span className="font-semibold">
+                          * Product Authenticity Declaration:
+                        </span>{" "}
+                        I declare that this product is genuine and authentic.
+                      </label>
+                    </div>
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        name="brandAuthorizationConfirmed"
+                        checked={formData.brandAuthorizationConfirmed}
+                        onChange={handleChange}
+                        required
+                        className="h-4 w-4 text-primary-600 rounded mt-1"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">
+                        <span className="font-semibold">
+                          * Brand Authorization:
+                        </span>{" "}
+                        I confirm that I am authorized to sell products under this
+                        brand.
+                      </label>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 15. Product Status */}
+                <Section
+                  title="1️⃣5️⃣ Product Status & Publishing"
+                  name="status"
+                  isActive={activeSection === "status"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    sectionRefs.current["status"] = el;
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Status
+                      </label>
+                      <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      >
+                        <option value="draft">Save as Draft</option>
+                        <option value="pending">Submit for Approval</option>
+                        <option value="active">Publish Immediately</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Schedule Publish Date
+                      </label>
+                      <input
+                        type="datetime-local"
+                        name="publishDate"
+                        value={formData.publishDate}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Visibility
+                      </label>
+                      <select
+                        name="visibility"
+                        value={formData.visibility}
+                        onChange={handleChange}
+                        className={textareaClass}
+                      >
+                        <option value="Public">Public</option>
+                        <option value="Business Only">Business Only</option>
+                        <option value="Private">Private</option>
+                      </select>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* 1️⃣6️⃣ Trust Badges */}
+                <Section
+                  title="1️⃣6️⃣ Trust Badges"
+                  name="trustBadges"
+                  isActive={activeSection === "trustBadges"}
+                  onToggle={toggleSection}
+                  sectionRef={(el) => {
+                    if (el) sectionRefs.current["trustBadges"] = el;
+                  }}
+                >
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                      Select trust badges to display on this product (assigned by admin)
+                    </p>
+
+                    {availableTrustBadges.length === 0 ? (
+                      <p className="text-sm text-gray-500 italic">
+                        No trust badges assigned to your business yet. Contact admin to get badges assigned.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {availableTrustBadges.map((badge) => {
+                          const isSelected = formData.trustBadges.includes(badge.id);
+                          return (
+                            <div
+                              key={badge.id}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    trustBadges: prev.trustBadges.filter(id => id !== badge.id)
+                                  }));
+                                } else {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    trustBadges: [...prev.trustBadges, badge.id]
+                                  }));
+                                }
+                              }}
+                              className={`cursor-pointer border rounded-lg p-4 transition-all duration-200 flex items-start gap-3
                             ${isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}
                           `}
-                        >
-                          <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors
+                            >
+                              <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors
                             ${isSelected ? 'bg-primary-600 border-primary-600' : 'border-gray-300 bg-white'}
                           `}>
-                            {isSelected && (
-                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className={`font-medium ${isSelected ? 'text-primary-900' : 'text-gray-900'}`}>
-                              {badge.name}
-                            </h3>
-                            {badge.description && (
-                              <p className={`text-xs mt-1 ${isSelected ? 'text-primary-700' : 'text-gray-500'}`}>
-                                {badge.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                                {isSelected && (
+                                  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <h3 className={`font-medium ${isSelected ? 'text-primary-900' : 'text-gray-900'}`}>
+                                  {badge.name}
+                                </h3>
+                                {badge.description && (
+                                  <p className={`text-xs mt-1 ${isSelected ? 'text-primary-700' : 'text-gray-500'}`}>
+                                    {badge.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </Section>
+                </Section>
 
-            {/* Submit Buttons */}
-            <div className="sticky bottom-0 mt-8 flex items-center justify-between space-x-4 p-6 bg-white rounded-xl shadow-xl border border-gray-200">
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">💡 Tip:</span> Save as draft to
-                continue later
-              </div>
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/seller/products"
-                  className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium hover:border-gray-400"
-                >
-                  Cancel
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleSaveDraft}
-                  disabled={loading || uploadingImages}
-                  className="px-6 py-2.5 border-2 border-amber-400 text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 hover:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5 disabled:transform-none flex items-center gap-2"
-                >
-                  {loading && !uploadingImages ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-700"></div>
-                      Saving Draft...
-                    </>
-                  ) : (
-                    "📝 Save Draft"
-                  )}
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || uploadingImages}
-                  className="px-8 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none flex items-center gap-2"
-                >
-                  {loading && uploadingImages ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Uploading Images...
-                    </>
-                  ) : loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Creating Product...
-                    </>
-                  ) : (
-                    "✓ Create Product"
-                  )}
-                </button>
-              </div>
+              </>
+            )}
+
+            {/* Submit Actions (Shared) */}
+            <div className="flex justify-end gap-4 pt-8 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={loading}
+                className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-all"
+              >
+                Save as Draft
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 font-medium shadow-md shadow-primary-200 transition-all transform hover:scale-[1.02]"
+              >
+                {loading ? "Creating Product..." : "Create Product"}
+              </button>
             </div>
-          </form>
-        </div>
-      </div>
-    </ProtectedRoute>
+          </form >
+        </div >
+      </div >
+    </ProtectedRoute >
   );
 }

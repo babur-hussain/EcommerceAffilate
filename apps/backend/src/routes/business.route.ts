@@ -1,8 +1,10 @@
+import mongoose from "mongoose";
 import { Router, Request, Response } from "express";
 import { Business } from "../models/business.model";
 import { User } from "../models/user.model";
 import { Product } from "../models/product.model";
 import { Brand } from "../models/brand.model";
+import Category from "../models/category.model";
 import { verifyFirebaseToken } from "../middlewares/firebaseAuth";
 import { logger } from "../utils/logger";
 import { adminAuth } from "../config/firebaseAdmin";
@@ -418,13 +420,43 @@ router.get(
       // Find products for this business
       const products = await Product.find({ businessId: authUser.businessId })
         .populate("brand", "name logo")
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .lean();
+
+      // Fetch category details to attach parentCategory
+      // Collect all unique category codes/ids
+      const categoryIdentifiers = [...new Set(products.map((p: any) => p.category))];
+
+      // Fetch categories by ID or Name
+      // We assume product.category is either an ID or a Name string
+      const categories = await Category.find({
+        $or: [
+          { _id: { $in: categoryIdentifiers.filter((id: any) => mongoose.Types.ObjectId.isValid(id)) } },
+          { name: { $in: categoryIdentifiers } }
+        ]
+      }).select("name parentCategory").lean();
+
+      // Create a map for quick lookup
+      const categoryMap = new Map();
+      categories.forEach((c: any) => {
+        categoryMap.set(c._id.toString(), c);
+        categoryMap.set(c.name, c);
+      });
+
+      // Attach parentCategory to each product
+      const productsWithCategory = products.map((p: any) => {
+        const cat = categoryMap.get(p.category.toString()) || categoryMap.get(p.category);
+        return {
+          ...p,
+          parentCategory: cat ? cat.parentCategory : null
+        };
+      });
 
       console.log(
-        `✅ Found ${products.length} products for business ${authUser.businessId}`
+        `✅ Found ${productsWithCategory.length} products for business ${authUser.businessId}`
       );
 
-      res.json(products);
+      res.json(productsWithCategory);
     } catch (error: any) {
       console.error("❌ Error fetching business products:", error.message);
       res
@@ -433,6 +465,78 @@ router.get(
     }
   }
 );
+
+// GET /api/business/grocery-products - Get grocery products for the authenticated seller's business
+router.get(
+  "/business/grocery-products",
+  verifyFirebaseToken,
+  async (req: Request, res: Response) => {
+    try {
+      const authUser = (req as any).user as
+        | { id?: string; role?: string; businessId?: string }
+        | undefined;
+      if (!authUser?.id) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      // Check if user has a business
+      if (!authUser.businessId) {
+        return res
+          .status(403)
+          .json({ error: "No business associated with this account" });
+      }
+
+      // Use top-level mongoose import
+      if (!mongoose.connection.db) {
+        console.error("❌ Database connection not established");
+        return res.status(500).json({ error: "Database connection not established" });
+      }
+
+      console.log(`🔍 Grocery Check - User Business ID: ${authUser.businessId}`);
+      console.log(`🔍 Grocery Check - ID Type: ${typeof authUser.businessId}`);
+
+      const groceryCollection = mongoose.connection.db.collection("grocery_products");
+
+      const query = {
+        businessId: new mongoose.Types.ObjectId(authUser.businessId)
+      };
+
+      // Optimize: Select only needed fields to reduce payload size
+      const projection = {
+        title: 1,
+        name: 1,
+        sellingPrice: 1,
+        price: 1,
+        stockQty: 1,
+        stock: 1,
+        images: 1,
+        image: 1,
+        category: 1,
+        status: 1,
+        isActive: 1,
+        isApproved: 1,
+        approvalStatus: 1,
+        _id: 1
+      };
+
+      console.log(`🔍 Grocery Query: ${JSON.stringify(query)} with projection`);
+
+      const products = await groceryCollection.find(query).project(projection).toArray();
+
+      console.log(
+        `✅ Found ${products.length} GROCERY products for business ${authUser.businessId}`
+      );
+
+      res.json(products);
+    } catch (error: any) {
+      console.error("❌ Error fetching business grocery products:", error.message);
+      res
+        .status(500)
+        .json({ error: "Failed to fetch grocery products", message: error.message });
+    }
+  }
+);
+
 
 // GET /api/business/brands - Get brands for the authenticated seller's business
 router.get(

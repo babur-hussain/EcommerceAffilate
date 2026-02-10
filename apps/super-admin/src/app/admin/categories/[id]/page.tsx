@@ -566,24 +566,29 @@ export default function CategoryDetailsPage() {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-gray-900 truncate">{sub.name}</p>
-                                                <div className="flex items-center gap-3 mt-0.5">
+                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                                                     <div className="flex items-center gap-1">
                                                         <span className={`w-2 h-2 rounded-full ${sub.isActive ? "bg-green-500" : "bg-red-500"}`} />
                                                         <span className="text-xs text-gray-500">Order: {sub.order}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1 group/id">
-                                                        <span className="text-[10px] font-mono text-gray-400">ID: {sub._id}</span>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                copyToClipboard(sub._id);
-                                                            }}
-                                                            className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-300 hover:text-gray-500"
-                                                            title="Copy ID"
-                                                        >
-                                                            {copiedId === sub._id ? <Check className="h-2.5 w-2.5 text-green-600" /> : <Copy className="h-2.5 w-2.5" />}
-                                                        </button>
+                                                    <div className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                                                        <span className="text-[10px] font-medium text-gray-600">
+                                                            {sub.productCount || 0} Products
+                                                        </span>
                                                     </div>
+                                                </div>
+                                                <div className="flex items-center gap-1 group/id mt-1">
+                                                    <span className="text-[10px] font-mono text-gray-400">ID: {sub._id}</span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            copyToClipboard(sub._id);
+                                                        }}
+                                                        className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-300 hover:text-gray-500"
+                                                        title="Copy ID"
+                                                    >
+                                                        {copiedId === sub._id ? <Check className="h-2.5 w-2.5 text-green-600" /> : <Copy className="h-2.5 w-2.5" />}
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -623,147 +628,151 @@ export default function CategoryDetailsPage() {
             </div>
 
             {/* Modal for Add/Edit Subcategory */}
-            {isSubModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                {editingSub ? "Edit Subcategory" : "Add Subcategory"}
-                            </h3>
-                            <button onClick={closeSubModal} className="text-gray-400 hover:text-gray-500">
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-gray-900"
-                                    value={subFormData.name}
-                                    onChange={e => setSubFormData({ ...subFormData, name: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Group / Section Title</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-gray-900"
-                                    placeholder="e.g. Staples"
-                                    value={subFormData.group}
-                                    onChange={e => setSubFormData({ ...subFormData, group: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
-                                <div className="space-y-2">
-                                    {subFormData.image && (
-                                        <div className="relative h-24 bg-gray-100 rounded-lg overflow-hidden">
-                                            <img src={subFormData.image} className="w-full h-full object-cover" />
-                                            <button type="button" onClick={() => setSubFormData({ ...subFormData, image: "" })} className="absolute top-1 right-1 p-1 bg-white rounded-full"><X className="h-3 w-3" /></button>
-                                        </div>
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                        disabled={uploading}
-                                        className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
-                                    <input
-                                        type="number"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-gray-900"
-                                        value={subFormData.order}
-                                        onChange={e => setSubFormData({ ...subFormData, order: parseInt(e.target.value) || 0 })}
-                                    />
-                                </div>
-                                <label className="flex items-center gap-2 pt-6 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={subFormData.isActive}
-                                        onChange={e => setSubFormData({ ...subFormData, isActive: e.target.checked })}
-                                        className="w-4 h-4 text-primary-600 rounded"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">Active</span>
-                                </label>
-                            </div>
-                            <div className="flex justify-end gap-3 pt-4">
-                                <button type="button" onClick={closeSubModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">Cancel</button>
-                                <button
-                                    type="submit"
-                                    disabled={submitting || uploading}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                                    Save
+            {
+                isSubModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    {editingSub ? "Edit Subcategory" : "Add Subcategory"}
+                                </h3>
+                                <button onClick={closeSubModal} className="text-gray-400 hover:text-gray-500">
+                                    <X className="h-5 w-5" />
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {/* Modal for Group Ordering */}
-            {isGroupOrderModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900">Reorder Groups</h3>
-                            <button onClick={() => setIsGroupOrderModalOpen(false)} className="text-gray-400 hover:text-gray-500">
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <div className="p-4 max-h-[60vh] overflow-y-auto space-y-2">
-                            {groupOrder.length === 0 ? (
-                                <p className="text-gray-500 text-center py-4">No groups found.</p>
-                            ) : (
-                                groupOrder.map((group, index) => (
-                                    <div key={group} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                        <span className="font-medium text-gray-700">{group}</span>
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => moveGroup(index, 'up')}
-                                                disabled={index === 0}
-                                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                                            </button>
-                                            <button
-                                                onClick={() => moveGroup(index, 'down')}
-                                                disabled={index === groupOrder.length - 1}
-                                                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                            </button>
-                                        </div>
+                            <form onSubmit={handleSubSubmit} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-gray-900"
+                                        value={subFormData.name}
+                                        onChange={e => setSubFormData({ ...subFormData, name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Group / Section Title</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-gray-900"
+                                        placeholder="e.g. Staples"
+                                        value={subFormData.group}
+                                        onChange={e => setSubFormData({ ...subFormData, group: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                                    <div className="space-y-2">
+                                        {subFormData.image && (
+                                            <div className="relative h-24 bg-gray-100 rounded-lg overflow-hidden">
+                                                <img src={subFormData.image} className="w-full h-full object-cover" />
+                                                <button type="button" onClick={() => setSubFormData({ ...subFormData, image: "" })} className="absolute top-1 right-1 p-1 bg-white rounded-full"><X className="h-3 w-3" /></button>
+                                            </div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            disabled={uploading}
+                                            className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                                        />
                                     </div>
-                                ))
-                            )}
-                        </div>
-                        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
-                            <button
-                                onClick={() => setIsGroupOrderModalOpen(false)}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSaveGroupOrder}
-                                disabled={savingOrder}
-                                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {savingOrder && <Loader2 className="h-3 w-3 animate-spin" />}
-                                Save Order
-                            </button>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                                        <input
+                                            type="number"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-gray-900"
+                                            value={subFormData.order}
+                                            onChange={e => setSubFormData({ ...subFormData, order: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                    <label className="flex items-center gap-2 pt-6 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={subFormData.isActive}
+                                            onChange={e => setSubFormData({ ...subFormData, isActive: e.target.checked })}
+                                            className="w-4 h-4 text-primary-600 rounded"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Active</span>
+                                    </label>
+                                </div>
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <button type="button" onClick={closeSubModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">Cancel</button>
+                                    <button
+                                        type="submit"
+                                        disabled={submitting || uploading}
+                                        className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                                        Save
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+            {/* Modal for Group Ordering */}
+            {
+                isGroupOrderModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-900">Reorder Groups</h3>
+                                <button onClick={() => setIsGroupOrderModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="p-4 max-h-[60vh] overflow-y-auto space-y-2">
+                                {groupOrder.length === 0 ? (
+                                    <p className="text-gray-500 text-center py-4">No groups found.</p>
+                                ) : (
+                                    groupOrder.map((group, index) => (
+                                        <div key={group} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                            <span className="font-medium text-gray-700">{group}</span>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => moveGroup(index, 'up')}
+                                                    disabled={index === 0}
+                                                    className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => moveGroup(index, 'down')}
+                                                    disabled={index === groupOrder.length - 1}
+                                                    className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+                                <button
+                                    onClick={() => setIsGroupOrderModalOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveGroupOrder}
+                                    disabled={savingOrder}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {savingOrder && <Loader2 className="h-3 w-3 animate-spin" />}
+                                    Save Order
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 }

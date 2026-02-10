@@ -59,20 +59,28 @@ const app: Express = express();
 // CORS: allow web frontend and dashboard origins (MUST be before helmet)
 // In development, allow all origins for mobile app compatibility
 // In production, use whitelist for security
-const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:3002",
-      "http://localhost:3003",
-      "https://www.seller.localforvocalstartup.com",
-      "https://www.localforvocalstartup.com",
-      "https://admin.localforvocalstartup.com",
-      "https://seller.localforvocalstartup.com",
-      "https://localforvocalstartup.com",
-    ]
-    : true, // Allow all origins in development
+const whitelistRegex = [
+  /^http:\/\/localhost:\d+$/, // Allow any localhost port
+  /^https:\/\/.*\.localforvocalstartup\.com$/, // Allow subdomains
+  /^https:\/\/localforvocalstartup\.com$/,
+  /^https:\/\/api\.lfvs\.in$/ // Allow self
+];
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Check if origin matches any regex
+    const isAllowed = whitelistRegex.some(regex => regex.test(origin));
+
+    if (isAllowed) {
+      return callback(null, true);
+    } else {
+      console.log(`🚫 CORS Blocked: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
   exposedHeaders: ["Content-Length", "X-Request-Id"],

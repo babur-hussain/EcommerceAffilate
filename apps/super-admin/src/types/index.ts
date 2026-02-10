@@ -398,4 +398,5 @@ export interface Category {
   posters?: string[];
   filterConfig?: FilterConfig[];
   subCategoryGroupOrder?: string[];
+  productCount?: number;
 }

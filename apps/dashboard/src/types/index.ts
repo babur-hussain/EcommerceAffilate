@@ -34,6 +34,7 @@ export interface Brand {
 export interface Product {
   _id: string;
   name: string;
+  title?: string;
   description: string;
   price: number;
   discountPrice?: number;

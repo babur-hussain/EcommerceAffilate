@@ -42,22 +42,118 @@ const getApprovalBadge = (status: string) => {
 export default function SellerProductsPage() {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
+  const [groceryProducts, setGroceryProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [activeTab, setActiveTab] = useState<'regular' | 'grocery'>('regular');
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      if (!selectedProductId) return;
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          if (blob) {
+            await processAndUploadImage(blob, selectedProductId);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [selectedProductId]);
 
   const fetchProducts = async () => {
     try {
-      const response = await apiClient.get<Product[]>('/api/business/products');
-      setProducts(response.data || []);
+      setLoading(true);
+      const [productsRes, groceryRes] = await Promise.all([
+        apiClient.get<Product[]>('/api/business/products'),
+        apiClient.get<Product[]>('/api/business/grocery-products')
+      ]);
+
+      const allProducts = productsRes.data || [];
+      const grocery = groceryRes.data || [];
+
+      // Filter out grocery items from standard products list if they accidentally appear there
+      // We assume grocery items might have 'Grocery' category or specific parentCategory
+      const regular = allProducts.filter(p => p.category !== 'Grocery' && (p as any).parentCategory !== '695f88c75f463eeb3c42e765');
+
+      setProducts(regular);
+      setGroceryProducts(grocery);
     } catch (error) {
       console.error('Failed to fetch products:', error);
       toast.error('Failed to load products');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const processAndUploadImage = async (file: File, productId: string) => {
+    const toastId = toast.loading('Processing & Uploading image...');
+    try {
+      // 1. Resize and Convert to WebP (500x500)
+      const imageBitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = 500;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context failed');
+
+      // Draw resized
+      ctx.drawImage(imageBitmap, 0, 0, 500, 500);
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/webp', 0.9)
+      );
+
+      if (!blob) throw new Error('Image conversion failed');
+
+      // 2. Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('image', blob, 'pasted-product.webp');
+
+      const uploadRes = await apiClient.post<{ imageUrl: string }>('/api/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const newImageUrl = uploadRes.data.imageUrl;
+
+      // 3. Update Product
+      await apiClient.patch(`/api/products/${productId}/image`, { imageUrl: newImageUrl });
+
+      // 4. Update Local State
+      const updateList = (list: Product[]) =>
+        list.map(p => {
+          if (p._id === productId) {
+            return {
+              ...p,
+              images: [newImageUrl, ...(p.images || [])],
+              image: newImageUrl
+            };
+          }
+          return p;
+        });
+
+      setProducts(prev => updateList(prev));
+      setGroceryProducts(prev => updateList(prev));
+
+      toast.success('Image updated successfully!', { id: toastId });
+      setSelectedProductId(null); // Deselect after success
+
+    } catch (error) {
+      console.error('Paste upload failed:', error);
+      toast.error('Failed to upload image', { id: toastId });
     }
   };
 
@@ -85,7 +181,10 @@ export default function SellerProductsPage() {
     try {
       await apiClient.delete(`/api/products/${productId}`);
       toast.success('Product deleted');
-      fetchProducts();
+
+      // Update local state instead of re-fetching
+      setProducts(prev => prev.filter(p => p._id !== productId));
+      setGroceryProducts(prev => prev.filter(p => p._id !== productId));
     } catch (error) {
       console.error('Failed to delete product:', error);
       toast.error('Failed to delete product');
@@ -104,17 +203,19 @@ export default function SellerProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter((product) => {
+  const currentList = activeTab === 'regular' ? products : groceryProducts;
+
+  const filteredProducts = currentList.filter((product) => {
+    if (filter === 'all') return true;
     if (filter === 'active') return product.isActive;
-    if (filter === 'inactive') return !product.isActive;
     if (filter === 'pending') return product.approvalStatus === 'pending';
     if (filter === 'approved') return product.approvalStatus === 'approved';
     if (filter === 'rejected') return product.approvalStatus === 'rejected';
     return true;
   });
 
-  const pendingCount = products.filter(p => p.approvalStatus === 'pending').length;
-  const rejectedCount = products.filter(p => p.approvalStatus === 'rejected').length;
+  const pendingCount = currentList.filter(p => p.approvalStatus === 'pending').length;
+  const rejectedCount = currentList.filter(p => p.approvalStatus === 'rejected').length;
 
   if (!user) return null;
 
@@ -133,6 +234,28 @@ export default function SellerProductsPage() {
             <Plus className="h-5 w-5 mr-2" />
             Add Product
           </Link>
+        </div>
+
+        {/* Grocery Tab Switcher */}
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('regular')}
+            className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'regular'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Standard Products ({products.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('grocery')}
+            className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'grocery'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Grocery Products ({groceryProducts.length})
+          </button>
         </div>
 
         {/* Pending Alert */}
@@ -165,7 +288,7 @@ export default function SellerProductsPage() {
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
-            All ({products.length})
+            All ({currentList.length})
           </button>
           <button
             onClick={() => setFilter('pending')}
@@ -183,7 +306,7 @@ export default function SellerProductsPage() {
               : 'bg-green-50 text-green-700 hover:bg-green-100'
               }`}
           >
-            Approved ({products.filter(p => p.approvalStatus === 'approved').length})
+            Approved ({currentList.filter(p => p.approvalStatus === 'approved').length})
           </button>
           <button
             onClick={() => setFilter('rejected')}
@@ -201,7 +324,7 @@ export default function SellerProductsPage() {
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
-            Live ({products.filter(p => p.isActive).length})
+            Live ({currentList.filter(p => p.isActive).length})
           </button>
         </div>
 
@@ -239,22 +362,35 @@ export default function SellerProductsPage() {
                   <tr key={product._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
+                        <div
+                          className={`h-10 w-10 flex-shrink-0 cursor-pointer p-0.5 rounded transition-all ${selectedProductId === product._id
+                            ? 'ring-2 ring-blue-500 shadow-md scale-110'
+                            : 'hover:ring-2 hover:ring-gray-300'
+                            }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProductId(selectedProductId === product._id ? null : product._id);
+                            if (selectedProductId !== product._id) {
+                              toast('Paste an image now to update', { icon: '📋' });
+                            }
+                          }}
+                          title="Click to select and paste new image"
+                        >
                           {product.images && product.images.length > 0 ? (
                             <img
-                              className="h-10 w-10 rounded object-cover"
+                              className="h-full w-full rounded object-cover"
                               src={product.images[0]}
                               alt={product.name}
                             />
                           ) : (
-                            <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
+                            <div className="h-full w-full rounded bg-gray-200 flex items-center justify-center">
                               <Package className="h-5 w-5 text-gray-400" />
                             </div>
                           )}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {product.name}
+                            {product.title || product.name}
                           </div>
                           <div className="text-xs text-gray-500">{product.category}</div>
                         </div>
@@ -368,4 +504,3 @@ export default function SellerProductsPage() {
     </ProtectedRoute>
   );
 }
-

@@ -1,5 +1,7 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Category from '../models/category.model';
+import { Product } from '../models/product.model';
 import { verifyFirebaseToken } from '../middlewares/firebaseAuth';
 import { requireRoles } from '../middlewares/rbac';
 
@@ -24,7 +26,65 @@ router.get('/categories', ...auth, async (req, res) => {
       .sort({ order: 1, name: 1 })
       .lean();
 
-    res.json(categories);
+    // Aggregation to get product counts from MAIN products collection
+    const categoryIds = categories.map(c => c._id);
+
+    // Also fetch immediate subcategories to include their product counts (for Groups)
+    // This allows a Group (Level 1) to show the sum of products in its Sub-Categories (Level 2)
+    const subCategories = await Category.find({ parentCategory: { $in: categoryIds } }).select('_id parentCategory').lean();
+    const subCategoryIds = subCategories.map(s => s._id);
+
+    // Combine IDs to query products for both current categories and their children
+    const allTargetIds = [...categoryIds, ...subCategoryIds];
+
+    const productCounts = await Product.aggregate([
+      { $match: { categoryId: { $in: allTargetIds } } },
+      { $group: { _id: "$categoryId", count: { $sum: 1 } } }
+    ]);
+
+    // Aggregation from GROCERY_PRODUCTS collection (if exists)
+    let groceryCounts: any[] = [];
+    try {
+      if (mongoose.connection.db) {
+        const groceryCollection = mongoose.connection.db.collection("grocery_products");
+        groceryCounts = await groceryCollection.aggregate([
+          { $match: { categoryId: { $in: allTargetIds } } },
+          { $group: { _id: "$categoryId", count: { $sum: 1 } } }
+        ]).toArray();
+      }
+    } catch (err) {
+      console.error("Error aggregating grocery products:", err);
+    }
+
+    const countMap = new Map();
+
+    // Helper to add counts
+    const addCounts = (list: any[]) => {
+      list.forEach(item => {
+        const id = item._id.toString();
+        countMap.set(id, (countMap.get(id) || 0) + item.count);
+      });
+    };
+
+    addCounts(productCounts);
+    addCounts(groceryCounts);
+
+    const categoriesWithCount = categories.map(cat => {
+      const ownCount = countMap.get(cat._id.toString()) || 0;
+
+      // Sum counts of children
+      // parentCategory in DB is ObjectId usually.
+      const childrenCount = subCategories
+        .filter(sub => sub.parentCategory && sub.parentCategory.toString() === cat._id.toString())
+        .reduce((sum, sub) => sum + (countMap.get(sub._id.toString()) || 0), 0);
+
+      return {
+        ...cat,
+        productCount: ownCount + childrenCount
+      };
+    });
+
+    res.json(categoriesWithCount);
   } catch (error: any) {
     console.error('Error fetching categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });
