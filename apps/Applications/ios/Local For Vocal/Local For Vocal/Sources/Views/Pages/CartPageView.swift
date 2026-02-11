@@ -252,9 +252,13 @@ struct GroceryView: View {
                             .padding(.bottom, 16)
 
                         // 4. Savings Banner
-                        SavingsBannerView()
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 100)
+                        if basketManager.basketSavings > 0 {
+                            SavingsBannerView(savings: basketManager.basketSavings)
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 100)
+                        } else {
+                            Color.clear.frame(height: 100)
+                        }
                     }
                 }
                 .background(Color(hex: "#F3F4F6"))

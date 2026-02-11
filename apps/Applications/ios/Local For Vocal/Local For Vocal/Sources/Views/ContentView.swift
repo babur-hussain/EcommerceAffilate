@@ -82,6 +82,7 @@ struct ContentView: View {
             GeometryReader { geometry in
                 homeContentView(geometry: geometry)
             }
+            .toolbar(navigationManager.activeTab == .grocery ? .hidden : .visible, for: .tabBar)
             .tabItem {
                 Image(systemName: "house")
                 Text("Home")
@@ -165,15 +166,25 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $navigationManager.showCategoryPage) {
             if let params = navigationManager.categoryNavigation {
                 NavigationView {
-                    CommonCategoryPageView(
-                        categoryId: params.categoryId,
-                        categoryName: params.categoryName,
-                        initialSubCategoryId: params.subCategoryId,
-                        initialFilters: params.filters
-                    )
+                    if params.layoutType == "grocery" {
+                        GroceryListingView(
+                            categoryId: params.categoryId,
+                            categoryName: params.categoryName,
+                            initialSubCategoryId: params.subCategoryId,
+                            initialFilters: params.filters
+                        )
+                    } else {
+                        CommonCategoryPageView(
+                            categoryId: params.categoryId,
+                            categoryName: params.categoryName,
+                            initialSubCategoryId: params.subCategoryId,
+                            initialFilters: params.filters
+                        )
+                    }
                 }
                 .environmentObject(navigationManager)
                 .environmentObject(cartManager)
+                .environmentObject(basketManager)
                 .environmentObject(WishlistManager.shared)
             }
         }
@@ -182,7 +193,7 @@ struct ContentView: View {
     @ViewBuilder
     private func homeContentView(geometry: GeometryProxy) -> some View {
         if navigationManager.activeTab == .grocery {
-            GroceryPageView(activeTab: $navigationManager.activeTab)
+            GroceryContainerView(activeTab: $navigationManager.activeTab)
         } else if navigationManager.activeTab == .services {
             ServicesPageView(activeTab: $navigationManager.activeTab)
                 .frame(maxWidth: .infinity)
@@ -269,11 +280,11 @@ struct ContentView: View {
             BooksPage()
         case "furniture":
             FurniturePage()
-        case "grocery":
-            GroceryPageView(activeTab: $navigationManager.activeTab)
+        // Grocery now uses SDUI (falls through to default)
         default:
             SDUIPage(slug: slug)
         }
+
     }
 }
 

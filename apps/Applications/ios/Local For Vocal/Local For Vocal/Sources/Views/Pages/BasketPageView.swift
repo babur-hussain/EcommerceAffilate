@@ -3,108 +3,145 @@ import SwiftUI
 struct BasketPageView: View {
     @EnvironmentObject var basketManager: BasketManager
     @Environment(\.presentationMode) var presentationMode
+    @State private var isSearching = false
+    var groceryTab: Binding<GroceryTab>?  // Optional: when inside GroceryContainerView
+    @State private var isCheckoutActive = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("My Basket (\(basketManager.basketCount) Items)")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(Color(hex: "#111827"))
-                Spacer()
-                Button(action: {
-                    basketManager.clearBasket()
-                }) {
-                    Text("Clear")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Color(hex: "#DC2626"))
-                }
-            }
-            .padding()
-            .background(Color.white)
-            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
-            .zIndex(1)
-
-            if basketManager.items.isEmpty {
-                BasketEmptyStateView()
-            } else {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // 1. Delivery Banner
-                        DeliveryBannerView()  // Reuse from CartPageView if compatible, or redefine
-                            .padding(.horizontal, 16)
-                            .padding(.top, 16)
-
-                        // 2. Items List
-                        VStack(spacing: 0) {  // Divider styling
-                            ForEach(basketManager.items) { item in
-                                BasketItemCell(item: item)
-                                    .padding(.vertical, 16)
-                                    .overlay(
-                                        Divider(),
-                                        alignment: .bottom
-                                    )
-                            }
+        NavigationView {
+            VStack(spacing: 0) {
+                // Header
+                HStack(spacing: 12) {
+                    Button(action: {
+                        if let tab = groceryTab {
+                            tab.wrappedValue = .grocery
+                        } else {
+                            presentationMode.wrappedValue.dismiss()
                         }
-                        .padding(.horizontal, 16)
-                        .background(Color.white)
-                        .padding(.bottom, 16)
+                    }) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(Color(hex: "#111827"))
+                    }
 
-                        // 3. Bill Details
-                        BillDetailsView(total: basketManager.basketTotal)  // Reuse
+                    Text("My Basket (\(basketManager.basketCount) Items)")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(Color(hex: "#111827"))
+
+                    Spacer()
+
+                    Button(action: {
+                        isSearching = true
+                    }) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(Color(hex: "#111827"))
+                    }
+                }
+                .padding()
+                .background(Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+                .zIndex(1)
+
+                if basketManager.items.isEmpty {
+                    BasketEmptyStateView()
+                } else {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            // 1. Delivery Banner
+                            DeliveryBannerView()  // Reuse from CartPageView if compatible, or redefine
+                                .padding(.horizontal, 16)
+                                .padding(.top, 16)
+
+                            // 2. Items List
+                            VStack(spacing: 0) {  // Divider styling
+                                ForEach(basketManager.items) { item in
+                                    BasketItemCell(item: item)
+                                        .padding(.vertical, 16)
+                                        .overlay(
+                                            Divider(),
+                                            alignment: .bottom
+                                        )
+                                }
+                            }
                             .padding(.horizontal, 16)
+                            .background(Color.white)
                             .padding(.bottom, 16)
 
-                        // 4. Savings Banner
-                        SavingsBannerView()  // Reuse
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 100)
-                    }
-                }
-                .background(Color(hex: "#F3F4F6"))
-            }
+                            // 3. Bill Details
+                            BillDetailsView(total: basketManager.basketTotal)  // Reuse
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 16)
 
-            // Checkout Bar (if not empty)
-            if !basketManager.items.isEmpty {
-                VStack {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Total")
-                                .font(.system(size: 12))
-                                .foregroundColor(Color(hex: "#6B7280"))
-                            Text("₹\(Int(basketManager.basketTotal + 2))")  // +2 handling
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(Color(hex: "#111827"))
-                        }
-                        Spacer()
-                        Button(action: {
-                            // Checkout action
-                        }) {
-                            HStack {
-                                Text("Proceed to Pay")
-                                    .font(.system(size: 14, weight: .bold))
-                                Image(systemName: "arrow.right")
+                            // 4. Savings Banner
+                            if basketManager.basketSavings > 0 {
+                                SavingsBannerView(savings: basketManager.basketSavings)
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 100)
+                            } else {
+                                Color.clear.frame(height: 100)
                             }
-                            .foregroundColor(.white)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 20)
-                            .background(Color(hex: "#15803d"))
-                            .cornerRadius(8)
                         }
                     }
-                    .padding(12)
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .background(Color(hex: "#F3F4F6"))
                 }
-                .padding(16)
-                .background(Color.clear)  // Floating feel
-                .padding(.bottom, 50)  // Tab bar clearance
-                .zIndex(2)
+
+                // Checkout Bar (if not empty)
+                if !basketManager.items.isEmpty {
+                    VStack(spacing: 0) {
+                        Divider()
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Total")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Color(hex: "#6B7280"))
+                                Text("₹\(Int(basketManager.basketTotal + 2))")  // +2 handling
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(Color(hex: "#111827"))
+                            }
+                            Spacer()
+                            Button(action: {
+                                isCheckoutActive = true
+                            }) {
+                                HStack {
+                                    Text("Proceed to Pay")
+                                        .font(.system(size: 14, weight: .bold))
+                                    Image(systemName: "arrow.right")
+                                }
+                                .foregroundColor(.white)
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 24)
+                                .background(Color(hex: "#15803d"))
+                                .cornerRadius(8)
+                            }
+                        }
+                        .padding(16)
+                        .background(Color.white)
+                    }
+                    .zIndex(2)
+                }
             }
+            .background(Color(hex: "#F3F4F6").edgesIgnoringSafeArea(.all))
+            .background(
+                NavigationLink(
+                    destination: CheckoutView(
+                        items: basketManager.items.map { item in
+                            CheckoutViewModel.CheckoutItem(
+                                product: item.product,
+                                quantity: item.quantity,
+                                selectedOfferIds: []
+                            )
+                        }
+                    ),
+                    isActive: $isCheckoutActive
+                ) { EmptyView() }
+            )
+            .navigationBarHidden(true)
+        }  // NavigationView
+        .navigationViewStyle(.stack)
+        .fullScreenCover(isPresented: $isSearching) {
+            GroceryGlobalSearchView()
         }
-        .background(Color(hex: "#F3F4F6"))
-        .edgesIgnoringSafeArea(.bottom)
     }
 }
 
@@ -322,11 +359,13 @@ struct BillDetailsView: View {
 }
 
 struct SavingsBannerView: View {
+    let savings: Double
+
     var body: some View {
         HStack {
             Image(systemName: "tag.fill")
                 .foregroundColor(Color(hex: "#15803d"))
-            Text("You saved ₹125 on this order")
+            Text("You saved ₹\(Int(savings)) on this order")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(Color(hex: "#14532d"))
             Spacer()

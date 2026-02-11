@@ -3,29 +3,35 @@ import SwiftUI
 
 // MARK: - SDUI Component Model
 
-public struct SDUIComponent: Identifiable, Decodable, Hashable {
-    public let id: String
+public struct SDUIComponent: Identifiable, Codable, Hashable {
+    public let id: String  // Always a unique UUID for SwiftUI identity
+    public let originalId: String  // Raw id from JSON (for logic/matching)
+    public let _id: String?
     public let type: ComponentType
     public let props: [String: SDUIAnyCodable]?
+    public let dataSource: [String: SDUIAnyCodable]?
     public let style: [String: SDUIAnyCodable]?
     public let children: [SDUIComponent]?
 
     enum CodingKeys: String, CodingKey {
-        case id, type, style, children
-        case props  // JSON key is now 'props'
-        case content  // Fallback key
+        case id, _id, type, style, children, dataSource
+        case props
+        case content  // Keep for decoding compatibility
     }
 
     // Custom decoding to handle missing IDs from backend
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        // Try decoding ID, if missing generate one
-        if let decodedId = try? container.decode(String.self, forKey: .id) {
-            self.id = decodedId
-        } else {
-            self.id = UUID().uuidString
-        }
+        // Always assign a fresh UUID for SwiftUI identity — guarantees uniqueness
+        // even when the same JSON is decoded multiple times or across pages.
+        self.id = UUID().uuidString
+
+        // Store the original JSON id for any logic/matching needs
+        self.originalId = (try? container.decode(String.self, forKey: .id)) ?? ""
+
+        self._id = try? container.decode(String.self, forKey: ._id)
+        self.dataSource = try? container.decode([String: SDUIAnyCodable].self, forKey: .dataSource)
 
         self.type = try container.decode(ComponentType.self, forKey: .type)
 
@@ -38,6 +44,35 @@ public struct SDUIComponent: Identifiable, Decodable, Hashable {
 
         self.style = try? container.decode([String: SDUIAnyCodable].self, forKey: .style)
         self.children = try? container.decode([SDUIComponent].self, forKey: .children)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        // Write originalId as "id" so re-encoded JSON stays clean
+        try container.encode(originalId, forKey: .id)
+        try container.encodeIfPresent(_id, forKey: ._id)
+        try container.encode(type, forKey: .type)
+        try container.encodeIfPresent(props, forKey: .props)
+        try container.encodeIfPresent(dataSource, forKey: .dataSource)
+        try container.encodeIfPresent(style, forKey: .style)
+        try container.encodeIfPresent(children, forKey: .children)
+    }
+
+    // Memberwise init for manual creation
+    public init(
+        id: String, _id: String? = nil, type: ComponentType, props: [String: SDUIAnyCodable]? = nil,
+        dataSource: [String: SDUIAnyCodable]? = nil, style: [String: SDUIAnyCodable]? = nil,
+        children: [SDUIComponent]? = nil
+    ) {
+        // For manual creation, use a fresh UUID for SwiftUI identity
+        self.id = UUID().uuidString
+        self.originalId = id
+        self._id = _id
+        self.type = type
+        self.props = props
+        self.dataSource = dataSource
+        self.style = style
+        self.children = children
     }
 
     // Helper to extract specific props
@@ -83,7 +118,7 @@ public struct SDUIComponent: Identifiable, Decodable, Hashable {
 
 // MARK: - Component Types
 
-public enum ComponentType: String, Decodable {
+public enum ComponentType: String, Codable {
     case container = "Container"
     case text = "Text"
     case image = "Image"
@@ -278,13 +313,21 @@ public enum ComponentType: String, Decodable {
     case flashSaleGrid = "flash_sale_grid"
     case featuredCarousel = "featured_carousel"
     case bestQuality = "best_quality"
+    case groceryListing = "grocery_listing"
+    case smartBasket = "smart_basket"
 
+    case groceryTopPicks = "grocery_top_picks"
     case unknown
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(String.self)
         self = ComponentType(rawValue: rawValue) ?? .unknown
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.rawValue)
     }
 }
 

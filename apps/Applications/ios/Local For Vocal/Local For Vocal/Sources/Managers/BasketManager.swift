@@ -20,6 +20,16 @@ class BasketManager: ObservableObject {
         items.reduce(0) { $0 + $1.quantity }
     }
 
+    var basketSavings: Double {
+        items.reduce(0) { total, item in
+            let mrp = item.product.mrp ?? item.product.price
+            let price = item.product.price
+            // Ensure savings is non-negative
+            let savingsPerItem = max(0, mrp - price)
+            return total + (savingsPerItem * Double(item.quantity))
+        }
+    }
+
     private let saveKey = "grocery_basket"
     private let GROCERY_CATEGORY_ID = "696686d02c5aacc146652e03"
 
@@ -30,18 +40,13 @@ class BasketManager: ObservableObject {
     // MARK: - Persistence
 
     private func loadBasket() {
-        if let data = UserDefaults.standard.data(forKey: saveKey) {
-            if let decoded = try? JSONDecoder().decode([CartItem].self, from: data) {
-                // Validate items belong to grocery category
-                let validItems = decoded.filter { item in
-                    // Check if product's category name contains "grocery"
-                    return item.product.category.lowercased().contains("grocery")
-                }
-                self.items = validItems
-                return
-            }
+        if let data = UserDefaults.standard.data(forKey: saveKey),
+            let decoded = try? JSONDecoder().decode([CartItem].self, from: data)
+        {
+            self.items = decoded
+        } else {
+            self.items = []
         }
-        self.items = []
     }
 
     private func saveBasket() {

@@ -59,12 +59,20 @@ struct SDUIPage: View {
 
     // MARK: - Cache-First Loading
 
-    private func loadLayoutCacheFirst() async {
+    // Public refresh method
+    public func refresh() async {
+        await loadLayoutCacheFirst(forceRefresh: true)
+    }
+
+    // MARK: - Cache-First Loading
+
+    private func loadLayoutCacheFirst(forceRefresh: Bool = false) async {
         isLoading = true
         errorMessage = nil
 
         // 1. Try loading from cache first (instant display)
-        if let cached = await SDUICacheManager.shared.load(slug: slug, userId: nil) {
+        // Skip cache if forced refresh
+        if !forceRefresh, let cached = await SDUICacheManager.shared.load(slug: slug, userId: nil) {
             await MainActor.run {
                 // Convert cached SDUIComponent to AdvancedLayoutResponse
                 self.layout = AdvancedLayoutResponse(
@@ -80,33 +88,36 @@ struct SDUIPage: View {
         }
 
         // 2. Fetch fresh data from network (in background)
-        await fetchAndUpdate(retryCount: 3)
+        await fetchAndUpdate(retryCount: 3, forceRefresh: forceRefresh)
     }
 
-    private func fetchAndUpdate(retryCount: Int) async {
+    private func fetchAndUpdate(retryCount: Int, forceRefresh: Bool = false) async {
         var lastError: Error?
 
         for attempt in 0..<retryCount {
             do {
                 try Task.checkCancellation()
 
-                // Fetch with raw data for caching
-                let (response, rawData) = try await fetchLayoutWithRawData(slug: slug)
+                // Fetch using APIService to ensure overrides (like 'grocery') are respected
+                guard
+                    let response = try await APIService.shared.fetchLayout(
+                        slug: slug, forceRefresh: forceRefresh)
+                else {
+                    throw APIService.APIError.serverError  // Should not happen if fetchLayout handles errors
+                }
 
-                // Update UI only if content actually changed or we're showing skeleton
-                let hasChanges = response.components.count != (layout?.components.count ?? 0)
-
+                // Always update UI with fresh network data
                 await MainActor.run {
-                    if hasChanges || self.showSkeleton {
-                        self.layout = response
-                    }
+                    self.layout = response
                     self.showSkeleton = false
                     self.isFromCache = false
                     self.isLoading = false
                 }
 
-                // Save raw JSON to cache (non-blocking)
-                if let rawData = rawData {
+                // Save only the components array to cache (not the full response wrapper)
+                // SDUICacheManager.load() decodes rawJSON as [SDUIComponent], so we must
+                // encode just the components array, not the full AdvancedLayoutResponse.
+                if let rawData = try? JSONEncoder().encode(response.components) {
                     let currentSlug = slug
                     Task.detached {
                         await SDUICacheManager.shared.saveRawJSON(
@@ -117,7 +128,9 @@ struct SDUIPage: View {
                     }
                 }
 
-                print("[SDUIPage] Network fetch success: \(response.components.count) components")
+                print(
+                    "[SDUIPage] Fetch success: \(response.components.count) components (Force: \(forceRefresh))"
+                )
                 return
 
             } catch is CancellationError {
@@ -150,44 +163,5 @@ struct SDUIPage: View {
                 print("[SDUIPage] Network failed but using cached content")
             }
         }
-    }
-
-    // MARK: - Network Fetch with Raw Data
-
-    private func fetchLayoutWithRawData(slug: String) async throws -> (
-        AdvancedLayoutResponse, Data?
-    ) {
-        let urlString = "\(APIService.shared.baseURL)/advanced-layout/\(slug)"
-        guard let url = URL(string: urlString) else {
-            throw URLError(.badURL)
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 10
-
-        if let token = AuthManager.shared.authToken {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-            (200...299).contains(httpResponse.statusCode)
-        else {
-            throw URLError(.badServerResponse)
-        }
-
-        // Log cache header from backend
-        if let cacheHit = httpResponse.value(forHTTPHeaderField: "X-Cache") {
-            print("[SDUIPage] Backend cache: \(cacheHit)")
-        }
-
-        // Decode to AdvancedLayoutResponse
-        let layout = try JSONDecoder().decode(AdvancedLayoutResponse.self, from: data)
-
-        // Return both decoded response and raw data for caching
-        return (layout, data)
     }
 }

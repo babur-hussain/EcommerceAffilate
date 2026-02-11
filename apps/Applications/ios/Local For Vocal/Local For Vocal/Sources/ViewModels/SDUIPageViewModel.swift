@@ -62,13 +62,11 @@ class SDUIPageViewModel: ObservableObject {
             // Check if task was cancelled
             guard !Task.isCancelled else { return }
 
-            // 3. Update UI only if content changed
-            if freshComponents.count != self.components.count || self.showSkeleton {
-                self.components = freshComponents
-                self.showSkeleton = false
-                self.isFromCache = false
-                print("[SDUI] Updated with \(freshComponents.count) fresh components")
-            }
+            // 3. Always update UI with fresh data from network
+            self.components = freshComponents
+            self.showSkeleton = false
+            self.isFromCache = false
+            print("[SDUI] Updated with \(freshComponents.count) fresh components")
 
             // 4. Save raw JSON to cache (non-blocking)
             if let rawData = rawData {

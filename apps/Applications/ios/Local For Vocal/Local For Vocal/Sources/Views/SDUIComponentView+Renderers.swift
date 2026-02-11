@@ -429,6 +429,11 @@ extension SDUIComponentView {
         KitchenEssentialsView(component: component)
     }
 
+    @ViewBuilder
+    func renderSmartBasket() -> some View {
+        SmartBasketView(component: component)
+    }
+
     // MARK: - Sports & Fitness Renderers
 
     @ViewBuilder
@@ -1386,6 +1391,17 @@ extension SDUIComponentView {
             headerImage: headerImage,
             backgroundColor: backgroundColor,
             items: items
+        )
+    }
+
+    @ViewBuilder
+    func renderGroceryListing() -> some View {
+        let categoryId = component.prop(for: "categoryId", as: String.self)
+        let categoryName = component.prop(for: "categoryName", as: String.self)
+
+        GroceryListingView(
+            categoryId: categoryId,
+            categoryName: categoryName
         )
     }
 }

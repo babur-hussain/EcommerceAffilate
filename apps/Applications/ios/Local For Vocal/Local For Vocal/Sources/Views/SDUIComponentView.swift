@@ -6,6 +6,7 @@ struct SDUIComponentView: View {
     @EnvironmentObject var cartManager: CartManager
     @EnvironmentObject var wishlistManager: WishlistManager
     @EnvironmentObject var beautyManager: BeautyManager
+    @EnvironmentObject var navigationManager: NavigationManager
 
     // Add observed object for dynamic updates
     @StateObject var viewModel = SDUIComponentViewModel()
@@ -28,22 +29,39 @@ struct SDUIComponentView: View {
         // MARK: - Core Components
         case .container:
             if let children = component.children {
-                VStack(spacing: 0) {
+                let stack = VStack(spacing: 0) {
                     ForEach(children) { child in
                         SDUIComponentView(component: child)
                     }
                 }
+
+                if let actionUrl = component.prop(for: "actionUrl") as String? {
+                    Button(action: {
+                        navigationManager.navigate(to: actionUrl)
+                    }) {
+                        stack
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                } else {
+                    stack
+                }
             }
+
         case .text:
             Text(component.prop(for: "text") ?? "")
         case .image:
             if let imageUrl = component.prop(for: "imageUrl") as String? {
+                let width = component.style?["width"]?.value as? CGFloat
+                let height = component.style?["height"]?.value as? CGFloat
+
                 CachedAsyncImage(url: URL(string: imageUrl)) { image in
                     image.resizable().scaledToFit()
                 } placeholder: {
                     Color.gray.opacity(0.1)
                 }
+                .frame(width: width, height: height)
             }
+
         case .button:
             Button(action: {}) {
                 Text(component.prop(for: "text") ?? "Button")
@@ -395,6 +413,13 @@ struct SDUIComponentView: View {
             renderFeaturedCarousel()
         case .bestQuality:
             renderBestQuality()
+        case .groceryListing:
+            renderGroceryListing()
+        case .groceryTopPicks:
+            renderGroceryTopPicks()
+
+        case .smartBasket:
+            renderSmartBasket()
 
         case .unknown:
             Text("Unknown: \(component.type.rawValue)")

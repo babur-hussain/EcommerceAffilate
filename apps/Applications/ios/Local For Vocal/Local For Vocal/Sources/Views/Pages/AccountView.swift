@@ -327,7 +327,7 @@ struct AccountView: View {
                 LanguageView()
             }
             .fullScreenCover(isPresented: $showSmartBasket) {
-                SmartBasketView()
+                SmartBasketPageView()
             }
             .fullScreenCover(isPresented: $showPlusMembership) {
                 PlusMembershipView()

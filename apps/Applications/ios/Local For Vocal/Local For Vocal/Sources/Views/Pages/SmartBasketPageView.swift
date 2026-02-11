@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SmartBasketView: View {
+struct SmartBasketPageView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var products: [Product] = []
     @State private var isLoading = true

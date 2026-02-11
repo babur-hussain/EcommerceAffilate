@@ -1,0 +1,336 @@
+[
+    {
+        "id": "grocery_hero",
+        "type": "hero_carousel",
+        "priority": 10,
+        "content": {
+            "banners": [
+                {
+                    "imageUrl": "https://img.freepik.com/free-vector/flat-supermarket-social-media-cover-template_23-2149366624.jpg",
+                    "actionUrl": "/products?category=grocery"
+                },
+                {
+                    "imageUrl": "https://img.freepik.com/free-vector/flat-design-supermarket-facebook-cover_23-2149379203.jpg",
+                    "actionUrl": "/products?category=vegetables"
+                }
+            ]
+        }
+    },
+    {
+        "id": "grocery_lowest_price_zone",
+        "type": "Container",
+        "style": {
+            "paddingVertical": 16,
+            "paddingHorizontal": 16,
+            "backgroundColor": "#F97316",
+            "marginBottom": 16,
+            "cornerRadius": 12
+        },
+        "children": [
+            {
+                "type": "Text",
+                "props": {
+                    "text": "Lowest price...!"
+                },
+                "style": {
+                    "fontSize": 24,
+                    "fontWeight": "bold",
+                    "color": "#FFFFFF",
+                    "fontStyle": "italic",
+                    "marginBottom": 16,
+                    "alignment": "center"
+                }
+            },
+            {
+                "type": "Container",
+                "style": {
+                    "flexDirection": "row",
+                    "justifyContent": "space-between"
+                },
+                "children": [
+                    {
+                        "type": "Container",
+                        "props": {
+                            "actionUrl": "category://Groceries?subCategoryId=697095953758a7d8f76fa8c5&layout=grocery"
+                        },
+                        "style": {
+                            "backgroundColor": "#FFFFFF",
+                            "cornerRadius": 8,
+                            "padding": 8,
+                            "width": 100,
+                            "height": 140
+                        },
+                        "children": [
+                            {
+                                "type": "Text",
+                                "props": {
+                                    "text": "Up to 70%...\nWinter Essential"
+                                },
+                                "style": {
+                                    "fontSize": 12,
+                                    "fontWeight": "bold",
+                                    "color": "#111827",
+                                    "marginBottom": 8,
+                                    "textAlign": "center"
+                                }
+                            },
+                            {
+                                "type": "Image",
+                                "props": {
+                                    "imageUrl": "https://cdn-icons-png.flaticon.com/512/2553/2553691.png"
+                                },
+                                "style": {
+                                    "width": 60,
+                                    "height": 60,
+                                    "alignment": "center"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Container",
+                        "props": {
+                            "actionUrl": "category://Groceries?subCategoryId=697095953758a7d8f76fa912&layout=grocery"
+                        },
+                        "style": {
+                            "backgroundColor": "#FFFFFF",
+                            "cornerRadius": 8,
+                            "padding": 8,
+                            "width": 100,
+                            "height": 140
+                        },
+                        "children": [
+                            {
+                                "type": "Text",
+                                "props": {
+                                    "text": "Up to 50% off\nSnack & Sip"
+                                },
+                                "style": {
+                                    "fontSize": 12,
+                                    "fontWeight": "bold",
+                                    "color": "#111827",
+                                    "marginBottom": 8,
+                                    "textAlign": "center"
+                                }
+                            },
+                            {
+                                "type": "Image",
+                                "props": {
+                                    "imageUrl": "https://cdn-icons-png.flaticon.com/512/3081/3081967.png"
+                                },
+                                "style": {
+                                    "width": 60,
+                                    "height": 60,
+                                    "alignment": "center"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Container",
+                        "props": {
+                            "actionUrl": "category://Groceries?subCategoryId=697095c1266f3a88165e3d20&layout=grocery"
+                        },
+                        "style": {
+                            "backgroundColor": "#FFFFFF",
+                            "cornerRadius": 8,
+                            "padding": 8,
+                            "width": 100,
+                            "height": 140
+                        },
+                        "children": [
+                            {
+                                "type": "Text",
+                                "props": {
+                                    "text": "Up to 40%...\nCooking Corner"
+                                },
+                                "style": {
+                                    "fontSize": 12,
+                                    "fontWeight": "bold",
+                                    "color": "#111827",
+                                    "marginBottom": 8,
+                                    "textAlign": "center"
+                                }
+                            },
+                            {
+                                "type": "Image",
+                                "props": {
+                                    "imageUrl": "https://cdn-icons-png.flaticon.com/512/3082/3082046.png"
+                                },
+                                "style": {
+                                    "width": 60,
+                                    "height": 60,
+                                    "alignment": "center"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "grocery_delivery_promise",
+        "type": "Container",
+        "style": {
+            "paddingHorizontal": 16,
+            "marginBottom": 24,
+            "alignment": "center"
+        },
+        "children": [
+            {
+                "type": "Container",
+                "style": {
+                    "backgroundColor": "#FFFFFF",
+                    "paddingVertical": 12,
+                    "paddingHorizontal": 20,
+                    "cornerRadius": 30,
+                    "shadowColor": "#000000",
+                    "shadowOpacity": 0.1,
+                    "shadowRadius": 4,
+                    "flexDirection": "row",
+                    "alignItems": "center",
+                    "justifyContent": "center"
+                },
+                "children": [
+                    {
+                        "type": "Image",
+                        "props": {
+                            "imageUrl": "https://cdn-icons-png.flaticon.com/512/2972/2972185.png"
+                        },
+                        "style": {
+                            "width": 24,
+                            "height": 24,
+                            "marginRight": 8
+                        }
+                    },
+                    {
+                        "type": "Text",
+                        "props": {
+                            "text": "Get delivered in 30 Minutes"
+                        },
+                        "style": {
+                            "fontSize": 16,
+                            "fontWeight": "bold",
+                            "color": "#111827"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "grocery_steal_deal",
+        "type": "Container",
+        "style": {
+            "paddingHorizontal": 16,
+            "marginBottom": 24
+        },
+        "children": [
+            {
+                "type": "Text",
+                "props": {
+                    "text": "Steal Deal - Pick any one!"
+                },
+                "style": {
+                    "fontSize": 18,
+                    "fontWeight": "bold",
+                    "marginBottom": 12,
+                    "color": "#111827"
+                }
+            },
+            {
+                "type": "Container",
+                "style": {
+                    "flexDirection": "horizontal",
+                    "spacing": 12
+                },
+                "children": [
+                    {
+                        "type": "Container",
+                        "props": {
+                            "actionUrl": "category://Groceries?subCategoryId=697095953758a7d8f76fa8ec&layout=grocery"
+                        },
+                        "style": {
+                            "backgroundColor": "#F3F4F6",
+                            "width": 140,
+                            "height": 180,
+                            "cornerRadius": 12,
+                            "padding": 8,
+                            "alignItems": "center",
+                            "justifyContent": "center"
+                        },
+                        "children": [
+                            {
+                                "type": "Text",
+                                "props": {
+                                    "text": "Product"
+                                },
+                                "style": {
+                                    "fontSize": 14,
+                                    "fontWeight": "bold",
+                                    "marginBottom": 4
+                                }
+                            },
+                            {
+                                "type": "Text",
+                                "props": {
+                                    "text": "₹99"
+                                },
+                                "style": {
+                                    "fontSize": 16,
+                                    "fontWeight": "bold"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Container",
+                        "props": {
+                            "actionUrl": "category://Groceries?subCategoryId=697095953758a7d8f76fa8c2&layout=grocery"
+                        },
+                        "style": {
+                            "backgroundColor": "#F3F4F6",
+                            "width": 140,
+                            "height": 180,
+                            "cornerRadius": 12,
+                            "padding": 8,
+                            "alignItems": "center",
+                            "justifyContent": "center"
+                        },
+                        "children": [
+                            {
+                                "type": "Text",
+                                "props": {
+                                    "text": "Product"
+                                },
+                                "style": {
+                                    "fontSize": 14,
+                                    "fontWeight": "bold",
+                                    "marginBottom": 4
+                                }
+                            },
+                            {
+                                "type": "Text",
+                                "props": {
+                                    "text": "₹99"
+                                },
+                                "style": {
+                                    "fontSize": 16,
+                                    "fontWeight": "bold"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "grocery_main_feed",
+        "type": "grocery_row",
+        "props": {
+            "categoryId": "GROCERY_TOP_PICKS"
+        }
+    }
+]

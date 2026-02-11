@@ -230,6 +230,7 @@ struct CategoryPageHeader: View {
     @Binding var searchQuery: String
     var onBack: () -> Void
     var cartCount: Int
+    var isPlaceholder: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -245,7 +246,7 @@ struct CategoryPageHeader: View {
                     .foregroundColor(Color(hex: "#6B7280"))
                     .font(.system(size: 16))
                 Text(title)
-                    .foregroundColor(Color(hex: "#374151"))
+                    .foregroundColor(isPlaceholder ? Color(hex: "#9CA3AF") : Color(hex: "#374151"))
                     .font(.system(size: 15, weight: .medium))
                 Spacer()
             }

@@ -7,15 +7,17 @@ struct CategoryNavigationParams: Equatable {
     let categoryName: String?
     let subCategoryId: String?
     let filters: [String: String]
+    let layoutType: String?
 
     init(
         categoryId: String? = nil, categoryName: String? = nil, subCategoryId: String? = nil,
-        filters: [String: String] = [:]
+        filters: [String: String] = [:], layoutType: String? = nil
     ) {
         self.categoryId = categoryId
         self.categoryName = categoryName
         self.subCategoryId = subCategoryId
         self.filters = filters
+        self.layoutType = layoutType
     }
 }
 
@@ -75,6 +77,7 @@ class NavigationManager: ObservableObject {
 
         var categoryId: String?
         var subCategoryId: String?
+        var layoutType: String?
         var filters: [String: String] = [:]
 
         // Parse query params
@@ -94,6 +97,8 @@ class NavigationManager: ObservableObject {
                     categoryId = value
                 case "subCategoryId":
                     subCategoryId = value
+                case "layout":
+                    layoutType = value
                 case "filters":
                     // Parse filters format: key1:value1,key2:value2
                     let filterPairs = value.components(separatedBy: ",")
@@ -114,8 +119,10 @@ class NavigationManager: ObservableObject {
             categoryId: categoryId,
             categoryName: categoryName,
             subCategoryId: subCategoryId,
-            filters: filters
+            filters: filters,
+            layoutType: layoutType
         )
+
         self.showCategoryPage = true
     }
 

@@ -546,7 +546,119 @@ router.patch(
   }
 );
 
-// GET /api/products/public/random - Get random products (for Top Picks etc)
+// GET /api/products/public/grocery - Get grocery products from grocery_products collection (public)
+router.get("/products/public/grocery", async (req: Request, res: Response) => {
+  try {
+    const { limit: limitParam, page: pageParam, category, subCategory } = req.query;
+    const limit = parseInt(limitParam as string) || 20;
+    const page = parseInt(pageParam as string) || 1;
+    const skip = (page - 1) * limit;
+
+    if (!mongoose.connection.db) {
+      return res.status(500).json({ error: "Database connection not established" });
+    }
+
+    const groceryCollection = mongoose.connection.db.collection("grocery_products");
+
+    // Build query - only active products
+    const query: any = {};
+    // Check common active flags
+    query.$or = [
+      { isActive: true },
+      { status: "active" },
+      { isActive: { $exists: false } } // Include products without isActive field
+    ];
+
+    // Filter by subCategory IDs (comma-separated ObjectIds from SDUI JSON)
+    // Since grocery_products stores `category` as a text name (not ObjectId),
+    // we need to look up the category names from the IDs first, then match by name.
+    if (subCategory) {
+      const subCatIds = (subCategory as string).split(',').map(id => id.trim()).filter(Boolean);
+      if (subCatIds.length > 0) {
+        // Look up category names from the provided ObjectIds
+        const validIds = subCatIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+        if (validIds.length > 0) {
+          const categoryDocs = await Category.find({
+            _id: { $in: validIds.map(id => new mongoose.Types.ObjectId(id)) }
+          }).lean() as any[];
+
+          if (categoryDocs.length > 0) {
+            const categoryNames = categoryDocs.map((doc: any) => doc.name);
+            // Match products whose category field matches any of the looked-up names
+            query.category = { $in: categoryNames.map((name: string) => new RegExp(name, 'i')) };
+            console.log(`🛒 SubCategory filter: IDs=${subCatIds.join(',')} → Names=${categoryNames.join(',')}`);
+          } else {
+            // No matching categories found, return empty result
+            console.log(`🛒 SubCategory filter: No categories found for IDs=${subCatIds.join(',')}`);
+            query.category = { $in: [] };
+          }
+        }
+      }
+    } else if (category) {
+      if (mongoose.Types.ObjectId.isValid(category as string)) {
+        // Look up category name from the ID since grocery_products stores category as text name
+        const categoryDoc = await Category.findById(category).lean() as any;
+        if (categoryDoc) {
+          query.category = { $regex: categoryDoc.name, $options: 'i' };
+        } else {
+          // Fallback: try matching directly (won't match if it's truly an ObjectId vs string)
+          query.category = category;
+        }
+      } else {
+        query.category = { $regex: category, $options: 'i' };
+      }
+    }
+
+    const [products, total] = await Promise.all([
+      groceryCollection.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
+      groceryCollection.countDocuments(query)
+    ]);
+
+    // Format products to match the standard product response format
+    const formatted = products.map((p: any) => {
+      const primaryImage = p.primaryImage || p.image || (p.images && p.images.length > 0 ? p.images[0] : "");
+      return {
+        _id: p._id,
+        title: p.title || p.name || "",
+        name: p.title || p.name || "",
+        slug: p.slug || "",
+        price: p.sellingPrice || p.price || 0,
+        mrp: p.mrp || p.price || 0,
+        description: p.description || p.shortDescription || "",
+        shortDescription: p.shortDescription || "",
+        category: p.category || "Grocery",
+        brand: p.brand || "",
+        image: primaryImage,
+        primaryImage: primaryImage,
+        images: p.images || [],
+        stock: p.stockQty || p.stock || 0,
+        isActive: p.isActive !== false,
+        rating: p.rating || 0,
+        ratingCount: p.ratingCount || 0,
+        unit: p.unit || "",
+        weight: p.weight || "",
+        foodType: p.foodType || "",
+        businessId: p.businessId,
+      };
+    });
+
+    res.json({
+      products: formatted,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+    });
+
+  } catch (error: any) {
+    console.error("❌ Error fetching public grocery products:", error.message);
+    res.status(500).json({
+      error: "Failed to fetch grocery products",
+      message: error.message,
+    });
+  }
+});
+
+
 router.get("/products/public/random", async (req: Request, res: Response) => {
   try {
     const count = await Product.countDocuments({ isActive: true });
@@ -649,7 +761,47 @@ router.get("/products/:id", async (req: Request, res: Response) => {
       path: 'businessId',
       select: 'businessIdentity.tradeName'
     }).lean();
+
     if (!product) {
+      // Fallback: Check grocery_products collection
+      if (mongoose.connection.db) {
+        const groceryCollection = mongoose.connection.db.collection("grocery_products");
+        const groceryProduct = await groceryCollection.findOne({ _id: new mongoose.Types.ObjectId(id) });
+
+        if (groceryProduct) {
+          console.log(`fallback: found product ${id} in grocery_products`);
+          // Transform grocery product to match Product structure
+          // We need to ensure vital fields for Edit page are present
+          const transformedProduct = {
+            ...groceryProduct,
+            // Ensure _id is string or ObjectId as expected? lean() returns ObjectId usually. 
+            // groceryProduct is from raw driver, so _id is ObjectId.
+            // We might need to populate businessId if possible, but raw driver can't populate mongoose refs easily.
+            // However, we can fetch business details if needed.
+            // usage in frontend: product.businessId (object) or string? 
+            // Frontend Product interface expects businessId to be string usually, or populated object.
+            // The edit page might not strictly use businessId validation on load, usually primarily for ownership check middleware which passed already.
+
+            // Map specific fields if they differ
+            title: groceryProduct.title || groceryProduct.name,
+            price: groceryProduct.price || groceryProduct.sellingPrice,
+            stock: groceryProduct.stock || groceryProduct.stockQty,
+
+            // Grocery specific fields that might need mapping or are already matching
+            // category is likely a string (name) in grocery_products, unlike ObjectId in Products
+            // The edit page handles "category > subcategory" string parsing.
+            category: groceryProduct.category,
+
+            // Ensure images
+            images: groceryProduct.images || (groceryProduct.image ? [groceryProduct.image] : []),
+            image: groceryProduct.image || (groceryProduct.images && groceryProduct.images.length > 0 ? groceryProduct.images[0] : "")
+          };
+
+          // Respond with grocery product
+          return res.json(transformedProduct);
+        }
+      }
+
       return res.status(404).json({ error: "Product not found" });
     }
 

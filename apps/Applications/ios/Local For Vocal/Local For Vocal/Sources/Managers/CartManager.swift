@@ -28,6 +28,15 @@ public class CartManager: ObservableObject {
         items.reduce(0) { $0 + $1.quantity }
     }
 
+    var cartSavings: Double {
+        items.reduce(0) { total, item in
+            let mrp = item.product.mrp ?? item.product.price
+            let price = item.product.price
+            let savingsPerItem = max(0, mrp - price)
+            return total + (savingsPerItem * Double(item.quantity))
+        }
+    }
+
     private let saveKey = "guest_cart"
 
     init() {

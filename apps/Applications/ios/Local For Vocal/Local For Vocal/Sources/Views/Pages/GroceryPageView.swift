@@ -10,61 +10,77 @@ struct GroceryPageView: View {
     private let fullText = "Lowest price..."
     @State private var isDeleting = false
 
+    @State private var isSearching = false
+    @State private var scrollOffset: CGFloat = 0
+    @State private var refreshID = UUID()
+
     var body: some View {
         ZStack(alignment: .top) {
-            Color(hex: "#FFF8E7").ignoresSafeArea()
+            // ── Yellow-to-White Gradient Background ──
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(hex: "#FFF8E7"),  // Warm yellow top
+                    Color(hex: "#FFFDF5"),  // Light transition
+                    Color.white,  // White bottom
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: 0) {
-                    // Static Header (Location & Categories)
+                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                    // ── Scrollable Header (tabs + location) ──
+                    // This scrolls away with content
+                    GroceryStaticHeader(activeTab: $activeTab)
 
-                    // Main Content
-                    VStack(spacing: 0) {
-                        // Hero Banner
-                        GroceryHeroBanner(typingText: typingText)
-                            .padding(.top, 12)
-                            .padding(.horizontal, 16)
-
-                        // Delivery Promise
-                        HStack(spacing: 8) {
-                            Image(systemName: "timer")
-                                .foregroundColor(Color(hex: "#FF9800"))
-                            Text("Get delivered in 30 Minutes")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.black)
+                    Section(
+                        header:
+                            VStack(spacing: 0) {
+                                GroceryStickyHeader(
+                                    text: $searchText,
+                                    onSearchTap: {
+                                        isSearching = true
+                                    }
+                                )
+                            }
+                            .frame(maxWidth: .infinity)
+                            .background(Color(hex: "#FFF8E7"))
+                            .ignoresSafeArea(edges: .top)
+                            .zIndex(100)
+                            .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+                    ) {
+                        // Main Content Driven by SDUI
+                        VStack(spacing: 0) {
+                            SDUIPage(slug: "grocery")
+                                .id(refreshID)  // Force recreation on refresh
                         }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 20)
-                        .background(Color.white)
-                        .cornerRadius(30)
-                        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-                        .padding(.top, 20)
-
-                        // Sections
-                        VStack(spacing: 24) {
-                            GrocerySectionPlaceholder(
-                                title: "Steal Deal - Pick any one!", color: Color(hex: "#7C3AED"))
-                            GrocerySectionPlaceholder(title: "Top Picks", color: .blue)
-                            GrocerySectionPlaceholder(title: "Breakfast Essentials", color: .orange)
-                            GrocerySectionPlaceholder(title: "Deals of the Day", color: .red)
-                            GrocerySectionPlaceholder(title: "Best Sellers", color: .green)
-                        }
-                        .padding(.top, 24)
+                        .padding(.top, 16)
+                        .padding(.bottom, 100)
+                        .zIndex(-1)
                     }
-                    .padding(.bottom, 100)
-                    .padding(.top, 130)  // Increased space for taller static header + sticky header
+                }
+            }
+            .refreshable {
+                // Hard refresh: Clear cache and force reload
+                await SDUICacheManager.shared.invalidate(slug: "grocery")
+                try? await Task.sleep(nanoseconds: 500_000_000)  // Small delay for UX
+                await MainActor.run {
+                    refreshID = UUID()
                 }
             }
 
-            VStack(spacing: 0) {
-                GroceryStaticHeader(activeTab: $activeTab)
-                // Sticky Header (Search) - Placed on top
-                GroceryStickyHeader(text: $searchText)
-            }
-            .background(Color(hex: "#FFF8E7"))
+            // ── Fixed Status Bar Background ──
+            Color(hex: "#FFF8E7")
+                .ignoresSafeArea(edges: .top)
+                .frame(height: 0)  // Allows it to extend only into the safe area
+                .zIndex(200)
         }
         .onAppear {
             startTypingAnimation()
+        }
+        .fullScreenCover(isPresented: $isSearching) {
+            GroceryGlobalSearchView()
         }
     }
 
@@ -148,27 +164,32 @@ struct GroceryStaticHeader: View {
 
 struct GroceryStickyHeader: View {
     @Binding var text: String
+    var onSearchTap: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(Color(hex: "#9CA3AF"))
-                TextField("Search for atta, dal, oil...", text: $text)
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "#111827"))
+            Button(action: onSearchTap) {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(Color(hex: "#9CA3AF"))
+                    Text("Search for atta, dal, oil...")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "#6B7280"))  // Placeholder gray
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(Color.white)
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(hex: "#E5E7EB"), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(Color.white)
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color(hex: "#E5E7EB"), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+            .buttonStyle(PlainButtonStyle())
 
-            Button(action: {}) {
+            Button(action: onSearchTap) {  // Mic also triggers search
                 Image(systemName: "mic.fill")
                     .foregroundColor(Color(hex: "#FF9800"))
                     .frame(width: 46, height: 46)

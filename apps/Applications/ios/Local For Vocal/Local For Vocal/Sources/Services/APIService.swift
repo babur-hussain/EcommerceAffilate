@@ -177,6 +177,82 @@ public class APIService {
     }
   }
 
+  /// Fetch grocery products from the dedicated grocery_products collection
+  func fetchGroceryProducts(limit: Int = 20) async throws -> [Product] {
+    let queryItems = [URLQueryItem(name: "limit", value: "\(limit)")]
+    let url = try makeURL("/products/public/grocery", queryItems: queryItems)
+
+    AppLogger.debug("🛒 Fetching grocery products from: \(url.absoluteString)")
+
+    let (data, _) = try await session.data(from: url)
+
+    // Debug: Print raw JSON
+    if let jsonString = String(data: data, encoding: .utf8) {
+      AppLogger.debug("🛒 fetchGroceryProducts JSON: \(jsonString.prefix(500))...")
+    }
+
+    // The endpoint returns { products: [...], total, page, pages }
+    // Extract the "products" array from the response dictionary
+    guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let productsArray = json["products"]
+    else {
+      AppLogger.error("🛒 Failed to parse grocery response as dictionary")
+      return []
+    }
+
+    let productsData = try JSONSerialization.data(withJSONObject: productsArray)
+    let products = try JSONDecoder().decode([Product].self, from: productsData)
+    AppLogger.info("🛒 Decoded \(products.count) grocery products")
+    return products
+  }
+
+  /// Fetch products filtered by multiple sub-category IDs
+  func fetchProductsBySubCategoryIds(_ ids: [String], limit: Int = 20) async throws -> [Product] {
+    // Construct query items: limit, and multiple 'subCategory' params
+    var queryItems = [URLQueryItem(name: "limit", value: "\(limit)")]
+
+    // Add each ID as a separate 'subCategory' query parameter
+    // Comma separated for Node/Express backend
+    let idsString = ids.joined(separator: ",")
+    queryItems.append(URLQueryItem(name: "subCategory", value: idsString))
+
+    let url = try makeURL("/products/public/grocery", queryItems: queryItems)
+
+    AppLogger.debug("🛒 Fetching products by subCategoryIds: \(url.absoluteString)")
+
+    let (data, response) = try await session.data(for: URLRequest(url: url))
+
+    guard let httpResponse = response as? HTTPURLResponse,
+      (200...299).contains(httpResponse.statusCode)
+    else {
+      AppLogger.error(
+        "❌ Failed to fetch products by subCategoryIds. Status: \((response as? HTTPURLResponse)?.statusCode ?? -1)"
+      )
+      throw APIError.serverError
+    }
+
+    // Debug: Print raw JSON
+    if let jsonString = String(data: data, encoding: .utf8) {
+      AppLogger.debug("📦 fetchProductsBySubCategoryIds JSON: \(jsonString.prefix(500))...")
+    }
+
+    // Reuse existing decoding logic (Array or ProductResponse)
+    // For simplicity, let's assume standard Product array or ProductResponse wrapper
+    struct ProductResponse: Decodable {
+      let products: [Product]
+    }
+
+    if let products = try? JSONDecoder().decode([Product].self, from: data) {
+      return products
+    }
+
+    if let res = try? JSONDecoder().decode(ProductResponse.self, from: data) {
+      return res.products
+    }
+
+    throw APIError.decodingError
+  }
+
   func fetchSubCategories(parentId: String) async throws -> [SubCategory] {
     // Use the live endpoint: /categories/:idOrSlug/subcategories
     let url = try makeURL("/categories/\(parentId)/subcategories")
@@ -404,16 +480,34 @@ public class APIService {
     return url
   }
 
-  func fetchLayout(slug: String) async throws -> AdvancedLayoutResponse? {
+  func fetchLayout(slug: String, forceRefresh: Bool = false) async throws -> AdvancedLayoutResponse?
+  {
     // [OVERRIDE] Force the Fashion layout locally as the user skipped backend DB update.
     let targetSlug = slug == "fashion-women" ? "women" : slug
 
+    // [OVERRIDE] Grocery Listing (PLP)
+    if slug.hasPrefix("grocery-listing") || slug == "grocery-plp" {
+      if let url = Bundle.main.url(forResource: "common_grocery_listing", withExtension: "json"),
+        let data = try? Data(contentsOf: url),
+        let components = try? JSONDecoder().decode([SDUIComponent].self, from: data)
+      {
+
+        // Inject category ID from slug if possible (e.g. grocery-listing-CAT123)
+        // For now, just return the template
+        return AdvancedLayoutResponse(
+          slug: slug, name: "Grocery Listing", isActive: true, components: components)
+      }
+    }
+
     // 1. Try Network Request
     let url = try makeURL("/advanced-layout/\(targetSlug)")
-    AppLogger.debug("Fetching layout from: \(url.absoluteString)")
+    AppLogger.debug("Fetching layout from: \(url.absoluteString) (Force Refresh: \(forceRefresh))")
 
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
+    if forceRefresh {
+      request.cachePolicy = .reloadIgnoringLocalCacheData
+    }
 
     let (data, response) = try await session.data(for: request)
 
@@ -473,66 +567,9 @@ public class APIService {
 }
 
 // MARK: - Search View Model
-@MainActor
-public class SearchViewModel: ObservableObject {
-  @Published public var query: String = ""
-  @Published public var trendingTerms: [String] = []
-  @Published public var searchState: SearchState = .idle
-  @Published public var globalResults: GlobalSearchResponse?
+// SearchViewModel moved to Sources/ViewModels/SearchViewModel.swift
 
-  private var cancellables = Set<AnyCancellable>()
-
-  public enum SearchState {
-    case idle
-    case loading
-    case results
-    case error(String)
-  }
-
-  public init() {
-    // Debounce query
-    $query
-      .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
-      .removeDuplicates()
-      .sink { [weak self] val in
-        Task {
-          await self?.performSearch(query: val)
-        }
-      }
-      .store(in: &cancellables)
-
-    Task {
-      await fetchTrending()
-    }
-  }
-
-  public func fetchTrending() async {
-    do {
-      self.trendingTerms = try await APIService.shared.fetchTrendingTerms()
-    } catch {
-      AppLogger.error("Failed to fetch trending: \(error)")
-    }
-  }
-
-  public func performSearch(query: String) async {
-    guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
-      self.searchState = .idle
-      self.globalResults = nil
-      return
-    }
-
-    self.searchState = .loading
-    do {
-      let results = try await APIService.shared.fetchGlobalSearch(query: query)
-      self.globalResults = results
-      self.searchState = .results
-    } catch {
-      self.searchState = .error(error.localizedDescription)
-    }
-  }
-}
-
-struct AdvancedLayoutResponse: Decodable {
+struct AdvancedLayoutResponse: Codable {
   let slug: String
   let name: String
   let isActive: Bool

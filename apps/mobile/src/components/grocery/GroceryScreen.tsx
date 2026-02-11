@@ -12,6 +12,7 @@ import {
     Animated,
     Easing
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { GroceryStaticHeader, GroceryStickyHeader } from './GroceryHeader';
 import { useRouter } from 'expo-router';
@@ -499,7 +500,11 @@ export default function GroceryScreen({ onTabPress, setStatusColor }: GroceryScr
             >
                 <GroceryStaticHeader onTabPress={onTabPress} />
                 <GroceryStickyHeader />
-                <View style={styles.contentContainer}>
+                <LinearGradient
+                    colors={['#FFF8E7', '#FFFFFF', '#FFFFFF']}
+                    style={styles.contentContainer}
+                >
+                    <TopPicksSection />
                     <View style={styles.mainBannerCard}>
                         <Image
                             source={{ uri: 'https://res.cloudinary.com/deljcbcvu/image/upload/v1768337045/Grocery_Offer_Backgroung_krgtp0.jpg' }}
@@ -538,7 +543,6 @@ export default function GroceryScreen({ onTabPress, setStatusColor }: GroceryScr
                         </View>
                     </View>
                     <StealDealSection />
-                    <TopPicksSection />
                     <ContinuousBannerSlider />
                     <BreakfastEssentialsSection />
                     <DealsOfTheDaySection />
@@ -550,7 +554,7 @@ export default function GroceryScreen({ onTabPress, setStatusColor }: GroceryScr
                     <WinterMustHavesSection />
                     <LaundryFavouritesSection />
                     <PriceCrashSection />
-                </View>
+                </LinearGradient>
             </ScrollView>
 
             <GroceryBottomBar currentTab={activeTab} onTabPress={(tab) => {

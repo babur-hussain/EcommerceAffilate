@@ -6,7 +6,7 @@ struct ShoesSalesView: View {
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
+        ScrollView(showsIndicators: false) { 
             VStack(spacing: 0) {
                 if components.isEmpty {
                     // Loading state
