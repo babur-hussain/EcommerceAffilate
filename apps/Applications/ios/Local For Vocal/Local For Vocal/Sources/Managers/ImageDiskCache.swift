@@ -15,6 +15,10 @@ actor ImageDiskCache {
     // In-memory index for fast lookups: URL hash → file exists
     private var fileIndex: Set<String> = []
 
+    // In-memory image cache (NSCache auto-evicts under memory pressure)
+    // This prevents re-reading from disk when LazyVStack recycles views
+    private let memoryCache = NSCache<NSString, UIImage>()
+
     private init() {
         let cacheBase = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
         cacheDirectory = cacheBase.appendingPathComponent("Images", isDirectory: true)
@@ -22,37 +26,56 @@ actor ImageDiskCache {
         try? FileManager.default.createDirectory(
             at: cacheDirectory, withIntermediateDirectories: true)
 
+        // Allow ~100 images in memory (~50MB)
+        memoryCache.countLimit = 100
+
         // Build in-memory file index on init
         Task { await buildIndex() }
     }
 
     // MARK: - Public API
 
-    /// Load image from disk cache
+    /// Load image from cache (memory → disk)
+    /// Returns instantly from memory if previously loaded this session
     func loadImage(for urlString: String) -> UIImage? {
         let hash = md5Hash(urlString)
+        let cacheKey = hash as NSString
 
+        // Layer 1: Check in-memory cache (instant, no disk I/O)
+        if let memImage = memoryCache.object(forKey: cacheKey) {
+            return memImage
+        }
+
+        // Layer 2: Check disk
         guard fileIndex.contains(hash) else { return nil }
 
         let filePath = cacheDirectory.appendingPathComponent(hash)
-        guard let data = try? Data(contentsOf: filePath) else {
-            // File was deleted externally, remove from index
+        guard let data = try? Data(contentsOf: filePath),
+            let image = UIImage(data: data)
+        else {
             fileIndex.remove(hash)
             return nil
         }
 
-        // Update access date for LRU
+        // Promote to memory cache for next access
+        memoryCache.setObject(image, forKey: cacheKey)
+
+        // Update access date for LRU (background, non-blocking)
         try? fileManager.setAttributes(
             [.modificationDate: Date()],
             ofItemAtPath: filePath.path
         )
 
-        return UIImage(data: data)
+        return image
     }
 
     /// Save image to disk cache
     func saveImage(_ image: UIImage, for urlString: String) {
         let hash = md5Hash(urlString)
+        let cacheKey = hash as NSString
+
+        // Save to memory cache immediately
+        memoryCache.setObject(image, forKey: cacheKey)
 
         // Use JPEG for photos, PNG for images with transparency
         guard let data = image.jpegData(compressionQuality: 0.85) else { return }
@@ -71,11 +94,17 @@ actor ImageDiskCache {
     /// Save raw image data to disk cache (avoids re-encoding)
     func saveData(_ data: Data, for urlString: String) {
         let hash = md5Hash(urlString)
+        let cacheKey = hash as NSString
 
         let filePath = cacheDirectory.appendingPathComponent(hash)
         try? data.write(to: filePath, options: .atomic)
 
         fileIndex.insert(hash)
+
+        // Also promote to memory cache
+        if let image = UIImage(data: data) {
+            memoryCache.setObject(image, forKey: cacheKey)
+        }
     }
 
     /// Check if image exists in disk cache
