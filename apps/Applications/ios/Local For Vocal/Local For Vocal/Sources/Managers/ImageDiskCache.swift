@@ -193,7 +193,7 @@ actor ImageDiskCache {
         let data = Data(string.utf8)
         var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
         data.withUnsafeBytes { buffer in
-            _ = CC_MD5(buffer.baseAddress, CC_UINT32(buffer.count), &digest)
+            _ = CC_MD5(buffer.baseAddress, CC_LONG(buffer.count), &digest)
         }
         return digest.map { String(format: "%02x", $0) }.joined()
     }
