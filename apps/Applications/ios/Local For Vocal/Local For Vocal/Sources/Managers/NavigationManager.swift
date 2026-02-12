@@ -37,6 +37,19 @@ class NavigationManager: ObservableObject {
     @Published var showCategoryPage: Bool = false
 
     func navigate(to url: String) {
+        // Handle grocery category deep links with multiple IDs
+        if url.starts(with: "/grocery/category/") {
+            let ids = url.replacingOccurrences(of: "/grocery/category/", with: "")
+            self.categoryNavigation = CategoryNavigationParams(
+                categoryId: nil,  // Category ID might not be needed if we have sub-category IDs
+                categoryName: "Groceries",
+                subCategoryId: ids,
+                layoutType: "grocery"
+            )
+            self.showCategoryPage = true
+            return
+        }
+
         // Handle category:// URLs
         if url.starts(with: "category://") {
             parseCategoryURL(url)

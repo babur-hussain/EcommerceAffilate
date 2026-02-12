@@ -596,6 +596,50 @@ struct CategoryModel: Decodable, Identifiable {
     case id = "_id"
     case name, slug, image, icon, parentCategory, group, subCategoryGroupOrder, attributes
   }
+
+  // Restore memberwise initializer lost due to custom init(from:)
+  public init(
+    id: String, name: String, slug: String, image: String?, icon: String?, parentCategory: String?,
+    group: String?, subCategoryGroupOrder: [String]?, attributes: [CategoryAttribute]?
+  ) {
+    self.id = id
+    self.name = name
+    self.slug = slug
+    self.image = image
+    self.icon = icon
+    self.parentCategory = parentCategory
+    self.group = group
+    self.subCategoryGroupOrder = subCategoryGroupOrder
+    self.attributes = attributes
+  }
+
+  // Custom decoding to handle parentCategory as String or Object
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    id = try container.decode(String.self, forKey: .id)
+    name = try container.decode(String.self, forKey: .name)
+    slug = try container.decode(String.self, forKey: .slug)
+    image = try? container.decode(String.self, forKey: .image)
+    icon = try? container.decode(String.self, forKey: .icon)
+    group = try? container.decode(String.self, forKey: .group)
+    subCategoryGroupOrder = try? container.decode([String].self, forKey: .subCategoryGroupOrder)
+    attributes = try? container.decode([CategoryAttribute].self, forKey: .attributes)
+
+    // Handle parentCategory: String or Object
+    if let parentId = try? container.decode(String.self, forKey: .parentCategory) {
+      parentCategory = parentId
+    } else if let parentObj = try? container.decode(CategoryParentRef.self, forKey: .parentCategory)
+    {
+      parentCategory = parentObj._id
+    } else {
+      parentCategory = nil
+    }
+  }
+
+  // Helper struct for decoding parent object
+  struct CategoryParentRef: Decodable {
+    let _id: String
+  }
 }
 
 struct CategoryAttribute: Decodable, Hashable {

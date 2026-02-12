@@ -317,6 +317,10 @@ public enum ComponentType: String, Codable {
     case smartBasket = "smart_basket"
 
     case groceryTopPicks = "grocery_top_picks"
+    case groceryDeals = "grocery_deals"
+    case groceryPromoCards = "grocery_promo_cards"
+    case groceryEvents = "grocery_events"
+    case groceryShopByCategory = "grocery_shop_by_category"
     case unknown
 
     public init(from decoder: Decoder) throws {
