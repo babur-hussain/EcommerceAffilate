@@ -49,190 +49,198 @@ struct WomenCollectionView: View {
     let textMuted = Color(hex: "#6c7c7f")
 
     var body: some View {
-        ZStack {
-            backgroundLight.ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack {
+                backgroundLight.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Header
-                HStack(spacing: 12) {
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 40, height: 40)
-                            .overlay(Image(systemName: "arrow.left").foregroundColor(textMain))
-                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-                    }
-
-                    // Search Bar
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(primaryColor)
-                        Text("Search designers, styles...")
-                            .foregroundColor(textMuted)
-                            .font(.system(size: 16, weight: .medium))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .frame(height: 48)
-                    .background(Color.white)
-                    .cornerRadius(24)
-                    .shadow(color: primaryColor.opacity(0.05), radius: 20, x: 0, y: 4)
-
-                    Button(action: {}) {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 40, height: 40)
-                            .overlay(
-                                ZStack {
-                                    Image(systemName: "bell")
-                                        .foregroundColor(textMain)
-                                    Circle()
-                                        .fill(secondaryColor)
-                                        .frame(width: 8, height: 8)
-                                        .offset(x: 4, y: -4)
-                                }
-                            )
-                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(backgroundLight.opacity(0.95))
-
-                // Categories
-                ScrollView(.horizontal, showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // Header
                     HStack(spacing: 12) {
-                        ForEach(Array(categories.enumerated()), id: \.offset) { index, cat in
-                            Text(cat)
-                                .font(.system(size: 14, weight: index == 0 ? .semibold : .medium))
-                                .foregroundColor(index == 0 ? .white : textMain)
-                                .padding(.horizontal, 20)
-                                .frame(height: 36)
-                                .background(index == 0 ? primaryColor : surfaceLight)
-                                .cornerRadius(18)
+                        Button(action: {
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 40, height: 40)
+                                .overlay(Image(systemName: "arrow.left").foregroundColor(textMain))
+                                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                        }
+
+                        // Search Bar
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(primaryColor)
+                            Text("Search designers, styles...")
+                                .foregroundColor(textMuted)
+                                .font(.system(size: 16, weight: .medium))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                        .frame(height: 48)
+                        .background(Color.white)
+                        .cornerRadius(24)
+                        .shadow(color: primaryColor.opacity(0.05), radius: 20, x: 0, y: 4)
+
+                        Button(action: {}) {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 40, height: 40)
+                                .overlay(
+                                    ZStack {
+                                        Image(systemName: "bell")
+                                            .foregroundColor(textMain)
+                                        Circle()
+                                            .fill(secondaryColor)
+                                            .frame(width: 8, height: 8)
+                                            .offset(x: 4, y: -4)
+                                    }
+                                )
+                                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
                         }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
-                }
-                .padding(.bottom, 8)
+                    .padding(.vertical, 8)
+                    .background(backgroundLight.opacity(0.95))
 
-                // Content
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Hero Section
-                        ZStack(alignment: .bottomLeading) {
-                            CachedAsyncImage(
-                                url: URL(
-                                    string:
-                                        "https://lh3.googleusercontent.com/aida-public/AB6AXuCWMEyYMVfSHhKIiqrG0BFfBtpM5oT7f5aC2cDexPxWyXACit1PnvxAZ2fcsPSskV7AbHp9fsLP4q1egPLJoza9h2JffHBvA1kCrIpg5AXROITqONfuJP9KWgz-A0-GvxfzfiL4VfULVgxCMjFA5iV8z077i1rJpZoFTEM2qmrYR5qPn-u5FnkNNlzRluWk5LAK27lJWB8tg3GX6Uvs6QumeU6DCIj2h39cb6O-EqghnXJLcZkDzYrQY0rfeLkXgl9qALqss5UsQ5ZF"
-                                )
-                            ) { image in
-                                image.resizable().aspectRatio(contentMode: .fill)
-                            } placeholder: {
-                                Color.gray.opacity(0.3)
-                            }
-                            .frame(height: 460)
-                            .clipped()
-
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    .clear, .black.opacity(0.1), .black.opacity(0.6),
-                                ]), startPoint: .top, endPoint: .bottom
-                            )
-                            .frame(height: 230)
-
-                            VStack(alignment: .leading, spacing: 16) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("The Spring\nFloral Edit")
-                                        .font(.system(size: 36, weight: .medium, design: .serif))
-                                        .foregroundColor(.white)
-                                    Text("Bloom with elegance.")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.white.opacity(0.9))
-                                }
-
-                                Button(action: {}) {
-                                    HStack(spacing: 8) {
-                                        Text("Shop the Look")
-                                            .fontWeight(.bold)
-                                        Image(systemName: "arrow.right")
-                                    }
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 12)
-                                    .background(secondaryColor)
-                                    .cornerRadius(12)
-                                    .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-                                }
-                            }
-                            .padding(24)
-                        }
-                        .cornerRadius(16)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-
-                        // Sub Categories Grid
-                        LazyVGrid(
-                            columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4),
-                            spacing: 12
-                        ) {
-                            ForEach(subCategories, id: \.name) { item in
-                                VStack(spacing: 8) {
-                                    ZStack {
-                                        surfaceLight
-                                        CachedAsyncImage(url: URL(string: item.image)) { image in
-                                            image.resizable().aspectRatio(contentMode: .fill)
-                                        } placeholder: {
-                                            Color.gray.opacity(0.1)
-                                        }
-                                    }
-                                    .frame(
-                                        width: (UIScreen.main.bounds.width - 68) / 4,
-                                        height: (UIScreen.main.bounds.width - 68) / 4
+                    // Categories
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(Array(categories.enumerated()), id: \.offset) { index, cat in
+                                Text(cat)
+                                    .font(
+                                        .system(size: 14, weight: index == 0 ? .semibold : .medium)
                                     )
-                                    .cornerRadius(16)
-                                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                                    .foregroundColor(index == 0 ? .white : textMain)
+                                    .padding(.horizontal, 20)
+                                    .frame(height: 36)
+                                    .background(index == 0 ? primaryColor : surfaceLight)
+                                    .cornerRadius(18)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 4)
+                    }
+                    .padding(.bottom, 8)
 
-                                    Text(item.name)
-                                        .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(textMain)
-                                        .multilineTextAlignment(.center)
+                    // Content
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Hero Section
+                            ZStack(alignment: .bottomLeading) {
+                                CachedAsyncImage(
+                                    url: URL(
+                                        string:
+                                            "https://lh3.googleusercontent.com/aida-public/AB6AXuCWMEyYMVfSHhKIiqrG0BFfBtpM5oT7f5aC2cDexPxWyXACit1PnvxAZ2fcsPSskV7AbHp9fsLP4q1egPLJoza9h2JffHBvA1kCrIpg5AXROITqONfuJP9KWgz-A0-GvxfzfiL4VfULVgxCMjFA5iV8z077i1rJpZoFTEM2qmrYR5qPn-u5FnkNNlzRluWk5LAK27lJWB8tg3GX6Uvs6QumeU6DCIj2h39cb6O-EqghnXJLcZkDzYrQY0rfeLkXgl9qALqss5UsQ5ZF"
+                                    )
+                                ) { image in
+                                    image.resizable().aspectRatio(contentMode: .fill)
+                                } placeholder: {
+                                    Color.gray.opacity(0.3)
+                                }
+                                .frame(height: 460)
+                                .clipped()
+
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        .clear, .black.opacity(0.1), .black.opacity(0.6),
+                                    ]), startPoint: .top, endPoint: .bottom
+                                )
+                                .frame(height: 230)
+
+                                VStack(alignment: .leading, spacing: 16) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("The Spring\nFloral Edit")
+                                            .font(
+                                                .system(size: 36, weight: .medium, design: .serif)
+                                            )
+                                            .foregroundColor(.white)
+                                        Text("Bloom with elegance.")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(.white.opacity(0.9))
+                                    }
+
+                                    Button(action: {}) {
+                                        HStack(spacing: 8) {
+                                            Text("Shop the Look")
+                                                .fontWeight(.bold)
+                                            Image(systemName: "arrow.right")
+                                        }
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 24)
+                                        .padding(.vertical, 12)
+                                        .background(secondaryColor)
+                                        .cornerRadius(12)
+                                        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+                                    }
+                                }
+                                .padding(24)
+                            }
+                            .cornerRadius(16)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+
+                            // Sub Categories Grid
+                            LazyVGrid(
+                                columns: Array(
+                                    repeating: GridItem(.flexible(), spacing: 12), count: 4),
+                                spacing: 12
+                            ) {
+                                ForEach(subCategories, id: \.name) { item in
+                                    VStack(spacing: 8) {
+                                        ZStack {
+                                            surfaceLight
+                                            CachedAsyncImage(url: URL(string: item.image)) {
+                                                image in
+                                                image.resizable().aspectRatio(contentMode: .fill)
+                                            } placeholder: {
+                                                Color.gray.opacity(0.1)
+                                            }
+                                        }
+                                        .frame(
+                                            width: (geometry.size.width - 68) / 4,
+                                            height: (geometry.size.width - 68) / 4
+                                        )
+                                        .cornerRadius(16)
+                                        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+
+                                        Text(item.name)
+                                            .font(.system(size: 12, weight: .semibold))
+                                            .foregroundColor(textMain)
+                                            .multilineTextAlignment(.center)
+                                    }
                                 }
                             }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
 
-                        // Trending Section
-                        VStack(alignment: .leading, spacing: 20) {
-                            Text("Trending for You")
-                                .font(.system(size: 24, weight: .semibold, design: .serif))
-                                .foregroundColor(textMain)
+                            // Trending Section
+                            VStack(alignment: .leading, spacing: 20) {
+                                Text("Trending for You")
+                                    .font(.system(size: 24, weight: .semibold, design: .serif))
+                                    .foregroundColor(textMain)
 
-                            VStack(spacing: 24) {
-                                // Card 1
-                                TrendingCard(
-                                    image:
-                                        "https://lh3.googleusercontent.com/aida-public/AB6AXuD-Oo1nZKXGGqOkuRCXFOKA7srndEVXEaYUCnRtI3SZ1gLKoYKHx5D3YxQjbrwUFHl5PB9f23jQSPgUq8YdJkcnh6hC8xxsIxdHvUR4pBWgdvlCT-mw8hF2pkxW0TV7CbM6GsubCxkfvspWHNUu33gxDl7XYhThH-XeuQklG1z-hl0UoIJzTNN9f9pm-HTego4z62qvM9GfAOg2A1x1qqYcgRu25gOlpbNJmv-e-JxmP_UbVJkIGHV_TlR2zjJjdx6VxIO6O8k1YpJ3",
-                                    badge: "NEW SEASON",
-                                    title: "Satin Slip Dresses"
-                                )
+                                VStack(spacing: 24) {
+                                    // Card 1
+                                    TrendingCard(
+                                        image:
+                                            "https://lh3.googleusercontent.com/aida-public/AB6AXuD-Oo1nZKXGGqOkuRCXFOKA7srndEVXEaYUCnRtI3SZ1gLKoYKHx5D3YxQjbrwUFHl5PB9f23jQSPgUq8YdJkcnh6hC8xxsIxdHvUR4pBWgdvlCT-mw8hF2pkxW0TV7CbM6GsubCxkfvspWHNUu33gxDl7XYhThH-XeuQklG1z-hl0UoIJzTNN9f9pm-HTego4z62qvM9GfAOg2A1x1qqYcgRu25gOlpbNJmv-e-JxmP_UbVJkIGHV_TlR2zjJjdx6VxIO6O8k1YpJ3",
+                                        badge: "NEW SEASON",
+                                        title: "Satin Slip Dresses"
+                                    )
 
-                                // Card 2
-                                TrendingCard(
-                                    image:
-                                        "https://lh3.googleusercontent.com/aida-public/AB6AXuDEGb5afFGFiBY8qbiW_kHE_Bd7cmDatWW5OWiYdzTeM0EXefomGJmOstOrqRcsKzxhTE2ZCGzqfL5Bfb4xIojeqNpNMYezyy137pYCzXK1R6jSrAHpq9BrG72C4wdSXuJueoZr2yG64mS1DLKTb-rgvocJWD3F0B-0SWONSFkOTuZuunpiwCHz85Tnltv6vZUY8SdbM3Sfy1DI8WzU6VwcZqVMEoGW4Dhjqcdlmbqf2Br0MOmjLFyfDSdE1Bwudce3cbCa743xCKmw",
-                                    badge: "WEDDING EDIT",
-                                    title: "Embroidered Lehengas"
-                                )
+                                    // Card 2
+                                    TrendingCard(
+                                        image:
+                                            "https://lh3.googleusercontent.com/aida-public/AB6AXuDEGb5afFGFiBY8qbiW_kHE_Bd7cmDatWW5OWiYdzTeM0EXefomGJmOstOrqRcsKzxhTE2ZCGzqfL5Bfb4xIojeqNpNMYezyy137pYCzXK1R6jSrAHpq9BrG72C4wdSXuJueoZr2yG64mS1DLKTb-rgvocJWD3F0B-0SWONSFkOTuZuunpiwCHz85Tnltv6vZUY8SdbM3Sfy1DI8WzU6VwcZqVMEoGW4Dhjqcdlmbqf2Br0MOmjLFyfDSdE1Bwudce3cbCa743xCKmw",
+                                        badge: "WEDDING EDIT",
+                                        title: "Embroidered Lehengas"
+                                    )
+                                }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 40)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 40)
                     }
                 }
             }

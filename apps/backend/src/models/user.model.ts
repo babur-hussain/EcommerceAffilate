@@ -23,6 +23,11 @@ export interface IUser extends Document {
   role: UserRole;
   businessId?: mongoose.Types.ObjectId;
   referralCode?: string;
+  customRoles?: {
+    roleId: mongoose.Types.ObjectId;
+    country?: string;
+    assignedAt?: Date;
+  }[];
   socialMedia?: {
     instagram?: string;
     youtube?: string;
@@ -116,6 +121,22 @@ const userSchema = new Schema<IUser>(
       sparse: true,
       uppercase: true,
     },
+    customRoles: [{
+      roleId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Role',
+        required: true
+      },
+      country: {
+        type: String, // ISO country code or 'ALL'
+        trim: true,
+        default: 'ALL'
+      },
+      assignedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
     socialMedia: {
       instagram: String,
       youtube: String,

@@ -14,9 +14,6 @@ struct GroceryGlobalSearchView: View {
         GridItem(.flexible(), spacing: 12),
     ]
 
-    // Explicit width relative to screen
-    private let itemWidth = (UIScreen.main.bounds.width - 40) / 2
-
     var body: some View {
         NavigationView {
             ZStack {
@@ -209,6 +206,40 @@ struct GroceryGlobalSearchView: View {
 
     func resultsContent(results: GlobalSearchResponse) -> some View {
         VStack(spacing: 16) {
+            // Check for Top Matching Terms in results
+            if !results.suggestions.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Top Matching Terms")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.searchTextGrey)
+                        .padding(.horizontal, 16)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(results.suggestions) { suggestion in
+                                Button(action: {
+                                    viewModel.query = suggestion.text
+                                }) {
+                                    Text(suggestion.text)
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.searchTextDark)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(Color.white)
+                                        .cornerRadius(20)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                        )
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                }
+                .padding(.top, 8)
+            }
+
             // Quick Filters (Grocery Categories)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {

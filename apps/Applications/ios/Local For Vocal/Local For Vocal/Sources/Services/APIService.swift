@@ -309,6 +309,23 @@ public class APIService {
     return try JSONDecoder().decode(GlobalSearchResponse.self, from: data)
   }
 
+  public func fetchGrocerySearch(query: String) async throws -> GlobalSearchResponse {
+    let url = try makeURL("/search/grocery", queryItems: [URLQueryItem(name: "q", value: query)])
+
+    let (data, response) = try await session.data(for: URLRequest(url: url))
+
+    guard let httpResponse = response as? HTTPURLResponse,
+      (200...299).contains(httpResponse.statusCode)
+    else {
+      throw APIError.serverError
+    }
+
+    if let jsonString = String(data: data, encoding: .utf8) {
+      AppLogger.debug("🔍 fetchGrocerySearch Response: \(jsonString)")
+    }
+    return try JSONDecoder().decode(GlobalSearchResponse.self, from: data)
+  }
+
   public func fetchTrendingTerms() async throws -> [String] {
     let url = try makeURL("/search/trending")
 
@@ -387,7 +404,9 @@ public class APIService {
 
     if httpResponse.statusCode == 401 {
       AppLogger.error("Session expired (401). Logging out.")
-      await AuthManager.shared.logout()
+      await MainActor.run {
+        AuthManager.shared.logout()
+      }
       throw APIError.custom(message: "Session expired. Please log in again.")
     }
 

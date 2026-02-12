@@ -12,7 +12,7 @@ struct SpecialDealNewStyleView: View {
     @State private var navigateToCart = false
 
     var body: some View {
-        NavigationView {  // Added NavigationView wrapper
+        NavigationStack {  // Added NavigationStack wrapper
             ZStack(alignment: .bottom) {
                 // Background
                 Color(red: 0.97, green: 0.97, blue: 0.97)
@@ -38,14 +38,12 @@ struct SpecialDealNewStyleView: View {
                         }
                     }
                 }
-
-                // Navigation Link for Cart
-                NavigationLink(destination: CartPageView(), isActive: $navigateToCart) {
-                    EmptyView()
-                }
             }
             .navigationBarHidden(true)
             .ignoresSafeArea(.all, edges: .bottom)
+            .navigationDestination(isPresented: $navigateToCart) {
+                CartPageView()
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())  // Ensure full screen behavior
         .onAppear {

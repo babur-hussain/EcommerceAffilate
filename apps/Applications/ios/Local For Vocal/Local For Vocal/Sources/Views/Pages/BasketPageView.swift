@@ -8,7 +8,7 @@ struct BasketPageView: View {
     @State private var isCheckoutActive = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Header
                 HStack(spacing: 12) {
@@ -122,23 +122,20 @@ struct BasketPageView: View {
                 }
             }
             .background(Color(hex: "#F3F4F6").edgesIgnoringSafeArea(.all))
-            .background(
-                NavigationLink(
-                    destination: CheckoutView(
-                        items: basketManager.items.map { item in
-                            CheckoutViewModel.CheckoutItem(
-                                product: item.product,
-                                quantity: item.quantity,
-                                selectedOfferIds: []
-                            )
-                        }
-                    ),
-                    isActive: $isCheckoutActive
-                ) { EmptyView() }
-            )
+            .background(Color(hex: "#F3F4F6").edgesIgnoringSafeArea(.all))
+            .navigationDestination(isPresented: $isCheckoutActive) {
+                CheckoutView(
+                    items: basketManager.items.map { item in
+                        CheckoutViewModel.CheckoutItem(
+                            product: item.product,
+                            quantity: item.quantity,
+                            selectedOfferIds: []
+                        )
+                    }
+                )
+            }
             .navigationBarHidden(true)
-        }  // NavigationView
-        .navigationViewStyle(.stack)
+        }  // NavigationStack
         .fullScreenCover(isPresented: $isSearching) {
             GroceryGlobalSearchView()
         }
@@ -281,19 +278,26 @@ struct BasketItemCell: View {
 }
 
 struct DeliveryBannerView: View {
+    @EnvironmentObject var locationManager: LocationManager
+
     var body: some View {
         HStack {
             Image(systemName: "location.fill")
                 .foregroundColor(Color(hex: "#15803d"))
-            Text("Delivery to ")
-                .font(.system(size: 14))
-                .foregroundColor(Color(hex: "#374151"))
-                + Text("Home - 560066")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Color(hex: "#111827"))
+            HStack(spacing: 0) {
+                Text("Delivery to ")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#374151"))
+                Text(locationManager.address)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Color(hex: "#111827"))
+                    .lineLimit(1)
+            }
             Spacer()
             Button("Change") {
-                // Action
+                withAnimation {
+                    locationManager.showAddressSelector = true
+                }
             }
             .font(.system(size: 12, weight: .bold))
             .foregroundColor(Color(hex: "#15803d"))
@@ -328,11 +332,13 @@ struct BillDetailsView: View {
                     .font(.system(size: 12))
                     .foregroundColor(Color(hex: "#4b5563"))
                 Spacer()
-                Text("₹25")
-                    .strikethrough()
-                    .foregroundColor(Color(hex: "#9ca3af"))
-                    + Text(" Free")
-                    .foregroundColor(Color(hex: "#15803d"))
+                HStack(spacing: 0) {
+                    Text("₹25")
+                        .strikethrough()
+                        .foregroundColor(Color(hex: "#9ca3af"))
+                    Text(" Free")
+                        .foregroundColor(Color(hex: "#15803d"))
+                }
             }
             HStack {
                 Text("Handling Charge")

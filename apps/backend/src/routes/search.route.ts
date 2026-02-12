@@ -174,4 +174,95 @@ async function searchBrands(query: string) {
     }));
 }
 
+// GET /api/search/grocery
+// Specific search for grocery products from grocery_products collection
+router.get("/search/grocery", async (req: Request, res: Response) => {
+    try {
+        const { q } = req.query;
+
+        // Ensure database connection is established
+        if (!mongoose.connection.db) {
+            return res.status(500).json({ error: "Database connection not established" });
+        }
+
+        if (!q || typeof q !== "string" || q.trim().length === 0) {
+            return res.json({
+                products: [],
+                suggestions: []
+            });
+        }
+
+        const query = q.trim();
+        const groceryCollection = mongoose.connection.db.collection("grocery_products");
+
+        // Use regex for flexible matching (case-insensitive)
+        const regex = new RegExp(query.split(' ').join('|'), 'i');
+
+        // Search in grocery_products collection
+        const products = await groceryCollection.find({
+            $or: [
+                { isActive: true },
+                { status: "active" },
+                { isActive: { $exists: false } }
+            ],
+            $and: [
+                {
+                    $or: [
+                        { title: regex },
+                        { brand: regex },
+                        { category: regex },
+                        { subCategory: regex },
+                        { description: regex }
+                    ]
+                }
+            ]
+        })
+            .limit(20)
+            .toArray();
+
+        // Extract suggestions (top 5 unique terms from results)
+        const suggestionsSet = new Set<string>();
+        // Add exact query match first if needed, but usually we want terms from content
+        // Let's add variations from product titles
+        products.forEach((p: any) => {
+            const title = p.title || p.name || "";
+            // Add exact title match if short enough
+            if (title.length < 30) suggestionsSet.add(title);
+            // Add category if matches query
+            if (p.category && new RegExp(query, 'i').test(p.category)) suggestionsSet.add(p.category);
+            // Add brand if matches query
+            if (p.brand && new RegExp(query, 'i').test(p.brand)) suggestionsSet.add(p.brand);
+        });
+
+        const suggestions = Array.from(suggestionsSet).slice(0, 5);
+
+        // Map to simplified product format
+        const formattedProducts = products.map((p: any) => {
+            const primaryImage = p.primaryImage || p.image || (p.images && p.images.length > 0 ? p.images[0] : "");
+            return {
+                _id: p._id,
+                title: p.title || p.name || "",
+                name: p.title || p.name || "",
+                slug: p.slug || "",
+                price: p.sellingPrice || p.price || 0,
+                mrp: p.mrp || p.price || 0,
+                image: primaryImage,
+                primaryImage: primaryImage,
+                rating: p.rating || 0,
+                brand: p.brand || "",
+                category: p.category || "Grocery"
+            };
+        });
+
+        res.json({
+            products: formattedProducts,
+            suggestions: suggestions.map(term => ({ text: term, type: 'term' })) // Wrap in object for consistency
+        });
+
+    } catch (error: any) {
+        console.error("Grocery search error:", error);
+        res.status(500).json({ error: "Grocery search failed", message: error.message });
+    }
+});
+
 export default router;

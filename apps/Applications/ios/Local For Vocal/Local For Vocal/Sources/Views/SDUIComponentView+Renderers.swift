@@ -34,7 +34,6 @@ extension SDUIComponentView {
         LuminousBottomNavView()
     }
 
-    @ViewBuilder
     func renderLuminousCategories() -> some View {
         let title = component.prop(for: "title") ?? "Categories"
         let linkText = component.prop(for: "linkText") ?? "View All"
@@ -42,9 +41,7 @@ extension SDUIComponentView {
         // 1. Try to get items from component props first (Static/JSON)
         var displayItems: [SubCategory] = []
 
-        if let itemsValue = component.props?["items"]?.value,
-            let itemsArray = itemsValue as? [[String: Any]]
-        {
+        if let itemsArray = component.props?["items"]?.value as? [[String: Any]] {
             displayItems = itemsArray.compactMap { dict in
                 // Handle various key possibilities from JSON (id vs _id, image vs image_url)
                 guard let name = dict["name"] as? String else { return nil }
@@ -1099,10 +1096,11 @@ extension SDUIComponentView {
                 Text(subtitle).font(.subheadline)
                 Text("⚠️ No items loaded").foregroundColor(.red).font(.caption)
                 Text(
-                    "Available props: \(component.props?.keys.sorted().joined(separator: ", ") ?? "nil")"
+                    verbatim:
+                        "Available props: \(component.props?.keys.sorted().joined(separator: ", ") ?? "nil")"
                 ).font(.caption2).foregroundColor(.gray)
                 if let itemsVal = component.props?["items"] {
-                    Text("Items Type: \(type(of: itemsVal.value))").font(.caption2)
+                    Text(verbatim: "Items Type: \(type(of: itemsVal.value))").font(.caption2)
                 }
             }
             .padding()
@@ -1170,7 +1168,6 @@ extension SDUIComponentView {
 
     @ViewBuilder
     func renderPromoPoster() -> some View {
-        let title = component.prop(for: "title") ?? "Promotions"  // Keep title just in case, though view might not use it
         let image = component.prop(for: "image") ?? ""
         let actionUrl = component.prop(for: "actionUrl") as String?
 
@@ -1304,7 +1301,7 @@ extension SDUIComponentView {
         ProductCardGrid(products: items, title: title)
             .onAppear {
                 // Try static props first, then dynamic
-                if let itemsValue = component.props?["items"]?.value {
+                if component.props?["items"]?.value != nil {
                     viewModel.decodeItems(from: component, type: Product.self)
                 } else {
                     loadDynamicProducts()
@@ -1403,5 +1400,15 @@ extension SDUIComponentView {
             categoryId: categoryId,
             categoryName: categoryName
         )
+    }
+
+    @ViewBuilder
+    func renderGrocerySpecialPicks() -> some View {
+        GrocerySpecialPicksComponent(component: component)
+    }
+
+    @ViewBuilder
+    func renderGroceryWholesaleText() -> some View {
+        GroceryWholesaleTextComponent(component: component)
     }
 }

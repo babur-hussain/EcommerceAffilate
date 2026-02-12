@@ -1,9 +1,9 @@
-import CommonCrypto
+import CryptoKit
 import Foundation
 import UIKit
 
 /// Persistent image disk cache for offline support
-/// Stores downloaded images to Library/Caches/Images/ with MD5-hashed filenames
+/// Stores downloaded images to Library/Caches/Images/ with SHA256-hashed filenames
 /// Thread-safe via actor isolation
 actor ImageDiskCache {
     static let shared = ImageDiskCache()
@@ -38,7 +38,7 @@ actor ImageDiskCache {
     /// Load image from cache (memory → disk)
     /// Returns instantly from memory if previously loaded this session
     func loadImage(for urlString: String) -> UIImage? {
-        let hash = md5Hash(urlString)
+        let hash = hashString(urlString)
         let cacheKey = hash as NSString
 
         // Layer 1: Check in-memory cache (instant, no disk I/O)
@@ -71,7 +71,7 @@ actor ImageDiskCache {
 
     /// Save image to disk cache
     func saveImage(_ image: UIImage, for urlString: String) {
-        let hash = md5Hash(urlString)
+        let hash = hashString(urlString)
         let cacheKey = hash as NSString
 
         // Save to memory cache immediately
@@ -93,7 +93,7 @@ actor ImageDiskCache {
 
     /// Save raw image data to disk cache (avoids re-encoding)
     func saveData(_ data: Data, for urlString: String) {
-        let hash = md5Hash(urlString)
+        let hash = hashString(urlString)
         let cacheKey = hash as NSString
 
         let filePath = cacheDirectory.appendingPathComponent(hash)
@@ -109,7 +109,7 @@ actor ImageDiskCache {
 
     /// Check if image exists in disk cache
     func hasImage(for urlString: String) -> Bool {
-        return fileIndex.contains(md5Hash(urlString))
+        return fileIndex.contains(hashString(urlString))
     }
 
     /// Prefetch multiple image URLs in parallel
@@ -218,12 +218,9 @@ actor ImageDiskCache {
         print("[ImageDiskCache] Evicted to \(currentSize / 1024 / 1024)MB")
     }
 
-    private func md5Hash(_ string: String) -> String {
-        let data = Data(string.utf8)
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
-        data.withUnsafeBytes { buffer in
-            _ = CC_MD5(buffer.baseAddress, CC_LONG(buffer.count), &digest)
-        }
-        return digest.map { String(format: "%02x", $0) }.joined()
+    private func hashString(_ string: String) -> String {
+        let inputData = Data(string.utf8)
+        let hashed = SHA256.hash(data: inputData)
+        return hashed.compactMap { String(format: "%02x", $0) }.joined()
     }
 }

@@ -53,15 +53,24 @@ class SearchViewModel: ObservableObject {
 
         self.searchState = .loading
         do {
-            // Pass categoryId to APIService if available (assuming API supports it)
-            // For now, we'll just search globally but in future we can add category filter
-            let results = try await APIService.shared.fetchGlobalSearch(query: query)
+            let results: GlobalSearchResponse
+
+            if self.categoryId == "grocery" {
+                // Use dedicated grocery search endpoint
+                results = try await APIService.shared.fetchGrocerySearch(query: query)
+            } else {
+                // Pass categoryId to APIService if available (assuming API supports it)
+                // For now, we'll just search globally but in future we can add category filter
+                results = try await APIService.shared.fetchGlobalSearch(query: query)
+            }
 
             // Client-side filtering if API doesn't support it yet (Optional optimization)
+            /*
             if let categoryId = categoryId {
                 // This would require results to have category IDs, which they might not fully have yet.
                 // For now, rely on global search.
             }
+            */
 
             self.globalResults = results
             self.searchState = .results

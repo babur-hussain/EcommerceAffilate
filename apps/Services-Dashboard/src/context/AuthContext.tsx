@@ -1,87 +1,58 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as FirebaseUser, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
-import { apiClient } from '@/lib/api';
-import { User } from '@/types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User, Role } from '@/types/auth'; // Ensure this path is correct
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
     user: User | null;
-    firebaseUser: FirebaseUser | null;
-    loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    loginWithGoogle: () => Promise<void>;
-    logout: () => Promise<void>;
-    refreshUser: () => Promise<void>;
+    isAuthenticated: boolean;
+    login: (user: User) => void;
+    logout: () => void;
+    hasRole: (role: Role) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    const fetchUserProfile = async (fbUser: FirebaseUser) => {
-        try {
-            // Fetch user profile from your backend
-            const response = await apiClient.get<{ user: User }>('/api/me');
-            setUser(response.data.user);
-        } catch (error) {
-            console.error('[AuthContext] Failed to fetch user profile:', error);
-            // Optional: Set mock user if strictly verifying UI without backend role support yet
-            // But user wanted "Live Data", so we trust the API or fallback to restricted
-        }
-    };
+    const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-            setFirebaseUser(fbUser);
-            if (fbUser) {
-                await fetchUserProfile(fbUser);
-            } else {
-                setUser(null);
-            }
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
+        // Check local storage or cookie for session
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
     }, []);
 
-    const login = async (email: string, password: string) => {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        await fetchUserProfile(userCredential.user);
+    const login = (userData: User) => {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        router.push('/');
     };
 
-    const loginWithGoogle = async () => {
-        const userCredential = await signInWithPopup(auth, googleProvider);
-        await fetchUserProfile(userCredential.user);
-    };
-
-    const logout = async () => {
-        await signOut(auth);
+    const logout = () => {
         setUser(null);
-        setFirebaseUser(null);
+        localStorage.removeItem('user');
+        router.push('/login');
     };
 
-    const refreshUser = async () => {
-        if (firebaseUser) {
-            await fetchUserProfile(firebaseUser);
-        }
+    const hasRole = (role: Role) => {
+        return user?.role === role;
     };
 
     return (
-        <AuthContext.Provider value={{ user, firebaseUser, loading, login, loginWithGoogle, logout, refreshUser }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, hasRole }}>
             {children}
         </AuthContext.Provider>
     );
-}
+};
 
-export function useAuth() {
+export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (context === undefined) {
+    if (!context) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
-}
+};

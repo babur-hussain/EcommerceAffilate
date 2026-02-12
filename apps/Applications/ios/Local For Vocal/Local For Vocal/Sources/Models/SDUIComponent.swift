@@ -321,6 +321,8 @@ public enum ComponentType: String, Codable {
     case groceryPromoCards = "grocery_promo_cards"
     case groceryEvents = "grocery_events"
     case groceryShopByCategory = "grocery_shop_by_category"
+    case grocerySpecialPicks = "grocery_special_picks"
+    case groceryWholesaleText = "grocery_wholesale_text"
     case unknown
 
     public init(from decoder: Decoder) throws {

@@ -1,5 +1,7 @@
 import Combine
 import CoreLocation
+import Foundation
+import SwiftUI
 
 public class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     public static let shared = LocationManager()
@@ -13,6 +15,10 @@ public class LocationManager: NSObject, ObservableObject, CLLocationManagerDeleg
         "Select Location", comment: "Default location prompt")
     @Published var permissionStatus: CLAuthorizationStatus = .notDetermined
     @Published var errorMessage: String?
+
+    // Global Address Selector State
+    @Published var showAddressSelector: Bool = false
+    @Published var savedAddresses: [UserAddress] = []
 
     override init() {
         super.init()
@@ -76,41 +82,60 @@ public class LocationManager: NSObject, ObservableObject, CLLocationManagerDeleg
     }
 
     private func reverseGeocode(location: CLLocation) {
-        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            guard let self = self else { return }
+        Task {
+            do {
+                let placemarks = try await geocoder.reverseGeocodeLocation(location)
 
-            // CRITICAL: All @Published property updates must happen on main thread
-            DispatchQueue.main.async {
-                if error != nil {
+                await MainActor.run {
+                    if let placemark = placemarks.first {
+                        // Construct address string
+                        let street = placemark.thoroughfare ?? ""
+                        let subLocality = placemark.subLocality ?? ""
+                        let city = placemark.locality ?? ""
+                        let state = placemark.administrativeArea ?? ""
+
+                        // Smart formatting
+                        if !subLocality.isEmpty {
+                            self.address = "\(subLocality), \(city)"
+                            self.city = subLocality.uppercased()
+                        } else if !street.isEmpty {
+                            self.address = "\(street), \(city)"
+                            self.city = city.uppercased()
+                        } else {
+                            self.address = "\(city), \(state)"
+                            self.city = city.uppercased()
+                        }
+
+                        if self.city.isEmpty {
+                            self.city = NSLocalizedString(
+                                "CURRENT LOCATION", comment: "Fallback city name")
+                        }
+                    } else {
+                        self.address = NSLocalizedString(
+                            "Address not found", comment: "Reverse geocoding failure")
+                    }
+                }
+            } catch {
+                await MainActor.run {
                     self.address = NSLocalizedString(
                         "Address not found", comment: "Reverse geocoding failure")
-                    return
+                    // debugPrint("Reverse geocode error: \(error)")
                 }
+            }
+        }
+    }
 
-                if let placemark = placemarks?.first {
-                    // Construct address string
-                    let street = placemark.thoroughfare ?? ""
-                    let subLocality = placemark.subLocality ?? ""
-                    let city = placemark.locality ?? ""
-                    let state = placemark.administrativeArea ?? ""
-
-                    // Smart formatting
-                    if !subLocality.isEmpty {
-                        self.address = "\(subLocality), \(city)"
-                        self.city = subLocality.uppercased()
-                    } else if !street.isEmpty {
-                        self.address = "\(street), \(city)"
-                        self.city = city.uppercased()
-                    } else {
-                        self.address = "\(city), \(state)"
-                        self.city = city.uppercased()
-                    }
-
-                    if self.city.isEmpty {
-                        self.city = NSLocalizedString(
-                            "CURRENT LOCATION", comment: "Fallback city name")
+    public func fetchSavedAddresses() {
+        Task {
+            do {
+                if AuthManager.shared.isAuthenticated {
+                    let addresses = try await APIService.shared.fetchAddresses()
+                    await MainActor.run {
+                        self.savedAddresses = addresses
                     }
                 }
+            } catch {
+                print("Failed to fetch addresses: \(error)")
             }
         }
     }

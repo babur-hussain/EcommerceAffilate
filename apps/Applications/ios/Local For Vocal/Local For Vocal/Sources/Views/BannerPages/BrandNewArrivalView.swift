@@ -101,86 +101,88 @@ struct BrandNewArrivalView: View {
 
     // MARK: - Hero Section
     private var heroSectionView: some View {
-        ZStack {
-            // 3-Panel Image Layout
-            HStack(spacing: 0) {
-                AsyncImage(
-                    url: URL(
-                        string:
-                            "https://lh3.googleusercontent.com/aida-public/AB6AXuC4KtvNZTORM6BF7WAkUzAbaKl09ue0n4XSt6ZFhmQe3gYh8m0SZ1NHKJpTPfOxwuigPNHzhS9nRMrZfuAifbfaOG2zAQhjMU8qyKLeE9E2FDRN16v6_q702FUuJ-dutxAr76KivmUVGWmxBloUtjNpkx3WsZHfaTu4yXMKKWl3Cm5UyAnbhWIKHDMVjsL1g7vLGSmR6IkIyzmIdhYsttn8wy3nfWcF5Ou02J7IG3KQ932ShCE66qif0Z_MuSEqgcVQJ9m7hn_kdvt4"
-                    )
-                ) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color(red: 0.96, green: 0.95, blue: 0.93)
+        GeometryReader { geo in
+            ZStack {
+                // 3-Panel Image Layout
+                HStack(spacing: 0) {
+                    AsyncImage(
+                        url: URL(
+                            string:
+                                "https://lh3.googleusercontent.com/aida-public/AB6AXuC4KtvNZTORM6BF7WAkUzAbaKl09ue0n4XSt6ZFhmQe3gYh8m0SZ1NHKJpTPfOxwuigPNHzhS9nRMrZfuAifbfaOG2zAQhjMU8qyKLeE9E2FDRN16v6_q702FUuJ-dutxAr76KivmUVGWmxBloUtjNpkx3WsZHfaTu4yXMKKWl3Cm5UyAnbhWIKHDMVjsL1g7vLGSmR6IkIyzmIdhYsttn8wy3nfWcF5Ou02J7IG3KQ932ShCE66qif0Z_MuSEqgcVQJ9m7hn_kdvt4"
+                        )
+                    ) { image in
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color(red: 0.96, green: 0.95, blue: 0.93)
+                    }
+                    .frame(width: geo.size.width * 0.25)
+                    .clipped()
+
+                    AsyncImage(
+                        url: URL(
+                            string:
+                                "https://lh3.googleusercontent.com/aida-public/AB6AXuB7B_ORgrzMVAzn-htq7okk_sV2-zubknWmdeCPC5YyBnXTFB5-pEnGxLUhgJS8Mu8XcxoQ4ZH-GWTOBoMRWWLiCwGeadprCA_F4hbA3mnFIrAz3H6LkFUhsdiy6i8ZePH_hwqskMNFV6h0Pm9nQR17ekhVxDiTJCxg4odCD6G7M6XslfmWhVk34wim09gnQyTba1G3OiA5Eggl0yNDeUCmBtbJpu5tNfmMgHgLrVeoYInN_UrtTrhxc8Yb-k_CBwHaDPgfxcOGR3Yl"
+                        )
+                    ) { image in
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color(red: 0.96, green: 0.95, blue: 0.93)
+                    }
+                    .frame(width: geo.size.width * 0.5)
+                    .clipped()
+
+                    AsyncImage(
+                        url: URL(
+                            string:
+                                "https://lh3.googleusercontent.com/aida-public/AB6AXuARyivEa4K73CagAaakss47BJek7ZbxTuZmMDySdKenheUK0E5wI9GdoxgvndWMAu3aWVcx5MaTIn4sPfu-er5gAon0bx1R7wlUbfrvIhljRNRFKnOHU7lcOSMDldYtWAQKtDTjyZlzchXiJZraBlxKKszDrHjbaLlS9Qj6ETxwU40H3bIc-2MoMfgPeypyV8Y8PYX6LJm9rSZVP9E8YEkyjgWxt6iiNcYvUsXIl9rl6qK5BrCc9MX7WOqRfby7L7OAtaEEB-XhNLCP"
+                        )
+                    ) { image in
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color(red: 0.96, green: 0.95, blue: 0.93)
+                    }
+                    .frame(width: geo.size.width * 0.25)
+                    .clipped()
                 }
-                .frame(width: UIScreen.main.bounds.width * 0.25)
-                .clipped()
 
-                AsyncImage(
-                    url: URL(
-                        string:
-                            "https://lh3.googleusercontent.com/aida-public/AB6AXuB7B_ORgrzMVAzn-htq7okk_sV2-zubknWmdeCPC5YyBnXTFB5-pEnGxLUhgJS8Mu8XcxoQ4ZH-GWTOBoMRWWLiCwGeadprCA_F4hbA3mnFIrAz3H6LkFUhsdiy6i8ZePH_hwqskMNFV6h0Pm9nQR17ekhVxDiTJCxg4odCD6G7M6XslfmWhVk34wim09gnQyTba1G3OiA5Eggl0yNDeUCmBtbJpu5tNfmMgHgLrVeoYInN_UrtTrhxc8Yb-k_CBwHaDPgfxcOGR3Yl"
-                    )
-                ) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color(red: 0.96, green: 0.95, blue: 0.93)
-                }
-                .frame(width: UIScreen.main.bounds.width * 0.5)
-                .clipped()
+                // Gradient Overlay
+                LinearGradient(
+                    gradient: Gradient(stops: [
+                        .init(color: Color.black.opacity(0.2), location: 0),
+                        .init(color: Color.clear, location: 0.4),
+                        .init(color: Color.black.opacity(0.4), location: 1),
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
 
-                AsyncImage(
-                    url: URL(
-                        string:
-                            "https://lh3.googleusercontent.com/aida-public/AB6AXuARyivEa4K73CagAaakss47BJek7ZbxTuZmMDySdKenheUK0E5wI9GdoxgvndWMAu3aWVcx5MaTIn4sPfu-er5gAon0bx1R7wlUbfrvIhljRNRFKnOHU7lcOSMDldYtWAQKtDTjyZlzchXiJZraBlxKKszDrHjbaLlS9Qj6ETxwU40H3bIc-2MoMfgPeypyV8Y8PYX6LJm9rSZVP9E8YEkyjgWxt6iiNcYvUsXIl9rl6qK5BrCc9MX7WOqRfby7L7OAtaEEB-XhNLCP"
-                    )
-                ) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color(red: 0.96, green: 0.95, blue: 0.93)
-                }
-                .frame(width: UIScreen.main.bounds.width * 0.25)
-                .clipped()
-            }
+                // Content Overlay
+                VStack(spacing: 0) {
+                    Text("PREMIUM JEWELRY")
+                        .font(.system(size: 10, weight: .regular))
+                        .tracking(4)
+                        .foregroundColor(.white.opacity(0.9))
+                        .padding(.bottom, 16)
 
-            // Gradient Overlay
-            LinearGradient(
-                gradient: Gradient(stops: [
-                    .init(color: Color.black.opacity(0.2), location: 0),
-                    .init(color: Color.clear, location: 0.4),
-                    .init(color: Color.black.opacity(0.4), location: 1),
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
+                    Text("Brand New Arrival")
+                        .font(.custom("Georgia", size: 42))
+                        .italic()
+                        .foregroundColor(.white)
+                        .padding(.bottom, 32)
 
-            // Content Overlay
-            VStack(spacing: 0) {
-                Text("PREMIUM JEWELRY")
-                    .font(.system(size: 10, weight: .regular))
-                    .tracking(4)
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.bottom, 16)
-
-                Text("Brand New Arrival")
-                    .font(.custom("Georgia", size: 42))
-                    .italic()
-                    .foregroundColor(.white)
-                    .padding(.bottom, 32)
-
-                Button(action: {}) {
-                    Text("SHOP NOW")
-                        .font(.system(size: 12, weight: .semibold))
-                        .tracking(3)
-                        .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.20))
-                        .padding(.horizontal, 40)
-                        .padding(.vertical, 14)
-                        .background(Color(red: 0.82, green: 0.71, blue: 0.55))  // Beige
+                    Button(action: {}) {
+                        Text("SHOP NOW")
+                            .font(.system(size: 12, weight: .semibold))
+                            .tracking(3)
+                            .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.20))
+                            .padding(.horizontal, 40)
+                            .padding(.vertical, 14)
+                            .background(Color(red: 0.82, green: 0.71, blue: 0.55))  // Beige
+                    }
                 }
             }
         }
-        .frame(height: UIScreen.main.bounds.height * 0.55)
+        .frame(height: 400)  // Fixed height to avoid infinite layout in vertical ScrollView if geo height is used unsafely
     }
 
     // MARK: - Collection Header

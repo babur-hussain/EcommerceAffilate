@@ -240,7 +240,7 @@ struct CategoryRightPaneView: View {
         .onAppear {
             loadData()
         }
-        .onChange(of: categoryId) { _ in
+        .onChange(of: categoryId) { oldValue, newValue in
             activeSubCategoryId = nil
             showProductList = false
             products = []
@@ -249,7 +249,7 @@ struct CategoryRightPaneView: View {
             isLoading = true
             loadData()
         }
-        .onChange(of: activeSubCategoryId) { newValue in
+        .onChange(of: activeSubCategoryId) { oldValue, newValue in
             if newValue != nil {
                 showProductList = true
                 Task { await loadProducts() }

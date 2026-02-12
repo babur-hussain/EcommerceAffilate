@@ -27,6 +27,9 @@ struct GroceryListingView: View {
     @State private var activeQuickFilters: Set<QuickFilter> = []
     @State private var activeFilterCount: Int = 0
 
+    // Address / Location State
+    @EnvironmentObject var locationManager: LocationManager
+
     // Grid Layout (2 Columns for Grocery)
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -46,7 +49,16 @@ struct GroceryListingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
+            // Location Header
+            LocationBarView(onTap: {
+                withAnimation {
+                    locationManager.showAddressSelector = true
+                }
+            })
+            .padding(.top, 44)  // Status bar spacing
+            .background(Color(hex: "#8A2387"))  // Match gradient top for seamless look
+
+            // Search Header
             CategoryPageHeader(
                 title: "Search for products...",
                 searchQuery: $searchQuery,
@@ -120,13 +132,13 @@ struct GroceryListingView: View {
         .background(Color(hex: "#F5F5F5").ignoresSafeArea(edges: .top))
         .navigationBarHidden(true)
         .onAppear { loadData() }
-        .onChange(of: activeSubCategoryId) { _ in
+        .onChange(of: activeSubCategoryId) { oldValue, newValue in
             Task { await loadProducts() }
         }
-        .onChange(of: selectedSort) { _ in
+        .onChange(of: selectedSort) { oldValue, newValue in
             Task { await loadProducts() }
         }
-        .onChange(of: activeQuickFilters) { _ in
+        .onChange(of: activeQuickFilters) { oldValue, newValue in
             Task { await loadProducts() }
         }
         .sheet(isPresented: $showSortSheet) {
@@ -139,10 +151,13 @@ struct GroceryListingView: View {
                 isPresented: $showFilterSheet
             )
         }
+
     }
 
     private func loadData() {
         isLoading = true
+
+        // Load addresses
 
         Task {
             do {
@@ -186,7 +201,7 @@ struct GroceryListingView: View {
 
         do {
             let limit = 20
-            let fetchId = categoryId
+            // let fetchId = categoryId // Unused
             let fetchSubId = activeSubCategoryId
 
             AppLogger.info("🛒 Loading products for SubCat: \(fetchSubId ?? "nil")")

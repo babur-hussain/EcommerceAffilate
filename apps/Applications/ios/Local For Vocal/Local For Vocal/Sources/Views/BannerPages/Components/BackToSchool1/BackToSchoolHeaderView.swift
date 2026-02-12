@@ -31,42 +31,44 @@ struct BackToSchoolHeaderView: View {
     }
 
     private var decorativeElements: some View {
-        Group {
-            // Top Deco Row
-            VStack {
-                HStack(alignment: .top, spacing: 30) {
-                    ForEach(0..<5) { i in
-                        Rectangle()
-                            .fill(Color(hex: "FDE047").opacity(0.5))
-                            .frame(width: 8, height: CGFloat(24 + (i % 3) * 6))
-                            .cornerRadius(4)
+        GeometryReader { geo in
+            Group {
+                // Top Deco Row
+                VStack {
+                    HStack(alignment: .top, spacing: 30) {
+                        ForEach(0..<5) { i in
+                            Rectangle()
+                                .fill(Color(hex: "FDE047").opacity(0.5))
+                                .frame(width: 8, height: CGFloat(24 + (i % 3) * 6))
+                                .cornerRadius(4)
+                        }
                     }
+                    .padding(.horizontal, 20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Spacer()
                 }
-                .padding(.horizontal, 20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Spacer()
+                .offset(y: -10)
+
+                // Simulated Chalk Drawings
+                Text("ABC")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                    .rotationEffect(.degrees(-12))
+                    .opacity(0.4)
+                    .position(x: 60, y: 100)
+
+                Image(systemName: "lightbulb.fill")
+                    .font(.system(size: 32))
+                    .foregroundColor(Color.white.opacity(0.4))
+                    .position(x: geo.size.width - 40, y: 100)
+
+                Text("1 + 2 = 3")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                    .rotationEffect(.degrees(12))
+                    .opacity(0.3)
+                    .position(x: geo.size.width - 80, y: 260)
             }
-            .offset(y: -10)
-
-            // Simulated Chalk Drawings
-            Text("ABC")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-                .rotationEffect(.degrees(-12))
-                .opacity(0.4)
-                .position(x: 60, y: 100)
-
-            Image(systemName: "lightbulb.fill")
-                .font(.system(size: 32))
-                .foregroundColor(Color.white.opacity(0.4))
-                .position(x: UIScreen.main.bounds.width - 40, y: 100)
-
-            Text("1 + 2 = 3")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-                .rotationEffect(.degrees(12))
-                .opacity(0.3)
-                .position(x: UIScreen.main.bounds.width - 80, y: 260)
         }
     }
 
@@ -76,16 +78,43 @@ struct BackToSchoolHeaderView: View {
                 .font(.system(size: 18))
                 .foregroundColor(Color.white.opacity(0.9))
 
+            // Avoid text concatenation warning by grouping
+            HStack(spacing: 0) {
+                Text("BACK")
+                    .font(.system(size: 42, weight: .black))
+                    .foregroundColor(.white)
+                Text("\n")
+                Text("to")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                Text(" SCHOOL")
+                    .font(.system(size: 42, weight: .black))
+                    .foregroundColor(.white)
+            }
+            // Multiline workaround if needed, or just standard wrapping
+            // Since it was "BACK\nto SCHOOL", the previous code relied on the newline working in concatenation.
+            // HStack won't wrap cleanly with \n.
+            // Let's use a VStack for the split
+            /*
             Text("BACK")
                 .font(.system(size: 42, weight: .black))
                 .foregroundColor(.white)
-                + Text("\n")
-                + Text("to")
-                .font(.system(size: 24))
-                .foregroundColor(.white)
-                + Text(" SCHOOL")
-                .font(.system(size: 42, weight: .black))
-                .foregroundColor(.white)
+            + Text("\n") ...
+            */
+            // Better approach:
+            VStack(spacing: 0) {
+                Text("BACK")
+                    .font(.system(size: 42, weight: .black))
+                    .foregroundColor(.white)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("to")
+                        .font(.system(size: 24))
+                        .foregroundColor(.white)
+                    Text("SCHOOL")
+                        .font(.system(size: 42, weight: .black))
+                        .foregroundColor(.white)
+                }
+            }
 
             HStack(alignment: .bottom, spacing: -12) {
                 circleImage(

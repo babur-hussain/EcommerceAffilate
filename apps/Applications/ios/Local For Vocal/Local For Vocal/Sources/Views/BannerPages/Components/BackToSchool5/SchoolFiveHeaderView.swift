@@ -77,43 +77,45 @@ struct SchoolFiveHeaderView: View {
                     .padding(.top, 48)
 
                     // Promo Image
-                    ZStack {
-                        AsyncImage(
-                            url: URL(
-                                string:
-                                    "https://lh3.googleusercontent.com/aida-public/AB6AXuDoRaUDKZyvSwlgoZOEv9kuTUBsifba_Nd1PpU0-T8RGetGYNhCL_4KjOHOPcuCv_ggOEg5TXSJ5zokyZ3nzIxROXAoNemMOLug0MGdoWTw0oNZ_Oj1RD6Nl_XiQMac76gFjQeXuErIm88C-uTSzMk3aJ2bU2rmNa5MRMRQSz0OoVsMqFuBltbtsA0JGsf8Oy70trIGrryn9ojP11s6fQf1FRHbY6EMW-CB213XCp6a9m3MdSLIXs6ytxAkL_B1ZiqSzicTDL7D0i0j"
-                            )
-                        ) { phase in
-                            if let image = phase.image {
-                                image.resizable().aspectRatio(contentMode: .fill)
-                            } else {
-                                Color.gray.opacity(0.3)
+                    GeometryReader { geo in
+                        ZStack {
+                            AsyncImage(
+                                url: URL(
+                                    string:
+                                        "https://lh3.googleusercontent.com/aida-public/AB6AXuDoRaUDKZyvSwlgoZOEv9kuTUBsifba_Nd1PpU0-T8RGetGYNhCL_4KjOHOPcuCv_ggOEg5TXSJ5zokyZ3nzIxROXAoNemMOLug0MGdoWTw0oNZ_Oj1RD6Nl_XiQMac76gFjQeXuErIm88C-uTSzMk3aJ2bU2rmNa5MRMRQSz0OoVsMqFuBltbtsA0JGsf8Oy70trIGrryn9ojP11s6fQf1FRHbY6EMW-CB213XCp6a9m3MdSLIXs6ytxAkL_B1ZiqSzicTDL7D0i0j"
+                                )
+                            ) { phase in
+                                if let image = phase.image {
+                                    image.resizable().aspectRatio(contentMode: .fill)
+                                } else {
+                                    Color.gray.opacity(0.3)
+                                }
                             }
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 4)
+                            )
+
+                            // Floating Emojis
+                            Text("✏️")
+                                .font(.system(size: 20))
+                                .padding(8)
+                                .background(Color(hex: "3B82F6"))
+                                .cornerRadius(12)
+                                .rotationEffect(.degrees(-6))
+                                .offset(x: -geo.size.width * 0.4 + 20, y: -60)  // Approx
+                                .shadow(radius: 4)
+
+                            Text("⏰")
+                                .font(.system(size: 20))
+                                .padding(8)
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .rotationEffect(.degrees(6))
+                                .offset(x: geo.size.width * 0.4 - 20, y: 60)
+                                .shadow(radius: 4)
                         }
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 4)
-                        )
-
-                        // Floating Emojis
-                        Text("✏️")
-                            .font(.system(size: 20))
-                            .padding(8)
-                            .background(Color(hex: "3B82F6"))
-                            .cornerRadius(12)
-                            .rotationEffect(.degrees(-6))
-                            .offset(x: -UIScreen.main.bounds.width * 0.4 + 20, y: -60)  // Approx
-                            .shadow(radius: 4)
-
-                        Text("⏰")
-                            .font(.system(size: 20))
-                            .padding(8)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .rotationEffect(.degrees(6))
-                            .offset(x: UIScreen.main.bounds.width * 0.4 - 20, y: 60)
-                            .shadow(radius: 4)
                     }
                     .frame(height: 200)  // Approx
                     .rotationEffect(.degrees(1))

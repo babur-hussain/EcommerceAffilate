@@ -78,7 +78,7 @@ struct AccountView: View {
 
     // MARK: - Logged In View
     private var loggedInView: some View {
-        NavigationView {
+        NavigationStack {
             ZStack(alignment: .top) {
                 // Background Layer covering Safe Area
                 pageBg.edgesIgnoringSafeArea(.all)  // Base background
@@ -349,19 +349,13 @@ struct AccountView: View {
             }
             // Influencer Shop Navigation Link (Hidden)
             // We use background NavigationLink to push while keeping the same state trigger
-            .background(
-                NavigationLink(
-                    destination: InfluencerShopView(),
-                    isActive: $showInfluencerShop
-                ) {
-                    EmptyView()
-                }
-            )
+            .navigationDestination(isPresented: $showInfluencerShop) {
+                InfluencerShopView()
+            }
             .fullScreenCover(isPresented: $showStoryUpload) {
                 StoryUploadView()
             }
-        }  // End NavigationView
-        .navigationViewStyle(.stack)
+        }  // End NavigationStack
     }
 
     // MARK: - Header Section

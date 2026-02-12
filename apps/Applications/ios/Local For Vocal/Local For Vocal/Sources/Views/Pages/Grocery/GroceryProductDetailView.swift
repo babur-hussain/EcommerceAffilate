@@ -9,6 +9,7 @@ struct GroceryProductDetailView: View {
 
     @State private var selectedImageIndex = 0
     @State private var addedAnimation = false
+    @ObservedObject var locationManager = LocationManager.shared
 
     // Computed
     var quantity: Int {
@@ -30,45 +31,43 @@ struct GroceryProductDetailView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // ── Background ──
-            Color(hex: "#F5F5F5").ignoresSafeArea()
+        VStack(spacing: 0) {
+            // ── Top Navigation Bar ──
+            topNavigationBar
 
-            VStack(spacing: 0) {
-                // ── Top Navigation Bar ──
-                topNavigationBar
+            // ── Scrollable Content ──
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // 1. Image Carousel
+                    imageCarouselSection
 
-                // ── Scrollable Content ──
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        // 1. Image Carousel
-                        imageCarouselSection
+                    // 2. Product Info Card
+                    productInfoCard
 
-                        // 2. Product Info Card
-                        productInfoCard
+                    // 3. Offers Section
+                    offersSection
 
-                        // 3. Offers Section
-                        offersSection
+                    // 4. Description
+                    descriptionSection
 
-                        // 4. Product Highlights
-                        highlightsSection
+                    // 5. Delivery Info
+                    deliverToSection
 
-                        // 5. Description
-                        descriptionSection
+                    // 6. Seller Info
+                    sellerDetailsSectionNew
 
-                        // 6. Seller Info
-                        sellerInfoSection
-
-                        // Spacer for bottom bar
-                        Color.clear.frame(height: 90)
-                    }
+                    // 7. Product Highlights
+                    highlightsSection
                 }
             }
-
+        }
+        .safeAreaInset(edge: .bottom) {
             // ── Bottom Add to Basket Bar ──
             bottomActionBar
         }
+        .background(Color.white.ignoresSafeArea())
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
     }
 
     // MARK: - Top Navigation Bar
@@ -314,7 +313,133 @@ struct GroceryProductDetailView: View {
         }
     }
 
-    // MARK: - Product Highlights
+    // MARK: - Delivery & Seller Info
+
+    private var deliverToSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Deliver to:")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "#374151"))
+
+                        Text(
+                            locationManager.city.isEmpty ? "Select Location" : locationManager.city
+                        )
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Color(hex: "#111827"))
+
+                        Text("HOME")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(Color(hex: "#6B7280"))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color(hex: "#F3F4F6"))
+                            .cornerRadius(4)
+                    }
+
+                    Text(
+                        locationManager.address.isEmpty
+                            ? "Tap to set location" : locationManager.address
+                    )
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "#6B7280"))
+                    .lineLimit(1)
+                }
+
+                Spacer()
+
+                Button(action: {
+                    // Action to change address
+                }) {
+                    Text("Change")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(hex: "#2563EB"))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color(hex: "#E5E7EB"), lineWidth: 1)
+                        )
+                }
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .padding(.top, 8)
+    }
+
+    private var deliveryDateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM, EEEE"
+        let deliveryDate = Calendar.current.date(byAdding: .day, value: 2, to: Date()) ?? Date()
+        return formatter.string(from: deliveryDate)
+    }
+
+    private var sellerDetailsSectionNew: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Seller Name & Rating
+            HStack(spacing: 6) {
+                Text("Sold by")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#374151"))
+
+                Text(product.sellerName ?? "Local Seller")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color(hex: "#2563EB"))
+
+                HStack(spacing: 2) {
+                    Text("\(String(format: "%.1f", product.rating ?? 4.2))")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color(hex: "#2563EB"))
+                .cornerRadius(4)
+            }
+
+            // Delivery Date
+            HStack(alignment: .center, spacing: 4) {
+                Text("Delivery by")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#374151"))
+                Text(deliveryDateString)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Color(hex: "#111827"))
+                Spacer()
+            }
+
+            // Services
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Circle().fill(Color(hex: "#6B7280")).frame(width: 3, height: 3)
+                    Text("Cash on Delivery")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#374151"))
+                }
+                HStack(spacing: 8) {
+                    Circle().fill(Color(hex: "#6B7280")).frame(width: 3, height: 3)
+                    Text("Easy Doorstep Return")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#374151"))
+                }
+            }
+
+            Button(action: {}) {
+                Text("View Details")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color(hex: "#2563EB"))
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .padding(.top, 8)
+    }
 
     private var highlightsSection: some View {
         Group {
@@ -363,7 +488,9 @@ struct GroceryProductDetailView: View {
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 16)
+                .padding(.horizontal, 20)
                 .background(Color.white)
                 .padding(.top, 8)
             }
@@ -486,6 +613,7 @@ struct GroceryProductDetailView: View {
         .padding(.vertical, 12)
         .background(
             Color.white
+                .ignoresSafeArea(edges: .bottom)
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: -4)
         )
     }

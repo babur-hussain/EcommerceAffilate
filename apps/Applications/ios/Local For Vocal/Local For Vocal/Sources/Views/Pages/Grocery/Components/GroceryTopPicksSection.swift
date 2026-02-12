@@ -65,7 +65,7 @@ struct GroceryTopPicksSection: View {
         .onAppear {
             loadProductsFromConfig()
         }
-        .onChange(of: configKey) { _ in
+        .onChange(of: configKey) {
             // Re-fetch when component props change (e.g. cache → fresh network data with different subCategoryIds)
             loadProductsFromConfig()
         }

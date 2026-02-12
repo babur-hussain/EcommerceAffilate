@@ -108,68 +108,6 @@ struct TopCategoryBoxesView: View {
     }
 }
 
-// MARK: - LocationBarView
-
-struct LocationBarView: View {
-    @ObservedObject var locationManager = LocationManager.shared
-
-    var body: some View {
-        HStack {
-            Button(action: {
-                locationManager.startUpdating()
-            }) {
-                HStack(spacing: 8) {
-                    // Pin Icon
-                    Image(systemName: "location.fill")
-                        .foregroundColor(.white)
-                        .font(.system(size: 16))
-                        .rotationEffect(.degrees(45))  // Angled pin
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(locationManager.city)  // Dynamic City/State
-                            .font(.system(size: 9, weight: .heavy))
-                            .foregroundColor(Color(hex: "#FFD700"))
-                            .tracking(0.5)
-
-                        HStack(spacing: 4) {
-                            Text(locationManager.address)  // Dynamic Address
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-
-                            Image(systemName: "chevron.down")
-                                .foregroundColor(.white)
-                                .font(.system(size: 12, weight: .bold))
-                        }
-                    }
-
-                    Spacer()
-                }
-            }
-
-            // Points Badge
-            HStack(spacing: 6) {
-                Image(systemName: "star.circle.fill")
-                    .foregroundColor(Color(hex: "#FFFFFF"))
-                    .font(.system(size: 14))
-                Text("0")
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundColor(.white)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.white.opacity(0.2))
-            .cornerRadius(20)  // More rounded pill
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)  // Taller bar
-        .background(Color.black.opacity(0.2))
-        .cornerRadius(10)  // Slightly more rounded corners
-        .padding(.horizontal, 16)
-        .padding(.vertical, 4)
-    }
-}
-
 // MARK: - SearchBarView
 
 struct SearchBarView: View {
@@ -299,6 +237,7 @@ struct CategoriesSliderView: View {
 
 struct HomeTopHeaderView: View {
     @Binding var activeTab: TabType
+    @EnvironmentObject var locationManager: LocationManager
 
     var body: some View {
         VStack(spacing: 0) {
@@ -307,7 +246,11 @@ struct HomeTopHeaderView: View {
             //.padding(.top, 54) // Moved handling to ContentView to avoid double padding logic
 
             // Location Bar
-            LocationBarView()
+            LocationBarView(onTap: {
+                withAnimation {
+                    locationManager.showAddressSelector = true
+                }
+            })
         }
         .background(
             LinearGradient(

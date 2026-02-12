@@ -635,13 +635,10 @@ struct RestAssuredSection: View {
             }
 
             Text(
-                "Delivery agent will open the package so you can check for correct product, damage or missing items. Share OTP to accept the delivery. "
+                "Delivery agent will open the package so you can check for correct product, damage or missing items. Share OTP to accept the delivery. \(Text("Why?").font(.system(size: 12, weight: .medium)).foregroundColor(AppTheme.Colors.primary))"
             )
             .font(.system(size: 12))
             .foregroundColor(AppTheme.Colors.textTertiary)
-                + Text("Why?")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(AppTheme.Colors.primary)
         }
         .padding(16)
         .background(Color.white)
@@ -827,19 +824,10 @@ struct TermsSection: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(
-                "By continuing with the order, you confirm that you are above 18 years of age, and you agree to our "
+                "By continuing with the order, you confirm that you are above 18 years of age, and you agree to our \(Text("Terms of Use").font(.system(size: 11, weight: .medium)).foregroundColor(AppTheme.Colors.primary)) and \(Text("Privacy Policy").font(.system(size: 11, weight: .medium)).foregroundColor(AppTheme.Colors.primary))"
             )
             .font(.system(size: 11))
             .foregroundColor(AppTheme.Colors.textTertiary)
-                + Text("Terms of Use")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(AppTheme.Colors.primary)
-                + Text(" and ")
-                .font(.system(size: 11))
-                .foregroundColor(AppTheme.Colors.textTertiary)
-                + Text("Privacy Policy")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(AppTheme.Colors.primary)
         }
     }
 }

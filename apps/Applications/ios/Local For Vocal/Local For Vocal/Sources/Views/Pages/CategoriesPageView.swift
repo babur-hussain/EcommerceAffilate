@@ -357,7 +357,7 @@ struct StoreCardView: View {
 
 // Helper for type erasure
 struct AnyShape: Shape {
-    private let _path: (CGRect) -> Path
+    private let _path: @Sendable (CGRect) -> Path
 
     init<S: Shape>(_ wrapped: S) {
         _path = { rect in

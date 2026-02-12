@@ -103,122 +103,125 @@ public struct UserAddressSelectorView: View {
     @State private var searchText = ""
 
     public var body: some View {
-        ZStack(alignment: .bottom) {
-            if isVisible {
-                // Dimmed background
-                Color.black.opacity(0.5)
-                    .edgesIgnoringSafeArea(.all)
-                    .onTapGesture {
-                        withAnimation { isVisible = false }
-                    }
-
-                // Modal Content
-                VStack(spacing: 0) {
-                    // Handle
-                    Capsule()
-                        .fill(Color(hex: "#E5E7EB"))
-                        .frame(width: 40, height: 4)
-                        .padding(.top, 12)
-                        .padding(.bottom, 16)
-
-                    // Header
-                    HStack {
-                        Text(title)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(Color(hex: "#111827"))
-                        Spacer()
-                        Button(action: { withAnimation { isVisible = false } }) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 20))
-                                .foregroundColor(Color(hex: "#1F2937"))
-                                .padding(4)
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                if isVisible {
+                    // Dimmed background
+                    Color.black.opacity(0.5)
+                        .edgesIgnoringSafeArea(.all)
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation { isVisible = false }
                         }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
 
-                    // Search Bar
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(Color(hex: "#9CA3AF"))
-                        TextField("Search by area, street name, pin code", text: $searchText)
-                            .font(.system(size: 14))
-                    }
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(hex: "#E5E7EB"), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                    // Modal Content
+                    VStack(spacing: 0) {
+                        // Handle
+                        Capsule()
+                            .fill(Color(hex: "#E5E7EB"))
+                            .frame(width: 40, height: 4)
+                            .padding(.top, 12)
+                            .padding(.bottom, 16)
 
-                    // Current Location
-                    Button(action: {
-                        onUseCurrentLocation()
-                        withAnimation { isVisible = false }
-                    }) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "location.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(Color(hex: "#2563EB"))
-                            Text("Use my current location")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(Color(hex: "#2563EB"))
+                        // Header
+                        HStack {
+                            Text(title)
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(Color(hex: "#111827"))
                             Spacer()
+                            Button(action: { withAnimation { isVisible = false } }) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(Color(hex: "#1F2937"))
+                                    .padding(4)
+                            }
                         }
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                    }
-
-                    Divider()
                         .padding(.bottom, 16)
 
-                    // Saved UserAddresses Header
-                    HStack {
-                        Text("Saved addresses")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Color(hex: "#374151"))
-                        Spacer()
-                        Button(action: onAddNewUserAddress) {
-                            Text("+ Add New")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(Color(hex: "#2563EB"))
+                        // Search Bar
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(Color(hex: "#9CA3AF"))
+                            TextField("Search by area, street name, pin code", text: $searchText)
+                                .font(.system(size: 14))
                         }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(hex: "#E5E7EB"), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
 
-                    // UserAddress List
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            if savedUserAddresses.isEmpty {
-                                Text("No saved addresses found.")
-                                    .foregroundColor(Color(hex: "#9CA3AF"))
-                                    .padding(32)
-                            } else {
-                                ForEach(savedUserAddresses) { address in
-                                    UserAddressRow(
-                                        address: address,
-                                        isSelected: selectedUserAddressId == address.id,
-                                        onSelect: {
-                                            onSelectUserAddress(address)
-                                            withAnimation { isVisible = false }
-                                        }
-                                    )
+                        // Current Location
+                        Button(action: {
+                            onUseCurrentLocation()
+                            withAnimation { isVisible = false }
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "location.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(Color(hex: "#2563EB"))
+                                Text("Use my current location")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#2563EB"))
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                        }
+
+                        Divider()
+                            .padding(.bottom, 16)
+
+                        // Saved UserAddresses Header
+                        HStack {
+                            Text("Saved addresses")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(Color(hex: "#374151"))
+                            Spacer()
+                            Button(action: onAddNewUserAddress) {
+                                Text("+ Add New")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#2563EB"))
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+
+                        // UserAddress List
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                if savedUserAddresses.isEmpty {
+                                    Text("No saved addresses found.")
+                                        .foregroundColor(Color(hex: "#9CA3AF"))
+                                        .padding(32)
+                                } else {
+                                    ForEach(savedUserAddresses) { address in
+                                        UserAddressRow(
+                                            address: address,
+                                            isSelected: selectedUserAddressId == address.id,
+                                            onSelect: {
+                                                onSelectUserAddress(address)
+                                                withAnimation { isVisible = false }
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
+                    .background(Color.white)
+                    #if canImport(UIKit)
+                        .cornerRadius(16, corners: [.topLeft, .topRight])
+                        .frame(maxHeight: geometry.size.height * 0.8)
+                    #else
+                        .cornerRadius(16)
+                        .frame(maxHeight: 600)  // Fallback height
+                    #endif
+                    .transition(.move(edge: .bottom))
                 }
-                .background(Color.white)
-                #if canImport(UIKit)
-                    .cornerRadius(16, corners: [.topLeft, .topRight])
-                    .frame(maxHeight: UIScreen.main.bounds.height * 0.8)
-                #else
-                    .cornerRadius(16)
-                    .frame(maxHeight: 600)  // Fallback height
-                #endif
-                .transition(.move(edge: .bottom))
             }
         }
         .zIndex(100)  // Ensure it sits on top

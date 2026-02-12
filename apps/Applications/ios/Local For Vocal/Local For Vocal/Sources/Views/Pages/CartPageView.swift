@@ -85,116 +85,122 @@ struct CartPageView: View {
 
 struct ShoppingView: View {
     @ObservedObject var cartManager: CartManager
+    @EnvironmentObject var locationManager: LocationManager
     @State private var isCheckoutActive = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Address Bar
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text("Deliver to:")
-                            .font(.system(size: 14))
-                            .foregroundColor(.black)
-                        Text("User, 460001")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.black)
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Address Bar
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 8) {
+                            Text("Deliver to:")
+                                .font(.system(size: 14))
+                                .foregroundColor(.black)
+                            Text(locationManager.address)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.black)
+                                .lineLimit(1)
 
-                        Text("HOME")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(Color(hex: "#666666"))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color(hex: "#F0F0F0"))
-                            .cornerRadius(4)
-                    }
-
-                    Text("Select your location to see delivery options")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color(hex: "#878787"))
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                Button(action: {
-                    // Change Address
-                }) {
-                    Text("Change")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "#2874F0"))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color(hex: "#E0E0E0"), lineWidth: 1)
-                        )
-                }
-            }
-            .padding(12)
-            .background(Color.white)
-            .padding(.bottom, 8)  // Separator
-            .background(Color(hex: "#F1F3F6"))  // Gap color
-
-            if cartManager.items.isEmpty {
-                EmptyStandardCartView()
-            } else {
-                ScrollView {
-                    VStack(spacing: 8) {
-                        ForEach(cartManager.items) { item in
-                            StandardCartItemView(item: item)
-                        }
-
-                        // Price Details
-                        PriceDetailsView(total: cartManager.cartTotal, count: cartManager.cartCount)
-                            .padding(.bottom, 100)
-                    }
-                }
-                .background(Color(hex: "#F1F3F6"))
-            }
-
-            // Bottom Bar
-            if !cartManager.items.isEmpty {
-                VStack(spacing: 0) {
-                    // Shadow effect simulation
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(height: 1)
-                        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: -2)
-                        .zIndex(1)
-
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            if cartManager.cartTotal < 10000 {
-                                Text("₹\(Int(cartManager.cartTotal * 1.1))")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(Color(hex: "#878787"))
-                                    .strikethrough()
-                            }
-                            Text("₹\(Int(cartManager.cartTotal))")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(Color(hex: "#212121"))
-                        }
-                        .padding(.leading, 10)
-
-                        Spacer()
-
-                        Button(action: {
-                            // Place Order Action
-                            isCheckoutActive = true
-                        }) {
-                            Text("Place Order")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color(hex: "#FB641B"))
+                            Text("HOME")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(Color(hex: "#666666"))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color(hex: "#F0F0F0"))
                                 .cornerRadius(4)
                         }
-                        .frame(width: UIScreen.main.bounds.width * 0.45)
-                        .background(
-                            NavigationLink(
-                                destination: CheckoutView(
+
+                        Text("Select your location to see delivery options")
+                            .font(.system(size: 13))
+                            .foregroundColor(Color(hex: "#878787"))
+                            .lineLimit(1)
+                    }
+
+                    Spacer()
+
+                    Button(action: {
+                        withAnimation {
+                            locationManager.showAddressSelector = true
+                        }
+                    }) {
+                        Text("Change")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color(hex: "#2874F0"))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color(hex: "#E0E0E0"), lineWidth: 1)
+                            )
+                    }
+                }
+                .padding(12)
+                .background(Color.white)
+                .padding(.bottom, 8)  // Separator
+                .background(Color(hex: "#F1F3F6"))  // Gap color
+
+                if cartManager.items.isEmpty {
+                    EmptyStandardCartView()
+                } else {
+                    ScrollView {
+                        VStack(spacing: 8) {
+                            ForEach(cartManager.items) { item in
+                                StandardCartItemView(item: item)
+                            }
+
+                            // Price Details
+                            PriceDetailsView(
+                                total: cartManager.cartTotal, count: cartManager.cartCount
+                            )
+                            .padding(.bottom, 100)
+                        }
+                    }
+                    .background(Color(hex: "#F1F3F6"))
+                }
+
+                // Bottom Bar
+                if !cartManager.items.isEmpty {
+                    VStack(spacing: 0) {
+                        // Shadow effect simulation
+                        Rectangle()
+                            .fill(Color.white)
+                            .frame(height: 1)
+                            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: -2)
+                            .zIndex(1)
+
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                if cartManager.cartTotal < 10000 {
+                                    Text("₹\(Int(cartManager.cartTotal * 1.1))")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(Color(hex: "#878787"))
+                                        .strikethrough()
+                                }
+                                Text("₹\(Int(cartManager.cartTotal))")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#212121"))
+                            }
+                            .padding(.leading, 10)
+
+                            Spacer()
+
+                            Button(action: {
+                                // Place Order Action
+                                isCheckoutActive = true
+                            }) {
+                                Text("Place Order")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Color(hex: "#FB641B"))
+                                    .cornerRadius(4)
+                            }
+                            .frame(width: geometry.size.width * 0.45)
+                            .navigationDestination(isPresented: $isCheckoutActive) {
+                                CheckoutView(
                                     items: cartManager.items.map { item in
                                         CheckoutViewModel.CheckoutItem(
                                             product: item.product,
@@ -202,14 +208,13 @@ struct ShoppingView: View {
                                             selectedOfferIds: []  // Cart items don't have selected offers yet in this flow
                                         )
                                     }
-                                ),
-                                isActive: $isCheckoutActive
-                            ) { EmptyView() }
-                        )
+                                )
+                            }
+                        }
+                        .padding(10)
+                        .background(Color.white)
+                        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: -1)
                     }
-                    .padding(10)
-                    .background(Color.white)
-                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: -1)
                 }
             }
         }

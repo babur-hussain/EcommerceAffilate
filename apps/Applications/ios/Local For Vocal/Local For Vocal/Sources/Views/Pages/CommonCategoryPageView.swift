@@ -150,13 +150,13 @@ struct CommonCategoryPageView: View {
         .background(Color(hex: "#F5F5F5").ignoresSafeArea(edges: .top))
         .navigationBarHidden(true)
         .onAppear { loadData() }
-        .onChange(of: activeSubCategoryId) { _ in
+        .onChange(of: activeSubCategoryId) { oldValue, newValue in
             Task { await loadProducts() }
         }
-        .onChange(of: selectedSort) { _ in
+        .onChange(of: selectedSort) { oldValue, newValue in
             Task { await loadProducts() }
         }
-        .onChange(of: activeQuickFilters) { _ in
+        .onChange(of: activeQuickFilters) { oldValue, newValue in
             Task { await loadProducts() }
         }
         .sheet(isPresented: $showSortSheet) {

@@ -21,11 +21,18 @@ public struct LocationPickerView: View {
     @State private var showError = false
     @State private var errorMessage = ""
 
-    // Map Region
+    // Map Region (iOS 16 and below)
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 21.1458, longitude: 79.0882),  // Nagpur default
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     )
+
+    // Map Position (iOS 17+)
+    @State private var position: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 21.1458, longitude: 79.0882),
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        ))
 
     // Form State
     @State private var name = ""
@@ -57,10 +64,14 @@ public struct LocationPickerView: View {
         }
         .onChange(of: locationManager.location) { newLocation in
             if let location = newLocation {
-                region = MKCoordinateRegion(
+                let newRegion = MKCoordinateRegion(
                     center: location.coordinate,
                     span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
                 )
+                region = newRegion
+                if #available(iOS 17.0, *) {
+                    position = .region(newRegion)
+                }
                 reverseGeocode(location: location)
             }
         }
@@ -70,14 +81,36 @@ public struct LocationPickerView: View {
     private var mapSelectionView: some View {
         ZStack {
             // Map
-            Map(coordinateRegion: $region, showsUserLocation: true)
+            // Map
+            if #available(iOS 17.0, *) {
+                Map(position: $position) {
+                    // UserAnnotation() is automatic in iOS 17 if we don't custom annotate
+                    // But we want to show user location manually or let Map handle it
+                    UserAnnotation()
+                }
+                .mapControls {
+                    MapUserLocationButton()
+                    MapCompass()
+                }
                 .edgesIgnoringSafeArea(.all)
                 .disabled(!isMapActive)
-                .onChange(of: region.center.latitude) { _ in
+                .onMapCameraChange { context in
                     if isMapActive {
+                        // Update region for reverse geocoding
+                        region = context.region
                         reverseGeocodeCenter()
                     }
                 }
+            } else {
+                Map(coordinateRegion: $region, showsUserLocation: true)
+                    .edgesIgnoringSafeArea(.all)
+                    .disabled(!isMapActive)
+                    .onChange(of: region.center.latitude) { _ in
+                        if isMapActive {
+                            reverseGeocodeCenter()
+                        }
+                    }
+            }
 
             // Dark overlay when inactive
             if !isMapActive {
@@ -136,10 +169,14 @@ public struct LocationPickerView: View {
 
                     Button(action: {
                         if let location = locationManager.location {
-                            region = MKCoordinateRegion(
+                            let newRegion = MKCoordinateRegion(
                                 center: location.coordinate,
                                 span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
                             )
+                            region = newRegion
+                            if #available(iOS 17.0, *) {
+                                position = .region(newRegion)
+                            }
                         }
                     }) {
                         HStack(spacing: 6) {

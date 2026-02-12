@@ -86,7 +86,7 @@ struct BrandGridCard: View {
                     .padding(12)
                 }
             }
-            .frame(height: (UIScreen.main.bounds.width - 32 - 24) / 3)  // Making it square-ish based on width
+            .aspectRatio(1, contentMode: .fit)  // Making it square based on available width
             .background(Color(hex: "#FFF9C4"))
             .cornerRadius(12)
         }

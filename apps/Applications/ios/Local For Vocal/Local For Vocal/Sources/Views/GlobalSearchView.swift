@@ -22,57 +22,58 @@ struct GlobalSearchView: View {
         GridItem(.flexible(), spacing: 16),
     ]
 
-    // Explicit width relative to screen to match ProductCardView logic
-    private let itemWidth = (UIScreen.main.bounds.width - 48) / 2
-
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background
-                Color.searchBackground.ignoresSafeArea()
+        GeometryReader { geometry in
+            let itemWidth = (geometry.size.width - 48) / 2
 
-                VStack(spacing: 0) {
-                    // Custom Header
-                    headerView
+            NavigationView {
+                ZStack {
+                    // Background
+                    Color.searchBackground.ignoresSafeArea()
 
-                    // Main Content
-                    ScrollView {
-                        VStack(spacing: 24) {
+                    VStack(spacing: 0) {
+                        // Custom Header
+                        headerView
 
-                            // Search Bar Container
-                            searchBarSection
+                        // Main Content
+                        ScrollView {
+                            VStack(spacing: 24) {
 
-                            if viewModel.query.isEmpty && viewModel.globalResults == nil {
-                                // Live Suggestions / Trending
-                                liveSuggestionsSection
-                            } else {
-                                // Results View
-                                if case .loading = viewModel.searchState {
-                                    loadingView
-                                } else if case .error(let msg) = viewModel.searchState {
-                                    errorView(msg: msg)
-                                } else if let results = viewModel.globalResults,
-                                    !results.products.isEmpty
-                                {
-                                    resultsContent(results: results)
-                                } else if viewModel.globalResults != nil {  // No results found
-                                    emptyResultsView
+                                // Search Bar Container
+                                searchBarSection
+
+                                if viewModel.query.isEmpty && viewModel.globalResults == nil {
+                                    // Live Suggestions / Trending
+                                    liveSuggestionsSection
+                                } else {
+                                    // Results View
+                                    if case .loading = viewModel.searchState {
+                                        loadingView
+                                    } else if case .error(let msg) = viewModel.searchState {
+                                        errorView(msg: msg)
+                                    } else if let results = viewModel.globalResults,
+                                        !results.products.isEmpty
+                                    {
+                                        resultsContent(results: results, itemWidth: itemWidth)
+                                    } else if viewModel.globalResults != nil {  // No results found
+                                        emptyResultsView
+                                    }
                                 }
                             }
+                            .padding(.bottom, 20)
                         }
-                        .padding(.bottom, 20)
+                        .scrollDismissesKeyboard(.interactively)
                     }
-                    .scrollDismissesKeyboard(.interactively)
+                }
+                .navigationBarHidden(true)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isFocused = true
+                    }
                 }
             }
-            .navigationBarHidden(true)
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isFocused = true
-                }
-            }
+            .navigationViewStyle(.stack)
         }
-        .navigationViewStyle(.stack)
     }
 
     // MARK: - Subviews
@@ -216,7 +217,7 @@ struct GlobalSearchView: View {
             .padding()
     }
 
-    func resultsContent(results: GlobalSearchResponse) -> some View {
+    func resultsContent(results: GlobalSearchResponse, itemWidth: CGFloat) -> some View {
         VStack(spacing: 16) {
             // Quick Filters
             ScrollView(.horizontal, showsIndicators: false) {

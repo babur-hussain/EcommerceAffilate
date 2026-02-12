@@ -38,7 +38,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         .onAppear {
             loader.load(url: url)
         }
-        .onChange(of: url) { newURL in
+        .onChange(of: url) { _, newURL in
             loader.load(url: newURL)
         }
     }

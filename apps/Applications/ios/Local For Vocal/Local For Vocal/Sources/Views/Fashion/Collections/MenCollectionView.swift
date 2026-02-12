@@ -157,7 +157,7 @@ struct MenCollectionView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            viewModel.fetchLayout()
+            viewModel.loadLayout()
         }
     }
 }

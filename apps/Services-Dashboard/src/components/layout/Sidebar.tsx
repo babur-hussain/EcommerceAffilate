@@ -1,92 +1,138 @@
-"use client"
+'use client';
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 import {
     LayoutDashboard,
-    Briefcase,
-    ShoppingCart,
-    BarChart2,
     Settings,
+    Users,
+    Package,
+    Calendar,
+    BarChart,
     LogOut,
-    Layers,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+    FileText,
+    Briefcase
+} from 'lucide-react';
+import { Role } from '@/types/auth';
 
-const routes = [
+interface NavItem {
+    title: string;
+    href: string;
+    icon: React.ElementType;
+    roles: Role[];
+}
+
+const navItems: NavItem[] = [
     {
-        label: "Dashboard",
+        title: 'Dashboard',
+        href: '/',
         icon: LayoutDashboard,
-        href: "/",
-        color: "text-sky-500",
+        roles: ['SUPER_ADMIN', 'COUNTRY_ADMIN', 'OPERATIONS_MANAGER', 'SUPPORT_AGENT'],
     },
     {
-        label: "Services",
+        title: 'Services',
+        href: '/services',
+        icon: Package,
+        roles: ['SUPER_ADMIN', 'COUNTRY_ADMIN', 'OPERATIONS_MANAGER'],
+    },
+    {
+        title: 'Services',
+        href: '/services',
         icon: Briefcase,
-        href: "/services",
-        color: "text-violet-500",
+        roles: ['SUPER_ADMIN', 'COUNTRY_ADMIN', 'OPERATIONS_MANAGER'],
     },
     {
-        label: "Orders",
-        icon: ShoppingCart,
-        href: "/orders",
-        color: "text-pink-700",
+        title: 'Availability',
+        href: '/availability',
+        icon: Calendar,
+        roles: ['SUPER_ADMIN', 'COUNTRY_ADMIN', 'OPERATIONS_MANAGER'],
     },
     {
-        label: "Analytics",
-        icon: BarChart2,
-        href: "/analytics",
-        color: "text-orange-700",
+        title: 'Bookings',
+        href: '/bookings', // Re-using Booking icon or using a different one
+        icon: FileText, // Swapped icon just to differentiate visually if needed, but keeping Calendar is fine if distinct
+        roles: ['SUPER_ADMIN', 'COUNTRY_ADMIN', 'OPERATIONS_MANAGER', 'SUPPORT_AGENT'],
     },
     {
-        label: "Settings",
+        title: 'Analytics',
+        href: '/analytics',
+        icon: BarChart,
+        roles: ['SUPER_ADMIN', 'COUNTRY_ADMIN'],
+    },
+    {
+        title: 'Users',
+        href: '/users',
+        icon: Users,
+        roles: ['SUPER_ADMIN'],
+    },
+    {
+        title: 'Settings',
+        href: '/settings',
         icon: Settings,
-        href: "/settings",
+        roles: ['SUPER_ADMIN'],
     },
-]
+    {
+        title: 'Roles & Permissions',
+        href: '/rbac',
+        icon: Users,
+        roles: ['SUPER_ADMIN'],
+    },
+];
 
-export default function Sidebar() {
-    const pathname = usePathname()
+export function Sidebar() {
+    const pathname = usePathname();
+    const { user, logout } = useAuth();
+
+    const filteredNavItems = navItems.filter((item) =>
+        user && item.roles.includes(user.role)
+    );
 
     return (
-        <div className="space-y-4 py-4 flex flex-col h-full bg-[#111827] text-white">
-            <div className="px-3 py-2 flex-1">
-                <Link href="/" className="flex items-center pl-3 mb-14">
-                    <div className="relative w-8 h-8 mr-4">
-                        <Layers className="text-white w-8 h-8" />
-                    </div>
-                    <h1 className="text-2xl font-bold">Services</h1>
-                </Link>
-                <div className="space-y-1">
-                    {routes.map((route) => (
+        <div className="flex h-screen w-64 flex-col border-r bg-white">
+            <div className="flex h-16 items-center justify-center border-b px-6">
+                <h1 className="text-xl font-bold text-gray-900">ServiceDash</h1>
+            </div>
+            <nav className="flex-1 space-y-1 px-3 py-4">
+                {filteredNavItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
                         <Link
-                            key={route.href}
-                            href={route.href}
+                            key={item.href}
+                            href={item.href}
                             className={cn(
-                                "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
-                                pathname === route.href
-                                    ? "text-white bg-white/10"
-                                    : "text-zinc-400"
+                                'group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                                isActive
+                                    ? 'bg-gray-100 text-gray-900'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             )}
                         >
-                            <div className="flex items-center flex-1">
-                                <route.icon
-                                    className={cn("h-5 w-5 mr-3", route.color)}
-                                />
-                                {route.label}
-                            </div>
+                            <item.icon
+                                className={cn(
+                                    'mr-3 h-5 w-5 flex-shrink-0',
+                                    isActive ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-500'
+                                )}
+                                aria-hidden="true"
+                            />
+                            {item.title}
                         </Link>
-                    ))}
-                </div>
-            </div>
-            <div className="px-3 py-2">
-                <div className="p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition text-zinc-400">
-                    <div className="flex items-center flex-1">
-                        <LogOut className="h-5 w-5 mr-3 text-red-500" />
-                        Logout
-                    </div>
-                </div>
+                    );
+                })}
+            </nav>
+            <div className="border-t p-4">
+                <button
+                    onClick={logout}
+                    className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                    <LogOut
+                        className="mr-3 h-5 w-5 flex-shrink-0 text-red-500 group-hover:text-red-600"
+                        aria-hidden="true"
+                    />
+                    Sign out
+                </button>
             </div>
         </div>
-    )
+    );
 }

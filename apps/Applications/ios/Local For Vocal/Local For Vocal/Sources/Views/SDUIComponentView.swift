@@ -425,6 +425,10 @@ struct SDUIComponentView: View {
             renderGroceryEvents()
         case .groceryShopByCategory:
             renderGroceryShopByCategory()
+        case .grocerySpecialPicks:
+            renderGrocerySpecialPicks()
+        case .groceryWholesaleText:
+            renderGroceryWholesaleText()
 
         case .smartBasket:
             renderSmartBasket()

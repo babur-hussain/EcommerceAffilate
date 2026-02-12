@@ -32,7 +32,7 @@ struct GroceryContainerView: View {
 
             // Categories Tab
             NavigationView {
-                CategoriesPageView()
+                GroceryCategoryPageView()
                     .navigationBarHidden(true)
             }
             .navigationViewStyle(.stack)
@@ -44,7 +44,7 @@ struct GroceryContainerView: View {
 
             // Top Picks Tab
             NavigationView {
-                SDUIPage(slug: "grocery-top-picks")
+                GroceryTopPicksView()
                     .navigationBarHidden(true)
             }
             .navigationViewStyle(.stack)
@@ -64,6 +64,7 @@ struct GroceryContainerView: View {
                 Image(systemName: "basket")
                 Text("Basket")
             }
+            .badge(basketManager.basketCount)
             .tag(GroceryTab.basket)
         }
         .accentColor(Color(hex: "#2874F0"))  // Same blue theme as homepage

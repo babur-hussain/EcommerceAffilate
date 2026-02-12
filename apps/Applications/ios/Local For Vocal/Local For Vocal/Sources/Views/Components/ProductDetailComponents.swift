@@ -8,7 +8,7 @@ struct ProductTimerView: View {
     @State private var timer: Timer? = nil
 
     var body: some View {
-        if let targetDate = targetDate, !timeRemaining.isEmpty {
+        if targetDate != nil && !timeRemaining.isEmpty {
             HStack(spacing: 8) {
                 Image(systemName: "clock")
                     .foregroundColor(.white)

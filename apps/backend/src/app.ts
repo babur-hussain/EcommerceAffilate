@@ -32,6 +32,11 @@ import uploadRouter from "./routes/upload.route";
 import meRouter from "./routes/me.route";
 import pageRouter from "./routes/page.route";
 import adminPageRouter from "./routes/admin.page.route";
+import rbacRouter from "./routes/rbac.route";
+import serviceTypeRouter from "./routes/serviceType.route";
+import serviceRouter from "./routes/service.route";
+import availabilityRouter from "./routes/availability.route";
+import bookingRouter from "./routes/booking.route";
 
 // ... existing code ...
 
@@ -181,6 +186,11 @@ app.use("/api", walletRouter);
 app.use("/api", meRouter);
 app.use("/api", pageRouter);
 app.use("/api", adminPageRouter);
+app.use("/api/rbac", rbacRouter);
+app.use("/api/service-types", serviceTypeRouter);
+app.use("/api/services", serviceRouter);
+app.use("/api/availability", availabilityRouter);
+app.use("/api/bookings", bookingRouter);
 app.use("/api", categoryRouter);
 app.use("/api", attributeRouter);
 app.use("/api", superAdminRouter);

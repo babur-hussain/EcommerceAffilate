@@ -15,43 +15,46 @@ struct SportSupportGoalsView: View {
     let items: [GoalItem]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack {
-                Text(title)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color(hex: "#111827"))
+        GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: 12) {
+                // Header
+                HStack {
+                    Text(title)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(Color(hex: "#111827"))
 
-                if let action = headerActionUrl {
-                    Spacer()
-                    Button(action: {
-                        print("Navigate to: \(action)")
-                    }) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Color(hex: "#111827"))
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-
-            // Horizontal Scroll
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(items) { item in
-                        GoalCard(item: item)
+                    if let action = headerActionUrl {
+                        Spacer()
+                        Button(action: {
+                            print("Navigate to: \(action)")
+                        }) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(Color(hex: "#111827"))
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+
+                // Horizontal Scroll
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(items) { item in
+                            GoalCard(item: item, width: geometry.size.width * 0.75)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
+                }
             }
+            .padding(.bottom, 24)
         }
-        .padding(.bottom, 24)
     }
 }
 
 struct GoalCard: View {
     let item: SportSupportGoalsView.GoalItem
+    let width: CGFloat
 
     var body: some View {
         Button(action: {
@@ -104,7 +107,7 @@ struct GoalCard: View {
                 }
                 .padding(20)
             }
-            .frame(width: UIScreen.main.bounds.width * 0.75, height: 400)
+            .frame(width: width, height: 400)
             .cornerRadius(24)
             .clipped()
         }

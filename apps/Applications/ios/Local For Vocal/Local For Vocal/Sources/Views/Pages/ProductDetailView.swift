@@ -317,21 +317,13 @@ struct ProductDetailView: View {
                         }
                     )
 
-                    // Hidden NavigationLink for checkout
-                    NavigationLink(
-                        destination: CheckoutView(
-                            product: product,
-                            quantity: 1,
-                            selectedOfferIds: selectedLastChanceOfferIds
-                        ),
-                        isActive: $navigateToCheckout
-                    ) { EmptyView() }
-
-                    // Hidden NavigationLink for Cart
+                    // Hidden NavigationLink for Cart - REPLACE WITH navigationDestination
+                    /*
                     NavigationLink(
                         destination: CartPageView(),
                         isActive: $navigateToCart
                     ) { EmptyView() }
+                     */
                 } else {
                     VStack(spacing: 16) {
                         Image(systemName: "magnifyingglass")

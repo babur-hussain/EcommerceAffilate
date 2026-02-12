@@ -12,12 +12,7 @@ struct ServicesPageView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
 
-    @ObservedObject private var locationManager = LocationManager.shared
-
-    // Address Selector State
-    @State private var showAddressSheet = false
-    @State private var savedAddresses: [UserAddress] = []
-    @State private var selectedAddressId: String? = nil
+    @EnvironmentObject var locationManager: LocationManager
 
     // Gradient matching React Native: '#2BC0E4', '#EAECC6', '#FFFFFF'
     private let backgroundGradient = LinearGradient(
@@ -116,9 +111,8 @@ struct ServicesPageView: View {
                 .padding(.vertical, 8)
                 .contentShape(Rectangle())  // Make full row content tappable
                 .onTapGesture {
-                    fetchAddresses()
                     withAnimation {
-                        showAddressSheet = true
+                        locationManager.showAddressSelector = true
                     }
                 }
 
@@ -154,46 +148,9 @@ struct ServicesPageView: View {
                 )
             )
 
-            // Address Selector Modal
-            UserAddressSelectorView(
-                isVisible: $showAddressSheet,
-                savedUserAddresses: savedAddresses,
-                selectedUserAddressId: $selectedAddressId,
-                onSelectUserAddress: { address in
-                    // Update location manager with selected address details
-                    locationManager.address = "\(address.addressLine1), \(address.city)"
-                    locationManager.city = address.city
-                    selectedAddressId = address.id
-                },
-                onUseCurrentLocation: {
-                    locationManager.startUpdating()
-                    selectedAddressId = nil
-                },
-                onAddNewUserAddress: {
-                    // TODO: Navigate to add address
-                },
-                title: "Select service address"
-            )
         }
         .onAppear {
             loadLayout()
-            locationManager.startUpdating()
-            fetchAddresses()
-        }
-    }
-
-    private func fetchAddresses() {
-        Task {
-            do {
-                if AuthManager.shared.isAuthenticated {
-                    let addresses = try await APIService.shared.fetchAddresses()
-                    await MainActor.run {
-                        self.savedAddresses = addresses
-                    }
-                }
-            } catch {
-                AppLogger.error("Failed to fetch addresses: \(error)")
-            }
         }
     }
 

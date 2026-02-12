@@ -28,14 +28,13 @@ struct BeautyProductView: View {
                 }
             }
 
-            // Hidden Navigation Link for Cart
-            NavigationLink(destination: CartPageView(), isActive: $showCart) {
-                EmptyView()
-            }
-
         }
+
         .navigationBarHidden(true)
         .ignoresSafeArea(.all, edges: .bottom)
+        .navigationDestination(isPresented: $showCart) {
+            CartPageView()
+        }
         .fullScreenCover(isPresented: $showSearch) {
             GlobalSearchView()
         }

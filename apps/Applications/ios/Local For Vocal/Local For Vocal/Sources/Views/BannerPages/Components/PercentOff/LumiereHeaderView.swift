@@ -78,13 +78,15 @@ struct LumiereHeaderView: View {
                             .foregroundColor(.white)
                             .offset(x: -40, y: 40)
 
-                        Text("-50")
-                            .font(.custom("PlayfairDisplay-Bold", size: 48))
-                            .fontWeight(.black)
-                            .foregroundColor(.white)
-                            + Text("%")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
+                        HStack(alignment: .firstTextBaseline, spacing: 0) {
+                            Text("-50")
+                                .font(.custom("PlayfairDisplay-Bold", size: 48))
+                                .fontWeight(.black)
+                                .foregroundColor(.white)
+                            Text("%")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                        }
                     }
                     .shadow(color: Color.black.opacity(0.5), radius: 4, x: 0, y: 2)
 
@@ -125,13 +127,14 @@ struct LumiereHeaderView: View {
                         )
                         .padding(.bottom, 12)
 
-                    Text(titleTop)
-                        .font(.custom("PlayfairDisplay-Regular", size: 36))
-                        .foregroundColor(.white)
-                        + Text("\n")
-                        + Text(titleBottom)
-                        .font(.custom("PlayfairDisplay-Regular", size: 36))
-                        .foregroundColor(.white)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(titleTop)
+                            .font(.custom("PlayfairDisplay-Regular", size: 36))
+                            .foregroundColor(.white)
+                        Text(titleBottom)
+                            .font(.custom("PlayfairDisplay-Regular", size: 36))
+                            .foregroundColor(.white)
+                    }
 
                     Text(subtitle)
                         .font(.system(size: 14))

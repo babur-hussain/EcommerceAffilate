@@ -77,116 +77,143 @@ struct ContentView: View {
     }
 
     var body: some View {
-        TabView(selection: $currentTab) {
-            // Home Tab
-            GeometryReader { geometry in
-                homeContentView(geometry: geometry)
-            }
-            .toolbar(navigationManager.activeTab == .grocery ? .hidden : .visible, for: .tabBar)
-            .tabItem {
-                Image(systemName: "house")
-                Text("Home")
-            }
-            .tag(MainTab.home)
-
-            // Categories Tab
-            CategoriesPageView()
-                .tabItem {
-                    Image(systemName: "square.grid.2x2")
-                    Text("Categories")
+        ZStack {
+            TabView(selection: $currentTab) {
+                // Home Tab
+                GeometryReader { geometry in
+                    homeContentView(geometry: geometry)
                 }
-                .tag(MainTab.categories)
-
-            // Cart Tab
-            CartPageView()
+                .toolbar(navigationManager.activeTab == .grocery ? .hidden : .visible, for: .tabBar)
                 .tabItem {
-                    Image(systemName: "cart")
-                    Text("Cart")
+                    Image(systemName: "house")
+                    Text("Home")
                 }
-                .tag(MainTab.cart)
+                .tag(MainTab.home)
 
-            // Account Tab
-            AccountView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(hex: "#F3F4F6"))
-                .tabItem {
-                    Image(systemName: "person")
-                    Text("Account")
-                }
-                .tag(MainTab.account)
-        }
-        .accentColor(Color(hex: "#2874F0"))  // Blue theme color
-        .environmentObject(cartManager)
-        .environmentObject(beautyManager)
-        .environmentObject(basketManager)
-        .environmentObject(navigationManager)
-        .environmentObject(locationManager)
-        .onAppear {
-            locationManager.requestPermission()
-        }
-        .fullScreenCover(isPresented: $navigationManager.showBeautyPage) {
-            NavigationView {
-                BeautyProductView()
+                // Categories Tab
+                CategoriesPageView()
+                    .tabItem {
+                        Image(systemName: "square.grid.2x2")
+                        Text("Categories")
+                    }
+                    .tag(MainTab.categories)
+
+                // Cart Tab
+                CartPageView()
+                    .tabItem {
+                        Image(systemName: "cart")
+                        Text("Cart")
+                    }
+                    .tag(MainTab.cart)
+
+                // Account Tab
+                AccountView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(hex: "#F3F4F6"))
+                    .tabItem {
+                        Image(systemName: "person")
+                        Text("Account")
+                    }
+                    .tag(MainTab.account)
             }
-            .environmentObject(navigationManager)
+            .accentColor(Color(hex: "#2874F0"))  // Blue theme color
             .environmentObject(cartManager)
             .environmentObject(beautyManager)
             .environmentObject(basketManager)
-        }
-        .fullScreenCover(isPresented: $navigationManager.showSpecialDealPage) {
-            SpecialDealNewStyleView()
-                .environmentObject(navigationManager)
-                .environmentObject(cartManager)
-                .environmentObject(beautyManager)
-                .environmentObject(basketManager)
-        }
-        .fullScreenCover(isPresented: $navigationManager.showBrandNewArrivalPage) {
-            BrandNewArrivalView()
-                .environmentObject(navigationManager)
-        }
-        .fullScreenCover(isPresented: $navigationManager.showMenFashionPage) {
-            MenFashionView()
-                .environmentObject(navigationManager)
-                .environmentObject(cartManager)
-                .environmentObject(beautyManager)
-                .environmentObject(basketManager)
-        }
-        .fullScreenCover(isPresented: $navigationManager.showGrandMobilesPage) {
-            GrandMobilesView()
-                .environmentObject(navigationManager)
-        }
-        .fullScreenCover(isPresented: $navigationManager.showShoesSalesPage) {
-            ShoesSalesView()
-                .environmentObject(navigationManager)
-        }
-        .fullScreenCover(isPresented: $navigationManager.showCyberSalePage) {
-            CyberSaleView()
-                .environmentObject(navigationManager)
-        }
-        .fullScreenCover(isPresented: $navigationManager.showCategoryPage) {
-            if let params = navigationManager.categoryNavigation {
+            .environmentObject(navigationManager)
+            .environmentObject(locationManager)
+            .onAppear {
+                locationManager.requestPermission()
+                // Pre-fetch addresses
+                locationManager.fetchSavedAddresses()
+            }
+            .fullScreenCover(isPresented: $navigationManager.showBeautyPage) {
                 NavigationView {
-                    if params.layoutType == "grocery" {
-                        GroceryListingView(
-                            categoryId: params.categoryId,
-                            categoryName: params.categoryName,
-                            initialSubCategoryId: params.subCategoryId,
-                            initialFilters: params.filters
-                        )
-                    } else {
-                        CommonCategoryPageView(
-                            categoryId: params.categoryId,
-                            categoryName: params.categoryName,
-                            initialSubCategoryId: params.subCategoryId,
-                            initialFilters: params.filters
-                        )
-                    }
+                    BeautyProductView()
                 }
                 .environmentObject(navigationManager)
                 .environmentObject(cartManager)
+                .environmentObject(beautyManager)
                 .environmentObject(basketManager)
-                .environmentObject(WishlistManager.shared)
             }
+            .fullScreenCover(isPresented: $navigationManager.showSpecialDealPage) {
+                SpecialDealNewStyleView()
+                    .environmentObject(navigationManager)
+                    .environmentObject(cartManager)
+                    .environmentObject(beautyManager)
+                    .environmentObject(basketManager)
+            }
+            .fullScreenCover(isPresented: $navigationManager.showBrandNewArrivalPage) {
+                BrandNewArrivalView()
+                    .environmentObject(navigationManager)
+            }
+            .fullScreenCover(isPresented: $navigationManager.showMenFashionPage) {
+                MenFashionView()
+                    .environmentObject(navigationManager)
+                    .environmentObject(cartManager)
+                    .environmentObject(beautyManager)
+                    .environmentObject(basketManager)
+            }
+            .fullScreenCover(isPresented: $navigationManager.showGrandMobilesPage) {
+                GrandMobilesView()
+                    .environmentObject(navigationManager)
+            }
+            .fullScreenCover(isPresented: $navigationManager.showShoesSalesPage) {
+                ShoesSalesView()
+                    .environmentObject(navigationManager)
+            }
+            .fullScreenCover(isPresented: $navigationManager.showCyberSalePage) {
+                CyberSaleView()
+                    .environmentObject(navigationManager)
+            }
+            .fullScreenCover(isPresented: $navigationManager.showCategoryPage) {
+                if let params = navigationManager.categoryNavigation {
+                    NavigationView {
+                        if params.layoutType == "grocery" {
+                            GroceryListingView(
+                                categoryId: params.categoryId,
+                                categoryName: params.categoryName,
+                                initialSubCategoryId: params.subCategoryId,
+                                initialFilters: params.filters
+                            )
+                        } else {
+                            CommonCategoryPageView(
+                                categoryId: params.categoryId,
+                                categoryName: params.categoryName,
+                                initialSubCategoryId: params.subCategoryId,
+                                initialFilters: params.filters
+                            )
+                        }
+                    }
+                    .environmentObject(navigationManager)
+                    .environmentObject(cartManager)
+                    .environmentObject(basketManager)
+                    .environmentObject(WishlistManager.shared)
+                }
+            }
+
+            // Global Address Selector Overlay
+            UserAddressSelectorView(
+                isVisible: $locationManager.showAddressSelector,
+                savedUserAddresses: locationManager.savedAddresses,
+                selectedUserAddressId: .constant(nil),
+                onSelectUserAddress: { address in
+                    locationManager.address = address.addressLine1
+                    locationManager.city = address.city
+                    locationManager.showAddressSelector = false
+                },
+                onUseCurrentLocation: {
+                    locationManager.startUpdating()
+                    locationManager.showAddressSelector = false
+                },
+                onAddNewUserAddress: {
+                    // TODO: Navigate to Add Address
+                    locationManager.showAddressSelector = false
+                }
+            )
+            .zIndex(1000)
+            .ignoresSafeArea()
+            .allowsHitTesting(locationManager.showAddressSelector)
         }
     }
 

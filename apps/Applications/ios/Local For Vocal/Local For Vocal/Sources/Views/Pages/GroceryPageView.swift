@@ -14,6 +14,9 @@ struct GroceryPageView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var refreshID = UUID()
 
+    // Location & Address State
+    @EnvironmentObject var locationManager: LocationManager
+
     var body: some View {
         ZStack(alignment: .top) {
             // ── Yellow-to-White Gradient Background ──
@@ -32,7 +35,16 @@ struct GroceryPageView: View {
                 LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                     // ── Scrollable Header (tabs + location) ──
                     // This scrolls away with content
-                    GroceryStaticHeader(activeTab: $activeTab)
+                    // ── Scrollable Header (tabs + location) ──
+                    // This scrolls away with content
+                    GroceryStaticHeader(
+                        activeTab: $activeTab,
+                        onLocationTap: {
+                            withAnimation {
+                                locationManager.showAddressSelector = true
+                            }
+                        }
+                    )
 
                     Section(
                         header:
@@ -116,6 +128,8 @@ struct GroceryPageView: View {
 
 struct GroceryStaticHeader: View {
     @Binding var activeTab: TabType
+    var onLocationTap: () -> Void
+    @ObservedObject var locationManager = LocationManager.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -123,24 +137,30 @@ struct GroceryStaticHeader: View {
             TopCategoryBoxesView(activeTab: $activeTab)
 
             HStack {
-                HStack(spacing: 8) {
-                    Image(systemName: "house.fill")
-                        .foregroundColor(Color(hex: "#8B6914"))
-                        .font(.system(size: 16))
+                Button(action: onLocationTap) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "house.fill")
+                            .foregroundColor(Color(hex: "#8B6914"))
+                            .font(.system(size: 16))
 
-                    Text("WORK")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(Color(hex: "#8B6914"))
+                        Text("HOME")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(Color(hex: "#8B6914"))
 
-                    Text("Select your location")
+                        Text(
+                            locationManager.address.isEmpty
+                                ? "Select your location" : locationManager.address
+                        )
                         .font(.system(size: 12))
                         .foregroundColor(Color(hex: "#6B5720"))
                         .lineLimit(1)
 
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(Color(hex: "#8B6914"))
-                        .font(.system(size: 14))
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(Color(hex: "#8B6914"))
+                            .font(.system(size: 14))
+                    }
                 }
+                .buttonStyle(PlainButtonStyle())
 
                 Spacer()
 

@@ -14,7 +14,7 @@ struct MenFashionView: View {
     @State private var navigateToCart = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack(alignment: .bottom) {
                 // Background
                 Color.white
@@ -53,14 +53,12 @@ struct MenFashionView: View {
                         }
                     }
                 }
-
-                // Navigation Link for Cart
-                NavigationLink(destination: CartPageView(), isActive: $navigateToCart) {
-                    EmptyView()
-                }
             }
             .navigationBarHidden(true)
             .ignoresSafeArea(.all, edges: .bottom)
+            .navigationDestination(isPresented: $navigateToCart) {
+                CartPageView()
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .fullScreenCover(isPresented: $showSearch) {
