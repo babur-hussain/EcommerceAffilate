@@ -19,36 +19,52 @@ struct GroceryContainerView: View {
     var body: some View {
         TabView(selection: $currentTab) {
             // Grocery Tab (main grocery home)
-            GroceryPageView(activeTab: $activeTab)
-                .tabItem {
-                    Image(systemName: "house")
-                    Text("Grocery")
-                }
-                .tag(GroceryTab.grocery)
+            NavigationView {
+                GroceryPageView(activeTab: $activeTab)
+                    .navigationBarHidden(true)
+            }
+            .navigationViewStyle(.stack)
+            .tabItem {
+                Image(systemName: "house")
+                Text("Grocery")
+            }
+            .tag(GroceryTab.grocery)
 
             // Categories Tab
-            CategoriesPageView()
-                .tabItem {
-                    Image(systemName: "square.grid.2x2")
-                    Text("Categories")
-                }
-                .tag(GroceryTab.categories)
+            NavigationView {
+                CategoriesPageView()
+                    .navigationBarHidden(true)
+            }
+            .navigationViewStyle(.stack)
+            .tabItem {
+                Image(systemName: "square.grid.2x2")
+                Text("Categories")
+            }
+            .tag(GroceryTab.categories)
 
             // Top Picks Tab
-            SDUIPage(slug: "grocery-top-picks")
-                .tabItem {
-                    Image(systemName: "star")
-                    Text("Top Picks")
-                }
-                .tag(GroceryTab.topPicks)
+            NavigationView {
+                SDUIPage(slug: "grocery-top-picks")
+                    .navigationBarHidden(true)
+            }
+            .navigationViewStyle(.stack)
+            .tabItem {
+                Image(systemName: "star")
+                Text("Top Picks")
+            }
+            .tag(GroceryTab.topPicks)
 
             // Basket Tab
-            BasketPageView(groceryTab: $currentTab)
-                .tabItem {
-                    Image(systemName: "basket")
-                    Text("Basket")
-                }
-                .tag(GroceryTab.basket)
+            NavigationView {
+                BasketPageView(groceryTab: $currentTab)
+                    .navigationBarHidden(true)
+            }
+            .navigationViewStyle(.stack)
+            .tabItem {
+                Image(systemName: "basket")
+                Text("Basket")
+            }
+            .tag(GroceryTab.basket)
         }
         .accentColor(Color(hex: "#2874F0"))  // Same blue theme as homepage
     }

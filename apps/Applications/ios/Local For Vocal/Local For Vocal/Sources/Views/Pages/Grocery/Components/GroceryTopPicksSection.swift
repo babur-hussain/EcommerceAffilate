@@ -38,8 +38,12 @@ struct GroceryTopPicksSection: View {
                 LazyHStack(spacing: 12) {
                     if let products = viewModel.data as? [Product], !products.isEmpty {
                         ForEach(products) { product in
-                            GroceryProductCard(product: product)
-                                .frame(width: 140)
+                            NavigationLink(destination: GroceryProductDetailView(product: product))
+                            {
+                                GroceryProductCard(product: product)
+                                    .frame(width: 140)
+                            }
+                            .buttonStyle(.plain)
                         }
                     } else if viewModel.isLoading {
                         ForEach(0..<4, id: \.self) { _ in

@@ -62,8 +62,13 @@ struct GroceryPageView: View {
                 }
             }
             .refreshable {
-                // Hard refresh: Clear cache and force reload
+                // Hard refresh: Clear both in-memory and disk cache, then force reload
                 await SDUICacheManager.shared.invalidate(slug: "grocery")
+                await MainActor.run {
+                    SDUILayoutStore.shared.layouts.removeValue(forKey: "grocery")
+                    SDUILayoutStore.shared.staleFlags.removeValue(forKey: "grocery")
+                    SDUILayoutStore.shared.lastFetchTime.removeValue(forKey: "grocery")
+                }
                 try? await Task.sleep(nanoseconds: 500_000_000)  // Small delay for UX
                 await MainActor.run {
                     refreshID = UUID()
