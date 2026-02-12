@@ -1,10 +1,10 @@
+import Combine
 import Foundation
 import Network
 
 /// Lightweight network reachability monitor
 /// Uses NWPathMonitor to track connectivity state
 /// Published property can be observed from SwiftUI views
-@MainActor
 class NetworkMonitor: ObservableObject {
     static let shared = NetworkMonitor()
 
@@ -23,7 +23,7 @@ class NetworkMonitor: ObservableObject {
 
     private init() {
         monitor.pathUpdateHandler = { [weak self] path in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.isConnected = (path.status == .satisfied)
 
                 if path.usesInterfaceType(.wifi) {
@@ -38,7 +38,7 @@ class NetworkMonitor: ObservableObject {
 
                 #if DEBUG
                     print(
-                        "[Network] Status: \(path.status == .satisfied ? "Connected" : "Disconnected") (\(self?.connectionType ?? .unknown))"
+                        "[Network] Status: \(path.status == .satisfied ? "Connected" : "Disconnected") (\(String(describing: self?.connectionType)))"
                     )
                 #endif
             }
