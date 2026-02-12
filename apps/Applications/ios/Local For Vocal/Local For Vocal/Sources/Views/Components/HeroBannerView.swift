@@ -161,6 +161,7 @@ struct HeroSliderContentView: View {
     @EnvironmentObject var navigationManager: NavigationManager
 
     @State private var dragOffset: CGFloat = 0
+    @State private var isDragging: Bool = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -169,16 +170,16 @@ struct HeroSliderContentView: View {
             HStack(spacing: 0) {
                 ForEach(0..<banners.count, id: \.self) { index in
                     let banner = banners[index]
-                    Button(action: {
-                        if dragOffset == 0, let action = banner.actionUrl {
-                            navigationManager.navigate(to: action)
+                    HeroBannerCard(banner: banner)
+                        .padding(.vertical, 8)
+                        .frame(width: width)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            // Only navigate if user didn't drag
+                            if !isDragging, let action = banner.actionUrl {
+                                navigationManager.navigate(to: action)
+                            }
                         }
-                    }) {
-                        HeroBannerCard(banner: banner)
-                            .padding(.vertical, 8)
-                            .frame(width: width)
-                    }
-                    .buttonStyle(PlainButtonStyle())
                 }
             }
             .offset(x: -CGFloat(selection) * width + dragOffset)
@@ -186,8 +187,9 @@ struct HeroSliderContentView: View {
             .animation(.interactiveSpring(), value: dragOffset)
             .gesture(
                 banners.count > 1
-                    ? DragGesture()
+                    ? DragGesture(minimumDistance: 10)
                         .onChanged { value in
+                            isDragging = true
                             onInteraction(true)
                             dragOffset = value.translation.width
                         }
@@ -200,14 +202,6 @@ struct HeroSliderContentView: View {
                                 if selection < banners.count - 1 {
                                     selection += 1
                                 } else {
-                                    // Loop back to start? or bounce?
-                                    // User requested loop in timer, manual swipe usually bounds.
-                                    // Let's allow loop for consistency if desired, or just bound.
-                                    // Bounding is standard for manual swipe unless infinite mechanism.
-                                    // Let's stick to bounding for manual, timer handles loop.
-                                    // Actually, user wants continuous.
-                                    // Implementing infinite manual swipe is hard without extra views.
-                                    // We'll stick to 0..count-1 bounds for swipe.
                                     withAnimation {
                                         dragOffset = 0
                                     }
@@ -230,18 +224,18 @@ struct HeroSliderContentView: View {
                                 }
                             }
 
-                            // If selection changed, the offset update handles it.
-                            // We must verify selection change logic:
-                            if dragOffset != 0 && (selection > 0 && selection < banners.count - 1) {
-                                // Handled above
-                            }
-
                             // Clear drag offset after decision
                             withAnimation {
                                 dragOffset = 0
                             }
 
                             onInteraction(false)
+
+                            // Reset dragging flag after a short delay
+                            // so onTapGesture doesn't fire immediately
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                isDragging = false
+                            }
                         } : nil
             )
         }
