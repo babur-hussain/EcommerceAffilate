@@ -1,13 +1,17 @@
 import SwiftUI
 
-/// SDUI Page with cache-first loading strategy
-/// Loads cached content instantly, shows skeleton if no cache, fetches network in background
+/// SDUI Page with cache-first loading strategy (Flipkart-style)
+/// 1. Always shows cached content instantly on launch
+/// 2. Refreshes from network in background (stale-while-revalidate)
+/// 3. Works fully offline using cached layouts + images
+/// 4. Prefetches images from component props after layout loads
 struct SDUIPage: View {
     let slug: String
     @State private var layout: AdvancedLayoutResponse?
     @State private var isLoading = true
     @State private var showSkeleton = true
     @State private var isFromCache = false
+    @State private var isStale = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -22,15 +26,27 @@ struct SDUIPage: View {
             } else if let error = errorMessage, layout == nil {
                 // Error state only if no cached content
                 VStack(spacing: 16) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 48))
-                        .foregroundColor(.orange)
-                    Text("Error loading page")
-                        .font(.headline)
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
+                    Image(
+                        systemName: NetworkMonitor.shared.isConnected
+                            ? "exclamationmark.triangle"
+                            : "wifi.slash"
+                    )
+                    .font(.system(size: 48))
+                    .foregroundColor(.orange)
+                    Text(
+                        NetworkMonitor.shared.isConnected
+                            ? "Error loading page"
+                            : "You're offline"
+                    )
+                    .font(.headline)
+                    Text(
+                        NetworkMonitor.shared.isConnected
+                            ? error
+                            : "Connect to the internet to load this page"
+                    )
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
                     Button("Retry") {
                         Task { await loadLayoutCacheFirst() }
                     }
@@ -67,17 +83,15 @@ struct SDUIPage: View {
         await loadLayoutCacheFirst(forceRefresh: true)
     }
 
-    // MARK: - Cache-First Loading
+    // MARK: - Cache-First Loading (Flipkart Strategy)
 
     private func loadLayoutCacheFirst(forceRefresh: Bool = false) async {
         isLoading = true
         errorMessage = nil
 
-        // 1. Try loading from cache first (instant display)
-        // Skip cache if forced refresh
+        // 1. Always try loading from cache first (instant display)
         if !forceRefresh, let cached = await SDUICacheManager.shared.load(slug: slug, userId: nil) {
             await MainActor.run {
-                // Convert cached SDUIComponent to AdvancedLayoutResponse
                 self.layout = AdvancedLayoutResponse(
                     slug: cached.slug,
                     name: "Cached",
@@ -86,11 +100,38 @@ struct SDUIPage: View {
                 )
                 self.showSkeleton = false
                 self.isFromCache = true
+                self.isStale = cached.isStale
             }
-            print("[SDUIPage] Loaded from cache: \(cached.components.count) components")
+            print(
+                "[SDUIPage] Loaded from cache: \(cached.components.count) components (stale: \(cached.isStale))"
+            )
+
+            // Prefetch images from cached components in background
+            Task.detached(priority: .utility) {
+                await prefetchImages(from: cached.components)
+            }
         }
 
-        // 2. Fetch fresh data from network (in background)
+        // 2. If offline and we have cache → stay on cache, skip network
+        if !NetworkMonitor.shared.isConnected {
+            if layout != nil {
+                print("[SDUIPage] Offline — using cached content for \(slug)")
+                await MainActor.run {
+                    self.isLoading = false
+                }
+                return
+            } else {
+                // Offline with no cache — show offline error
+                await MainActor.run {
+                    self.errorMessage = "No cached content available"
+                    self.showSkeleton = false
+                    self.isLoading = false
+                }
+                return
+            }
+        }
+
+        // 3. Online — fetch fresh data from network (in background)
         await fetchAndUpdate(retryCount: 3, forceRefresh: forceRefresh)
     }
 
@@ -101,12 +142,11 @@ struct SDUIPage: View {
             do {
                 try Task.checkCancellation()
 
-                // Fetch using APIService to ensure overrides (like 'grocery') are respected
                 guard
                     let response = try await APIService.shared.fetchLayout(
                         slug: slug, forceRefresh: forceRefresh)
                 else {
-                    throw APIService.APIError.serverError  // Should not happen if fetchLayout handles errors
+                    throw APIService.APIError.serverError
                 }
 
                 // Always update UI with fresh network data
@@ -114,12 +154,11 @@ struct SDUIPage: View {
                     self.layout = response
                     self.showSkeleton = false
                     self.isFromCache = false
+                    self.isStale = false
                     self.isLoading = false
                 }
 
-                // Save only the components array to cache (not the full response wrapper)
-                // SDUICacheManager.load() decodes rawJSON as [SDUIComponent], so we must
-                // encode just the components array, not the full AdvancedLayoutResponse.
+                // Save only the components array to cache
                 if let rawData = try? JSONEncoder().encode(response.components) {
                     let currentSlug = slug
                     Task.detached {
@@ -129,6 +168,11 @@ struct SDUIPage: View {
                             userId: nil
                         )
                     }
+                }
+
+                // Prefetch images from fresh components
+                Task.detached(priority: .utility) {
+                    await prefetchImages(from: response.components)
                 }
 
                 print(
@@ -157,7 +201,6 @@ struct SDUIPage: View {
         await MainActor.run {
             self.isLoading = false
 
-            // Only show error if we have no cached content
             if self.layout == nil {
                 self.errorMessage = lastError?.localizedDescription ?? "Unknown error"
                 self.showSkeleton = false
@@ -166,5 +209,48 @@ struct SDUIPage: View {
                 print("[SDUIPage] Network failed but using cached content")
             }
         }
+    }
+
+    // MARK: - Image Prefetching
+
+    /// Extract all image URLs from SDUI component props and prefetch them
+    private func prefetchImages(from components: [SDUIComponent]) async {
+        var imageURLs: [String] = []
+
+        for component in components {
+            guard let props = component.props else { continue }
+
+            for (key, prop) in props {
+                // Look for common image property keys
+                let imageKeys = [
+                    "image", "imageUrl", "image_url", "primaryImage",
+                    "headerImage", "bannerImage", "doctorImage", "icon",
+                ]
+                if imageKeys.contains(key), let urlString = prop.value as? String,
+                    urlString.hasPrefix("http")
+                {
+                    imageURLs.append(urlString)
+                }
+
+                // Look for items arrays that may contain image URLs
+                if key == "items" || key == "banners",
+                    let items = prop.value as? [[String: Any]]
+                {
+                    for item in items {
+                        for imageKey in ["image", "imageUrl", "image_url", "icon"] {
+                            if let urlString = item[imageKey] as? String,
+                                urlString.hasPrefix("http")
+                            {
+                                imageURLs.append(urlString)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        guard !imageURLs.isEmpty else { return }
+        print("[SDUIPage] Prefetching \(imageURLs.count) images for \(slug)")
+        await ImageDiskCache.shared.prefetch(urls: imageURLs)
     }
 }

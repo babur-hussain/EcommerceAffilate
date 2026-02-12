@@ -11,8 +11,9 @@ actor SDUICacheManager {
     private let metadataFile: URL
     private var metadata: CacheMetadata
 
-    // Maximum cache age (24 hours for offline fallback)
-    private let maxCacheAge: TimeInterval = 24 * 60 * 60
+    // Stale threshold (1 hour) - cache is still usable but should refresh in bg
+    private let staleCacheAge: TimeInterval = 60 * 60
+    // Note: We NEVER delete cache just because it's old — it's the offline fallback
 
     // MARK: - Cache Metadata
 
@@ -37,6 +38,7 @@ actor SDUICacheManager {
         let version: Int
         let timestamp: Date
         let slug: String
+        let isStale: Bool  // true if older than staleCacheAge, but still usable
     }
 
     // Internal storage format (Codable - stores raw JSON)
@@ -82,22 +84,22 @@ actor SDUICacheManager {
             let data = try Data(contentsOf: fileURL)
             let cacheFile = try JSONDecoder().decode(CacheFile.self, from: data)
 
-            // Check cache age
-            if Date().timeIntervalSince(cacheFile.timestamp) > maxCacheAge {
-                log("[SDUI Cache] Cache expired for \(slug)")
-                try? fileManager.removeItem(at: fileURL)
-                return nil
-            }
+            // Determine if cache is stale (older than threshold)
+            // But NEVER delete it — stale data is better than no data
+            let isStale = Date().timeIntervalSince(cacheFile.timestamp) > staleCacheAge
 
             // Decode the stored raw JSON to components
             let components = try JSONDecoder().decode([SDUIComponent].self, from: cacheFile.rawJSON)
 
-            log("[SDUI Cache] Loaded \(components.count) components for \(slug)")
+            log(
+                "[SDUI Cache] Loaded \(components.count) components for \(slug) (stale: \(isStale))"
+            )
             return CachedLayout(
                 components: components,
                 version: cacheFile.version,
                 timestamp: cacheFile.timestamp,
-                slug: cacheFile.slug
+                slug: cacheFile.slug,
+                isStale: isStale
             )
 
         } catch {
@@ -152,7 +154,8 @@ actor SDUICacheManager {
 
         // Quick check using metadata
         if let entry = metadata.entries[fileName] {
-            return Date().timeIntervalSince(entry.timestamp) < maxCacheAge
+            // Cache always "exists" if there's a file — staleness is handled by the caller
+            return Date().timeIntervalSince(entry.timestamp) < staleCacheAge
         }
 
         return false

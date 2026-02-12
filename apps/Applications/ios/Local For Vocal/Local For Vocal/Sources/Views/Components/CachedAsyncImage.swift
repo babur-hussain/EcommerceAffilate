@@ -69,83 +69,93 @@ class ImageLoaderObservable: ObservableObject {
         let originalString = url.absoluteString
         var finalURL = url
 
-        // ---------------------------------------------------------
         // URL SANITIZATION: Strict PNG Enforcement for placehold.co
-        // ---------------------------------------------------------
-        // Problem: placehold.co returns SVG by default. iOS UIImage cannot decode SVG.
-        // Solution: Force .png extension to request a raster image.
-        // Fix: Append .png to the END of the path, not mid-path.
         if originalString.contains("placehold.co")
             && !originalString.contains(".png")
             && !originalString.contains("/png")
         {
             if var components = URLComponents(url: url, resolvingAgainstBaseURL: true) {
-                // Check if path already ends in .png (sanity check)
                 if !components.path.hasSuffix(".png") {
                     components.path += ".png"
                 }
-
                 if let newURL = components.url {
                     finalURL = newURL
-                    AppLogger.debug(
-                        "🔧 Enforced PNG (Correct Path) for placehold.co: \(newURL.absoluteString)")
                 }
             }
         }
 
         let urlString = finalURL.absoluteString
 
-        // Check URLCache (Disk + Memory) via APIService session
-        let request = URLRequest(
-            url: finalURL, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 60)
-
-        if let cachedResponse = APIService.shared.session.configuration.urlCache?.cachedResponse(
-            for: request),
-            let cachedImage = UIImage(data: cachedResponse.data)
-        {
-            AppLogger.debug("📦 Image found in URLCache: \(urlString)")
-            self.image = cachedImage
-            return
-        }
-
-        isLoading = true
-
-        cancellable = APIService.shared.session.dataTaskPublisher(for: request)
-            .tryMap { data, response -> UIImage in
-                if let httpResponse = response as? HTTPURLResponse {
-                    let contentType =
-                        httpResponse.value(forHTTPHeaderField: "Content-Type") ?? "unknown"
-                    /*AppLogger.debug(
-                        "Image response: status=\(httpResponse.statusCode), type=\(contentType), size=\(data.count), url=\(urlString)"
-                    )*/
-
-                    if httpResponse.statusCode != 200 {
-                        throw URLError(.badServerResponse)
-                    }
+        // --- LAYER 1: Check persistent ImageDiskCache (survives app restarts) ---
+        Task {
+            if let diskImage = await ImageDiskCache.shared.loadImage(for: urlString) {
+                await MainActor.run {
+                    self.image = diskImage
                 }
-
-                if let uiImage = UIImage(data: data) {
-                    return uiImage
-                }
-
-                throw URLError(.cannotDecodeContentData)
+                return
             }
-            .receive(on: DispatchQueue.main)
-            .sink(
-                receiveCompletion: { [weak self] completion in
-                    self?.isLoading = false
-                    if case .failure(let error) = completion {
-                        self?.hasError = true
-                        AppLogger.error(
-                            "Image load error: \(error.localizedDescription) for URL: \(urlString)")
-                    }
-                },
-                receiveValue: { [weak self] downloadedImage in
-                    self?.image = downloadedImage
-                    // URLSession automatically caches the response based on policy, no manual set needed usually
-                    // unless we want to force it. Configured session should handle it.
-                    // AppLogger.debug("✅ Image loaded successfully: \(urlString)")
+
+            // --- LAYER 2: Check URLCache (system-managed, may evict) ---
+            let request = URLRequest(
+                url: finalURL, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 60)
+
+            if let cachedResponse = APIService.shared.session.configuration.urlCache?
+                .cachedResponse(
+                    for: request),
+                let cachedImage = UIImage(data: cachedResponse.data)
+            {
+                await MainActor.run {
+                    self.image = cachedImage
                 }
-            )
+                // Also save to disk cache for persistence
+                await ImageDiskCache.shared.saveData(cachedResponse.data, for: urlString)
+                return
+            }
+
+            // --- LAYER 3: Check if offline → show placeholder ---
+            let isOnline = await MainActor.run { NetworkMonitor.shared.isConnected }
+            if !isOnline {
+                await MainActor.run {
+                    self.hasError = true
+                }
+                return
+            }
+
+            // --- LAYER 4: Download from network ---
+            await MainActor.run {
+                self.isLoading = true
+            }
+
+            self.cancellable = APIService.shared.session.dataTaskPublisher(for: request)
+                .tryMap { data, response -> UIImage in
+                    if let httpResponse = response as? HTTPURLResponse {
+                        if httpResponse.statusCode != 200 {
+                            throw URLError(.badServerResponse)
+                        }
+                    }
+
+                    if let uiImage = UIImage(data: data) {
+                        // Save to persistent disk cache in background
+                        Task.detached(priority: .utility) {
+                            await ImageDiskCache.shared.saveData(data, for: urlString)
+                        }
+                        return uiImage
+                    }
+
+                    throw URLError(.cannotDecodeContentData)
+                }
+                .receive(on: DispatchQueue.main)
+                .sink(
+                    receiveCompletion: { [weak self] completion in
+                        self?.isLoading = false
+                        if case .failure = completion {
+                            self?.hasError = true
+                        }
+                    },
+                    receiveValue: { [weak self] downloadedImage in
+                        self?.image = downloadedImage
+                    }
+                )
+        }
     }
 }
