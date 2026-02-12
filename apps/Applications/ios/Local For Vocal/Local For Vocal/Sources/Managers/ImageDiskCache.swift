@@ -26,8 +26,8 @@ actor ImageDiskCache {
         try? FileManager.default.createDirectory(
             at: cacheDirectory, withIntermediateDirectories: true)
 
-        // Allow ~100 images in memory (~50MB)
-        memoryCache.countLimit = 100
+        // NSCache auto-evicts under memory pressure — no artificial limit needed
+        // All loaded images stay in RAM for instant access until iOS reclaims memory
 
         // Build in-memory file index on init
         Task { await buildIndex() }
