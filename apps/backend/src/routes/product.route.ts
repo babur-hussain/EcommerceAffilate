@@ -13,6 +13,9 @@ import { requireProductOwnership } from "../utils/ownership";
 import { buildOptimizedVariants, resolvePrimaryImage } from "../utils/image";
 import { getCategoryMeta } from "../utils/categoryMeta";
 import { estimateDeliveryTime } from "../utils/delivery";
+import { redis } from '../services/redis.service';
+import { CacheTTL, CacheKeys } from '../config/redis.config';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -547,6 +550,7 @@ router.patch(
 );
 
 // GET /api/products/public/grocery - Get grocery products from grocery_products collection (public)
+// With Redis caching for fast repeated requests
 router.get("/products/public/grocery", async (req: Request, res: Response) => {
   try {
     const { limit: limitParam, page: pageParam, category, subCategory } = req.query;
@@ -554,6 +558,26 @@ router.get("/products/public/grocery", async (req: Request, res: Response) => {
     const page = parseInt(pageParam as string) || 1;
     const skip = (page - 1) * limit;
 
+    // Build a stable cache key from query params
+    const queryStr = JSON.stringify({ limit, page, category: category || '', subCategory: subCategory || '' });
+    const queryHash = crypto.createHash('md5').update(queryStr).digest('hex').slice(0, 12);
+    const cacheKeyVal = CacheKeys.GROCERY_PRODUCTS(queryHash);
+
+    // 1. Try Redis cache first
+    try {
+      const cached = await redis.get(cacheKeyVal);
+      if (cached) {
+        console.log(`[Grocery] Cache HIT for ${cacheKeyVal}`);
+        res.setHeader('X-Cache', 'HIT');
+        res.setHeader('X-Cache-Key', cacheKeyVal);
+        return res.json(JSON.parse(cached));
+      }
+      console.log(`[Grocery] Cache MISS for ${cacheKeyVal}`);
+    } catch (cacheErr) {
+      console.error('[Grocery] Redis error, falling back to MongoDB:', cacheErr);
+    }
+
+    // 2. Fetch from MongoDB
     if (!mongoose.connection.db) {
       return res.status(500).json({ error: "Database connection not established" });
     }
@@ -642,12 +666,21 @@ router.get("/products/public/grocery", async (req: Request, res: Response) => {
       };
     });
 
-    res.json({
+    const responseData = {
       products: formatted,
       total,
       page,
       pages: Math.ceil(total / limit),
-    });
+    };
+
+    // 3. Cache the result in Redis (non-blocking)
+    redis.setex(cacheKeyVal, CacheTTL.GROCERY_PRODUCTS, JSON.stringify(responseData))
+      .then(() => console.log(`[Grocery] Cached ${cacheKeyVal} (TTL: ${CacheTTL.GROCERY_PRODUCTS}s)`))
+      .catch(err => console.error('[Grocery] Cache write failed:', err));
+
+    res.setHeader('X-Cache', 'MISS');
+    res.setHeader('X-Cache-Key', cacheKeyVal);
+    res.json(responseData);
 
   } catch (error: any) {
     console.error("❌ Error fetching public grocery products:", error.message);

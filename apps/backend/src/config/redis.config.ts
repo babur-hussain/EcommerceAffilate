@@ -37,6 +37,8 @@ export const CacheTTL = {
     HOME_USER: 60,              // 60 seconds - personalized user home
     CATEGORY_LAYOUT: 10 * 60,   // 10 minutes - category layouts
     FEATURE_BLOCK: 10 * 60,     // 10 minutes - feature-specific blocks
+    GROCERY_PRODUCTS: 5 * 60,   // 5 minutes - grocery product listings
+    CATEGORIES: 10 * 60,        // 10 minutes - category lookups
 } as const;
 
 // Cache key prefixes
@@ -46,4 +48,6 @@ export const CacheKeys = {
     HOME_USER: (userId: string) => `home:user:${userId}`,
     LAYOUT: (slug: string) => `layout:${slug}`,
     FEATURE: (name: string) => `feature:${name}`,
+    GROCERY_PRODUCTS: (queryHash: string) => `grocery:products:${queryHash}`,
+    CATEGORIES: (parentId: string) => `categories:${parentId}`,
 } as const;

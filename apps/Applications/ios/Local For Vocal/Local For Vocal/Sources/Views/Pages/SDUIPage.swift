@@ -41,10 +41,13 @@ struct SDUIPage: View {
                 .frame(maxWidth: .infinity, minHeight: 200)
             } else if let components = layout?.components {
                 // Content loaded (from cache or network)
-                ForEach(components) { component in
-                    SDUIComponentView(component: component)
+                // LazyVStack renders components on-demand as user scrolls
+                LazyVStack(spacing: 0) {
+                    ForEach(components) { component in
+                        SDUIComponentView(component: component)
+                            .transition(.opacity)
+                    }
                 }
-                .transition(.opacity)
             } else {
                 Text("No content found")
                     .foregroundColor(.secondary)
