@@ -136,20 +136,36 @@ public struct AnimatedFoundationView: View {
     }
 }
 
-// MARK: - Main For You Page
-public struct ForYouPage: View {
-    @State private var headerComponents: [SDUIComponent] = []
+// MARK: - Reusable Category Theme Page
+// Shared component that powers ALL category theme pages.
+public struct CategoryThemePage: View {
+    /// The slug used to fetch header theme components (e.g., "for-you-header-theme")
+    let headerSlug: String
+    /// The slug used for the main page SDUI content (e.g., "for-you")
+    let pageSlug: String
+    /// Default gradient colors when no JSON is loaded
+    let defaultGradientColors: [Color]
 
-    // Pre-computed background data (avoids recomputing in body)
+    @State private var headerComponents: [SDUIComponent] = []
     @State private var backgroundImage: String?
     @State private var lottieLayers: [LottieLayerConfig] = []
     @State private var gradientColors: [String] = []
 
-    public init() {}
+    public init(
+        headerSlug: String,
+        pageSlug: String,
+        defaultGradientColors: [Color] = [
+            Color(hex: "#1A1A2E"), Color(hex: "#16213E"), Color(hex: "#0F3460"),
+        ]
+    ) {
+        self.headerSlug = headerSlug
+        self.pageSlug = pageSlug
+        self.defaultGradientColors = defaultGradientColors
+    }
 
     public var body: some View {
         VStack(spacing: 0) {
-            // Top Section with Animated Background
+            // Top Section with Animated Background — gradient scoped here only
             VStack(spacing: 8) {
                 if headerComponents.isEmpty {
                     Color.clear.frame(height: 1)
@@ -160,95 +176,103 @@ public struct ForYouPage: View {
                 }
             }
             .padding(.top, 10)
-            .padding(.bottom, 0)
-
-            // Existing SDUI Content
-            SDUIPage(slug: "for-you")
-        }
-        .padding(.bottom, 100)
-        // Lottie overlay — separate from gradient, with its own coordinate space
-        // y=0 → screen top (behind status bar), y=100 → where gradient ends
-        .overlay(
-            Group {
-                if !lottieLayers.isEmpty {
-                    ZStack {
-                        ForEach(lottieLayers) { layer in
-                            GlobalLottieLayer(layer: layer)
-                                .equatable()
+            .padding(.bottom, 8)
+            // Lottie overlay — scoped to header section
+            .overlay(
+                Group {
+                    if !lottieLayers.isEmpty {
+                        ZStack {
+                            ForEach(lottieLayers) { layer in
+                                GlobalLottieLayer(layer: layer)
+                                    .equatable()
+                            }
                         }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 450)
+                        .clipped()
                     }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 450)  // Visible gradient area (status bar → gradient end)
-                    .clipped()  // Clip to gradient visible bounds
                 }
-            }
-            .offset(y: -300)  // Push up behind headers to reach screen top
-            .allowsHitTesting(false)
-            .ignoresSafeArea(edges: .top), alignment: .top
-        )
-        .background(
-            // Gradient background — scrolls with content
-            ZStack(alignment: .top) {
-                // 1. Gradient fills entire extended frame
-                LinearGradient(
-                    gradient: Gradient(colors: resolvedGradientColors),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-
-                // 2. Smooth fade at bottom — blends gradient into page background
-                VStack {
-                    Spacer()
+                .offset(y: -300)
+                .allowsHitTesting(false)
+                .ignoresSafeArea(edges: .top), alignment: .top
+            )
+            .background(
+                // Gradient — only covers header section + upward extension behind headers
+                ZStack(alignment: .top) {
                     LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color.clear,
-                            Color(safeHex: "#F9FAFB").opacity(0.3),
-                            Color(safeHex: "#F9FAFB").opacity(0.7),
-                            Color(safeHex: "#F9FAFB"),
-                        ]),
+                        gradient: Gradient(colors: resolvedGradientColors),
                         startPoint: .top,
                         endPoint: .bottom
                     )
-                    .frame(height: 200)  // Blend zone height
-                }
 
-                // 3. Fallback image (if no Lottie)
-                if let imageUrl = backgroundImage, let url = URL(string: imageUrl),
-                    lottieLayers.isEmpty
-                {
-                    CachedAsyncImage(url: url) { image in
-                        image.resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        EmptyView()
+                    // Fallback image (if no Lottie)
+                    if let imageUrl = backgroundImage, let url = URL(string: imageUrl),
+                        lottieLayers.isEmpty
+                    {
+                        CachedAsyncImage(url: url) { image in
+                            image.resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            EmptyView()
+                        }
+                        .clipped()
                     }
-                    .clipped()
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.top, -400)
+                .ignoresSafeArea(edges: .top), alignment: .top)
+
+            // SDUI Content with fade behind it
+            ZStack(alignment: .top) {
+                // Fade behind content
+                LinearGradient(
+                    gradient: Gradient(stops: [
+                        .init(
+                            color: resolvedGradientColors.last ?? defaultGradientColors.last
+                                ?? .blue,
+                            location: 0.0),
+                        .init(
+                            color: (resolvedGradientColors.last ?? defaultGradientColors.last
+                                ?? .blue)
+                                .opacity(0.85), location: 0.15),
+                        .init(
+                            color: (resolvedGradientColors.last ?? defaultGradientColors.last
+                                ?? .blue)
+                                .opacity(0.5), location: 0.35),
+                        .init(color: Color(hex: "#F9FAFB").opacity(0.3), location: 0.6),
+                        .init(color: Color(hex: "#F9FAFB").opacity(0.7), location: 0.8),
+                        .init(color: Color(hex: "#F9FAFB"), location: 1.0),
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 280)
+                .frame(maxWidth: .infinity)
+
+                // Page content — on top of fade
+                SDUIPage(slug: pageSlug)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 1200)  // Extended frame to cover header area
-            .offset(y: -400)  // Shift up behind header
-            .ignoresSafeArea(edges: .top), alignment: .top
-        )
+        }
+        .padding(.bottom, 100)
+        .background(Color(hex: "#F9FAFB"))
         .task {
             await loadComponents()
         }
     }
 
-    /// Resolved gradient colors from server JSON or default fallback
+    // MARK: - Helpers
+
     private var resolvedGradientColors: [Color] {
         if gradientColors.isEmpty {
-            return [
-                Color(safeHex: "#EE204D"), Color(safeHex: "#58111A"), Color(safeHex: "#EE204D"),
-            ]
+            return defaultGradientColors
         }
-        return gradientColors.map { Color(safeHex: $0) }
+        return gradientColors.map { Color(hex: $0) }
     }
 
     private func loadComponents() async {
         do {
             if let layout = try await APIService.shared.fetchLayout(
-                slug: "for-you-header-theme", forceRefresh: true)
+                slug: headerSlug, forceRefresh: true)
             {
                 self.headerComponents = layout.components
                 updateBackgroundData()
@@ -263,13 +287,22 @@ public struct ForYouPage: View {
         backgroundImage = bg?.prop(for: "imageUrl") as String?
         lottieLayers = bg?.decodeItems(for: "lottieLayers", as: [LottieLayerConfig].self) ?? []
         gradientColors = bg?.decodeItems(for: "gradientColors", as: [String].self) ?? []
+    }
+}
 
-        // Debug: confirm JSON frame values are being read
-        for layer in lottieLayers {
-            print(
-                "[Lottie] \(layer.animationName) → x:\(layer.frame.x) y:\(layer.frame.y) w:\(layer.frame.width) h:\(layer.frame.height)"
-            )
-        }
+// MARK: - Main For You Page (powered by shared CategoryThemePage)
+// JSON slug: for-you-header-theme
+public struct ForYouPage: View {
+    public init() {}
+
+    public var body: some View {
+        CategoryThemePage(
+            headerSlug: "for-you-header-theme",
+            pageSlug: "for-you",
+            defaultGradientColors: [
+                Color(safeHex: "#EE204D"), Color(safeHex: "#58111A"), Color(safeHex: "#EE204D"),
+            ]
+        )
     }
 }
 

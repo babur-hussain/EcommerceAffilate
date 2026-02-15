@@ -268,10 +268,8 @@ struct HomeTabContent: View {
             } else {
                 // Default Home / Shopping
                 NavigationView {
-                    let theme: HomeHeaderTheme =
-                        navigationManager.selectedCategory == "For You"
-                        ? ForYouHomeHeaderTheme()
-                        : DefaultHomeHeaderTheme(showIcons: showIcons)
+                    let theme: HomeHeaderTheme = themeForCategory(
+                        navigationManager.selectedCategory, showIcons: showIcons)
 
                     ZStack(alignment: .top) {
                         // SCROLLABLE CONTENT (Top Layer)
@@ -354,24 +352,48 @@ struct HomeTabContent: View {
         }
     }
 
+    // MARK: - Theme per category
+    private func themeForCategory(_ category: String, showIcons: Bool) -> HomeHeaderTheme {
+        switch category {
+        case "For You": return ForYouHomeHeaderTheme()
+        case "Ramadan": return RamadanHomeHeaderTheme()
+        case "Fashion": return FashionHomeHeaderTheme()
+        case "Mobiles": return MobilesHomeHeaderTheme()
+        case "Beauty": return BeautyHomeHeaderTheme()
+        case "Electronics": return ElectronicsHomeHeaderTheme()
+        case "Home": return HomeDecorHomeHeaderTheme()
+        case "Appliances": return AppliancesHomeHeaderTheme()
+        case "Toys": return ToysHomeHeaderTheme()
+        case "Food & Health": return FoodHealthHomeHeaderTheme()
+        case "Dry Fruits": return DryFruitsHomeHeaderTheme()
+        case "Auto": return AutoHomeHeaderTheme()
+        case "Sports": return SportsHomeHeaderTheme()
+        case "Books": return BooksHomeHeaderTheme()
+        case "Furniture": return FurnitureHomeHeaderTheme()
+        case "Jewellery": return JewelleryHomeHeaderTheme()
+        default: return DefaultHomeHeaderTheme(showIcons: showIcons)
+        }
+    }
+
     @ViewBuilder
     private func pageContent(for slug: String) -> some View {
         switch slug {
-        case "fashion": FashionPage()
         case "for-you": ForYouPage()
-        case "mobiles": SDUIPage(slug: "mobiles")
-        case "beauty": BeautyPage()
-        case "electronics": ElectronicsPage()
-        case "home": SDUIPage(slug: "home")
-        case "appliances": SDUIPage(slug: "appliances")
-        case "toys": SDUIPage(slug: "toys")
-        case "food-&-health": SDUIPage(slug: "food-health")
-        case "dry-fruits": SDUIPage(slug: "dry-fruits")
-        case "auto": SDUIPage(slug: "auto")
-        case "sports": SportsPage()
-        case "books": BooksPage()
-        case "furniture": FurniturePage()
-        case "jewellery": SDUIPage(slug: "jewellery")
+        case "ramadan": RamadanPage()
+        case "fashion": FashionThemePage()
+        case "mobiles": MobilesThemePage()
+        case "beauty": BeautyThemePage()
+        case "electronics": ElectronicsThemePage()
+        case "home": HomeDecorThemePage()
+        case "appliances": AppliancesThemePage()
+        case "toys": ToysThemePage()
+        case "food-&-health": FoodHealthThemePage()
+        case "dry-fruits": DryFruitsThemePage()
+        case "auto": AutoThemePage()
+        case "sports": SportsThemePage()
+        case "books": BooksThemePage()
+        case "furniture": FurnitureThemePage()
+        case "jewellery": JewelleryThemePage()
         default:
             Text("Content for \(slug)")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
