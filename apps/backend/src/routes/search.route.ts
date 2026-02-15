@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { Product } from "../models/product.model";
 import Category from "../models/category.model";
 import { Brand } from "../models/brand.model";
+import mongoose from "mongoose";
 
 const router = Router();
 

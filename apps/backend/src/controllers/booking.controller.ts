@@ -23,7 +23,7 @@ const logAction = async (
             }
         });
     } catch (err) {
-        logger.error('Failed to create audit log', err);
+        logger.error({ err }, 'Failed to create audit log');
     }
 };
 

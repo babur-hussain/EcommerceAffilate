@@ -21,6 +21,34 @@ struct CategoryNavigationParams: Equatable {
     }
 }
 
+enum TabType: String, CaseIterable, Identifiable {
+    case shopping = "Shopping"
+    case services = "Services"
+    case grocery = "Grocery"
+    case influencers = "Influencers"
+
+    var id: String { rawValue }
+
+    var iconName: String {
+        switch self {
+        case .shopping: return "bag.fill"
+        case .services: return "building.2.fill"
+        case .grocery: return "basket.fill"
+        case .influencers: return "person.3.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        // Using System Colors for now to avoid init errors until Extension is confirmed
+        case .shopping: return Color(hex: "#2563EB")
+        case .services: return Color(hex: "#7C3AED")
+        case .grocery: return Color(hex: "#10B981")
+        case .influencers: return Color(hex: "#EC4899")
+        }
+    }
+}
+
 class NavigationManager: ObservableObject {
     @Published var selectedCategory: String = "For You"
     @Published var activeTab: TabType = .shopping
@@ -57,7 +85,18 @@ class NavigationManager: ObservableObject {
         }
 
         // Handle slug-based navigation
-        if url == "beauty-product" {
+        if url == "shopping" {
+            if self.activeTab == .shopping {
+                self.selectedCategory = "For You"
+            }
+            self.activeTab = .shopping
+        } else if url == "services" {
+            self.activeTab = .services
+        } else if url == "grocery" {
+            self.activeTab = .grocery
+        } else if url == "influencers" {
+            self.activeTab = .influencers
+        } else if url == "beauty-product" {
             self.showBeautyPage = true
         } else if url == "special-deal-new-style" {
             self.showSpecialDealPage = true

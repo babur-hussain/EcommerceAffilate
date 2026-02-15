@@ -1,48 +1,23 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Types
 
-enum TabType: String, CaseIterable, Identifiable {
-    case shopping = "Shopping"
-    case services = "Services"
-    case grocery = "Grocery"
-    case influencers = "Influencers"
+// Helper for Color to avoid init conflicts
+// Moved to Extensions.swift
 
-    var id: String { rawValue }
-
-    var iconName: String {
-        switch self {
-        case .shopping: return "bag.fill"
-        case .services: return "building.2.fill"
-        case .grocery: return "basket.fill"
-        case .influencers: return "person.3.fill"
-        }
-    }
-
-    var color: Color {
-        switch self {
-        case .shopping: return Color(hex: "#2563EB")
-        case .services: return Color(hex: "#7C3AED")
-        case .grocery: return Color(hex: "#10B981")
-        case .influencers: return Color(hex: "#EC4899")
-        }
-    }
-}
+// TabType moved to Models/AppTypes.swift
 
 struct CategoryItem: Identifiable {
     let id: String
     let name: String
-    let icon: String  // SF Symbol name
+    let icon: String
 }
 
 // MARK: - TopCategoryBoxesView
 
-// MARK: - TopCategoryBoxesView
-
-// MARK: - TopCategoryBoxesView
-
 struct TopCategoryBoxesView: View {
-    @Binding var activeTab: TabType
+    @EnvironmentObject var navigationManager: NavigationManager
     var activeBgColor: Color = Color(hex: "#FFD700")
     var inactiveBgColor: Color = Color.white
     var activeTextColor: Color = Color(hex: "#111827")
@@ -56,55 +31,65 @@ struct TopCategoryBoxesView: View {
     // Layout customization
     var forceEqualWidth: Bool = false
 
+    private var activeTab: TabType { navigationManager.activeTab }
+
     var body: some View {
         GeometryReader { geometry in
-            let horizontalPadding: CGFloat = 16  // 8 * 2 padding
-            let spacing: CGFloat = 24  // 8 * 3 gaps
-            let availableWidth = geometry.size.width - horizontalPadding - spacing
-            let itemWidth = max(availableWidth / 4, 60)  // Minimum 60 width
+            let horizontalPadding: CGFloat = 16
+            let spacing: CGFloat = 8
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
+            // 4 items, 3 spaces of 8px = 24px total spacing
+            // itemWidth = (availableWidth - 24) / 4
+            let itemWidth = (availableWidth - (spacing * 3)) / 4
 
-            HStack(spacing: 8) {
+            HStack(spacing: spacing) {
                 ForEach(TabType.allCases) { tab in
                     Button(action: {
+                        HapticManager.shared.selection()
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            activeTab = tab
+                            // Use route-based navigation
+                            navigationManager.navigate(to: tab.rawValue.lowercased())
                         }
                     }) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(activeTab == tab ? activeBgColor : inactiveBgColor)
+                            RealAppleGlass(cornerRadius: 12)
                                 .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
 
-                            VStack(spacing: 2) {
+                            VStack(spacing: 4) {
                                 Image(systemName: tab.iconName)
-                                    .font(.system(size: 20))
-                                    .foregroundColor(
-                                        useTabColorForIcon
-                                            ? tab.color
-                                            : (activeTab == tab
-                                                ? activeIconColor : inactiveIconColor)
-                                    )
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .symbolEffect(.bounce, value: activeTab == tab)  // iOS 17+ symbol effect
 
                                 Text(tab.rawValue)
-                                    .font(.system(size: 9, weight: .bold))
-                                    .foregroundColor(
-                                        activeTab == tab ? activeTextColor : inactiveTextColor
-                                    )
+                                    .font(.system(size: 10, weight: .bold))  // Slightly larger text
+                                    .foregroundColor(.white)
                                     .lineLimit(1)
-                                    .minimumScaleFactor(0.6)
+                                    .minimumScaleFactor(0.8)
                             }
-                            .padding(.vertical, 4)
+                            .padding(.vertical, 6)
                         }
-                        .frame(width: itemWidth, height: 50)
-                        .skeleton(isLoading: false)  // Placeholder boolean, in real app bind to ViewModel
+                        .frame(width: itemWidth, height: 60)  // Fixed height, slightly taller
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(ScaleButtonStyle())  // Add scale effect on press
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 8)
+            .padding(.top, 10)
+            .padding(.bottom, 2)
+            .padding(.horizontal, horizontalPadding)
         }
-        .frame(height: 70)
+        .frame(height: 72)  // Adjusted height
+    }
+}
+
+// Button Style for press animation
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -122,28 +107,28 @@ struct SearchBarView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(Color(hex: "#9CA3AF"))
+                        .foregroundColor(.white)
                     Text("Search products...")
                         .font(.system(size: 15))
-                        .foregroundColor(Color(hex: "#9CA3AF"))
+                        .foregroundColor(.white)
                     Spacer()
+
+                    // Voice Search Separator & Icon
+                    Rectangle()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(width: 1, height: 24)
+
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white)
                 }
                 .padding(.horizontal, 14)
-                .frame(height: 46)  // Taller search bar
-                .background(Color.white)
-                .cornerRadius(10)
+                .frame(height: 46)
+                .background(
+                    RealAppleGlass(style: .systemChromeMaterial, cornerRadius: 23)
+                )
             }
             .buttonStyle(PlainButtonStyle())
-
-            // Scan Button
-            Button(action: {}) {
-                Image(systemName: "qrcode.viewfinder")
-                    .font(.system(size: 22))
-                    .foregroundColor(Color(hex: "#FF6B00"))
-                    .frame(width: 46, height: 46)
-                    .background(Color.white)
-                    .cornerRadius(10)
-            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -156,10 +141,9 @@ struct SearchBarView: View {
 // MARK: - CategoriesSliderView
 
 struct CategoriesSliderView: View {
-    @Binding var selectedCategory: String
+    @EnvironmentObject var navigationManager: NavigationManager
     var showIcons: Bool = true
 
-    // Updated icon mapping to look more premium
     let categories: [CategoryItem] = [
         CategoryItem(id: "1", name: "For You", icon: "tag.fill"),
         CategoryItem(id: "2", name: "Fashion", icon: "tshirt.fill"),
@@ -180,35 +164,35 @@ struct CategoriesSliderView: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 24) {  // Increased spacing between items
+            HStack(spacing: 24) {
                 ForEach(categories) { category in
                     Button(action: {
                         HapticManager.shared.selection()
                         withAnimation {
-                            selectedCategory = category.name
+                            navigationManager.selectedCategory = category.name
                         }
                     }) {
                         VStack(spacing: 8) {
-                            // Icon Container
                             if showIcons {
                                 ZStack {
                                     Image(systemName: category.icon)
                                         .font(.system(size: 24))
                                         .foregroundColor(.white)
                                 }
-                                .frame(height: 30)  // Fixed height for icon area
+                                .frame(height: 30)
                                 .transition(.opacity.combined(with: .scale))
                             }
 
-                            // Text
                             Text(category.name)
                                 .font(
                                     .system(
                                         size: 14,
-                                        weight: selectedCategory == category.name ? .bold : .medium)
+                                        weight: navigationManager.selectedCategory == category.name
+                                            ? .bold : .medium)
                                 )
                                 .foregroundColor(
-                                    selectedCategory == category.name ? .white : .white.opacity(0.8)
+                                    navigationManager.selectedCategory == category.name
+                                        ? .white : .white.opacity(0.8)
                                 )
                         }
                         .padding(.horizontal, 4)
@@ -216,15 +200,16 @@ struct CategoriesSliderView: View {
                         .overlay(
                             VStack {
                                 Spacer()
-                                if selectedCategory == category.name {
+                                if navigationManager.selectedCategory == category.name {
                                     Rectangle()
                                         .fill(Color.white)
                                         .frame(height: 3)
                                 }
                             }
                         )
+                        .contentShape(Rectangle())
                     }
-                    .skeleton(isLoading: false)  // Placeholder boolean
+                    // .skeleton(isLoading: false)
                 }
             }
             .padding(.horizontal, 20)
@@ -236,80 +221,76 @@ struct CategoriesSliderView: View {
 // MARK: - Header Parts
 
 struct HomeTopHeaderView: View {
-    @Binding var activeTab: TabType
+    var theme: HomeHeaderTheme
+    var safeAreaTop: CGFloat = 47
     @EnvironmentObject var locationManager: LocationManager
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top Tab Switcher
-            TopCategoryBoxesView(activeTab: $activeTab)
-            //.padding(.top, 54) // Moved handling to ContentView to avoid double padding logic
+            // Transparent background layer for status bar spacing
+            Color.clear.frame(height: safeAreaTop)
 
-            // Location Bar
+            TopCategoryBoxesView()
+
             LocationBarView(onTap: {
                 withAnimation {
                     locationManager.showAddressSelector = true
                 }
             })
         }
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(hex: "#8A2387"),
-                    Color(hex: "#E94057"),
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
     }
 }
 
 struct HomeStickyHeaderView: View {
-    @Binding var selectedCategory: String
+    @EnvironmentObject var navigationManager: NavigationManager
     @Binding var showIcons: Bool
+    var theme: HomeHeaderTheme
+    var safeAreaTop: CGFloat = 47
+    var headerHeight: CGFloat = 0
+    var scrollOffset: CGFloat = 0  // Passed from parent
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Search Bar
-            SearchBarView()
-                .padding(.top, 4)
+        // Calculate progressive opacity
+        // 0 at top (offset 0), 1 at scroll -100 (or adjustable threshold)
+        let threshold: CGFloat = 100
+        let glassOpacity = min(1.0, max(0.0, -scrollOffset / threshold))
 
-            // Categories Slider
-            CategoriesSliderView(selectedCategory: $selectedCategory, showIcons: showIcons)
+        return VStack(spacing: 0) {
+            SearchBarView()
+                .padding(.top, 2)
+
+            CategoriesSliderView(showIcons: showIcons)
         }
-        .padding(.bottom, 8)
+        .padding(.top, safeAreaTop)
         .background(
-            LinearGradient(
-                gradient: Gradient(
-                    colors: showIcons
-                        ? [
-                            Color(hex: "#E94057"),
-                            Color(hex: "#F27121"),
-                        ]
-                        : [
-                            Color(hex: "#8A2387"),
-                            Color(hex: "#E94057"),
-                            Color(hex: "#F27121"),
-                        ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            Group {
+                RealAppleGlass(style: .systemUltraThinMaterial)
+                    .ignoresSafeArea(edges: .top)
+                    .frame(height: max(headerHeight, safeAreaTop + 50) + 60)
+                    .overlay(
+                        Color.white.opacity(0.1)
+                            .allowsHitTesting(false)
+                    )
+                    .opacity(glassOpacity)  // Progressive opacity
+            },
+            alignment: .bottom
         )
     }
 }
 
-// Legacy wrapper for compatibility if needed elsewhere
 struct HomeHeaderView: View {
-    @State private var activeTab: TabType = .shopping
-    @State private var selectedCategory: String = "For You"
+    @EnvironmentObject var navigationManager: NavigationManager
     @State private var showIcons: Bool = true
+    var safeAreaTop: CGFloat = 47
 
     var body: some View {
+        let theme = DefaultHomeHeaderTheme(showIcons: showIcons)
         VStack(spacing: 0) {
-            HomeTopHeaderView(activeTab: $activeTab)
-                .padding(.top, 54)
-            HomeStickyHeaderView(selectedCategory: $selectedCategory, showIcons: $showIcons)
+            HomeTopHeaderView(theme: theme)
+            HomeStickyHeaderView(
+                showIcons: $showIcons,
+                theme: theme
+            )
         }
     }
 }

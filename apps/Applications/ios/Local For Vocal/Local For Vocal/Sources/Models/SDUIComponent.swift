@@ -142,6 +142,13 @@ public enum ComponentType: String, Codable {
     case activeOrders = "active_orders"
     case subCategorySlider = "sub_category_slider"
     case shoppingForOthersHub = "shopping_for_others_hub"
+
+    // --- For You Custom Sections ---
+    case forYouBentoGrid = "for_you_bento_grid"
+    case poweredByRow = "powered_by_row"
+    case spoilYourselfTitle = "spoil_yourself_title"
+    case headerBackground = "header_background"
+
     case earlyBirdDeals = "early_bird_deals"
     case sankrantiFestival = "sankranti_festival"
     case shoeStealFest = "shoe_steal_fest"
@@ -323,6 +330,7 @@ public enum ComponentType: String, Codable {
     case groceryShopByCategory = "grocery_shop_by_category"
     case grocerySpecialPicks = "grocery_special_picks"
     case groceryWholesaleText = "grocery_wholesale_text"
+    case spacer = "spacer"
     case unknown
 
     public init(from decoder: Decoder) throws {

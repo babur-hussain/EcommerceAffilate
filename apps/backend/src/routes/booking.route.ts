@@ -6,7 +6,7 @@ import {
     addBookingNote,
     createBooking
 } from '../controllers/booking.controller';
-import { protect, authorize } from '../middlewares/auth.middleware';
+import { protect, restrictTo as authorize } from '../middlewares/auth.middleware';
 
 const router = express.Router();
 

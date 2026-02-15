@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAdmin } from '../middlewares/rbac';
 import { AdvancedLayout, IAdvancedLayout } from '../models/advanced.layout.model';
+import { redis } from '../services/redis.service';
 import mongoose from 'mongoose';
 
 const router = Router();
@@ -104,6 +105,15 @@ router.put('/admin/layouts/:id', requireAdmin, async (req: Request, res: Respons
 
         if (!result) {
             return res.status(404).json({ error: 'Layout not found' });
+        }
+
+        // Auto-invalidate Redis cache for this layout's slug
+        try {
+            const count = await redis.delPattern(`adv-layout:${result.slug}:*`);
+            console.log(`[Admin Layout] Auto-invalidated ${count} cache keys for slug: ${result.slug}`);
+        } catch (cacheErr) {
+            console.error(`[Admin Layout] Cache invalidation failed:`, cacheErr);
+            // Don't fail the request — DB update succeeded
         }
 
         res.json(result);

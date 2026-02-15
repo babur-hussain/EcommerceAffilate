@@ -10,8 +10,8 @@ private func configureTabBarAppearance() {
     appearance.backgroundEffect = UIBlurEffect(style: .systemChromeMaterial)
     appearance.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.8)
 
-    // Shadow line
-    appearance.shadowColor = UIColor.separator.withAlphaComponent(0.3)
+    // Shadow line (Removed for glass effect)
+    appearance.shadowColor = .clear
 
     // Selected item appearance - Blue color
     let selectedColor = UIColor(red: 40 / 255, green: 116 / 255, blue: 240 / 255, alpha: 1)  // Blue #2874F0
@@ -29,10 +29,31 @@ private func configureTabBarAppearance() {
     UITabBar.appearance().scrollEdgeAppearance = appearance
 }
 
+// Configure navigation bar to remove default shadow/border
+private func configureNavigationBarAppearance() {
+    let appearance = UINavigationBarAppearance()
+    appearance.configureWithTransparentBackground()
+    appearance.shadowColor = .clear
+    appearance.backgroundColor = .clear
+
+    UINavigationBar.appearance().standardAppearance = appearance
+    UINavigationBar.appearance().scrollEdgeAppearance = appearance
+}
+
 ////////////////////////////////////////////////////////////////////////////////
-// Scroll Offset Preference Key
+// Scroll Offset Preference Key (Simplified)
 ////////////////////////////////////////////////////////////////////////////////
 struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Header Frame Preference Key (Tracks Bottom of Sticky Header for Glass Height)
+////////////////////////////////////////////////////////////////////////////////
+struct HeaderBottomPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
@@ -48,47 +69,40 @@ struct ContentView: View {
     // Navigation Manager
     @StateObject private var navigationManager = NavigationManager()
 
-    // Header States (Home Tab) - Now using NavigationManager defaults
-    @State private var showIcons: Bool = true
-
-    // Main Tab State
+    // Header States
     @State private var currentTab: MainTab = .home
 
-    // Computed slug based on category (Home Tab)
-    var currentSlug: String {
-        navigationManager.selectedCategory.lowercased().replacingOccurrences(of: " ", with: "-")
+    // Safe area
+    private var safeAreaTop: CGFloat {
+        let scenes = UIApplication.shared.connectedScenes
+        let windowScene = scenes.first as? UIWindowScene
+        return windowScene?.windows.first?.safeAreaInsets.top ?? 59
     }
 
-    // Location Manager
+    // Managers
     @StateObject private var locationManager = LocationManager()
-
-    // Cart Manager
     @StateObject private var cartManager = CartManager()
-
-    // Beauty Manager
     @StateObject private var beautyManager = BeautyManager()
-
-    // Basket Manager (Groceries)
     @StateObject private var basketManager = BasketManager()
 
-    // Configure tab bar appearance once at initialization
     init() {
         configureTabBarAppearance()
+        configureNavigationBarAppearance()
     }
 
     var body: some View {
         ZStack {
             TabView(selection: $currentTab) {
                 // Home Tab
-                GeometryReader { geometry in
-                    homeContentView(geometry: geometry)
-                }
-                .toolbar(navigationManager.activeTab == .grocery ? .hidden : .visible, for: .tabBar)
-                .tabItem {
-                    Image(systemName: "house")
-                    Text("Home")
-                }
-                .tag(MainTab.home)
+                HomeTabContent()
+                    .toolbar(
+                        navigationManager.activeTab == .grocery ? .hidden : .visible, for: .tabBar
+                    )
+                    .tabItem {
+                        Image(systemName: "house")
+                        Text("Home")
+                    }
+                    .tag(MainTab.home)
 
                 // Categories Tab
                 CategoriesPageView()
@@ -116,25 +130,24 @@ struct ContentView: View {
                     }
                     .tag(MainTab.account)
             }
-            .accentColor(Color(hex: "#2874F0"))  // Blue theme color
+            .accentColor(Color(hex: "#2874F0"))
             .environmentObject(cartManager)
             .environmentObject(beautyManager)
             .environmentObject(basketManager)
             .environmentObject(navigationManager)
             .environmentObject(locationManager)
+            .onChange(of: navigationManager.activeTab) { newVal in
+            }
             .onAppear {
                 locationManager.requestPermission()
-                // Pre-fetch addresses
                 locationManager.fetchSavedAddresses()
             }
             .fullScreenCover(isPresented: $navigationManager.showBeautyPage) {
-                NavigationView {
-                    BeautyProductView()
-                }
-                .environmentObject(navigationManager)
-                .environmentObject(cartManager)
-                .environmentObject(beautyManager)
-                .environmentObject(basketManager)
+                NavigationView { BeautyProductView() }
+                    .environmentObject(navigationManager)
+                    .environmentObject(cartManager)
+                    .environmentObject(beautyManager)
+                    .environmentObject(basketManager)
             }
             .fullScreenCover(isPresented: $navigationManager.showSpecialDealPage) {
                 SpecialDealNewStyleView()
@@ -144,8 +157,7 @@ struct ContentView: View {
                     .environmentObject(basketManager)
             }
             .fullScreenCover(isPresented: $navigationManager.showBrandNewArrivalPage) {
-                BrandNewArrivalView()
-                    .environmentObject(navigationManager)
+                BrandNewArrivalView().environmentObject(navigationManager)
             }
             .fullScreenCover(isPresented: $navigationManager.showMenFashionPage) {
                 MenFashionView()
@@ -155,16 +167,13 @@ struct ContentView: View {
                     .environmentObject(basketManager)
             }
             .fullScreenCover(isPresented: $navigationManager.showGrandMobilesPage) {
-                GrandMobilesView()
-                    .environmentObject(navigationManager)
+                GrandMobilesView().environmentObject(navigationManager)
             }
             .fullScreenCover(isPresented: $navigationManager.showShoesSalesPage) {
-                ShoesSalesView()
-                    .environmentObject(navigationManager)
+                ShoesSalesView().environmentObject(navigationManager)
             }
             .fullScreenCover(isPresented: $navigationManager.showCyberSalePage) {
-                CyberSaleView()
-                    .environmentObject(navigationManager)
+                CyberSaleView().environmentObject(navigationManager)
             }
             .fullScreenCover(isPresented: $navigationManager.showCategoryPage) {
                 if let params = navigationManager.categoryNavigation {
@@ -192,7 +201,7 @@ struct ContentView: View {
                 }
             }
 
-            // Global Address Selector Overlay
+            // Global Address Selector
             UserAddressSelectorView(
                 isVisible: $locationManager.showAddressSelector,
                 savedUserAddresses: locationManager.savedAddresses,
@@ -207,7 +216,6 @@ struct ContentView: View {
                     locationManager.showAddressSelector = false
                 },
                 onAddNewUserAddress: {
-                    // TODO: Navigate to Add Address
                     locationManager.showAddressSelector = false
                 }
             )
@@ -217,74 +225,131 @@ struct ContentView: View {
         }
     }
 
-    @ViewBuilder
-    private func homeContentView(geometry: GeometryProxy) -> some View {
-        if navigationManager.activeTab == .grocery {
-            GroceryContainerView(activeTab: $navigationManager.activeTab)
-        } else if navigationManager.activeTab == .services {
-            ServicesPageView(activeTab: $navigationManager.activeTab)
-                .frame(maxWidth: .infinity)
-        } else if navigationManager.activeTab == .influencers {
-            InfluencersPageView(activeTab: $navigationManager.activeTab)
-                .frame(maxWidth: .infinity)
-        } else {
-            ZStack(alignment: .top) {
-                // Layer 1: Global Background
-                Color(hex: "#F9FAFB").ignoresSafeArea()
+}
 
-                // Layer 2: Status Bar Background
-                Color(hex: "#8A2387")
-                    .frame(height: geometry.safeAreaInsets.top)
-                    .ignoresSafeArea(edges: .top)
-                    .zIndex(100)
+// MARK: - Home Tab Content View
+struct HomeTabContent: View {
+    @EnvironmentObject var navigationManager: NavigationManager
+    @EnvironmentObject var locationManager: LocationManager
+    @EnvironmentObject var cartManager: CartManager
+    @EnvironmentObject var beautyManager: BeautyManager
+    @EnvironmentObject var basketManager: BasketManager
 
-                // Layer 3: Main Content Structure
+    // Header States
+    @State private var showIcons: Bool = true
+    @State private var headerHeight: CGFloat = 300
+    @State private var scrollOffset: CGFloat = 0
+
+    // Computed props
+    var currentSlug: String {
+        navigationManager.selectedCategory.lowercased().replacingOccurrences(of: " ", with: "-")
+    }
+
+    var safeAreaTop: CGFloat {
+        let scenes = UIApplication.shared.connectedScenes
+        let windowScene = scenes.first as? UIWindowScene
+        return windowScene?.windows.first?.safeAreaInsets.top ?? 59
+    }
+
+    var body: some View {
+        Group {
+            if navigationManager.activeTab == .grocery {
                 NavigationView {
-                    // Scrollable Content with Sticky Header
-                    ScrollView {
-                        ScrollViewReader { scrollProxy in  // Prepare for scroll to top
-                            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                                // Part 1: Top Header (Scrolls away)
-                                HomeTopHeaderView(activeTab: $navigationManager.activeTab)
-                                    // Natural placement below safe area
-                                    .background(
-                                        GeometryReader { proxy in
-                                            Color.clear.preference(
-                                                key: ScrollOffsetPreferenceKey.self,
-                                                value: proxy.frame(in: .named("scroll")).minY
-                                            )
-                                        }
-                                    )
+                    GroceryPageView()
+                        .navigationBarHidden(true)
+                }
+                .navigationViewStyle(.stack)
+            } else if navigationManager.activeTab == .services {
+                ServicesPageView()
+                    .frame(maxWidth: .infinity)
+            } else if navigationManager.activeTab == .influencers {
+                InfluencersPageView()
+                    .frame(maxWidth: .infinity)
+            } else {
+                // Default Home / Shopping
+                NavigationView {
+                    let theme: HomeHeaderTheme =
+                        navigationManager.selectedCategory == "For You"
+                        ? ForYouHomeHeaderTheme()
+                        : DefaultHomeHeaderTheme(showIcons: showIcons)
 
-                                // Part 2: Sticky Header and Content
-                                Section(
-                                    header: HomeStickyHeaderView(
-                                        selectedCategory: $navigationManager.selectedCategory,
-                                        showIcons: $showIcons
-                                    ).zIndex(1)
-                                ) {
-                                    // Page Content
-                                    pageContent(for: currentSlug)
-                                        .zIndex(0)
+                    ZStack(alignment: .top) {
+                        // SCROLLABLE CONTENT (Top Layer)
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                // TOP HEADER (Scrolls Away - Wrapped in standard VStack to prevent recycling)
+                                HomeTopHeaderView(
+                                    theme: theme,
+                                    safeAreaTop: safeAreaTop
+                                )
+                                .padding(.bottom, -safeAreaTop)  // Pull up sticky header to overlap gap
+                                .frame(minHeight: 120)
+                                .zIndex(1)
+
+                                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                                    // STICKY HEADER (Pins)
+                                    Section(
+                                        header: HomeStickyHeaderView(
+                                            showIcons: $showIcons,
+                                            theme: theme,
+                                            safeAreaTop: safeAreaTop,
+                                            headerHeight: headerHeight,
+                                            scrollOffset: scrollOffset
+                                        )
+                                        .frame(minHeight: 110)
+                                        // TRACK BOTTOM EDGE -> SETS GLASS HEIGHT
+                                        .background(
+                                            GeometryReader { proxy in
+                                                Color.clear.preference(
+                                                    key: HeaderBottomPreferenceKey.self,
+                                                    value: proxy.frame(in: .global).maxY
+                                                )
+                                            }
+                                        )
+                                    ) {
+                                        pageContent(for: currentSlug)
+                                            .id(currentSlug)
+                                            .background(Color(hex: "#F9FAFB"))
+                                    }
                                 }
                             }
-                            .onChange(of: navigationManager.selectedCategory) {
-                                oldValue, newValue in
-                                // Category changed from \(oldValue) to \(newValue)
+                            // Removed BodyContentHeightKey background usage to fix build error
+                            .overlay(
+                                GeometryReader { proxy in
+                                    Color.clear
+                                        .preference(
+                                            key: ScrollOffsetPreferenceKey.self,
+                                            value: proxy.frame(in: .named("scroll")).minY
+                                        )
+                                },
+                                alignment: .top
+                            )
+                            .onChange(of: navigationManager.selectedCategory) { _, _ in
+                                showIcons = true
                             }
                         }
-                    }
-                    .coordinateSpace(name: "scroll")
-                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                        // If offset is less than -80 (approx top header height), we are scrolled down
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showIcons = value > -50
+                        .coordinateSpace(name: "scroll")
+                        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                            self.scrollOffset = value
+                            let shouldShow = value > -5
+                            if shouldShow != showIcons {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    showIcons = shouldShow
+                                }
+                            }
                         }
+                        .onPreferenceChange(HeaderBottomPreferenceKey.self) { value in
+                            // Sync Glass Height to Header Bottom
+                            if value > 0 {
+                                headerHeight = value
+                            }
+                        }
+                        .background(Color.clear)  // Transparent so ZStack background shows through
+                        .ignoresSafeArea(edges: .top)
+                        .zIndex(2)
                     }
-                    .background(Color(hex: "#F9FAFB"))
                     .navigationBarHidden(true)
                 }
-                .background(Color(hex: "#8A2387"))  // Fallback
             }
         }
     }
@@ -292,33 +357,25 @@ struct ContentView: View {
     @ViewBuilder
     private func pageContent(for slug: String) -> some View {
         switch slug {
-        case "fashion":
-            FashionPage()
-        case "for-you":
-            ForYouPage()
-        case "beauty":
-            BeautyPage()
-        // beauty-product is now handled via fullScreenCover
-        case "electronics":
-            ElectronicsPage()
-        case "sports":
-            SportsPage()
-        case "books":
-            BooksPage()
-        case "furniture":
-            FurniturePage()
-        // Grocery now uses SDUI (falls through to default)
+        case "fashion": FashionPage()
+        case "for-you": ForYouPage()
+        case "mobiles": SDUIPage(slug: "mobiles")
+        case "beauty": BeautyPage()
+        case "electronics": ElectronicsPage()
+        case "home": SDUIPage(slug: "home")
+        case "appliances": SDUIPage(slug: "appliances")
+        case "toys": SDUIPage(slug: "toys")
+        case "food-&-health": SDUIPage(slug: "food-health")
+        case "dry-fruits": SDUIPage(slug: "dry-fruits")
+        case "auto": SDUIPage(slug: "auto")
+        case "sports": SportsPage()
+        case "books": BooksPage()
+        case "furniture": FurniturePage()
+        case "jewellery": SDUIPage(slug: "jewellery")
         default:
-            SDUIPage(slug: slug)
+            Text("Content for \(slug)")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(hex: "#F9FAFB"))
         }
-
     }
 }
-
-#if DEBUG
-    struct ContentView_Previews: PreviewProvider {
-        static var previews: some View {
-            ContentView()
-        }
-    }
-#endif

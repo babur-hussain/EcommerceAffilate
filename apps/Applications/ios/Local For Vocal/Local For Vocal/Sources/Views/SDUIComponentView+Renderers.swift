@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 extension SDUIComponentView {
@@ -411,7 +412,6 @@ extension SDUIComponentView {
 
     // MARK: - Home & Kitchen Renderers
 
-    @ViewBuilder
     func renderHomeHeader() -> some View {
         HomeHeaderView()
     }

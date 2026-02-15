@@ -20,6 +20,7 @@ const connectWithRetry = async (attempt = 1): Promise<void> => {
       socketTimeoutMS: 45_000,
       heartbeatFrequencyMS: 10_000,
       family: 4, // Force IPv4
+      autoIndex: false,
     });
     isConnected = true;
     logger.info({ attempt }, 'MongoDB connected');

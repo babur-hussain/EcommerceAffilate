@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct InfluencersPageView: View {
-    @Binding var activeTab: TabType
+    @EnvironmentObject var navigationManager: NavigationManager
     @State private var selectedCategory: String = "All"
 
     // Mock Data
@@ -131,7 +131,7 @@ struct InfluencersPageView: View {
                 .frame(width: geometry.size.width)
 
                 // Fixed Header
-                InfluencersHeader(activeTab: $activeTab)
+                InfluencersHeader()
                     .frame(width: geometry.size.width)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
@@ -143,13 +143,11 @@ struct InfluencersPageView: View {
 // MARK: - Components
 
 struct InfluencersHeader: View {
-    @Binding var activeTab: TabType
 
     var body: some View {
         VStack(spacing: 0) {
             // Top Tabs (Shopping, Services, Grocery, Influencers)
             TopCategoryBoxesView(
-                activeTab: $activeTab,
                 activeBgColor: Color(hex: "#CCFF00"),
                 inactiveBgColor: Color.white.opacity(0.1),
                 activeTextColor: .black,

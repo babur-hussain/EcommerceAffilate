@@ -115,11 +115,11 @@ struct SDUIPage: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: layout?.components.count ?? 0)
-        .onAppear {
-            // Only trigger loading once, or if no layout exists
-            if !hasTriggeredLoad || layout == nil {
+        .task(id: slug) {
+            // Reload whenever slug changes
+            if !hasTriggeredLoad || layout == nil || store.layouts[slug] == nil {
                 hasTriggeredLoad = true
-                Task { await loadLayout() }
+                await loadLayout()
             }
         }
     }
@@ -144,7 +144,6 @@ struct SDUIPage: View {
             if store.shouldFetchFromNetwork(slug: slug) {
                 let isStale = store.staleFlags[slug] ?? false
                 if isStale {
-                    print("[SDUIPage] \(slug): In-memory but stale, bg-refreshing…")
                     Task.detached { await self.fetchFromNetwork() }
                 }
             }
@@ -169,10 +168,6 @@ struct SDUIPage: View {
                 isLoading = false
             }
 
-            print(
-                "[SDUIPage] \(slug): Loaded from disk cache (\(cached.components.count) components, stale: \(cached.isStale))"
-            )
-
             // Prefetch images in background
             Task.detached(priority: .utility) {
                 await self.prefetchImages(from: cached.components)
@@ -180,7 +175,6 @@ struct SDUIPage: View {
 
             // If stale, bg-refresh from network
             if cached.isStale && store.shouldFetchFromNetwork(slug: slug) {
-                print("[SDUIPage] \(slug): Disk cache stale, bg-refreshing…")
                 Task.detached { await self.fetchFromNetwork() }
             }
             return
@@ -257,9 +251,6 @@ struct SDUIPage: View {
                     await self.prefetchImages(from: response.components)
                 }
 
-                print(
-                    "[SDUIPage] \(currentSlug): Network fetch success (\(response.components.count) components)"
-                )
                 return
 
             } catch is CancellationError {
@@ -286,7 +277,7 @@ struct SDUIPage: View {
                 errorMessage = lastError?.localizedDescription ?? "Unknown error"
                 showSkeleton = false
             } else {
-                print("[SDUIPage] \(currentSlug): Network failed, using cached content")
+                // Network failed but cached content available, silently use it
             }
         }
     }
@@ -327,7 +318,6 @@ struct SDUIPage: View {
         }
 
         guard !imageURLs.isEmpty else { return }
-        print("[SDUIPage] Prefetching \(imageURLs.count) images for \(slug)")
         await ImageDiskCache.shared.prefetch(urls: imageURLs)
     }
 }

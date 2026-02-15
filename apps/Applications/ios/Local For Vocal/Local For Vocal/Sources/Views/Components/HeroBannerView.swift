@@ -65,17 +65,8 @@ struct HeroBannerView: View {
 
     @EnvironmentObject var navigationManager: NavigationManager
 
-    // Timer for animation (0.1s interval for better performance/less lag)
-    let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
-
-    // Progress state (0.0 to 1.0)
-    @State private var progress: CGFloat = 0.0
-
-    // Internal counter to manage 2s fill + 2s wait logic
-    // 0.1s * 20 ticks = 2s (Fill)
-    // 0.1s * 20 ticks = 2s (Wait)
-    // Total 40 ticks = 4s
-    @State private var tickCount: Int = 0
+    // Auto-advance timer — fires once every 4s (NOT 0.1s) to prevent CPU overload
+    let timer = Timer.publish(every: 4, on: .main, in: .common).autoconnect()
 
     // Track if user is interacting to pause auto-scroll
     @State private var isInteracting: Bool = false
@@ -89,50 +80,28 @@ struct HeroBannerView: View {
                     .overlay(ProgressView())
             } else if !banners.isEmpty {
                 VStack(spacing: 1) {
-                    // 1. Slider Content (Images) - Isolated to prevent re-render on progress tick
+                    // 1. Slider Content (Images)
                     HeroSliderContentView(
                         banners: banners,
                         selection: $selection,
                         onInteraction: { interacting in
                             self.isInteracting = interacting
-                            if interacting {
-                                self.progress = 0
-                                self.tickCount = 0
-                            }
                         }
                     )
                     .frame(height: 200)
 
-                    // 2. Indicators - Updates frequently (0.1s)
+                    // 2. Simple dot indicators (no 0.1s progress animation)
                     if banners.count > 1 {
                         HeroSliderIndicators(
                             count: banners.count,
-                            selection: selection,
-                            progress: progress
+                            selection: selection
                         )
                     }
                 }
                 .onReceive(timer) { _ in
                     guard !isInteracting, banners.count > 1 else { return }
-
-                    tickCount += 1
-
-                    // Phase 1: Animation (0s - 2s) -> 20 ticks
-                    if tickCount <= 20 {
-                        progress = CGFloat(tickCount) / 20.0
-                    }
-                    // Phase 2: Wait (2s - 4s) -> 20 to 40 ticks
-                    else if tickCount < 40 {
-                        progress = 1.0  // Stay full
-                    }
-                    // Phase 3: Switch
-                    else {
-                        withAnimation(.easeInOut(duration: 0.5)) {
-                            selection = (selection + 1) % banners.count
-                        }
-                        // Explicitly reset to prevent rapid sliding
-                        tickCount = 0
-                        progress = 0
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        selection = (selection + 1) % banners.count
                     }
                 }
             }
@@ -247,29 +216,14 @@ struct HeroSliderContentView: View {
 struct HeroSliderIndicators: View {
     let count: Int
     let selection: Int
-    let progress: CGFloat
 
     var body: some View {
         HStack(spacing: 4) {
             ForEach(0..<count, id: \.self) { index in
-                if selection == index {
-                    // Active indicator - Larger & Filled
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 32, height: 4)
-
-                        Capsule()
-                            .fill(Color(hex: "#111827"))
-                            .frame(width: 32 * progress, height: 4)
-                    }
-                    .animation(.linear(duration: 0.1), value: progress)
-                } else {
-                    // Inactive indicator
-                    Capsule()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 12, height: 3)
-                }
+                Capsule()
+                    .fill(selection == index ? Color(hex: "#111827") : Color.gray.opacity(0.3))
+                    .frame(width: selection == index ? 24 : 8, height: 4)
+                    .animation(.easeInOut(duration: 0.3), value: selection)
             }
         }
         .padding(.top, 0)

@@ -17,9 +17,6 @@ struct SDUIComponentView: View {
 
     var body: some View {
         renderComponent()
-            .onAppear {
-                // Individual renderers handle data decoding
-            }
     }
 
     @ViewBuilder
@@ -95,6 +92,14 @@ struct SDUIComponentView: View {
             renderProductList()
         case .productListHorizontal:
             renderProductListHorizontal()
+
+        // MARK: - For You Custom Sections (New)
+        case .forYouBentoGrid:
+            ForYouBentoGridSDUI(component: component)
+        case .poweredByRow:
+            PoweredByRowSDUI(component: component)
+        case .spoilYourselfTitle:
+            SpoilYourselfTitleSDUI(component: component)
 
         // MARK: - Shopping Page Components
         case .dealsOfTheDay:
@@ -432,6 +437,9 @@ struct SDUIComponentView: View {
 
         case .smartBasket:
             renderSmartBasket()
+
+        case .spacer:
+            SpacerSDUI(component: component)
 
         case .unknown:
             Text("Unknown: \(component.type.rawValue)")

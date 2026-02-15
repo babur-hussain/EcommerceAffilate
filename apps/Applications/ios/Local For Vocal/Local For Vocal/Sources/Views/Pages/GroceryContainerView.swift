@@ -12,7 +12,7 @@ enum GroceryTab: Int {
 /// Since the parent TabView's tab bar is hidden (via .toolbar(.hidden, for: .tabBar)),
 /// this inner TabView provides the grocery-specific native footer.
 struct GroceryContainerView: View {
-    @Binding var activeTab: TabType
+    @EnvironmentObject var navigationManager: NavigationManager
     @State private var currentTab: GroceryTab = .grocery
     @EnvironmentObject var basketManager: BasketManager
 
@@ -20,7 +20,7 @@ struct GroceryContainerView: View {
         TabView(selection: $currentTab) {
             // Grocery Tab (main grocery home)
             NavigationView {
-                GroceryPageView(activeTab: $activeTab)
+                GroceryPageView()
                     .navigationBarHidden(true)
             }
             .navigationViewStyle(.stack)

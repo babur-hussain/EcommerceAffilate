@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GroceryPageView: View {
-    @Binding var activeTab: TabType
+    @EnvironmentObject var navigationManager: NavigationManager
     @State private var searchText = ""
     @EnvironmentObject var basketManager: BasketManager
 
@@ -38,7 +38,6 @@ struct GroceryPageView: View {
                     // ── Scrollable Header (tabs + location) ──
                     // This scrolls away with content
                     GroceryStaticHeader(
-                        activeTab: $activeTab,
                         onLocationTap: {
                             withAnimation {
                                 locationManager.showAddressSelector = true
@@ -127,14 +126,13 @@ struct GroceryPageView: View {
 // MARK: - Subcomponents
 
 struct GroceryStaticHeader: View {
-    @Binding var activeTab: TabType
     var onLocationTap: () -> Void
     @ObservedObject var locationManager = LocationManager.shared
 
     var body: some View {
         VStack(spacing: 0) {
             // Top Tab Switcher
-            TopCategoryBoxesView(activeTab: $activeTab)
+            TopCategoryBoxesView()
 
             HStack {
                 Button(action: onLocationTap) {

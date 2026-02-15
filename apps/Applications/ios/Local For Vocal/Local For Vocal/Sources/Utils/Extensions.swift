@@ -33,6 +33,10 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+
+    public static func fromHex(_ hex: String) -> Color {
+        return Color(hex: hex)
+    }
 }
 
 // MARK: - View Extension for Rounded Corners

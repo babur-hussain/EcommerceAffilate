@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LocationBarView: View {
-    @ObservedObject var locationManager = LocationManager.shared
+    @EnvironmentObject var locationManager: LocationManager
     var onTap: (() -> Void)? = nil
 
     var body: some View {
@@ -60,7 +60,8 @@ struct LocationBarView: View {
             .background(Color.black.opacity(0.2))
             .cornerRadius(10)  // Slightly more rounded corners
             .padding(.horizontal, 16)
-            .padding(.vertical, 4)
+            .padding(.top, 8)
+            .padding(.bottom, 0)
         }
         .buttonStyle(PlainButtonStyle())
     }

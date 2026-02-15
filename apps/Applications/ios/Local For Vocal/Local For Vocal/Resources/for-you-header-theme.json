@@ -1,0 +1,119 @@
+[
+    {
+        "id": "header_background_image",
+        "type": "header_background",
+        "dataSource": {
+            "type": "STATIC"
+        },
+        "props": {
+            "imageUrl": "https://images.unsplash.com/photo-1557683316-973673baf926?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
+        },
+        "children": [],
+        "_id": "60d5ecb8b4097f4d2c8e4045"
+    },
+    {
+        "id": "for_you_bento_grid",
+        "type": "for_you_bento_grid",
+        "dataSource": {
+            "type": "STATIC"
+        },
+        "props": {
+            "items": [
+                {
+                    "title": "ADULT MONEY",
+                    "subtitle": "CORNER",
+                    "gradientColors": [
+                        "#F27121",
+                        "#E94057"
+                    ],
+                    "imageUrl": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "actionUrl": "adult-money"
+                },
+                {
+                    "title": "Shopping",
+                    "icon": "bag.fill",
+                    "gradientColors": [
+                        "#2563EB",
+                        "#1D4ED8"
+                    ],
+                    "imageUrl": "https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "actionUrl": "shopping"
+                },
+                {
+                    "title": "Grocery",
+                    "icon": "basket.fill",
+                    "gradientColors": [
+                        "#10B981",
+                        "#059669"
+                    ],
+                    "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "actionUrl": "grocery"
+                },
+                {
+                    "title": "Services",
+                    "icon": "building.2.fill",
+                    "gradientColors": [
+                        "#7C3AED",
+                        "#6D28D9"
+                    ],
+                    "imageUrl": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "actionUrl": "services"
+                },
+                {
+                    "title": "Influencers",
+                    "icon": "person.3.fill",
+                    "gradientColors": [
+                        "#EC4899",
+                        "#DB2777"
+                    ],
+                    "imageUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "actionUrl": "influencers"
+                }
+            ]
+        },
+        "children": [],
+        "_id": "60d5ecb8b4097f4d2c8e4042"
+    },
+    {
+        "id": "powered_by_section",
+        "type": "powered_by_row",
+        "dataSource": {
+            "type": "STATIC"
+        },
+        "props": {
+            "title": "POWERED BY",
+            "brands": [
+                {
+                    "name": "5Star",
+                    "textColor": "#FFFFFF"
+                },
+                {
+                    "name": "durex",
+                    "textColor": "#2563EB"
+                },
+                {
+                    "name": "SKORE",
+                    "textColor": "#FFFFFF"
+                }
+            ]
+        },
+        "children": [],
+        "_id": "60d5ecb8b4097f4d2c8e4043"
+    },
+    {
+        "id": "spoil_yourself_section",
+        "type": "spoil_yourself_title",
+        "dataSource": {
+            "type": "STATIC"
+        },
+        "props": {
+            "title": "Spoil Yourself",
+            "gradientColors": [
+                "#FF6B00",
+                "#FF6B00"
+            ]
+        },
+        "children": [],
+        "_id": "60d5ecb8b4097f4d2c8e4044"
+    }
+]

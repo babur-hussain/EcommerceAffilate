@@ -2,7 +2,7 @@ import Combine
 import SwiftUI
 
 struct ServicesPageView: View {
-    @Binding var activeTab: TabType
+    @EnvironmentObject var navigationManager: NavigationManager
 
     // Environment
     @Environment(\.presentationMode) var presentationMode
@@ -66,7 +66,6 @@ struct ServicesPageView: View {
             VStack(spacing: 0) {
                 // Top Tabs (Shopping, Services, Grocery, Influencers)
                 TopCategoryBoxesView(
-                    activeTab: $activeTab,
                     activeBgColor: Color(hex: "#FFD700"),
                     inactiveBgColor: Color.white,
                     activeTextColor: Color(hex: "#111827"),
