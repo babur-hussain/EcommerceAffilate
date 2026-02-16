@@ -528,7 +528,23 @@ public class APIService {
       request.cachePolicy = .reloadIgnoringLocalCacheData
     }
 
-    let (data, response) = try await session.data(for: request)
+    let data: Data
+    let response: URLResponse
+
+    do {
+      (data, response) = try await session.data(for: request)
+    } catch {
+      // Network failed, try strictly from cache
+      AppLogger.warning("Network failed for \(url). Attempting to load from cache.")
+      request.cachePolicy = .returnCacheDataDontLoad
+      if let cachedResponse = session.configuration.urlCache?.cachedResponse(for: request) {
+        AppLogger.info("✅ Loaded cached layout for \(url)")
+        data = cachedResponse.data
+        response = cachedResponse.response
+      } else {
+        throw error  // Rethrow original network error if no cache
+      }
+    }
 
     guard let httpResponse = response as? HTTPURLResponse,
       (200...299).contains(httpResponse.statusCode)

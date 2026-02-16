@@ -1,3 +1,4 @@
+import Lottie
 // JSON slug: electronics-header-theme
 // Page slug: electronics
 import SwiftUI

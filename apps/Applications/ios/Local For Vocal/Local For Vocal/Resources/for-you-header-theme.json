@@ -1,22 +1,64 @@
 [
     {
+        "dataSource": {
+            "type": "STATIC"
+        },
         "id": "header_background_image",
         "type": "header_background",
-        "dataSource": {
-            "type": "STATIC"
-        },
         "props": {
-            "imageUrl": "https://images.unsplash.com/photo-1557683316-973673baf926?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
+            "imageUrl": "",
+            "gradientColors": [
+                "000328",
+                "00458e"
+            ],
+            "lottieLayers": [
+                {
+                    "animationName": "Maha Shivratri",
+                    "frame": {
+                        "x": 0,
+                        "y": 22,
+                        "width": 100,
+                        "height": 100
+                    },
+                    "loop": true,
+                    "speed": 1,
+                    "contentMode": "fill",
+                    "opacity": 1
+                },
+                {
+                    "animationName": "Weather-night",
+                    "frame": {
+                        "x": 70,
+                        "y": 10,
+                        "width": 30,
+                        "height": 30
+                    },
+                    "loop": true,
+                    "speed": 1,
+                    "contentMode": "fill",
+                    "opacity": 1
+                }
+            ]
         },
-        "children": [],
-        "_id": "60d5ecb8b4097f4d2c8e4045"
+        "children": []
     },
     {
-        "id": "for_you_bento_grid",
-        "type": "for_you_bento_grid",
         "dataSource": {
             "type": "STATIC"
         },
+        "id": "global_spacer_1",
+        "type": "spacer",
+        "props": {
+            "height": 40
+        },
+        "children": []
+    },
+    {
+        "dataSource": {
+            "type": "STATIC"
+        },
+        "id": "for_you_bento_grid",
+        "type": "for_you_bento_grid",
         "props": {
             "items": [
                 {
@@ -26,60 +68,64 @@
                         "#F27121",
                         "#E94057"
                     ],
+                    "backgroundImage": "https://images.unsplash.com/photo-1557683316-973673baf926?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
                     "imageUrl": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
                     "actionUrl": "adult-money"
                 },
                 {
-                    "title": "Shopping",
-                    "icon": "bag.fill",
+                    "title": "Flowers & Offerings",
+                    "icon": "",
                     "gradientColors": [
                         "#2563EB",
                         "#1D4ED8"
                     ],
-                    "imageUrl": "https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "backgroundImage": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "imageUrl": "https://res.cloudinary.com/deljcbcvu/image/upload/v1771101996/1_owfcd1.webp",
                     "actionUrl": "shopping"
                 },
                 {
-                    "title": "Grocery",
-                    "icon": "basket.fill",
+                    "title": "Pooja Needs",
+                    "icon": "",
                     "gradientColors": [
                         "#10B981",
                         "#059669"
                     ],
-                    "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "backgroundImage": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "imageUrl": "https://res.cloudinary.com/deljcbcvu/image/upload/v1771101996/3_pwe2jf.webp",
                     "actionUrl": "grocery"
                 },
                 {
-                    "title": "Services",
-                    "icon": "building.2.fill",
+                    "title": "Dry Fruits",
+                    "icon": "",
                     "gradientColors": [
                         "#7C3AED",
                         "#6D28D9"
                     ],
-                    "imageUrl": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "backgroundImage": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "imageUrl": "https://res.cloudinary.com/deljcbcvu/image/upload/v1771101996/2_ofga7u.webp",
                     "actionUrl": "services"
                 },
                 {
-                    "title": "Influencers",
-                    "icon": "person.3.fill",
+                    "title": "Best of Amul",
+                    "icon": "",
                     "gradientColors": [
                         "#EC4899",
                         "#DB2777"
                     ],
-                    "imageUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "backgroundImage": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                    "imageUrl": "https://res.cloudinary.com/deljcbcvu/image/upload/v1771101996/2_ofga7u.webp",
                     "actionUrl": "influencers"
                 }
             ]
         },
-        "children": [],
-        "_id": "60d5ecb8b4097f4d2c8e4042"
+        "children": []
     },
     {
-        "id": "powered_by_section",
-        "type": "powered_by_row",
         "dataSource": {
             "type": "STATIC"
         },
+        "id": "powered_by_section",
+        "type": "powered_by_row",
         "props": {
             "title": "POWERED BY",
             "brands": [
@@ -97,23 +143,21 @@
                 }
             ]
         },
-        "children": [],
-        "_id": "60d5ecb8b4097f4d2c8e4043"
+        "children": []
     },
     {
-        "id": "spoil_yourself_section",
-        "type": "spoil_yourself_title",
         "dataSource": {
             "type": "STATIC"
         },
+        "id": "spoil_yourself_section",
+        "type": "spoil_yourself_title",
         "props": {
-            "title": "Spoil Yourself",
+            "title": "Spoil Yourself!",
             "gradientColors": [
                 "#FF6B00",
                 "#FF6B00"
             ]
         },
-        "children": [],
-        "_id": "60d5ecb8b4097f4d2c8e4044"
+        "children": []
     }
 ]

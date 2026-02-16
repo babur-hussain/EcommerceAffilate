@@ -108,10 +108,9 @@ public struct AnimatedFoundationView: View {
             )
             .ignoresSafeArea()
 
-            // 2. Global Lottie Layers (Overlay) - Optimized & Stateless
+            // 2. Global Lottie Layers (Overlay)
             ForEach(lottieLayers) { layer in
                 GlobalLottieLayer(layer: layer)
-                    .equatable()  // Optimization: Only update if layer config changes
                     .allowsHitTesting(false)
                     .ignoresSafeArea()
             }
@@ -151,6 +150,8 @@ public struct CategoryThemePage: View {
     @State private var lottieLayers: [LottieLayerConfig] = []
     @State private var gradientColors: [String] = []
 
+    @State private var hasError = false
+
     public init(
         headerSlug: String,
         pageSlug: String,
@@ -167,7 +168,14 @@ public struct CategoryThemePage: View {
         VStack(spacing: 0) {
             // Top Section with Animated Background — gradient scoped here only
             VStack(spacing: 8) {
-                if headerComponents.isEmpty {
+                if hasError {
+                    Text("Failed to load theme")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.red.opacity(0.8))
+                        .cornerRadius(8)
+                } else if headerComponents.isEmpty {
                     Color.clear.frame(height: 1)
                 } else {
                     ForEach(headerComponents.filter { $0.type != .headerBackground }) { component in
@@ -184,10 +192,9 @@ public struct CategoryThemePage: View {
                         ZStack {
                             ForEach(lottieLayers) { layer in
                                 GlobalLottieLayer(layer: layer)
-                                    .equatable()
                             }
                         }
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: CGFloat.infinity)
                         .frame(height: 450)
                         .clipped()
                     }
@@ -255,9 +262,16 @@ public struct CategoryThemePage: View {
         }
         .padding(.bottom, 100)
         .background(Color(hex: "#F9FAFB"))
-        .task {
+        .task(id: headerSlug) {
             await loadComponents()
         }
+        .onAppear {
+            // Safety net: reload if data is empty (LazyVStack may not re-fire .task)
+            if headerComponents.isEmpty && !hasError {
+                Task { await loadComponents() }
+            }
+        }
+        .id(headerSlug)  // FORCE RECREATION of the view when slug changes
     }
 
     // MARK: - Helpers
@@ -270,15 +284,40 @@ public struct CategoryThemePage: View {
     }
 
     private func loadComponents() async {
-        do {
-            if let layout = try await APIService.shared.fetchLayout(
-                slug: headerSlug, forceRefresh: true)
-            {
-                self.headerComponents = layout.components
-                updateBackgroundData()
+        print("DEBUG: Loading components for slug: \(headerSlug)")
+        hasError = false  // Reset error state
+        let maxRetries = 3
+
+        for attempt in 1...maxRetries {
+            do {
+                if let layout = try await APIService.shared.fetchLayout(
+                    slug: headerSlug, forceRefresh: true)
+                {
+                    print(
+                        "DEBUG: Successfully fetched layout for \(headerSlug) (Attempt \(attempt))")
+                    await MainActor.run {
+                        self.headerComponents = layout.components
+                        updateBackgroundData()
+                    }
+                    return  // Success
+                } else {
+                    print("DEBUG: Fetch returned nil layout for \(headerSlug) (Attempt \(attempt))")
+                }
+            } catch {
+                print(
+                    "DEBUG: Failed to fetch layout for \(headerSlug) (Attempt \(attempt)): \(error)"
+                )
             }
-        } catch {
-            // Silently fail — default gradient will show
+
+            // Wait before retrying (exponential backoff optional, here linear 0.5s)
+            if attempt < maxRetries {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+            }
+        }
+        print(
+            "DEBUG: All \(maxRetries) attempts failed for \(headerSlug). Default gradient remains.")
+        await MainActor.run {
+            self.hasError = true
         }
     }
 
@@ -327,19 +366,14 @@ public struct LottieLayerConfig: Codable, Identifiable, Equatable {
     }
 }
 
-// MARK: - Optimized Global Lottie Component
-public struct GlobalLottieLayer: View, Equatable {
-    public static func == (lhs: GlobalLottieLayer, rhs: GlobalLottieLayer) -> Bool {
-        return lhs.layer == rhs.layer
-    }
-
+// MARK: - Global Lottie Component (Reliable Loading)
+public struct GlobalLottieLayer: View {
     let layer: LottieLayerConfig
     @State private var dotLottieFile: DotLottieFile?
     @State private var failedToLoadDotLottie = false
+    @State private var hasAppeared = false
 
     // Computed Normalized Frame (Stateless & Optimized)
-    // Always divide by 100 as per 0-100 scale request
-    // This avoids State updates inside layout loops, preventing freezes.
     private var nX: Double { layer.frame.x / 100.0 }
     private var nY: Double { layer.frame.y / 100.0 }
     private var nW: Double { layer.frame.width / 100.0 }
@@ -355,34 +389,54 @@ public struct GlobalLottieLayer: View, Equatable {
             let parentHeight = proxy.size.height
 
             Group {
+                // Branch 1: DotLottie
                 if let dotLottieFile = dotLottieFile {
-                    LottieView(dotLottieFile: dotLottieFile)
-                        .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
-                        .looping()
-                        .animationSpeed(layer.speed)
-                        .resizable()
-                        .aspectRatio(contentMode: layer.contentMode == "fill" ? .fill : .fit)
-                        .opacity(layer.opacity ?? 1.0)
-                        .rotationEffect(.degrees(layer.rotation ?? 0.0))
+                    if layer.loop {
+                        LottieView(dotLottieFile: dotLottieFile)
+                            .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .looping()
+                            .animationSpeed(layer.speed)
+                            .resizable()
+                            .aspectRatio(contentMode: layer.contentMode == "fill" ? .fill : .fit)
+                            .opacity(layer.opacity ?? 1.0)
+                            .rotationEffect(.degrees(layer.rotation ?? 0.0))
+                    } else {
+                        LottieView(dotLottieFile: dotLottieFile)
+                            .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .animationSpeed(layer.speed)
+                            .resizable()
+                            .aspectRatio(contentMode: layer.contentMode == "fill" ? .fill : .fit)
+                            .opacity(layer.opacity ?? 1.0)
+                            .rotationEffect(.degrees(layer.rotation ?? 0.0))
+                    }
                 } else if failedToLoadDotLottie {
-                    LottieView(animation: .named(layer.animationName, bundle: .main))
-                        .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
-                        .looping()
-                        .animationSpeed(layer.speed)
-                        .resizable()
-                        .aspectRatio(contentMode: layer.contentMode == "fill" ? .fill : .fit)
-                        .opacity(layer.opacity ?? 1.0)
-                        .rotationEffect(.degrees(layer.rotation ?? 0.0))
+                    // Branch 2: JSON Fallback
+                    if layer.loop {
+                        LottieView(animation: .named(layer.animationName, bundle: .main))
+                            .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .looping()
+                            .animationSpeed(layer.speed)
+                            .resizable()
+                            .aspectRatio(contentMode: layer.contentMode == "fill" ? .fill : .fit)
+                            .opacity(layer.opacity ?? 1.0)
+                            .rotationEffect(.degrees(layer.rotation ?? 0.0))
+                    } else {
+                        LottieView(animation: .named(layer.animationName, bundle: .main))
+                            .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .animationSpeed(layer.speed)
+                            .resizable()
+                            .aspectRatio(contentMode: layer.contentMode == "fill" ? .fill : .fit)
+                            .opacity(layer.opacity ?? 1.0)
+                            .rotationEffect(.degrees(layer.rotation ?? 0.0))
+                    }
                 } else {
                     Color.clear  // Loading state
                 }
             }
-            // Size: width/height as percentage of parent (0-100 scale)
             .frame(
                 width: parentWidth * nW,
                 height: parentHeight * nH
             )
-            // Position: x/y as percentage of parent (0=top/left, 100=bottom/right)
             .position(
                 x: parentWidth * nX + (parentWidth * nW / 2),
                 y: parentHeight * nY + (parentHeight * nH / 2)
@@ -392,20 +446,36 @@ public struct GlobalLottieLayer: View, Equatable {
         .task(id: layer.animationName) {
             await loadLottie()
         }
+        .onAppear {
+            // Safety net: if .task(id:) didn't fire (LazyVStack recycling), load here
+            if dotLottieFile == nil && !failedToLoadDotLottie && !hasAppeared {
+                hasAppeared = true
+                Task { await loadLottie() }
+            }
+            hasAppeared = true
+        }
+        .onChange(of: layer.animationName) { newName in
+            dotLottieFile = nil
+            failedToLoadDotLottie = false
+            hasAppeared = false
+            Task { await loadLottie() }
+        }
     }
 
     private func loadLottie() async {
-        // Avoid reloading if already loaded correctly
+        // If we already have the correct file loaded, skip
         if dotLottieFile != nil { return }
 
         do {
             let file = try await DotLottieFile.named(layer.animationName)
             await MainActor.run {
                 self.dotLottieFile = file
+                self.failedToLoadDotLottie = false
             }
         } catch {
-            print("GlobalLottieLayer: Failed DotLottie '\(layer.animationName)', fallback JSON.")
+            print("GlobalLottieLayer: Failed DotLottie '\(layer.animationName)', trying JSON fallback.")
             await MainActor.run {
+                self.dotLottieFile = nil
                 self.failedToLoadDotLottie = true
             }
         }
