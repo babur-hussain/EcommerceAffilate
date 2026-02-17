@@ -791,6 +791,26 @@ router.patch(
 
 // ============ Product Review Workflow ============
 
+// GET /api/super-admin/debug/orders - Get raw orders for debugging
+router.get(
+  "/super-admin/debug/orders",
+  verifyFirebaseToken,
+  verifySuperAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const orders = await Order.find({})
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .populate('items.productId', 'title businessId');
+
+      res.json(orders);
+    } catch (error: any) {
+      console.error("Error fetching debug orders:", error);
+      res.status(500).json({ error: "Failed to fetch debug orders" });
+    }
+  }
+);
+
 // GET /api/super-admin/products/pending - Get all pending products grouped by seller
 router.get(
   "/super-admin/products/pending",

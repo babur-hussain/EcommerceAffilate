@@ -431,12 +431,41 @@ export default function OrderDetailsModal({ order: initialOrder, onClose }: Orde
                     </div>
 
                     <div className="flex flex-wrap gap-4 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <div className="flex flex-col">
+                        <div className="flex flex-col flex-1">
                             <span className="text-xs text-gray-500 mb-1">Shipping Method</span>
                             <div className="flex items-center gap-2">
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${order.shippingMethod === 'INTERNAL' ? 'text-teal-700 bg-teal-50 border border-teal-100' : 'text-orange-700 bg-orange-50 border border-orange-100'}`}>
-                                    {order.shippingMethod === 'INTERNAL' ? 'Internal Delivery' : 'Shiprocket'}
-                                </span>
+                                {/* Only allow changing if not shipped yet */}
+                                {['CREATED', 'PROCESSING'].includes(order.status) ? (
+                                    <select
+                                        value={order.shippingMethod || 'INTERNAL'}
+                                        onChange={async (e) => {
+                                            const newMethod = e.target.value as 'INTERNAL' | 'SHIPROCKET';
+                                            try {
+                                                setLoading(true);
+                                                // We reuse the status update endpoint but only send shippingMethod
+                                                const res = await apiClient.patch(`/api/business/orders/${order._id}/status`, {
+                                                    shippingMethod: newMethod
+                                                });
+                                                setOrder(prev => ({ ...prev, shippingMethod: newMethod }));
+                                                toast.success(`Shipping method updated to ${newMethod === 'INTERNAL' ? 'Internal' : 'Shiprocket'}`);
+                                            } catch (err) {
+                                                console.error('Failed to update shipping method:', err);
+                                                toast.error('Failed to update shipping method');
+                                            } finally {
+                                                setLoading(false);
+                                            }
+                                        }}
+                                        disabled={loading}
+                                        className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                    >
+                                        <option value="INTERNAL">Internal Delivery (Fleet)</option>
+                                        <option value="SHIPROCKET">Shiprocket (External)</option>
+                                    </select>
+                                ) : (
+                                    <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${order.shippingMethod === 'INTERNAL' ? 'text-teal-700 bg-teal-50 border border-teal-100' : 'text-orange-700 bg-orange-50 border border-orange-100'}`}>
+                                        {order.shippingMethod === 'INTERNAL' ? 'Internal Delivery' : 'Shiprocket'}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>

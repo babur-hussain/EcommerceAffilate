@@ -610,7 +610,7 @@ router.get(
         "items.productId": { $in: productIds },
         $or: [
           { paymentProvider: 'COD' },
-          { paymentStatus: { $in: ['PAID', 'SUCCESS'] } }
+          { paymentStatus: { $in: ['PAID', 'SUCCESS', 'PENDING'] } }
         ]
       })
         .sort({ createdAt: -1 })
@@ -638,7 +638,7 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { status, deliveryStatus } = req.body;
+      const { status, deliveryStatus, shippingMethod } = req.body;
       const authUser = (req as any).user as
         | { id?: string; role?: string; businessId?: string }
         | undefined;
@@ -684,6 +684,7 @@ router.patch(
       // Update fields
       if (status) order.status = status;
       if (deliveryStatus) order.deliveryStatus = deliveryStatus;
+      if (shippingMethod) order.shippingMethod = shippingMethod;
 
       await order.save();
 
