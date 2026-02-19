@@ -411,7 +411,7 @@ export default function Footer() {
             <div className="col-span-1 lg:col-span-2">
               <h4 className="text-white font-bold mb-4 text-sm uppercase tracking-wider">Company</h4>
               <ul className="space-y-3">
-                {['About Us', 'Careers', 'Press', 'Blog', 'Contact', 'Join as Influencer']
+                {['About Us', 'Careers', 'Press', 'Blog', 'Contact', 'Join as Influencer', 'Commission Structure']
                   .filter(item => !(item === 'Join as Influencer' && isSeller))
                   .map((item) => (
                     <li key={item}>
@@ -435,7 +435,7 @@ export default function Footer() {
                         </button>
                       ) : (
                         <Link
-                          href="#"
+                          href={item === 'Commission Structure' ? '/commission-structure' : '#'}
                           className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
                         >
                           <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
