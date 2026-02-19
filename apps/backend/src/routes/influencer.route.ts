@@ -121,6 +121,73 @@ router.post('/influencer/register', verifyFirebaseToken, async (req: Request, re
   }
 });
 
+// GET /influencer/status - Get influencer registration status for current user
+router.get('/influencer/status', verifyFirebaseToken, async (req: Request, res: Response) => {
+  try {
+    const firebaseUser = (req as any).firebaseUser;
+    const user = (req as any).user;
+
+    if (!firebaseUser || !user) {
+      return res.status(401).json({ error: 'Authentication failed' });
+    }
+
+    const firebaseUid = firebaseUser.uid;
+
+    // Check if user already has an influencer role
+    const mongoUser = await User.findById(user.id);
+    if (!mongoUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (mongoUser.role === 'INFLUENCER') {
+      // Check if user also has a Business document with APPROVED status
+      const business = await Business.findOne({ firebaseUid });
+      if (business && business.status === 'APPROVED') {
+        return res.json({ status: 'APPROVED', businessId: business._id });
+      }
+      // Role is INFLUENCER but business might still be pending
+      if (business) {
+        return res.json({
+          status: business.status || 'PENDING',
+          businessId: business._id,
+          tradeName: business.businessIdentity?.tradeName
+        });
+      }
+      // Role is INFLUENCER but no business doc (edge case)
+      return res.json({ status: 'APPROVED' });
+    }
+
+    // Check if there's a business registration with Influencer type for this user
+    const business = await Business.findOne({ firebaseUid });
+
+    if (!business) {
+      return res.json({ status: 'NONE' });
+    }
+
+    // Check if this is an influencer registration (businessType contains 'Influencer' or storeProfile has 'Influencer')
+    const isInfluencerReg = business.businessIdentity?.businessType === 'Influencer' ||
+      business.storeProfile?.brandOwnership === 'Influencer' ||
+      business.businessIdentity?.natureOfBusiness === 'Content Creator';
+
+    if (!isInfluencerReg) {
+      // This is a seller registration, not influencer
+      return res.json({ status: 'NONE' });
+    }
+
+    return res.json({
+      status: business.status || 'PENDING',
+      businessId: business._id,
+      tradeName: business.businessIdentity?.tradeName
+    });
+  } catch (error: any) {
+    console.error('Error fetching influencer status:', error.message);
+    return res.status(500).json({
+      error: 'Failed to fetch influencer status',
+      details: error.message
+    });
+  }
+});
+
 // GET /influencer/attributions?status=PENDING|APPROVED|PAID|REJECTED
 router.get('/influencer/attributions', verifyFirebaseToken, async (req: Request, res: Response) => {
   try {

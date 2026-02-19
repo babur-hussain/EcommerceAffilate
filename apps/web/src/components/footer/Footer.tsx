@@ -15,47 +15,79 @@ export default function Footer() {
   const [showSellerModal, setShowSellerModal] = useState(false);
   const [showInfluencerModal, setShowInfluencerModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [businessStatus, setBusinessStatus] = useState<'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'>('NONE');
+  const [sellerStatus, setSellerStatus] = useState<'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'>('NONE');
+  const [influencerStatus, setInfluencerStatus] = useState<'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'>('NONE');
   const [loadingStatus, setLoadingStatus] = useState(false);
 
-  // Fetch business status when user logs in
+  // Fetch seller status
   useEffect(() => {
-    const fetchBusinessStatus = async () => {
+    const fetchSellerStatus = async () => {
       if (!backendUser || !firebaseUser) {
-        setBusinessStatus('NONE');
+        setSellerStatus('NONE');
         return;
       }
 
-      // If user already has a business role, they're approved
       if (backendUser.role === 'BUSINESS_OWNER' || backendUser.role === 'BUSINESS_MANAGER' || backendUser.role === 'BUSINESS_STAFF') {
-        setBusinessStatus('APPROVED');
+        setSellerStatus('APPROVED');
         return;
       }
 
-      // Check if they have a pending registration
       try {
         setLoadingStatus(true);
+        const token = await firebaseUser.getIdToken();
         const response = await fetch('/api/business/status', {
-          headers: {
-            'Authorization': `Bearer ${await firebaseUser.getIdToken()}`,
-          },
+          headers: { 'Authorization': `Bearer ${token}` },
         });
 
         if (response.ok) {
           const data = await response.json();
-          setBusinessStatus(data.status || 'NONE');
+          setSellerStatus(data.status || 'NONE');
         } else {
-          setBusinessStatus('NONE');
+          setSellerStatus('NONE');
         }
       } catch (error) {
-        console.error('Error fetching business status:', error);
-        setBusinessStatus('NONE');
+        console.error('Error fetching seller status:', error);
+        setSellerStatus('NONE');
       } finally {
         setLoadingStatus(false);
       }
     };
 
-    fetchBusinessStatus();
+    fetchSellerStatus();
+  }, [backendUser, firebaseUser]);
+
+  // Fetch influencer status (independent from seller)
+  useEffect(() => {
+    const fetchInfluencerStatus = async () => {
+      if (!backendUser || !firebaseUser) {
+        setInfluencerStatus('NONE');
+        return;
+      }
+
+      if (backendUser.role === 'INFLUENCER') {
+        setInfluencerStatus('APPROVED');
+        return;
+      }
+
+      try {
+        const token = await firebaseUser.getIdToken();
+        const response = await fetch('/api/influencer/status', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setInfluencerStatus(data.status || 'NONE');
+        } else {
+          setInfluencerStatus('NONE');
+        }
+      } catch (error) {
+        console.error('Error fetching influencer status:', error);
+        setInfluencerStatus('NONE');
+      }
+    };
+
+    fetchInfluencerStatus();
   }, [backendUser, firebaseUser]);
 
   const handleSellerRegistrationClick = () => {
@@ -94,14 +126,14 @@ export default function Footer() {
       <BusinessRegistrationModal
         open={showSellerModal}
         onClose={() => setShowSellerModal(false)}
-        onSuccess={() => setBusinessStatus('PENDING')}
+        onSuccess={() => setSellerStatus('PENDING')}
       />
 
       {/* Influencer Registration Modal */}
       <InfluencerRegistrationModal
         open={showInfluencerModal}
         onClose={() => setShowInfluencerModal(false)}
-        onSuccess={() => setBusinessStatus('PENDING')}
+        onSuccess={() => setInfluencerStatus('PENDING')}
       />
 
       {/* Login Prompt Modal */}
@@ -189,7 +221,7 @@ export default function Footer() {
 
                 {/* Right CTA */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                  {businessStatus === 'NONE' && (
+                  {influencerStatus === 'NONE' && (
                     <button
                       onClick={() => {
                         if (firebaseUser) {
@@ -205,23 +237,33 @@ export default function Footer() {
                       <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                   )}
-                  {businessStatus === 'PENDING' && (
+                  {influencerStatus === 'PENDING' && (
                     <button
-                      onClick={handleCheckStatus}
+                      onClick={() => setShowInfluencerModal(true)}
                       className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">pending</span>
-                      Check Status
+                      Registration Under Review
                       <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                   )}
-                  {businessStatus === 'APPROVED' && (
+                  {influencerStatus === 'APPROVED' && (
                     <button
                       onClick={() => window.location.href = 'https://influencer.localforvocalstartup.com'}
                       className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">dashboard</span>
                       Influencer Dashboard
+                      <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                  )}
+                  {influencerStatus === 'REJECTED' && (
+                    <button
+                      onClick={() => setShowInfluencerModal(true)}
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-red-500 to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
+                      <span className="material-symbols-outlined">cancel</span>
+                      Application Rejected — Reapply
                       <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                   )}
@@ -273,7 +315,7 @@ export default function Footer() {
 
                 {/* Right CTA */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                  {businessStatus === 'NONE' && (
+                  {sellerStatus === 'NONE' && (
                     <button
                       onClick={handleSellerRegistrationClick}
                       disabled={loadingStatus}
@@ -284,17 +326,17 @@ export default function Footer() {
                       <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                   )}
-                  {businessStatus === 'PENDING' && (
+                  {sellerStatus === 'PENDING' && (
                     <button
-                      onClick={handleCheckStatus}
+                      onClick={() => setShowSellerModal(true)}
                       className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">pending</span>
-                      Check Status
+                      Registration Under Review
                       <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                   )}
-                  {businessStatus === 'APPROVED' && (
+                  {sellerStatus === 'APPROVED' && (
                     <button
                       onClick={handleGoToDashboard}
                       className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
@@ -304,13 +346,13 @@ export default function Footer() {
                       <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                   )}
-                  {businessStatus === 'REJECTED' && (
+                  {sellerStatus === 'REJECTED' && (
                     <button
-                      onClick={handleCheckStatus}
+                      onClick={() => setShowSellerModal(true)}
                       className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-red-500 to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">cancel</span>
-                      Application Rejected
+                      Application Rejected — Reapply
                       <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                   )}
@@ -418,8 +460,12 @@ export default function Footer() {
                       {item === 'Join as Influencer' ? (
                         <button
                           onClick={() => {
-                            if (businessStatus !== 'NONE') {
-                              handleCheckStatus();
+                            if (influencerStatus === 'APPROVED') {
+                              window.location.href = 'https://influencer.localforvocalstartup.com';
+                              return;
+                            }
+                            if (influencerStatus === 'PENDING' || influencerStatus === 'REJECTED') {
+                              setShowInfluencerModal(true);
                               return;
                             }
                             if (firebaseUser) {
@@ -431,7 +477,7 @@ export default function Footer() {
                           className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group text-left"
                         >
                           <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
-                          {businessStatus === 'PENDING' ? 'Registration Under Review' : businessStatus === 'APPROVED' ? 'Go to Dashboard' : item}
+                          {influencerStatus === 'PENDING' ? 'Registration Under Review' : influencerStatus === 'APPROVED' ? 'Go to Dashboard' : item}
                         </button>
                       ) : (
                         <Link

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 type Step = 2 | 3 | 4 | 5 | 6;
+type RegistrationStatus = 'LOADING' | 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
 interface BusinessFormData {
   // Step 2: Business Info (now first step)
@@ -62,9 +63,43 @@ interface Props {
   onSuccess?: () => void;
 }
 
+const STORAGE_KEY = 'seller_registration_draft';
+const MAX_RETRIES = 3;
+
+// Helper: exponential backoff delay
+function backoffDelay(attempt: number): number {
+  return Math.min(1000 * Math.pow(2, attempt), 8000);
+}
+
+// Helper: save form to localStorage (exclude File objects)
+function saveFormDraft(data: BusinessFormData) {
+  try {
+    const serializable = { ...data };
+    delete serializable.idProofFile;
+    delete serializable.gstCertFile;
+    delete serializable.panFile;
+    delete serializable.shopCertFile;
+    delete serializable.chequeFile;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+  } catch { /* ignore quota errors */ }
+}
+
+function loadFormDraft(): Partial<BusinessFormData> | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch { /* ignore */ }
+  return null;
+}
+
+function clearFormDraft() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+}
+
 export default function BusinessRegistrationModal({ open, onClose, onSuccess }: Props) {
   const { firebaseUser, idToken } = useAuth();
   const [step, setStep] = useState<Step>(2);
+  const [registrationStatus, setRegistrationStatus] = useState<RegistrationStatus>('LOADING');
   const [formData, setFormData] = useState<BusinessFormData>({
     legalBusinessName: '',
     tradeName: '',
@@ -92,8 +127,8 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
     gstin: '',
     gstType: 'Regular',
     panNumber: '',
-    cin: '', // Initialize with empty string
-    udyamNumber: '', // Initialize with empty string
+    cin: '',
+    udyamNumber: '',
     bankAccountName: '',
     bankName: '',
     accountNumber: '',
@@ -104,6 +139,52 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Check existing registration status when modal opens
+  useEffect(() => {
+    if (!open) return;
+
+    const checkStatus = async () => {
+      if (!firebaseUser) {
+        setRegistrationStatus('NONE');
+        return;
+      }
+
+      try {
+        setRegistrationStatus('LOADING');
+        const token = await firebaseUser.getIdToken(true);
+        const backendUrl = process.env.NEXT_PUBLIC_API_BASE || '/api';
+        const response = await fetch(`${backendUrl}/business/status`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const status = data.status || 'NONE';
+          setRegistrationStatus(status as RegistrationStatus);
+        } else {
+          // If status check fails, allow registration (fail-open for UX)
+          setRegistrationStatus('NONE');
+        }
+      } catch (err) {
+        console.error('Failed to check seller status:', err);
+        setRegistrationStatus('NONE');
+      }
+    };
+
+    checkStatus();
+  }, [open, firebaseUser]);
+
+  // Load saved draft on mount
+  useEffect(() => {
+    if (open && registrationStatus === 'NONE') {
+      const draft = loadFormDraft();
+      if (draft) {
+        setFormData(prev => ({ ...prev, ...draft }));
+      }
+    }
+  }, [open, registrationStatus]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -112,21 +193,21 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
     } else {
       document.body.style.overflow = '';
     }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [open]);
 
   if (!open) return null;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    const newData = { ...formData };
     if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+      (newData as any)[name] = (e.target as HTMLInputElement).checked;
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      (newData as any)[name] = value;
     }
+    setFormData(newData);
+    saveFormDraft(newData);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -135,28 +216,21 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
+  // Robust submit with retry logic
+  const submitWithRetry = async (attempt: number = 0): Promise<void> => {
     try {
       if (!firebaseUser) {
         throw new Error('Not logged in. Please log in first.');
       }
 
-      if (!idToken) {
+      // Always get fresh token
+      const token = await firebaseUser.getIdToken(true);
+      if (!token) {
         throw new Error('Authentication required. Please refresh and log in again.');
       }
 
-      console.log('📝 Starting business registration...');
-      console.log('🔐 Firebase UID:', firebaseUser.uid);
-      console.log('🔑 ID Token present:', !!idToken);
-      console.log('🔑 Token length:', idToken?.length);
-
-      // Prepare JSON data in the format backend expects
       const submitData = {
-        accountType: 'new', // Always 'new' since we removed conversion option
+        accountType: 'new',
         businessIdentity: {
           legalBusinessName: formData.legalBusinessName,
           tradeName: formData.tradeName,
@@ -220,7 +294,7 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
         storeProfile: {
           storeName: formData.tradeName,
           storeDescription: formData.natureOfBusiness,
-          brandOwnership: 'Own Brand', // Default to own brand
+          brandOwnership: 'Own Brand',
         },
         compliance: {
           sellerAgreementAccepted: true,
@@ -230,40 +304,162 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
         },
       };
 
-      // Call backend API with Firebase auth token
       const backendUrl = process.env.NEXT_PUBLIC_API_BASE || '/api';
-      console.log('📤 Sending POST to:', `${backendUrl}/business/register`);
-      console.log('📦 Authorization header:', `Bearer ${idToken?.substring(0, 50)}...`);
-
       const response = await fetch(`${backendUrl}/business/register`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${idToken}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(submitData),
       });
 
-      console.log('📥 Response status:', response.status);
-      console.log('📥 Response headers:', Array.from(response.headers.entries()));
-
       if (!response.ok) {
-        const error = await response.json();
-        console.error('❌ Backend error:', error);
-        throw new Error(error.message || error.error || 'Failed to create business account');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+
+        // If already registered, treat as success
+        if (response.status === 400 && errorData.status === 'PENDING') {
+          clearFormDraft();
+          setRegistrationStatus('PENDING');
+          setShowSuccessModal(true);
+          return;
+        }
+        if (response.status === 400 && errorData.status === 'APPROVED') {
+          clearFormDraft();
+          setRegistrationStatus('APPROVED');
+          return;
+        }
+
+        throw new Error(errorData.message || errorData.error || 'Failed to create business account');
       }
 
-      const result = await response.json();
-      console.log('✅ Business registration submitted:', result);
-
-      // Show success modal instead of alert
+      // Success!
+      clearFormDraft();
       setShowSuccessModal(true);
+      setRetryCount(0);
+    } catch (err: any) {
+      // Retry on network/server errors (not on validation errors)
+      const isRetryable = !err.message?.includes('Missing required') &&
+        !err.message?.includes('Not logged in') &&
+        !err.message?.includes('Authentication required') &&
+        attempt < MAX_RETRIES - 1;
+
+      if (isRetryable) {
+        console.log(`⏳ Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${backoffDelay(attempt)}ms`);
+        setRetryCount(attempt + 1);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay(attempt)));
+        return submitWithRetry(attempt + 1);
+      }
+
+      throw err;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    setRetryCount(0);
+
+    try {
+      await submitWithRetry(0);
     } catch (err: any) {
       console.error('❌ Error:', err);
-      setError(err.message || 'Registration failed');
+      setError(err.message || 'Registration failed. Your data has been saved — you can try again.');
     } finally {
       setLoading(false);
+      setRetryCount(0);
     }
+  };
+
+  // Status overlay for already-submitted registrations
+  const renderStatusOverlay = () => {
+    if (registrationStatus === 'LOADING') {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 px-8">
+          <div className="w-16 h-16 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin mb-6"></div>
+          <p className="text-slate-600 text-lg font-medium">Checking registration status...</p>
+        </div>
+      );
+    }
+
+    if (registrationStatus === 'PENDING') {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 px-8">
+          <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-amber-500/30">
+            <span className="material-symbols-outlined text-white text-4xl">hourglass_top</span>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">Application Under Review</h3>
+          <p className="text-gray-600 text-center mb-6 leading-relaxed max-w-md">
+            Your seller registration has already been submitted and is currently being reviewed by our team. You will be notified once it is approved.
+          </p>
+          <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-6 w-full max-w-sm">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+              <span className="text-amber-800 font-semibold">Status: Pending Approval</span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-8 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          >
+            Got it!
+          </button>
+        </div>
+      );
+    }
+
+    if (registrationStatus === 'APPROVED') {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 px-8">
+          <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-500/30">
+            <span className="material-symbols-outlined text-white text-4xl">check_circle</span>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">Already Approved!</h3>
+          <p className="text-gray-600 text-center mb-6 leading-relaxed max-w-md">
+            Your seller account has been approved. You can access your Seller Dashboard to manage your business.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { window.location.href = 'https://www.seller.localforvocalstartup.com/login'; }}
+              className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined">dashboard</span>
+              Go to Dashboard
+            </button>
+            <button
+              onClick={onClose}
+              className="px-6 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:border-sky-500 hover:text-sky-600 transition-all"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (registrationStatus === 'SUSPENDED') {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 px-8">
+          <div className="w-20 h-20 bg-gradient-to-br from-red-400 to-rose-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-red-500/30">
+            <span className="material-symbols-outlined text-white text-4xl">block</span>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">Account Suspended</h3>
+          <p className="text-gray-600 text-center mb-6 leading-relaxed max-w-md">
+            Your seller account has been suspended. Please contact support for more information.
+          </p>
+          <button
+            onClick={onClose}
+            className="px-8 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          >
+            Close
+          </button>
+        </div>
+      );
+    }
+
+    // REJECTED: allow re-submission, return null to show form
+    return null;
   };
 
   const renderStep = () => {
@@ -272,6 +468,16 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
         return (
           <div className="space-y-4">
             <h3 className="font-semibold text-lg text-gray-900">Business Information</h3>
+
+            {registrationStatus === 'REJECTED' && (
+              <div className="mb-4 bg-red-50 text-red-700 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+                <span className="material-symbols-outlined text-red-500 mt-0.5">warning</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">Previous Application Rejected</p>
+                  <p className="text-sm">Your previous application was rejected. You can re-submit with updated information.</p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-800">
@@ -623,7 +829,7 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
                     name="hasGST"
                     value="true"
                     checked={formData.hasGST === true}
-                    onChange={(e) => setFormData({ ...formData, hasGST: true, gstin: '', gstType: 'Regular' })}
+                    onChange={() => { const d = { ...formData, hasGST: true, gstin: '', gstType: 'Regular' }; setFormData(d); saveFormDraft(d); }}
                     className="w-4 h-4 text-sky-600 focus:ring-sky-500"
                   />
                   <span className="text-gray-900 font-medium">Yes, I have GST</span>
@@ -634,10 +840,10 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
                     name="hasGST"
                     value="false"
                     checked={formData.hasGST === false}
-                    onChange={(e) => setFormData({ ...formData, hasGST: false, gstin: '', gstType: 'Regular' })}
+                    onChange={() => { const d = { ...formData, hasGST: false, gstin: '', gstType: 'Regular' }; setFormData(d); saveFormDraft(d); }}
                     className="w-4 h-4 text-sky-600 focus:ring-sky-500"
                   />
-                  <span className="text-gray-900 font-medium">No, I don't have GST</span>
+                  <span className="text-gray-900 font-medium">No, I don&apos;t have GST</span>
                 </label>
               </div>
             </div>
@@ -842,6 +1048,9 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
     }
   };
 
+  // Check if we should show the status overlay instead of the form
+  const statusOverlay = renderStatusOverlay();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden relative flex flex-col">
@@ -862,75 +1071,84 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-bold">Business Registration</h2>
-              <p className="text-sky-100 text-sm">Step {step - 1} of 5</p>
+              {registrationStatus === 'NONE' || registrationStatus === 'REJECTED' ? (
+                <p className="text-sky-100 text-sm">Step {step - 1} of 5</p>
+              ) : (
+                <p className="text-sky-100 text-sm">Registration Status</p>
+              )}
             </div>
           </div>
-          {/* Modern Progress Bar */}
-          <div className="mt-4 w-full bg-black/10 rounded-full h-2 overflow-hidden">
-            <div
-              className="bg-white h-2 rounded-full transition-all duration-500 ease-out shadow-glow"
-              style={{ width: `${((step - 1) / 5) * 100}%` }}
-            />
-          </div>
+          {(registrationStatus === 'NONE' || registrationStatus === 'REJECTED') && (
+            <div className="mt-4 w-full bg-black/10 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-white h-2 rounded-full transition-all duration-500 ease-out shadow-glow"
+                style={{ width: `${((step - 1) / 5) * 100}%` }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <form onSubmit={handleSubmit} className="p-8">
-            {error && (
-              <div className="mb-6 bg-red-50 text-red-700 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-sm">
-                <span className="material-symbols-outlined text-red-500 mt-0.5">error</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm">Error</p>
-                  <p className="text-sm">{error}</p>
+          {statusOverlay ? (
+            statusOverlay
+          ) : (
+            <form onSubmit={handleSubmit} className="p-8">
+              {error && (
+                <div className="mb-6 bg-red-50 text-red-700 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+                  <span className="material-symbols-outlined text-red-500 mt-0.5">error</span>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">Error</p>
+                    <p className="text-sm">{error}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {renderStep()}
+              {renderStep()}
 
-            {/* Navigation Buttons */}
-            <div className="mt-8 flex gap-4 justify-between border-t border-slate-200 pt-6">
-              <button
-                type="button"
-                onClick={() => setStep(Math.max(2, step - 1) as Step)}
-                disabled={step === 2}
-                className="px-8 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:border-sky-500 hover:text-sky-600 hover:bg-sky-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-xl">arrow_back</span>
-                Previous
-              </button>
-
-              {step === 6 ? (
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-8 py-3 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined">check_circle</span>
-                      Submit Registration
-                    </>
-                  )}
-                </button>
-              ) : (
+              {/* Navigation Buttons */}
+              <div className="mt-8 flex gap-4 justify-between border-t border-slate-200 pt-6">
                 <button
                   type="button"
-                  onClick={() => setStep(Math.min(6, step + 1) as Step)}
-                  className="px-8 py-3 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                  onClick={() => setStep(Math.max(2, step - 1) as Step)}
+                  disabled={step === 2}
+                  className="px-8 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:border-sky-500 hover:text-sky-600 hover:bg-sky-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2"
                 >
-                  Next
-                  <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                  <span className="material-symbols-outlined text-xl">arrow_back</span>
+                  Previous
                 </button>
-              )}
-            </div>
-          </form>
+
+                {step === 6 ? (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-8 py-3 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                        {retryCount > 0 ? `Retrying (${retryCount}/${MAX_RETRIES})...` : 'Submitting...'}
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined">check_circle</span>
+                        Submit Registration
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setStep(Math.min(6, step + 1) as Step)}
+                    className="px-8 py-3 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                  >
+                    Next
+                    <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
         </div>
       </div>
 

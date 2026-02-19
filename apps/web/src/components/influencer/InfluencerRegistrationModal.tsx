@@ -4,16 +4,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 type Step = 2 | 3 | 4 | 5 | 6;
+type RegistrationStatus = 'LOADING' | 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
-interface BusinessFormData {
-    // Step 2: Business Info (now first step)
+interface InfluencerFormData {
+    // Step 2: Profile Info
     legalBusinessName: string;
     tradeName: string;
-    businessType: string;
-    natureOfBusiness: string;
     yearEstablished: string;
 
-    // Step 3: Owner Details
+    // Step 3: Personal Details
     ownerFullName: string;
     designation: string;
     ownerMobile: string;
@@ -43,7 +42,6 @@ interface BusinessFormData {
     panNumber: string;
     panFile?: File;
     cin?: string;
-    shopCertFile?: File;
     udyamNumber?: string;
 
     // Step 6: Bank & Settlement
@@ -62,14 +60,43 @@ interface Props {
     onSuccess?: () => void;
 }
 
+const STORAGE_KEY = 'influencer_registration_draft';
+const MAX_RETRIES = 3;
+
+function backoffDelay(attempt: number): number {
+    return Math.min(1000 * Math.pow(2, attempt), 8000);
+}
+
+function saveFormDraft(data: InfluencerFormData) {
+    try {
+        const serializable = { ...data };
+        delete serializable.idProofFile;
+        delete serializable.gstCertFile;
+        delete serializable.panFile;
+        delete serializable.chequeFile;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+    } catch { /* ignore */ }
+}
+
+function loadFormDraft(): Partial<InfluencerFormData> | null {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+    } catch { /* ignore */ }
+    return null;
+}
+
+function clearFormDraft() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+}
+
 export default function InfluencerRegistrationModal({ open, onClose, onSuccess }: Props) {
     const { firebaseUser, idToken } = useAuth();
     const [step, setStep] = useState<Step>(2);
-    const [formData, setFormData] = useState<BusinessFormData>({
+    const [registrationStatus, setRegistrationStatus] = useState<RegistrationStatus>('LOADING');
+    const [formData, setFormData] = useState<InfluencerFormData>({
         legalBusinessName: '',
         tradeName: '',
-        businessType: '',
-        natureOfBusiness: '',
         yearEstablished: new Date().getFullYear().toString(),
         ownerFullName: '',
         designation: 'Owner',
@@ -92,8 +119,8 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
         gstin: '',
         gstType: 'Regular',
         panNumber: '',
-        cin: '', // Initialize with empty string
-        udyamNumber: '', // Initialize with empty string
+        cin: '',
+        udyamNumber: '',
         bankAccountName: '',
         bankName: '',
         accountNumber: '',
@@ -104,6 +131,50 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [retryCount, setRetryCount] = useState(0);
+
+    // Check existing registration status when modal opens
+    useEffect(() => {
+        if (!open) return;
+
+        const checkStatus = async () => {
+            if (!firebaseUser) {
+                setRegistrationStatus('NONE');
+                return;
+            }
+
+            try {
+                setRegistrationStatus('LOADING');
+                const token = await firebaseUser.getIdToken(true);
+                const backendUrl = process.env.NEXT_PUBLIC_API_BASE || '/api';
+                const response = await fetch(`${backendUrl}/influencer/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setRegistrationStatus((data.status || 'NONE') as RegistrationStatus);
+                } else {
+                    setRegistrationStatus('NONE');
+                }
+            } catch (err) {
+                console.error('Failed to check influencer status:', err);
+                setRegistrationStatus('NONE');
+            }
+        };
+
+        checkStatus();
+    }, [open, firebaseUser]);
+
+    // Load saved draft on mount
+    useEffect(() => {
+        if (open && registrationStatus === 'NONE') {
+            const draft = loadFormDraft();
+            if (draft) {
+                setFormData(prev => ({ ...prev, ...draft }));
+            }
+        }
+    }, [open, registrationStatus]);
 
     // Prevent body scroll when modal is open
     useEffect(() => {
@@ -112,21 +183,21 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
         } else {
             document.body.style.overflow = '';
         }
-
-        return () => {
-            document.body.style.overflow = '';
-        };
+        return () => { document.body.style.overflow = ''; };
     }, [open]);
 
     if (!open) return null;
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
+        const newData = { ...formData };
         if (type === 'checkbox') {
-            setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+            (newData as any)[name] = (e.target as HTMLInputElement).checked;
         } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
+            (newData as any)[name] = value;
         }
+        setFormData(newData);
+        saveFormDraft(newData);
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -135,29 +206,25 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
-        setLoading(true);
-
+    // Robust submit with retry logic
+    const submitWithRetry = async (attempt: number = 0): Promise<void> => {
         try {
             if (!firebaseUser) {
                 throw new Error('Not logged in. Please log in first.');
             }
 
-            if (!idToken) {
+            const token = await firebaseUser.getIdToken(true);
+            if (!token) {
                 throw new Error('Authentication required. Please refresh and log in again.');
             }
 
-            // Reusing the business endpoint for now as per plan, can be switched to /influencer/register later
             const submitData = {
                 accountType: 'new',
                 businessIdentity: {
-                    // Hardcoded to 'Influencer' to match backend Enum
                     legalBusinessName: formData.legalBusinessName,
                     tradeName: formData.tradeName,
                     businessType: 'Influencer',
-                    natureOfBusiness: 'Content Creator', // or 'Influencer'
+                    natureOfBusiness: 'Content Creator',
                     yearOfEstablishment: parseInt(formData.yearEstablished),
                 },
                 ownerDetails: {
@@ -215,8 +282,7 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                 },
                 storeProfile: {
                     storeName: formData.tradeName,
-                    storeDescription: `Platform: ${formData.businessType}, Category: ${formData.natureOfBusiness}`,
-                    categories: [formData.natureOfBusiness],
+                    storeDescription: 'Influencer / Content Creator',
                     brandOwnership: 'Influencer',
                 },
                 compliance: {
@@ -228,28 +294,157 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
             };
 
             const backendUrl = process.env.NEXT_PUBLIC_API_BASE || '/api';
-
             const response = await fetch(`${backendUrl}/influencer/register`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${idToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(submitData),
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || error.error || 'Failed to create influencer account');
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+
+                if (response.status === 400 && errorData.status === 'PENDING') {
+                    clearFormDraft();
+                    setRegistrationStatus('PENDING');
+                    setShowSuccessModal(true);
+                    return;
+                }
+                if (response.status === 400 && errorData.status === 'APPROVED') {
+                    clearFormDraft();
+                    setRegistrationStatus('APPROVED');
+                    return;
+                }
+
+                throw new Error(errorData.message || errorData.error || 'Failed to create influencer account');
             }
 
+            clearFormDraft();
             setShowSuccessModal(true);
+            setRetryCount(0);
+        } catch (err: any) {
+            const isRetryable = !err.message?.includes('Missing required') &&
+                !err.message?.includes('Not logged in') &&
+                !err.message?.includes('Authentication required') &&
+                attempt < MAX_RETRIES - 1;
+
+            if (isRetryable) {
+                console.log(`⏳ Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${backoffDelay(attempt)}ms`);
+                setRetryCount(attempt + 1);
+                await new Promise(resolve => setTimeout(resolve, backoffDelay(attempt)));
+                return submitWithRetry(attempt + 1);
+            }
+
+            throw err;
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setLoading(true);
+        setRetryCount(0);
+
+        try {
+            await submitWithRetry(0);
         } catch (err: any) {
             console.error('❌ Error:', err);
-            setError(err.message || 'Registration failed');
+            setError(err.message || 'Registration failed. Your data has been saved — you can try again.');
         } finally {
             setLoading(false);
+            setRetryCount(0);
         }
+    };
+
+    // Status overlay for already-submitted registrations
+    const renderStatusOverlay = () => {
+        if (registrationStatus === 'LOADING') {
+            return (
+                <div className="flex flex-col items-center justify-center py-20 px-8">
+                    <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin mb-6"></div>
+                    <p className="text-slate-600 text-lg font-medium">Checking registration status...</p>
+                </div>
+            );
+        }
+
+        if (registrationStatus === 'PENDING') {
+            return (
+                <div className="flex flex-col items-center justify-center py-16 px-8">
+                    <div className="w-20 h-20 bg-linear-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-amber-500/30">
+                        <span className="material-symbols-outlined text-white text-4xl">hourglass_top</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">Application Under Review</h3>
+                    <p className="text-gray-600 text-center mb-6 leading-relaxed max-w-md">
+                        Your influencer registration has already been submitted and is currently being reviewed by our team. You will be notified once it is approved.
+                    </p>
+                    <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-6 w-full max-w-sm">
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                            <span className="text-amber-800 font-semibold">Status: Pending Approval</span>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="px-8 py-3 bg-linear-to-r from-pink-500 to-fuchsia-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                    >
+                        Got it!
+                    </button>
+                </div>
+            );
+        }
+
+        if (registrationStatus === 'APPROVED') {
+            return (
+                <div className="flex flex-col items-center justify-center py-16 px-8">
+                    <div className="w-20 h-20 bg-linear-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-green-500/30">
+                        <span className="material-symbols-outlined text-white text-4xl">check_circle</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">Already Approved!</h3>
+                    <p className="text-gray-600 text-center mb-6 leading-relaxed max-w-md">
+                        Your influencer account has been approved. You can access your Influencer Dashboard.
+                    </p>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => { window.location.href = 'https://influencer.localforvocalstartup.com'; }}
+                            className="px-8 py-3 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined">dashboard</span>
+                            Go to Dashboard
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:border-pink-500 hover:text-pink-600 transition-all"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        if (registrationStatus === 'SUSPENDED') {
+            return (
+                <div className="flex flex-col items-center justify-center py-16 px-8">
+                    <div className="w-20 h-20 bg-linear-to-br from-red-400 to-rose-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-red-500/30">
+                        <span className="material-symbols-outlined text-white text-4xl">block</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">Account Suspended</h3>
+                    <p className="text-gray-600 text-center mb-6 leading-relaxed max-w-md">
+                        Your influencer account has been suspended. Please contact support for more information.
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="px-8 py-3 bg-linear-to-r from-pink-500 to-fuchsia-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                    >
+                        Close
+                    </button>
+                </div>
+            );
+        }
+
+        return null;
     };
 
     const renderStep = () => {
@@ -257,26 +452,21 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
             case 2:
                 return (
                     <div className="space-y-4">
-                        <h3 className="font-semibold text-lg text-gray-900">Influencer Information</h3>
+                        <h3 className="font-semibold text-lg text-gray-900">Influencer Profile Information</h3>
+
+                        {registrationStatus === 'REJECTED' && (
+                            <div className="mb-4 bg-red-50 text-red-700 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+                                <span className="material-symbols-outlined text-red-500 mt-0.5">warning</span>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-sm">Previous Application Rejected</p>
+                                    <p className="text-sm">Your previous application was rejected. You can re-submit with updated information.</p>
+                                </div>
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-800">
-                                Display Name / Handle <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="tradeName"
-                                value={formData.tradeName}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
-                                required
-                                placeholder="@username or Channel Name"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-gray-800">
-                                Legal Name <span className="text-red-500">*</span>
+                                Full Name / Brand Name <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -288,50 +478,31 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                             />
                         </div>
 
-                        <div className="hidden">
-                            {/* Hidden fields to satisfy TS but pre-filled logic */}
-                            <input type="hidden" name="businessType" value="Proprietorship" />
-                        </div>
-
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-800">
-                                Primary Platform <span className="text-red-500">*</span>
+                                Display Name / Channel Name <span className="text-red-500">*</span>
                             </label>
-                            <select
-                                name="businessType"
-                                value={formData.businessType}
+                            <input
+                                type="text"
+                                name="tradeName"
+                                value={formData.tradeName}
                                 onChange={handleInputChange}
                                 className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
                                 required
-                            >
-                                <option>Select Platform</option>
-                                <option value="Instagram">Instagram</option>
-                                <option value="YouTube">YouTube</option>
-                                <option value="TikTok">TikTok</option>
-                                <option value="Twitch">Twitch</option>
-                                <option value="Other">Other</option>
-                            </select>
+                            />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1 text-gray-800">
-                                Content Category <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                name="natureOfBusiness"
-                                value={formData.natureOfBusiness}
+                            <label className="block text-sm font-medium mb-1 text-gray-800">Year Started Creating Content</label>
+                            <input
+                                type="number"
+                                name="yearEstablished"
+                                value={formData.yearEstablished}
                                 onChange={handleInputChange}
                                 className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
-                                required
-                            >
-                                <option>Select Category</option>
-                                <option value="Fashion">Fashion</option>
-                                <option value="Tech">Tech</option>
-                                <option value="Lifestyle">Lifestyle</option>
-                                <option value="Gaming">Gaming</option>
-                                <option value="Beauty">Beauty</option>
-                                <option value="Other">Other</option>
-                            </select>
+                                min="2000"
+                                max={new Date().getFullYear()}
+                            />
                         </div>
                     </div>
                 );
@@ -386,6 +557,16 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
+                                <label className="block text-sm font-medium mb-1 text-gray-800">Date of Birth</label>
+                                <input
+                                    type="date"
+                                    name="dob"
+                                    value={formData.dob}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                                />
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-800">Gender</label>
                                 <select
                                     name="gender"
@@ -399,20 +580,8 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-800">
-                                    Government ID Number <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="govIdNumber"
-                                    value={formData.govIdNumber}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
-                                    required
-                                />
-                            </div>
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-800">
                                 Government ID Type <span className="text-red-500">*</span>
@@ -430,17 +599,41 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 <option value="Passport">Passport</option>
                             </select>
                         </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-gray-800">
+                                Government ID Number <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="govIdNumber"
+                                value={formData.govIdNumber}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-gray-800">ID Proof Upload (PDF/JPG)</label>
+                            <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg"
+                                onChange={(e) => handleFileChange(e, 'idProofFile')}
+                                key={formData.idProofFile?.name || 'id-proof'}
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 transition-all duration-200"
+                            />
+                        </div>
                     </div>
                 );
 
             case 4:
-                // Reusing Address form but simplified if needed, keeping same for now for robustness
                 return (
                     <div className="space-y-4">
                         <h3 className="font-semibold text-lg text-gray-900">Address Details</h3>
 
                         <div className="p-3 bg-slate-50 rounded-lg">
-                            <h4 className="font-medium mb-3 text-gray-800">Mailing Address</h4>
+                            <h4 className="font-medium mb-3 text-gray-800">Primary Address</h4>
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-800">
                                     Address Line 1 <span className="text-red-500">*</span>
@@ -455,6 +648,19 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 />
                             </div>
                             <div className="mt-2">
+                                <label className="block text-sm font-medium mb-1 text-gray-800">Address Line 2</label>
+                                <input
+                                    type="text"
+                                    name="registeredAddressLine2"
+                                    value={formData.registeredAddressLine2}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-800">
                                     City <span className="text-red-500">*</span>
                                 </label>
@@ -467,33 +673,44 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                     required
                                 />
                             </div>
-                            <div className="mt-2 grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-800">
-                                        State <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="state"
-                                        value={formData.state}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-gray-800">
-                                        Pincode <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="pincode"
-                                        value={formData.pincode}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
-                                        required
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-gray-800">District</label>
+                                <input
+                                    type="text"
+                                    name="district"
+                                    value={formData.district}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-gray-800">
+                                    State <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="state"
+                                    value={formData.state}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-gray-800">
+                                    Pincode / ZIP <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="pincode"
+                                    value={formData.pincode}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                                    required
+                                />
                             </div>
                         </div>
                     </div>
@@ -502,7 +719,63 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
             case 5:
                 return (
                     <div className="space-y-4">
-                        <h3 className="font-semibold text-lg text-gray-900">Tax Information</h3>
+                        <h3 className="font-semibold text-lg text-gray-900">Tax & Legal Information</h3>
+
+                        <div className="p-4 bg-pink-50 border-2 border-pink-200 rounded-xl">
+                            <label className="block text-sm font-medium mb-3 text-gray-900">
+                                Do you have GST Registration?
+                            </label>
+                            <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="hasGST"
+                                        value="true"
+                                        checked={formData.hasGST === true}
+                                        onChange={() => { const d = { ...formData, hasGST: true }; setFormData(d); saveFormDraft(d); }}
+                                        className="w-4 h-4 text-pink-600 focus:ring-pink-500"
+                                    />
+                                    <span className="text-gray-900 font-medium">Yes</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="hasGST"
+                                        value="false"
+                                        checked={formData.hasGST === false}
+                                        onChange={() => { const d = { ...formData, hasGST: false }; setFormData(d); saveFormDraft(d); }}
+                                        className="w-4 h-4 text-pink-600 focus:ring-pink-500"
+                                    />
+                                    <span className="text-gray-900 font-medium">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {formData.hasGST && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-800">GSTIN Number</label>
+                                    <input
+                                        type="text"
+                                        name="gstin"
+                                        value={formData.gstin}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                                        placeholder="15 digit GSTIN"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-800">GST Certificate Upload</label>
+                                    <input
+                                        type="file"
+                                        accept=".pdf,.jpg,.jpeg"
+                                        onChange={(e) => handleFileChange(e, 'gstCertFile')}
+                                        key={formData.gstCertFile?.name || 'gst-cert'}
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 transition-all duration-200"
+                                    />
+                                </div>
+                            </>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-800">
@@ -518,13 +791,24 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 required
                             />
                         </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-gray-800">PAN Card Upload</label>
+                            <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg"
+                                onChange={(e) => handleFileChange(e, 'panFile')}
+                                key={formData.panFile?.name || 'pan-file'}
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 transition-all duration-200"
+                            />
+                        </div>
                     </div>
                 );
 
             case 6:
                 return (
                     <div className="space-y-4">
-                        <h3 className="font-semibold text-lg text-gray-900">Payout Details</h3>
+                        <h3 className="font-semibold text-lg text-gray-900">Bank & Payment Settlement Details</h3>
 
                         <div>
                             <label className="block text-sm font-medium mb-1 text-gray-800">
@@ -581,6 +865,44 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 required
                             />
                         </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-gray-800">Account Type</label>
+                            <select
+                                name="bankAccountType"
+                                value={formData.bankAccountType}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                            >
+                                <option value="Savings">Savings</option>
+                                <option value="Current">Current</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-gray-800">Cancelled Cheque / Bank Proof</label>
+                            <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg"
+                                onChange={(e) => handleFileChange(e, 'chequeFile')}
+                                key={formData.chequeFile?.name || 'cheque-file'}
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 transition-all duration-200"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-gray-800">Preferred Settlement Cycle</label>
+                            <select
+                                name="settlementCycle"
+                                value={formData.settlementCycle}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 placeholder:text-slate-400 transition-all duration-200"
+                            >
+                                <option value="Daily">Daily</option>
+                                <option value="Weekly">Weekly</option>
+                                <option value="Bi-Weekly">Bi-Weekly</option>
+                            </select>
+                        </div>
                     </div>
                 );
 
@@ -589,10 +911,12 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
         }
     };
 
+    const statusOverlay = renderStatusOverlay();
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
             <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden relative flex flex-col">
-                {/* Close Button - Pink Theme */}
+                {/* Close Button */}
                 <button
                     onClick={onClose}
                     aria-label="Close"
@@ -601,94 +925,99 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                     <span className="material-symbols-outlined text-2xl">close</span>
                 </button>
 
-                {/* Header - Pink Gradient */}
-                <div className="relative bg-linear-to-r from-[#ec4899] to-[#f43f5e] text-white px-6 py-5 border-b border-pink-400/30 shadow-lg shrink-0">
+                {/* Header */}
+                <div className="relative bg-linear-to-r from-pink-500 to-fuchsia-600 text-white px-6 py-5 border-b border-pink-400/30 shadow-lg shrink-0">
                     <div className="flex items-center gap-3 mb-3">
                         <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                            <span className="material-symbols-outlined text-3xl">campaign</span>
+                            <span className="material-symbols-outlined text-3xl">stars</span>
                         </div>
                         <div>
                             <h2 className="text-xl sm:text-2xl font-bold">Influencer Registration</h2>
-                            <p className="text-pink-100 text-sm">Step {step - 1} of 5</p>
+                            {registrationStatus === 'NONE' || registrationStatus === 'REJECTED' ? (
+                                <p className="text-pink-100 text-sm">Step {step - 1} of 5</p>
+                            ) : (
+                                <p className="text-pink-100 text-sm">Registration Status</p>
+                            )}
                         </div>
                     </div>
-                    {/* Progress Bar - Pink */}
-                    <div className="mt-4 w-full bg-black/10 rounded-full h-2 overflow-hidden">
-                        <div
-                            className="bg-white h-2 rounded-full transition-all duration-500 ease-out shadow-glow"
-                            style={{ width: `${((step - 1) / 5) * 100}%` }}
-                        />
-                    </div>
+                    {(registrationStatus === 'NONE' || registrationStatus === 'REJECTED') && (
+                        <div className="mt-4 w-full bg-black/10 rounded-full h-2 overflow-hidden">
+                            <div
+                                className="bg-white h-2 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${((step - 1) / 5) * 100}%` }}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto">
-                    <form onSubmit={handleSubmit} className="p-8">
-                        {error && (
-                            <div className="mb-6 bg-red-50 text-red-700 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-sm">
-                                <span className="material-symbols-outlined text-red-500 mt-0.5">error</span>
-                                <div className="flex-1">
-                                    <p className="font-semibold text-sm">Error</p>
-                                    <p className="text-sm">{error}</p>
+                    {statusOverlay ? (
+                        statusOverlay
+                    ) : (
+                        <form onSubmit={handleSubmit} className="p-8">
+                            {error && (
+                                <div className="mb-6 bg-red-50 text-red-700 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+                                    <span className="material-symbols-outlined text-red-500 mt-0.5">error</span>
+                                    <div className="flex-1">
+                                        <p className="font-semibold text-sm">Error</p>
+                                        <p className="text-sm">{error}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {renderStep()}
+                            {renderStep()}
 
-                        {/* Navigation Buttons */}
-                        <div className="mt-8 flex gap-4 justify-between border-t border-slate-200 pt-6">
-                            <button
-                                type="button"
-                                onClick={() => setStep(Math.max(2, step - 1) as Step)}
-                                disabled={step === 2}
-                                className="px-8 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:border-pink-500 hover:text-pink-600 hover:bg-pink-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2"
-                            >
-                                <span className="material-symbols-outlined text-xl">arrow_back</span>
-                                Previous
-                            </button>
-
-                            {step === 6 ? (
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="px-8 py-3 bg-linear-to-r from-pink-500 to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center gap-2"
-                                >
-                                    {loading ? (
-                                        <>
-                                            <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                            Submitting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span className="material-symbols-outlined">check_circle</span>
-                                            Submit Registration
-                                        </>
-                                    )}
-                                </button>
-                            ) : (
+                            {/* Navigation Buttons */}
+                            <div className="mt-8 flex gap-4 justify-between border-t border-slate-200 pt-6">
                                 <button
                                     type="button"
-                                    onClick={() => setStep(Math.min(6, step + 1) as Step)}
-                                    className="px-8 py-3 bg-linear-to-r from-pink-500 to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                                    onClick={() => setStep(Math.max(2, step - 1) as Step)}
+                                    disabled={step === 2}
+                                    className="px-8 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:border-pink-500 hover:text-pink-600 hover:bg-pink-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2"
                                 >
-                                    Next
-                                    <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                                    <span className="material-symbols-outlined text-xl">arrow_back</span>
+                                    Previous
                                 </button>
-                            )}
-                        </div>
-                    </form>
+
+                                {step === 6 ? (
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="px-8 py-3 bg-linear-to-r from-pink-500 to-fuchsia-600 text-white font-bold rounded-xl shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                                {retryCount > 0 ? `Retrying (${retryCount}/${MAX_RETRIES})...` : 'Submitting...'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="material-symbols-outlined">check_circle</span>
+                                                Submit Registration
+                                            </>
+                                        )}
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep(Math.min(6, step + 1) as Step)}
+                                        className="px-8 py-3 bg-linear-to-r from-pink-500 to-fuchsia-600 text-white font-bold rounded-xl shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                                    >
+                                        Next
+                                        <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+                    )}
                 </div>
             </div>
 
-            {/* Success Modal - Pink Theme */}
+            {/* Success Modal */}
             {showSuccessModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-60">
                     <style>{`
-            @keyframes fadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
             @keyframes slideUp {
               from { opacity: 0; transform: translateY(20px); }
               to { opacity: 1; transform: translateY(0); }
@@ -702,25 +1031,51 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
               100% { stroke-dashoffset: 0; }
             }
           `}</style>
-                    <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-300">
+
+                    <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl" style={{ animation: 'slideUp 0.4s ease-out' }}>
                         <div className="flex justify-center mb-6">
                             <div className="relative">
                                 <div
-                                    className="w-20 h-20 bg-linear-to-br from-pink-400 to-rose-600 rounded-full flex items-center justify-center"
+                                    className="w-20 h-20 bg-linear-to-br from-pink-400 to-fuchsia-600 rounded-full flex items-center justify-center"
                                     style={{ animation: 'scaleIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}
                                 >
-                                    <span className="material-symbols-outlined text-white text-4xl">check_circle</span>
+                                    <svg
+                                        className="w-12 h-12 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        style={{ strokeDasharray: 100, strokeDashoffset: 0, animation: 'checkmark 0.6s ease-in 0.3s backwards' }}
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
                                 </div>
+                                <div
+                                    className="absolute inset-0 w-20 h-20 bg-linear-to-br from-pink-400 to-fuchsia-600 rounded-full opacity-20"
+                                    style={{ animation: 'scaleIn 1s infinite' }}
+                                ></div>
                             </div>
                         </div>
 
                         <h3 className="text-2xl font-bold text-center text-gray-900 mb-3">
-                            Application Submitted!
+                            Registration Submitted!
                         </h3>
 
                         <p className="text-gray-600 text-center mb-6 leading-relaxed">
-                            Your influencer application has been received. Our team will review your profile and contact you soon.
+                            Your influencer registration has been submitted and is now pending review by our admin team.
                         </p>
+
+                        <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-6">
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                                <span className="text-amber-800 font-semibold">Status: Pending Approval</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-pink-50 border-2 border-pink-200 rounded-xl p-4 mb-6">
+                            <p className="text-pink-800 text-sm text-center">
+                                📧 You will receive an email notification once your registration is approved.
+                            </p>
+                        </div>
 
                         <button
                             onClick={() => {
@@ -728,7 +1083,7 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 onClose();
                                 onSuccess?.();
                             }}
-                            className="w-full bg-linear-to-r from-pink-500 to-rose-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-pink-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                            className="w-full bg-linear-to-r from-pink-500 to-fuchsia-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-pink-600 hover:to-fuchsia-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         >
                             Got it!
                         </button>
