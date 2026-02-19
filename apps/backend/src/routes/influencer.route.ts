@@ -165,8 +165,8 @@ router.get('/influencer/status', verifyFirebaseToken, async (req: Request, res: 
     }
 
     // Check if this is an influencer registration (businessType contains 'Influencer' or storeProfile has 'Influencer')
-    const isInfluencerReg = business.businessIdentity?.businessType === 'Influencer' ||
-      business.storeProfile?.brandOwnership === 'Influencer' ||
+    const isInfluencerReg = (business.businessIdentity?.businessType as string) === 'Influencer' ||
+      (business.storeProfile?.brandOwnership as string) === 'Influencer' ||
       business.businessIdentity?.natureOfBusiness === 'Content Creator';
 
     if (!isInfluencerReg) {
