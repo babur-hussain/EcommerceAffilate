@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import GlobalSearch from "@/components/search/GlobalSearch";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import AuthModal from "@/components/auth/AuthModal";
-import BusinessRegistrationModal from "@/components/business/BusinessRegistrationModal";
-import CartPopup from "@/components/cart/CartPopup";
+
+const AuthModal = dynamic(() => import("@/components/auth/AuthModal"), { ssr: false });
+const BusinessRegistrationModal = dynamic(() => import("@/components/business/BusinessRegistrationModal"), { ssr: false });
+const CartPopup = dynamic(() => import("@/components/cart/CartPopup"), { ssr: false });
+
 
 export default function Header() {
     const [authOpen, setAuthOpen] = useState(false);

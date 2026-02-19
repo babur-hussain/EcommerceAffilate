@@ -4,11 +4,15 @@ import HeroSlider from "@/components/home/HeroSlider";
 import MobileHeroSlider from "@/components/home/MobileHeroSlider";
 import HomeCategoryList from "@/components/home/HomeCategoryList";
 import CategorySection from "@/components/homepage/CategorySection";
+import LazySection from "@/components/common/LazySection";
 import type { HomepageSection } from "@/hooks/useHomepageSections";
 
 interface HomeContentProps {
     sections: HomepageSection[];
 }
+
+/** Number of sections to render immediately (above fold) */
+const EAGER_SECTIONS = 2;
 
 export default function HomeContent({ sections }: HomeContentProps) {
     return (
@@ -30,14 +34,19 @@ export default function HomeContent({ sections }: HomeContentProps) {
                 </div>
             </section>
 
-            {/* Dynamic Product Sections — already loaded, no skeleton needed */}
+            {/* Dynamic Product Sections — lazy loaded per viewport */}
             <main className="flex flex-col w-full bg-slate-100 pt-2.5">
                 {sections.map((section, index) => (
-                    <CategorySection
+                    <LazySection
                         key={section._id}
-                        section={section}
-                        index={index}
-                    />
+                        priority={index < EAGER_SECTIONS}
+                        height={360}
+                    >
+                        <CategorySection
+                            section={section}
+                            index={index}
+                        />
+                    </LazySection>
                 ))}
 
                 {/* Empty State */}

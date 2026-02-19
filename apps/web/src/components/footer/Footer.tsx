@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import BusinessRegistrationModal from '@/components/business/BusinessRegistrationModal';
-import InfluencerRegistrationModal from '@/components/influencer/InfluencerRegistrationModal';
+
+const BusinessRegistrationModal = dynamic(() => import('@/components/business/BusinessRegistrationModal'), { ssr: false });
+const InfluencerRegistrationModal = dynamic(() => import('@/components/influencer/InfluencerRegistrationModal'), { ssr: false });
 
 export default function Footer() {
   const { firebaseUser, backendUser } = useAuth();

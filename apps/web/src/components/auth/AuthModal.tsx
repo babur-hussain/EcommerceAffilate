@@ -176,7 +176,7 @@ export default function AuthModal({
 
   if (!open || !mounted) return null;
 
-  return createPortal(
+  return (<>{createPortal(
     <div className="fixed inset-0 z-9999 flex items-center justify-center isolate">
       {/* Backdrop */}
       <div
@@ -358,5 +358,5 @@ export default function AuthModal({
       <div ref={recaptchaRef} id="recaptcha-container" />
     </div>,
     document.body
-  );
+  )}</>);
 }
