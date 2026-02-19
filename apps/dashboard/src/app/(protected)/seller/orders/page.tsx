@@ -234,6 +234,10 @@ export default function OrdersPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
             <p className="text-gray-600">Manage and track your customer orders</p>
+            <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Only confirmed (PAID or COD) orders are shown here. Pending payments are hidden.
+            </p>
           </div>
           <button
             onClick={() => setShowSettings(!showSettings)}
@@ -449,8 +453,8 @@ export default function OrdersPage() {
                             )}
                             {/* Shipping Method Badge */}
                             <span className={`text-[10px] uppercase tracking-wider font-semibold pl-1 ${order.shippingMethod === 'SHIPROCKET'
-                                ? 'text-orange-600'
-                                : 'text-teal-600'
+                              ? 'text-orange-600'
+                              : 'text-teal-600'
                               }`}>
                               {order.shippingMethod === 'SHIPROCKET' ? '🚀 Shiprocket' : '🏠 Internal'}
                             </span>

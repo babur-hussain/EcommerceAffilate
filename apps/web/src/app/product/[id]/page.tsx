@@ -159,7 +159,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   modules={[Thumbs]}
                   className="h-full max-h-[100px] md:max-h-[500px]"
                 >
-                  {[product.primaryImage, ...(product.images || [])].map((img, idx) => (
+                  {Array.from(new Set([product.primaryImage, ...(product.images || [])].filter(Boolean))).map((img, idx) => (
                     <SwiperSlide key={idx}>
                       <div className={`aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${activeIndex === idx ? 'border-primary ring-2 ring-primary/20' : 'border-transparent opacity-60'}`}>
                         <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
@@ -180,7 +180,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   onSlideChange={(swiper: SwiperType) => setActiveIndex(swiper.activeIndex)}
                   className="rounded-xl bg-white shadow-sm overflow-hidden aspect-4/5"
                 >
-                  {[product.primaryImage, ...(product.images || [])].map((img, idx) => (
+                  {Array.from(new Set([product.primaryImage, ...(product.images || [])].filter(Boolean))).map((img, idx) => (
                     <SwiperSlide key={idx}>
                       <div className="w-full h-full relative group">
                         <img

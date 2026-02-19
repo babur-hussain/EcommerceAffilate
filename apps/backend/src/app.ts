@@ -201,6 +201,7 @@ app.use("/api/partner", partnerRouter);
 app.use("/api", shiprocketRouter);
 app.use("/api", returnRouter);
 
+import homepageRouter from "./routes/homepage.route";
 import storyRouter from "./routes/story.route";
 app.use("/api/stories", storyRouter);
 app.use('/api/super-admin', adminCategoryRouter);
@@ -213,6 +214,7 @@ import browserHistoryRouter from "./routes/browserHistory.route";
 app.use('/api', adminLayoutRouter);
 app.use('/api', advancedLayoutRouter);
 app.use('/api', browserHistoryRouter);
+app.use('/api', homepageRouter);
 
 
 // Global error handler

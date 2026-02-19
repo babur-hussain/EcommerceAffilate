@@ -65,7 +65,9 @@
 
 /* Tap highlight removal for mobile */
 @media (hover: none) and (pointer: coarse) {
-  button, a {
+
+  button,
+  a {
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -74,6 +76,61 @@ body {
   background-color: var(--color-background-light);
   color: #0f172a;
   /* slate-900 equivalent approximately, but we can rely on tailwind classes */
+}
+
+/* ───── Flipkart-inspired Homepage Styles ───── */
+
+/* Category section entrance animation */
+.category-section {
+  animation: fadeSlideUp 0.5s ease-out both;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation for multiple sections */
+.category-section:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.category-section:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.category-section:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.category-section:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.category-section:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.category-section:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+/* Deal strip divider */
+.deal-strip+.deal-strip {
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Product card hover lift */
+.homepage-product-card {
+  will-change: transform;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (prefers-color-scheme: dark) {

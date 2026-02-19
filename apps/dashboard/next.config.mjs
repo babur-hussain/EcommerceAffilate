@@ -1,14 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:4000/api/:path*',
-      },
-    ];
-  },
+  // rewrites removed to ensure live backend usage only
   // Disable Fast Refresh
   experimental: {
     optimizeCss: false,
