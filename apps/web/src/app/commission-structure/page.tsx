@@ -23,10 +23,10 @@ const CommissionPage = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-12">
                     <h1 className="text-3xl font-extrabold text-neutral-900 sm:text-4xl">
-                        Commission Income
+                        Commission Structure
                     </h1>
                     <p className="mt-4 text-lg text-neutral-600">
-                        Earn clear and competitive commissions on every sale.
+                        Category wise Platfrom Commision.
                     </p>
                 </div>
 

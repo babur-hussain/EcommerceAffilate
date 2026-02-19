@@ -1,57 +1,23 @@
-"use client";
+import HomeContent from "@/components/homepage/HomeContent";
+import type { HomepageSection } from "@/hooks/useHomepageSections";
 
-import HeroSlider from "@/components/home/HeroSlider";
-import MobileHeroSlider from "@/components/home/MobileHeroSlider";
-import HomeCategoryList from "@/components/home/HomeCategoryList";
-import CategorySection from "@/components/homepage/CategorySection";
-import HomepageSkeleton from "@/components/homepage/HomepageSkeleton";
-import { useHomepageSections } from "@/hooks/useHomepageSections";
+const BACKEND_URL = process.env.BACKEND_URL || "https://api.lfvs.in";
 
-export default function Home() {
-  const { sections, loading } = useHomepageSections();
+async function getHomepageSections(): Promise<HomepageSection[]> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/homepage/sections`, {
+      next: { revalidate: 60 }, // Cache for 60 seconds on the server
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
 
-  return (
-    <div className="bg-white text-slate-900 font-display antialiased overflow-x-hidden min-h-screen">
-      {/* Categories Bar */}
-      <HomeCategoryList />
+export default async function Home() {
+  const sections = await getHomepageSections();
 
-      {/* Hero Section */}
-      <section className="relative w-full pt-1 pb-2 px-2 sm:px-3 md:px-6 bg-slate-50">
-        <div className="max-w-[1440px] mx-auto">
-          {/* Desktop Slider */}
-          <div className="hidden md:block">
-            <HeroSlider />
-          </div>
-          {/* Mobile Slider */}
-          <div className="block md:hidden">
-            <MobileHeroSlider />
-          </div>
-        </div>
-      </section>
-
-      {/* Dynamic Product Sections */}
-      {loading ? (
-        <HomepageSkeleton />
-      ) : (
-        <main className="flex flex-col w-full bg-slate-100 pt-2.5">
-          {sections.map((section, index) => (
-            <CategorySection
-              key={section._id}
-              section={section}
-              index={index}
-            />
-          ))}
-
-          {/* Empty State */}
-          {sections.length === 0 && !loading && (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white">
-              <span className="material-symbols-outlined text-6xl mb-4">inventory_2</span>
-              <p className="text-lg font-medium">No products available yet</p>
-              <p className="text-sm mt-1">Check back soon for amazing deals!</p>
-            </div>
-          )}
-        </main>
-      )}
-    </div>
-  );
+  return <HomeContent sections={sections} />;
 }

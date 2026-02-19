@@ -4,6 +4,11 @@ import { Product } from '../models/product.model';
 
 const router = Router();
 
+// --- In-memory cache for homepage sections (60s TTL) ---
+let cachedSections: any = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
 /**
  * GET /api/homepage/sections
  * Returns all parent categories (excluding Grocery) with their subcategories
@@ -11,6 +16,10 @@ const router = Router();
  */
 router.get('/homepage/sections', async (req: Request, res: Response) => {
     try {
+        // Serve from cache if still fresh
+        if (cachedSections && (Date.now() - cacheTimestamp) < CACHE_TTL_MS) {
+            return res.json(cachedSections);
+        }
         // 1. Fetch all parent categories
         const parentCategories = await Category.find({
             parentCategory: null,
@@ -313,6 +322,9 @@ router.get('/homepage/sections', async (req: Request, res: Response) => {
             nonEmptySections.unshift(specialSection as any);
         }
 
+        // Store in cache and respond
+        cachedSections = nonEmptySections;
+        cacheTimestamp = Date.now();
         res.json(nonEmptySections);
     } catch (error: any) {
         console.error('Error fetching homepage sections:', error);
