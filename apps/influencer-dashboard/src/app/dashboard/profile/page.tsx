@@ -43,7 +43,7 @@ export default function ProfilePage() {
     setLoading(true);
 
     try {
-      await api.put("/api/influencers/profile", formData);
+      await api.put("/influencers/profile", formData);
       toast.success("Profile updated successfully!");
       await refreshProfile();
     } catch (error: any) {

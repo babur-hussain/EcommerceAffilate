@@ -67,10 +67,10 @@ export default function DashboardPage() {
         setIsRefreshing(true);
       }
       const [metricsRes, productsRes, clicksRes, attributionsRes] = await Promise.all([
-        api.get("/api/influencers/metrics"),
-        api.get("/api/influencers/top-products"),
-        api.get("/api/influencers/clicks-over-time?days=30"),
-        api.get("/api/influencers/attributions?status=all&limit=10"),
+        api.get("/influencers/metrics"),
+        api.get("/influencers/top-products"),
+        api.get("/influencers/clicks-over-time?days=30"),
+        api.get("/influencers/attributions?status=all&limit=10"),
       ]);
 
       setMetrics(metricsRes.data);

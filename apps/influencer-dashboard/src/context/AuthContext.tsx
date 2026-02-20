@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (token: string, firebaseUser?: FirebaseUser) => {
     try {
       console.log("Fetching profile...");
-      const response = await api.get("/api/influencers/profile", {
+      const response = await api.get("/influencers/profile", {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Profile fetched:", response.data);
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.data.referralCode && firebaseUser) {
         console.log("Profile exists but no referral code, creating one...");
         await api.post(
-          "/api/influencers/register",
+          "/influencers/register",
           {
             name:
               firebaseUser.displayName ||
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         );
         // Fetch again
-        const newResponse = await api.get("/api/influencers/profile", {
+        const newResponse = await api.get("/influencers/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfile(newResponse.data);
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           console.log("Auto-creating influencer profile...");
           const registerResponse = await api.post(
-            "/api/influencers/register",
+            "/influencers/register",
             {
               name:
                 firebaseUser.displayName ||
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("Registration response:", registerResponse.data);
 
           // Fetch profile again after creation
-          const newResponse = await api.get("/api/influencers/profile", {
+          const newResponse = await api.get("/influencers/profile", {
             headers: { Authorization: `Bearer ${token}` },
           });
           console.log("New profile fetched:", newResponse.data);
@@ -159,14 +159,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Check if profile exists, if not create one (auto-register)
       try {
-        await api.get("/api/influencers/profile", {
+        await api.get("/influencers/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
       } catch (error: any) {
         if (error.response?.status === 404) {
           // Create profile automatically
           await api.post(
-            "/api/influencers/register",
+            "/influencers/register",
             {
               name: userCredential.user.displayName || email.split("@")[0],
               email: email,
@@ -196,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create influencer profile
       await api.post(
-        "/api/influencers/register",
+        "/influencers/register",
         {
           name,
           email,
@@ -221,14 +221,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Check if profile exists, if not create one
       try {
-        await api.get("/api/influencers/profile", {
+        await api.get("/influencers/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
       } catch (error: any) {
         if (error.response?.status === 404) {
           // Create profile
           await api.post(
-            "/api/influencers/register",
+            "/influencers/register",
             {
               name: result.user.displayName || "Influencer",
               email: result.user.email,

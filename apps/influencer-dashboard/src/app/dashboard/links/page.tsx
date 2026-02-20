@@ -43,7 +43,7 @@ export default function LinksPage() {
 
   const fetchLinks = async () => {
     try {
-      const response = await api.get("/api/influencers/affiliate-links");
+      const response = await api.get("/influencers/affiliate-links");
       setLinks(response.data);
     } catch (error) {
       console.error("Error fetching links:", error);
@@ -74,7 +74,7 @@ export default function LinksPage() {
 
     setSubmitting(true);
     try {
-      await api.post("/api/influencers/affiliate-links", {
+      await api.post("/influencers/affiliate-links", {
         productId: selectedProduct,
       });
 
@@ -108,7 +108,7 @@ export default function LinksPage() {
 
   const handleToggleStatus = async (linkId: string, currentStatus: boolean) => {
     try {
-      await api.patch(`/api/influencers/affiliate-links/${linkId}`, {
+      await api.patch(`/influencers/affiliate-links/${linkId}`, {
         isActive: !currentStatus,
       });
 
@@ -198,11 +198,10 @@ export default function LinksPage() {
                 </div>
                 <button
                   onClick={() => handleToggleStatus(link._id, link.isActive)}
-                  className={`p-2 rounded-lg ${
-                    link.isActive
+                  className={`p-2 rounded-lg ${link.isActive
                       ? "text-green-600 bg-green-50"
                       : "text-gray-400 bg-gray-50"
-                  }`}
+                    }`}
                   title={link.isActive ? "Active" : "Inactive"}
                 >
                   {link.isActive ? (
@@ -301,11 +300,10 @@ export default function LinksPage() {
                       setSearchQuery(product.name);
                       setProducts([]);
                     }}
-                    className={`w-full flex items-center gap-3 p-3 border rounded-lg text-left ${
-                      selectedProduct === product._id
+                    className={`w-full flex items-center gap-3 p-3 border rounded-lg text-left ${selectedProduct === product._id
                         ? "border-primary-500 bg-primary-50"
                         : "border-gray-300 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <img
                       src={product.images?.[0] || "/placeholder.png"}

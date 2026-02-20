@@ -39,8 +39,8 @@ export default function PerformancePage() {
       params.append("days", dateRange);
 
       const [attributionsRes, statsRes] = await Promise.all([
-        api.get(`/api/influencers/attributions?${params}`),
-        api.get("/api/influencers/stats"),
+        api.get(`/influencers/attributions?${params}`),
+        api.get("/influencers/stats"),
       ]);
 
       setAttributions(attributionsRes.data);
@@ -191,11 +191,10 @@ export default function PerformancePage() {
               <button
                 key={status}
                 onClick={() => setFilter(status as any)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === status
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === status
                     ? "bg-primary-600 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </button>
@@ -272,13 +271,12 @@ export default function PerformancePage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          attr.status === "paid"
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${attr.status === "paid"
                             ? "bg-green-100 text-green-800"
                             : attr.status === "conversion"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
                       >
                         {attr.status}
                       </span>

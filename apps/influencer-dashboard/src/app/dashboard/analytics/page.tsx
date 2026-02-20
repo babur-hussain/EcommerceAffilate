@@ -47,7 +47,7 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     try {
       const response = await api.get(
-        `/api/influencers/analytics?days=${period}`
+        `/influencers/analytics?days=${period}`
       );
       setData(response.data);
     } catch (error) {
@@ -70,9 +70,8 @@ export default function AnalyticsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `analytics-report-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
+    a.download = `analytics-report-${new Date().toISOString().split("T")[0]
+      }.json`;
     a.click();
   };
 
@@ -134,9 +133,8 @@ export default function AnalyticsPage() {
                 {formatNumber(trends.clicks.current)}
               </p>
               <div
-                className={`flex items-center text-sm font-medium ${
-                  trends.clicks.growth >= 0 ? "text-green-600" : "text-red-600"
-                }`}
+                className={`flex items-center text-sm font-medium ${trends.clicks.growth >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {trends.clicks.growth >= 0 ? (
                   <TrendingUp className="h-4 w-4 mr-1" />
@@ -157,11 +155,10 @@ export default function AnalyticsPage() {
                 {formatNumber(trends.conversions.current)}
               </p>
               <div
-                className={`flex items-center text-sm font-medium ${
-                  trends.conversions.growth >= 0
+                className={`flex items-center text-sm font-medium ${trends.conversions.growth >= 0
                     ? "text-green-600"
                     : "text-red-600"
-                }`}
+                  }`}
               >
                 {trends.conversions.growth >= 0 ? (
                   <TrendingUp className="h-4 w-4 mr-1" />
@@ -182,9 +179,8 @@ export default function AnalyticsPage() {
                 {formatCurrency(trends.revenue.current)}
               </p>
               <div
-                className={`flex items-center text-sm font-medium ${
-                  trends.revenue.growth >= 0 ? "text-green-600" : "text-red-600"
-                }`}
+                className={`flex items-center text-sm font-medium ${trends.revenue.growth >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {trends.revenue.growth >= 0 ? (
                   <TrendingUp className="h-4 w-4 mr-1" />
@@ -205,11 +201,10 @@ export default function AnalyticsPage() {
                 {formatPercentage(trends.conversionRate.current)}
               </p>
               <div
-                className={`flex items-center text-sm font-medium ${
-                  trends.conversionRate.growth >= 0
+                className={`flex items-center text-sm font-medium ${trends.conversionRate.growth >= 0
                     ? "text-green-600"
                     : "text-red-600"
-                }`}
+                  }`}
               >
                 {trends.conversionRate.growth >= 0 ? (
                   <TrendingUp className="h-4 w-4 mr-1" />
@@ -381,13 +376,12 @@ export default function AnalyticsPage() {
                     <div
                       className="bg-blue-600 h-2 rounded-full"
                       style={{
-                        width: `${
-                          (source.count /
+                        width: `${(source.count /
                             Math.max(
                               ...data.sourceBreakdown.map((s: any) => s.count)
                             )) *
                           100
-                        }%`,
+                          }%`,
                       }}
                     />
                   </div>

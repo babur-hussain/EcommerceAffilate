@@ -44,7 +44,7 @@ export default function EarningsPage() {
 
   const fetchPayouts = async () => {
     try {
-      const response = await api.get("/api/influencers/payouts");
+      const response = await api.get("/influencers/payouts");
       setPayouts(response.data);
     } catch (error) {
       console.error("Error fetching payouts:", error);
@@ -111,7 +111,7 @@ export default function EarningsPage() {
         };
       }
 
-      await api.post("/api/influencers/payouts", payload);
+      await api.post("/influencers/payouts", payload);
 
       toast.success("Payout request submitted successfully!");
       setShowPayoutModal(false);
@@ -256,20 +256,19 @@ export default function EarningsPage() {
                       {payout.method === "bank_transfer"
                         ? "Bank Transfer"
                         : payout.method === "upi"
-                        ? "UPI"
-                        : "PayPal"}
+                          ? "UPI"
+                          : "PayPal"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          payout.status === "completed"
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${payout.status === "completed"
                             ? "bg-green-100 text-green-800"
                             : payout.status === "processing"
-                            ? "bg-blue-100 text-blue-800"
-                            : payout.status === "failed"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                              ? "bg-blue-100 text-blue-800"
+                              : payout.status === "failed"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {payout.status === "completed" && (
                           <CheckCircle className="h-3 w-3" />
@@ -340,11 +339,10 @@ export default function EarningsPage() {
                   <button
                     type="button"
                     onClick={() => setPayoutMethod("upi")}
-                    className={`w-full flex items-center gap-3 p-3 border rounded-lg ${
-                      payoutMethod === "upi"
+                    className={`w-full flex items-center gap-3 p-3 border rounded-lg ${payoutMethod === "upi"
                         ? "border-primary-500 bg-primary-50"
                         : "border-gray-300"
-                    }`}
+                      }`}
                   >
                     <CreditCard className="h-5 w-5" />
                     <span className="font-medium">UPI</span>
@@ -352,11 +350,10 @@ export default function EarningsPage() {
                   <button
                     type="button"
                     onClick={() => setPayoutMethod("bank_transfer")}
-                    className={`w-full flex items-center gap-3 p-3 border rounded-lg ${
-                      payoutMethod === "bank_transfer"
+                    className={`w-full flex items-center gap-3 p-3 border rounded-lg ${payoutMethod === "bank_transfer"
                         ? "border-primary-500 bg-primary-50"
                         : "border-gray-300"
-                    }`}
+                      }`}
                   >
                     <CreditCard className="h-5 w-5" />
                     <span className="font-medium">Bank Transfer</span>
