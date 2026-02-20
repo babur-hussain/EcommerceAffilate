@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import SearchResultCard from "@/components/search/SearchResultCard";
+import CategorySection from "@/components/homepage/CategorySection";
+import { useHomepageSections } from "@/hooks/useHomepageSections";
 
 interface Product {
     _id: string;
@@ -36,6 +38,8 @@ export default function ProductListingPage({
 }: ProductListingPageProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const { sections } = useHomepageSections();
+    const fashionSection = sections.find(s => s.name.toLowerCase() === 'fashion');
 
     useEffect(() => {
         async function fetchProducts() {
@@ -97,6 +101,13 @@ export default function ProductListingPage({
                         </div>
                         <h3 className="text-xl font-bold text-slate-900 mb-2">{emptyTitle}</h3>
                         <p className="text-slate-500 max-w-md">{emptySubtitle}</p>
+                    </div>
+                )}
+
+                {/* Fashion Section from Homepage */}
+                {!loading && fashionSection && (
+                    <div className="mt-16 pt-12 border-t border-slate-100">
+                        <CategorySection section={fashionSection} index={0} />
                     </div>
                 )}
             </main>
