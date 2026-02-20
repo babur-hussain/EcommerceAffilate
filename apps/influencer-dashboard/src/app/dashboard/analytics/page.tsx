@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Analytics Dashboard
@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
@@ -156,8 +156,8 @@ export default function AnalyticsPage() {
               </p>
               <div
                 className={`flex items-center text-sm font-medium ${trends.conversions.growth >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
+                  ? "text-green-600"
+                  : "text-red-600"
                   }`}
               >
                 {trends.conversions.growth >= 0 ? (
@@ -202,8 +202,8 @@ export default function AnalyticsPage() {
               </p>
               <div
                 className={`flex items-center text-sm font-medium ${trends.conversionRate.growth >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
+                  ? "text-green-600"
+                  : "text-red-600"
                   }`}
               >
                 {trends.conversionRate.growth >= 0 ? (
@@ -377,9 +377,9 @@ export default function AnalyticsPage() {
                       className="bg-blue-600 h-2 rounded-full"
                       style={{
                         width: `${(source.count /
-                            Math.max(
-                              ...data.sourceBreakdown.map((s: any) => s.count)
-                            )) *
+                          Math.max(
+                            ...data.sourceBreakdown.map((s: any) => s.count)
+                          )) *
                           100
                           }%`,
                       }}

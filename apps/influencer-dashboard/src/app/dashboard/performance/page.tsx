@@ -93,7 +93,7 @@ export default function PerformancePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Performance Analytics
@@ -192,15 +192,15 @@ export default function PerformancePage() {
                 key={status}
                 onClick={() => setFilter(status as any)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === status
-                    ? "bg-primary-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-primary-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
             <Calendar className="h-4 w-4 text-gray-500" />
             <select
               value={dateRange}
@@ -272,10 +272,10 @@ export default function PerformancePage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${attr.status === "paid"
-                            ? "bg-green-100 text-green-800"
-                            : attr.status === "conversion"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-100 text-gray-800"
+                          ? "bg-green-100 text-green-800"
+                          : attr.status === "conversion"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
                           }`}
                       >
                         {attr.status}

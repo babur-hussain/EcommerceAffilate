@@ -130,7 +130,7 @@ export default function LinksPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-900">
@@ -199,8 +199,8 @@ export default function LinksPage() {
                 <button
                   onClick={() => handleToggleStatus(link._id, link.isActive)}
                   className={`p-2 rounded-lg ${link.isActive
-                      ? "text-green-600 bg-green-50"
-                      : "text-gray-400 bg-gray-50"
+                    ? "text-green-600 bg-green-50"
+                    : "text-gray-400 bg-gray-50"
                     }`}
                   title={link.isActive ? "Active" : "Inactive"}
                 >
@@ -235,7 +235,7 @@ export default function LinksPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => handleCopyLink(link)}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100"
@@ -301,8 +301,8 @@ export default function LinksPage() {
                       setProducts([]);
                     }}
                     className={`w-full flex items-center gap-3 p-3 border rounded-lg text-left ${selectedProduct === product._id
-                        ? "border-primary-500 bg-primary-50"
-                        : "border-gray-300 hover:bg-gray-50"
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-300 hover:bg-gray-50"
                       }`}
                   >
                     <img
