@@ -1089,7 +1089,7 @@ export default function BusinessRegistrationModal({ open, onClose, onSuccess }: 
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className={`flex-1 overflow-y-auto ${statusOverlay ? 'flex items-center justify-center' : ''}`}>
           {statusOverlay ? (
             statusOverlay
           ) : (

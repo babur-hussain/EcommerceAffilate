@@ -20,7 +20,7 @@ export default function CategorySection({ section, index }: CategorySectionProps
                     {section.groups.map((group) => (
                         <div key={group.groupName}>
                             {/* Section Title Bar */}
-                            <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-1">
+                            <div className="flex items-center justify-between px-3 sm:px-6 pt-4 sm:pt-5 pb-1">
                                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                                     {group.groupName === section.name
                                         ? section.name
@@ -28,7 +28,7 @@ export default function CategorySection({ section, index }: CategorySectionProps
                                 </h2>
                                 <Link
                                     href={`/category/${section.slug}`}
-                                    className="text-primary text-sm font-semibold hover:underline flex items-center gap-0.5 shrink-0"
+                                    className="text-primary text-xs sm:text-sm font-semibold hover:underline flex items-center gap-0.5 shrink-0 py-1 min-h-[36px]"
                                 >
                                     View All
                                     <span className="material-symbols-outlined text-[18px]">chevron_right</span>

@@ -21,7 +21,7 @@ export default function HomeContent({ sections }: HomeContentProps) {
             <HomeCategoryList />
 
             {/* Hero Section */}
-            <section className="relative w-full pt-1 pb-2 px-2 sm:px-3 md:px-6 bg-slate-50">
+            <section className="relative w-full pt-1 pb-2 px-2 sm:px-3 md:px-6 bg-white">
                 <div className="max-w-[1440px] mx-auto">
                     {/* Desktop Slider */}
                     <div className="hidden md:block">
@@ -35,7 +35,7 @@ export default function HomeContent({ sections }: HomeContentProps) {
             </section>
 
             {/* Dynamic Product Sections — lazy loaded per viewport */}
-            <main className="flex flex-col w-full bg-slate-100 pt-2.5">
+            <main className="flex flex-col w-full bg-white pt-2.5">
                 {sections.map((section, index) => (
                     <LazySection
                         key={section._id}

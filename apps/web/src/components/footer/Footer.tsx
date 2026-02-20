@@ -150,7 +150,7 @@ export default function Footer() {
             </button>
 
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-linear-to-br from-sky-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-sky-500/30">
+              <div className="w-16 h-16 bg-linear-to-br from-primary to-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/30">
                 <span className="material-symbols-outlined text-white text-3xl">lock</span>
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Login Required</h3>
@@ -162,14 +162,14 @@ export default function Footer() {
             <div className="space-y-3">
               <button
                 onClick={() => router.push('/login?redirect=/&action=seller-register')}
-                className="w-full px-6 py-3 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 bg-linear-to-r from-primary to-primary text-white font-bold rounded-xl shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined">login</span>
                 Login to Continue
               </button>
               <button
                 onClick={() => router.push('/register?type=seller')}
-                className="w-full px-6 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:border-sky-500 hover:text-sky-600 hover:bg-sky-50 transition-all duration-300 flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-300 flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined">person_add</span>
                 Create New Account
@@ -179,7 +179,7 @@ export default function Footer() {
         </div>
       )}
 
-      <footer className="relative bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-300 mt-auto overflow-hidden">
+      <footer className="relative bg-linear-to-br from-[#023047] via-slate-800 to-[#023047] text-slate-300 mt-auto overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{
@@ -195,7 +195,7 @@ export default function Footer() {
               <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
                 {/* Left Content */}
                 <div className="flex-1 text-center lg:text-left">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-linear-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-full text-purple-400 text-sm font-semibold mb-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-linear-to-r from-accent-dark/10 to-accent-dark/10 border border-accent-dark/20 rounded-full text-accent text-sm font-semibold mb-4">
                     <span className="material-symbols-outlined text-lg">campaign</span>
                     Join Our Creator Network
                   </div>
@@ -207,15 +207,15 @@ export default function Footer() {
                   </p>
                   <div className="flex flex-wrap items-center gap-4 sm:gap-8 justify-center lg:justify-start text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-purple-400">check_circle</span>
+                      <span className="material-symbols-outlined text-accent">check_circle</span>
                       <span className="text-slate-300">High Commissions</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-purple-400">check_circle</span>
+                      <span className="material-symbols-outlined text-accent">check_circle</span>
                       <span className="text-slate-300">Exclusive Perks</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-purple-400">check_circle</span>
+                      <span className="material-symbols-outlined text-accent">check_circle</span>
                       <span className="text-slate-300">Partner Support</span>
                     </div>
                   </div>
@@ -232,7 +232,7 @@ export default function Footer() {
                           setShowLoginPrompt(true);
                         }
                       }}
-                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-accent to-accent-dark text-white font-bold rounded-xl shadow-lg shadow-accent-dark/30 hover:shadow-xl hover:shadow-accent-dark/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">stars</span>
                       Register as Influencer
@@ -242,7 +242,7 @@ export default function Footer() {
                   {influencerStatus === 'PENDING' && (
                     <button
                       onClick={() => setShowInfluencerModal(true)}
-                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-accent to-accent-dark text-white font-bold rounded-xl shadow-lg shadow-accent/30 hover:shadow-xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">pending</span>
                       Registration Under Review
@@ -271,7 +271,7 @@ export default function Footer() {
                   )}
                   <Link
                     href="#"
-                    className="text-slate-400 hover:text-purple-400 text-sm transition-colors flex items-center gap-1 justify-center"
+                    className="text-slate-400 hover:text-accent text-sm transition-colors flex items-center gap-1 justify-center"
                   >
                     Learn more
                     <span className="material-symbols-outlined text-sm">help</span>
@@ -289,7 +289,7 @@ export default function Footer() {
               <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
                 {/* Left Content */}
                 <div className="flex-1 text-center lg:text-left">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-linear-to-r from-sky-500/10 to-blue-500/10 border border-sky-500/20 rounded-full text-sky-400 text-sm font-semibold mb-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-linear-to-r from-primary/10 to-primary/10 border border-primary/20 rounded-full text-primary text-sm font-semibold mb-4">
                     <span className="material-symbols-outlined text-lg">trending_up</span>
                     Join Our Seller Community
                   </div>
@@ -321,7 +321,7 @@ export default function Footer() {
                     <button
                       onClick={handleSellerRegistrationClick}
                       disabled={loadingStatus}
-                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-sky-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-primary to-primary text-white font-bold rounded-xl shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">storefront</span>
                       Register as Seller
@@ -331,7 +331,7 @@ export default function Footer() {
                   {sellerStatus === 'PENDING' && (
                     <button
                       onClick={() => setShowSellerModal(true)}
-                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
+                      className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-accent to-accent-dark text-white font-bold rounded-xl shadow-lg shadow-accent/30 hover:shadow-xl hover:shadow-accent/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">pending</span>
                       Registration Under Review
@@ -360,7 +360,7 @@ export default function Footer() {
                   )}
                   <Link
                     href="#"
-                    className="text-slate-400 hover:text-sky-400 text-sm transition-colors flex items-center gap-1"
+                    className="text-slate-400 hover:text-primary text-sm transition-colors flex items-center gap-1"
                   >
                     Learn more
                     <span className="material-symbols-outlined text-sm">help</span>
@@ -378,7 +378,7 @@ export default function Footer() {
             {/* Brand Section */}
             <div className="col-span-2 sm:col-span-2 lg:col-span-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/30">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-primary flex items-center justify-center shadow-lg shadow-primary/30">
                   <span className="material-symbols-outlined text-white text-2xl">shopping_bag</span>
                 </div>
                 <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Local For Vocal Startup</h3>
@@ -390,25 +390,25 @@ export default function Footer() {
               <div className="flex items-center gap-3">
                 <Link
                   href="#"
-                  className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:bg-sky-500 hover:border-sky-500 hover:scale-110 transition-all duration-300 group"
+                  className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary hover:scale-110 transition-all duration-300 group"
                 >
                   <span className="material-symbols-outlined text-slate-400 group-hover:text-white text-xl">link</span>
                 </Link>
                 <Link
                   href="#"
-                  className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:bg-sky-500 hover:border-sky-500 hover:scale-110 transition-all duration-300 group"
+                  className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary hover:scale-110 transition-all duration-300 group"
                 >
                   <span className="material-symbols-outlined text-slate-400 group-hover:text-white text-xl">tag</span>
                 </Link>
                 <Link
                   href="#"
-                  className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:bg-sky-500 hover:border-sky-500 hover:scale-110 transition-all duration-300 group"
+                  className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary hover:scale-110 transition-all duration-300 group"
                 >
                   <span className="material-symbols-outlined text-slate-400 group-hover:text-white text-xl">photo_camera</span>
                 </Link>
                 <Link
                   href="#"
-                  className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:bg-sky-500 hover:border-sky-500 hover:scale-110 transition-all duration-300 group"
+                  className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:bg-primary hover:border-primary hover:scale-110 transition-all duration-300 group"
                 >
                   <span className="material-symbols-outlined text-slate-400 group-hover:text-white text-xl">play_circle</span>
                 </Link>
@@ -429,7 +429,7 @@ export default function Footer() {
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
+                      className="text-slate-400 hover:text-primary hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
                     >
                       <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                       {item.name}
@@ -453,7 +453,7 @@ export default function Footer() {
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
+                      className="text-slate-400 hover:text-primary hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
                     >
                       <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                       {item.name}
@@ -488,7 +488,7 @@ export default function Footer() {
                               setShowLoginPrompt(true);
                             }
                           }}
-                          className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group text-left"
+                          className="text-slate-400 hover:text-primary hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group text-left"
                         >
                           <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                           {influencerStatus === 'PENDING' ? 'Registration Under Review' : influencerStatus === 'APPROVED' ? 'Go to Dashboard' : item}
@@ -504,7 +504,7 @@ export default function Footer() {
                                       : item === 'Contact' ? '/contact'
                                         : '#'
                           }
-                          className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
+                          className="text-slate-400 hover:text-primary hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
                         >
                           <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                           {item}
@@ -532,7 +532,7 @@ export default function Footer() {
                 />
                 <button
                   type="submit"
-                  className="absolute right-1 top-1 bottom-1 px-4 bg-linear-to-r from-sky-500 to-blue-600 text-white rounded-md hover:shadow-lg hover:shadow-sky-500/50 transition-all duration-300 flex items-center justify-center disabled:opacity-50"
+                  className="absolute right-1 top-1 bottom-1 px-4 bg-linear-to-r from-primary to-primary text-white rounded-md hover:shadow-lg hover:shadow-primary/50 transition-all duration-300 flex items-center justify-center disabled:opacity-50"
                   disabled={subscribed}
                 >
                   {subscribed ? (
@@ -562,7 +562,7 @@ export default function Footer() {
               {['credit_card', 'account_balance', 'qr_code_2', 'wallet'].map((icon) => (
                 <div
                   key={icon}
-                  className="w-12 h-8 rounded bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:border-sky-500 transition-colors"
+                  className="w-12 h-8 rounded bg-slate-800/50 border border-slate-700 flex items-center justify-center hover:border-primary transition-colors"
                 >
                   <span className="material-symbols-outlined text-slate-400 text-lg">{icon}</span>
                 </div>
@@ -575,15 +575,15 @@ export default function Footer() {
                 © 2026 <span className="text-white font-semibold">Local For Vocal Startup</span>. All rights reserved.
               </p>
               <div className="flex items-center justify-center md:justify-end gap-4 mt-2">
-                <Link href="#" className="text-slate-500 hover:text-sky-400 text-xs transition-colors">
+                <Link href="#" className="text-slate-500 hover:text-primary text-xs transition-colors">
                   Privacy Policy
                 </Link>
                 <span className="text-slate-700">•</span>
-                <Link href="#" className="text-slate-500 hover:text-sky-400 text-xs transition-colors">
+                <Link href="#" className="text-slate-500 hover:text-primary text-xs transition-colors">
                   Terms of Service
                 </Link>
                 <span className="text-slate-700">•</span>
-                <Link href="#" className="text-slate-500 hover:text-sky-400 text-xs transition-colors">
+                <Link href="#" className="text-slate-500 hover:text-primary text-xs transition-colors">
                   Cookies
                 </Link>
               </div>
@@ -592,7 +592,7 @@ export default function Footer() {
         </div>
 
         {/* Decorative Gradient Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-sky-500 via-blue-500 to-purple-500" />
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-primary via-accent to-accent-dark" />
       </footer>
     </>
   );

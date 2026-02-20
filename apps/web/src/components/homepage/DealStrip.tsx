@@ -27,13 +27,13 @@ export default function DealStrip({ title, slug, products }: DealStripProps) {
     return (
         <div className="deal-strip py-3 sm:py-4">
             {/* Subcategory Header */}
-            <div className="flex items-center justify-between mb-3 px-4 sm:px-5">
+            <div className="flex items-center justify-between mb-3 px-3 sm:px-5">
                 <h4 className="text-sm sm:text-base font-bold text-slate-800 tracking-tight">
                     {title}
                 </h4>
                 <Link
                     href={viewAllLink}
-                    className="text-xs sm:text-sm font-semibold text-primary hover:underline flex items-center gap-0.5"
+                    className="text-xs sm:text-sm font-semibold text-primary hover:underline flex items-center gap-0.5 py-1 min-h-[36px]"
                 >
                     View All
                     <span className="material-symbols-outlined text-[14px]">chevron_right</span>
@@ -61,7 +61,7 @@ export default function DealStrip({ title, slug, products }: DealStripProps) {
                 {/* Product Scroll Track */}
                 <div
                     ref={scrollRef}
-                    className="flex gap-3 sm:gap-4 overflow-x-auto hide-scrollbar scroll-smooth-touch px-4 sm:px-5 pb-2"
+                    className="flex gap-2.5 sm:gap-4 overflow-x-auto hide-scrollbar scroll-smooth-touch px-3 sm:px-5 pb-2"
                 >
                     {products.map((product) => (
                         <HomepageProductCard key={product._id} product={product} />

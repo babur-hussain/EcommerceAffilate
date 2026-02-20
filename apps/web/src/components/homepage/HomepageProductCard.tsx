@@ -22,7 +22,7 @@ export default function HomepageProductCard({ product }: HomepageProductCardProp
     return (
         <Link
             href={`/product/${product._id}`}
-            className="homepage-product-card group block w-[160px] sm:w-[180px] md:w-[200px] shrink-0 snap-start"
+            className="homepage-product-card group block w-[140px] xs:w-[160px] sm:w-[180px] md:w-[200px] shrink-0 snap-start"
         >
             <div className="h-full flex flex-col">
                 {/* Image Container */}

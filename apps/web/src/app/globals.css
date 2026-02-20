@@ -1,10 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #19a1e6;
+  --color-primary: #219ebc;
   --color-background-light: #ffffff;
-  --color-background-dark: #22252a;
+  --color-background-dark: #023047;
   --color-surface-light: #f8fafc;
+  --color-accent: #ffb703;
+  --color-accent-dark: #fb8500;
 
   --font-display: "Epilogue", sans-serif;
   --font-sans: "Epilogue", sans-serif;
@@ -14,7 +16,7 @@
   --radius-2xl: 2rem;
 
   --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
-  --shadow-glow: 0 0 20px -5px rgba(25, 161, 230, 0.3);
+  --shadow-glow: 0 0 20px -5px rgba(33, 158, 188, 0.3);
 }
 
 /* Custom Utilities */
@@ -124,7 +126,7 @@ body {
 
 /* Deal strip divider */
 .deal-strip+.deal-strip {
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #ffffff;
 }
 
 /* Product card hover lift */
@@ -148,38 +150,38 @@ body {
   width: 24px !important;
   height: 4px !important;
   border-radius: 2px !important;
-  background: rgba(255, 255, 255, 0.5) !important;
+  background: rgba(33, 158, 188, 0.5) !important;
   opacity: 1 !important;
   transition: all 0.3s ease !important;
 }
 
 .hero-slider-flat .swiper-pagination-bullet-active {
-  background: #fff !important;
+  background: var(--color-accent) !important;
   width: 32px !important;
 }
 
 /* Product Gallery Swiper Pagination */
 .swiper-pagination-bullet-active {
-  background: var(--color-primary) !important;
+  background: var(--color-accent) !important;
 }
 
 /* Checkout Redesign Animations */
 @keyframes pulse-glow {
   0% {
-    box-shadow: 0 0 0 0 rgba(60, 207, 78, 0.4);
+    box-shadow: 0 0 0 0 rgba(33, 158, 188, 0.4);
   }
 
   70% {
-    box-shadow: 0 0 0 8px rgba(60, 207, 78, 0);
+    box-shadow: 0 0 0 8px rgba(33, 158, 188, 0);
   }
 
   100% {
-    box-shadow: 0 0 0 0 rgba(60, 207, 78, 0);
+    box-shadow: 0 0 0 0 rgba(33, 158, 188, 0);
   }
 }
 
 .pulse-glow {
-  box-shadow: 0 0 0 0 rgba(60, 207, 78, 0.7);
+  box-shadow: 0 0 0 0 rgba(33, 158, 188, 0.7);
   animation: pulse-glow 2s infinite;
 }
 
