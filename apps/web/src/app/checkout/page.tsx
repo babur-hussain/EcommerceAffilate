@@ -886,33 +886,7 @@ export default function CheckoutPage() {
               <span className="text-gray-500 text-sm font-medium">{cartItems.length} Items</span>
             </div>
 
-            {/* Rapid Delivery Banner */}
-            <div className="bg-[#F8FFF9] dark:bg-[#122415] border border-green-500/20 rounded-xl p-5 mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-3 h-3 bg-green-500 rounded-full pulse-glow"></div>
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#1a3a1f] dark:text-[#a3cfab]">
-                    {(() => {
-                      const selectedAddress = addresses.find(a => a._id === selectedAddressId);
-                      const { minutes, text } = calculateOrderDelivery(cartItems, selectedAddress?.coordinates);
 
-                      // If address is selected, show explicit time
-                      if (selectedAddressId && minutes < 1440) { // Less than 24 hours
-                        const arrivalTime = new Date(Date.now() + minutes * 60000);
-                        return `Arriving by ${arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                      }
-                      return `Delivering in ${text}`;
-                    })()}
-                  </h3>
-                  <p className="text-sm text-[#3a5a3f] dark:text-[#7ba983]">
-                    {selectedAddressId ? "Fast delivery to your doorstep." : "Your items are ready for rapid dispatch."}
-                  </p>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-green-500">bolt</span>
-            </div>
 
             {/* Checkout Steps Accordion */}
             <div className="space-y-6">
