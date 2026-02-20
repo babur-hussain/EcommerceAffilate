@@ -105,7 +105,7 @@ export default function Footer() {
   };
 
   const handleGoToDashboard = () => {
-    window.location.href = 'https://www.seller.localforvocalstartup.com/login';
+    window.location.href = 'https://influencers.localforvocalstartup.com';
   };
 
   const handleSubscribe = (e: React.FormEvent) => {
