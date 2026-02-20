@@ -251,7 +251,7 @@ export default function Footer() {
                   )}
                   {influencerStatus === 'APPROVED' && (
                     <button
-                      onClick={() => window.location.href = 'https://influencer.localforvocalstartup.com'}
+                      onClick={() => window.location.href = 'https://influencers.localforvocalstartup.com/login'}
                       className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">dashboard</span>
@@ -340,7 +340,7 @@ export default function Footer() {
                   )}
                   {sellerStatus === 'APPROVED' && (
                     <button
-                      onClick={handleGoToDashboard}
+                      onClick={() => window.location.href = 'https://www.seller.localforvocalstartup.com/'}
                       className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <span className="material-symbols-outlined">dashboard</span>
@@ -463,7 +463,7 @@ export default function Footer() {
                         <button
                           onClick={() => {
                             if (influencerStatus === 'APPROVED') {
-                              window.location.href = 'https://influencer.localforvocalstartup.com';
+                              window.location.href = 'https://influencers.localforvocalstartup.com/login';
                               return;
                             }
                             if (influencerStatus === 'PENDING' || influencerStatus === 'REJECTED') {

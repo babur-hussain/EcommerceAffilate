@@ -37,14 +37,22 @@ export default function CategorySection({ section, index }: CategorySectionProps
 
                             {/* Subcategory Deal Strips */}
                             <div>
-                                {group.subcategories.map((subcategory) => (
-                                    <DealStrip
-                                        key={subcategory._id}
-                                        title={subcategory.name}
-                                        slug={subcategory._id}
-                                        products={subcategory.products}
-                                    />
-                                ))}
+                                {group.subcategories.map((subcategory) => {
+                                    const validProducts = subcategory.products?.filter(
+                                        (p) => !!p.image || !!p.primaryImage || (p.images && p.images.length > 0)
+                                    ) || [];
+
+                                    if (validProducts.length === 0) return null;
+
+                                    return (
+                                        <DealStrip
+                                            key={subcategory._id}
+                                            title={subcategory.name}
+                                            slug={subcategory._id}
+                                            products={validProducts}
+                                        />
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
