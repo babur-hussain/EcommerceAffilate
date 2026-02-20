@@ -869,6 +869,12 @@ export const COMMISSIONS: CategoryGroup[] = [
                 ]
             },
             {
+                name: "Refurbished Mobile phones",
+                rates: [
+                    { range: "All prices", rate: "7%" },
+                ]
+            },
+            {
                 name: "Tablets (including Graphic Tablets)",
                 rates: [
                     { range: "item price <= 300", rate: "0.0%" },

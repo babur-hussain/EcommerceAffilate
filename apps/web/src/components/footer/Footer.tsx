@@ -419,14 +419,20 @@ export default function Footer() {
             <div className="col-span-1 lg:col-span-2">
               <h4 className="text-white font-bold mb-4 text-sm uppercase tracking-wider">Shop</h4>
               <ul className="space-y-3">
-                {['New Arrivals', 'Best Sellers', 'Sale', 'Collections', 'Gift Cards'].map((item) => (
-                  <li key={item}>
+                {[
+                  { name: 'New Arrivals', href: '/new-arrivals' },
+                  { name: 'Best Sellers', href: '/best-sellers' },
+                  { name: 'Sale', href: '/sale' },
+                  { name: 'Collections', href: '/collections' },
+                  { name: 'Gift Cards', href: '/gift-cards' },
+                ].map((item) => (
+                  <li key={item.name}>
                     <Link
-                      href="#"
+                      href={item.href}
                       className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
                     >
                       <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
-                      {item}
+                      {item.name}
                     </Link>
                   </li>
                 ))}
@@ -437,14 +443,20 @@ export default function Footer() {
             <div className="col-span-1 lg:col-span-2">
               <h4 className="text-white font-bold mb-4 text-sm uppercase tracking-wider">Support</h4>
               <ul className="space-y-3">
-                {['Help Center', 'Track Order', 'Returns', 'Shipping Info', 'Size Guide'].map((item) => (
-                  <li key={item}>
+                {[
+                  { name: 'Help Center', href: '/help-center' },
+                  { name: 'Track Order', href: '/track-order' },
+                  { name: 'Returns', href: '/returns' },
+                  { name: 'Shipping Info', href: '/shipping-info' },
+                  { name: 'Size Guide', href: '/size-guide' },
+                ].map((item) => (
+                  <li key={item.name}>
                     <Link
-                      href="#"
+                      href={item.href}
                       className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
                     >
                       <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
-                      {item}
+                      {item.name}
                     </Link>
                   </li>
                 ))}
@@ -483,7 +495,15 @@ export default function Footer() {
                         </button>
                       ) : (
                         <Link
-                          href={item === 'Commission Structure' ? '/commission-structure' : '#'}
+                          href={
+                            item === 'Commission Structure' ? '/commission-structure'
+                              : item === 'About Us' ? '/about'
+                                : item === 'Careers' ? '/careers'
+                                  : item === 'Press' ? '/press'
+                                    : item === 'Blog' ? '/blog'
+                                      : item === 'Contact' ? '/contact'
+                                        : '#'
+                          }
                           className="text-slate-400 hover:text-sky-400 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 group"
                         >
                           <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
