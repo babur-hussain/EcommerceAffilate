@@ -75,6 +75,7 @@ export const DEFAULT_PERMISSIONS: Record<AdminRole, PermissionKey[]> = {
         "delivery_rules",
         "reports",
         "homepage",
+        "layout_manager",
         "team",
     ],
     staff: ["dashboard", "review_products", "categories"],

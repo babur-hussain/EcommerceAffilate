@@ -12,6 +12,8 @@ export interface LayoutVersion {
     timestamp: string;        // ISO string
     json: string;             // raw JSON string
     layoutName: string;
+    savedByEmail?: string;    // who committed this version
+    savedByName?: string;     // display name of the user
 }
 
 export interface LayoutBookmark {
@@ -20,6 +22,8 @@ export interface LayoutBookmark {
     json: string;             // raw JSON string
     note: string;
     layoutName: string;
+    savedByEmail?: string;
+    savedByName?: string;
 }
 
 // ─── Internal helpers ────────────────────────────────────────────────
@@ -58,7 +62,9 @@ function writeJSON(key: string, value: unknown) {
 export function saveVersion(
     layoutId: string,
     json: string,
-    layoutName: string
+    layoutName: string,
+    savedByEmail?: string,
+    savedByName?: string
 ): LayoutVersion {
     const versions = readJSON<LayoutVersion[]>(historyKey(layoutId), []);
     const entry: LayoutVersion = {
@@ -66,6 +72,8 @@ export function saveVersion(
         timestamp: new Date().toISOString(),
         json,
         layoutName,
+        savedByEmail,
+        savedByName,
     };
     versions.unshift(entry);
     // Cap at MAX_VERSIONS
@@ -97,7 +105,9 @@ export function saveBookmark(
     layoutId: string,
     json: string,
     note: string,
-    layoutName: string
+    layoutName: string,
+    savedByEmail?: string,
+    savedByName?: string
 ): LayoutBookmark {
     const bookmarks = readJSON<LayoutBookmark[]>(bookmarkKey(layoutId), []);
     const entry: LayoutBookmark = {
@@ -106,6 +116,8 @@ export function saveBookmark(
         json,
         note,
         layoutName,
+        savedByEmail,
+        savedByName,
     };
     bookmarks.unshift(entry);
     writeJSON(bookmarkKey(layoutId), bookmarks);

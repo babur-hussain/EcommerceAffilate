@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Save, ArrowLeft, Code, Clock, Bookmark, BookmarkPlus, Trash2, RotateCcw, Pencil, X, Check } from "lucide-react";
+import { Save, ArrowLeft, Code, Clock, Bookmark, BookmarkPlus, Trash2, RotateCcw, Pencil, X, Check, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import api from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import {
     saveVersion,
     getVersions,
@@ -18,11 +19,13 @@ import {
     type LayoutVersion,
     type LayoutBookmark,
 } from "@/lib/layoutHistory";
+import toast from "react-hot-toast";
 
 type SideTab = "sections" | "history" | "bookmarks";
 
 export default function LayoutEditorPage({ params }: { params: { id: string } }) {
     const router = useRouter();
+    const { userEmail, userName } = useAuth();
     const isNew = params.id === 'new';
 
     const [formData, setFormData] = useState({
@@ -48,6 +51,7 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
     const [editingBookmarkId, setEditingBookmarkId] = useState<string | null>(null);
     const [editingNote, setEditingNote] = useState('');
     const [restoredMessage, setRestoredMessage] = useState('');
+    const [rollingBack, setRollingBack] = useState(false);
 
     // Load history & bookmarks from localStorage
     const refreshSideData = useCallback(() => {
@@ -60,6 +64,7 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
         if (!isNew) {
             fetchLayout();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [params.id]);
 
     useEffect(() => {
@@ -112,9 +117,9 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                 return;
             }
 
-            // Save version to localStorage BEFORE the API call
+            // Save version to localStorage BEFORE the API call (with user info)
             if (!isNew) {
-                saveVersion(params.id, jsonContent, formData.name || formData.slug);
+                saveVersion(params.id, jsonContent, formData.name || formData.slug, userEmail, userName);
             }
 
             const payload = {
@@ -135,11 +140,10 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
             // Refresh side data after save
             refreshSideData();
 
+            toast.success("Layout saved successfully!");
             router.push('/admin/layout-manager');
         } catch (err: any) {
             console.error('Full error:', err);
-            console.error('Response data:', err.response?.data);
-            console.error('Response status:', err.response?.status);
             const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || "Error saving layout";
             setError(errorMessage);
         } finally {
@@ -149,10 +153,48 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
 
     // ─── History actions ─────────────────────────────────────────
 
+    /** Restore to editor only (does NOT save to backend) */
     const handleRestoreVersion = (json: string) => {
         setJsonContent(json);
-        setRestoredMessage('Version restored to editor!');
-        setTimeout(() => setRestoredMessage(''), 3000);
+        setRestoredMessage('Version restored to editor. Click "Save Layout" to apply.');
+        setSideTab("sections");
+        setTimeout(() => setRestoredMessage(''), 5000);
+    };
+
+    /** Rollback: restore to editor AND save to backend immediately */
+    const handleRollback = async (version: LayoutVersion) => {
+        if (!confirm(`Rollback to version from ${format(new Date(version.timestamp), 'MMM d, yyyy HH:mm')}${version.savedByName ? ` by ${version.savedByName}` : ''}?\n\nThis will save this version to the server immediately.`)) return;
+
+        setRollingBack(true);
+        try {
+            // Parse the version JSON
+            const parsedComponents = JSON.parse(version.json);
+
+            // Save to API
+            await api.put(`/api/admin/layouts/${params.id}`, {
+                ...formData,
+                components: parsedComponents,
+            });
+
+            // Save a new version entry marking the rollback
+            saveVersion(
+                params.id,
+                version.json,
+                formData.name || formData.slug,
+                userEmail,
+                userName
+            );
+
+            // Update editor
+            setJsonContent(version.json);
+            refreshSideData();
+            toast.success("Rolled back successfully!");
+        } catch (err: any) {
+            console.error("Rollback error:", err);
+            toast.error("Rollback failed: " + (err.response?.data?.error || err.message));
+        } finally {
+            setRollingBack(false);
+        }
     };
 
     const handleDeleteVersion = (versionId: string) => {
@@ -170,10 +212,11 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
 
     const handleAddBookmark = () => {
         if (!bookmarkNote.trim()) return;
-        saveBookmark(params.id, jsonContent, bookmarkNote.trim(), formData.name || formData.slug);
+        saveBookmark(params.id, jsonContent, bookmarkNote.trim(), formData.name || formData.slug, userEmail, userName);
         setBookmarkNote('');
         setShowBookmarkModal(false);
         refreshSideData();
+        toast.success("Bookmark saved!");
     };
 
     const handleRestoreBookmark = (json: string) => {
@@ -239,7 +282,7 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
 
                     <button
                         onClick={handleSave}
-                        disabled={saving}
+                        disabled={saving || rollingBack}
                         className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
                     >
                         <Save className="h-4 w-4" />
@@ -308,8 +351,8 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                         <button
                             onClick={() => setSideTab("sections")}
                             className={`flex-1 px-2 py-2.5 text-xs font-medium uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${sideTab === "sections"
-                                    ? "text-primary-600 border-b-2 border-primary-600 bg-white"
-                                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                                ? "text-primary-600 border-b-2 border-primary-600 bg-white"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                                 }`}
                         >
                             <Code className="h-3.5 w-3.5" />
@@ -318,8 +361,8 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                         <button
                             onClick={() => setSideTab("history")}
                             className={`flex-1 px-2 py-2.5 text-xs font-medium uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${sideTab === "history"
-                                    ? "text-primary-600 border-b-2 border-primary-600 bg-white"
-                                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                                ? "text-primary-600 border-b-2 border-primary-600 bg-white"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                                 }`}
                         >
                             <Clock className="h-3.5 w-3.5" />
@@ -333,8 +376,8 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                         <button
                             onClick={() => setSideTab("bookmarks")}
                             className={`flex-1 px-2 py-2.5 text-xs font-medium uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${sideTab === "bookmarks"
-                                    ? "text-amber-600 border-b-2 border-amber-500 bg-white"
-                                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                                ? "text-amber-600 border-b-2 border-amber-500 bg-white"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                                 }`}
                         >
                             <Bookmark className="h-3.5 w-3.5" />
@@ -403,16 +446,35 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                                                     {format(new Date(v.timestamp), 'MMM d, HH:mm')}
                                                 </span>
                                             </div>
-                                            <div className="text-xs text-gray-500 truncate mb-2">
+                                            <div className="text-xs text-gray-500 truncate mb-1">
                                                 {v.layoutName}
                                             </div>
+                                            {/* User who saved this version */}
+                                            {(v.savedByName || v.savedByEmail) && (
+                                                <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-2">
+                                                    <User className="h-2.5 w-2.5" />
+                                                    <span className="truncate">
+                                                        {v.savedByName || v.savedByEmail}
+                                                    </span>
+                                                </div>
+                                            )}
                                             <div className="flex gap-1">
                                                 <button
                                                     onClick={() => handleRestoreVersion(v.json)}
                                                     className="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded transition-colors"
+                                                    title="Load into editor (preview only)"
+                                                >
+                                                    <Code className="h-3 w-3" />
+                                                    Preview
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRollback(v)}
+                                                    disabled={rollingBack}
+                                                    className="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1 text-green-600 bg-green-50 hover:bg-green-100 rounded transition-colors disabled:opacity-50"
+                                                    title="Rollback: restore and save to server"
                                                 >
                                                     <RotateCcw className="h-3 w-3" />
-                                                    Restore
+                                                    Rollback
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteVersion(v.id)}
@@ -480,6 +542,15 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                                                             {format(new Date(b.timestamp), 'MMM d, HH:mm')}
                                                         </span>
                                                     </div>
+                                                    {/* User who saved this bookmark */}
+                                                    {(b.savedByName || b.savedByEmail) && (
+                                                        <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-1.5">
+                                                            <User className="h-2.5 w-2.5" />
+                                                            <span className="truncate">
+                                                                {b.savedByName || b.savedByEmail}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                     <div className="flex gap-1 mt-2">
                                                         <button
                                                             onClick={() => handleRestoreBookmark(b.json)}
