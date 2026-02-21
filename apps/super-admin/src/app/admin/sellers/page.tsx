@@ -73,7 +73,10 @@ export default function SellersPage() {
     (seller) =>
       seller.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       seller.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      seller.business?.businessName
+      seller.business?.businessIdentity?.legalBusinessName
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      seller.business?.businessIdentity?.tradeName
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase())
   );
@@ -196,10 +199,10 @@ export default function SellersPage() {
                       {seller.business ? (
                         <div>
                           <p className="font-medium text-gray-900">
-                            {seller.business.businessName}
+                            {seller.business.businessIdentity?.legalBusinessName || seller.business.businessIdentity?.tradeName}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {seller.business.businessType}
+                            {seller.business.businessIdentity?.businessType}
                           </p>
                           <span
                             className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${getStatusColor(
