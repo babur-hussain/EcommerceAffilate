@@ -253,7 +253,7 @@ export default function TeamPage() {
                                 onChange={(e) => setFormEmail(e.target.value)}
                                 disabled={!!editingUid}
                                 placeholder="user@example.com"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-500 text-gray-900"
                             />
                             {!editingUid && (
                                 <p className="text-xs text-gray-500 mt-1">
@@ -272,7 +272,7 @@ export default function TeamPage() {
                                 value={formName}
                                 onChange={(e) => setFormName(e.target.value)}
                                 placeholder="John Doe"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
                             />
                         </div>
                     </div>
@@ -288,8 +288,8 @@ export default function TeamPage() {
                                     key={role}
                                     onClick={() => handleRoleChange(role)}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${formRole === role
-                                            ? "border-primary-500 bg-primary-50 text-primary-700"
-                                            : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                        ? "border-primary-500 bg-primary-50 text-primary-700"
+                                        : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
                                         }`}
                                 >
                                     {roleIcon(role)}
@@ -310,8 +310,8 @@ export default function TeamPage() {
                                     <label
                                         key={perm}
                                         className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${formPermissions.includes(perm)
-                                                ? "border-primary-300 bg-primary-50 text-primary-700"
-                                                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                                            ? "border-primary-300 bg-primary-50 text-primary-700"
+                                            : "border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
                                             }`}
                                     >
                                         <input
@@ -322,8 +322,8 @@ export default function TeamPage() {
                                         />
                                         <div
                                             className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${formPermissions.includes(perm)
-                                                    ? "bg-primary-600 border-primary-600"
-                                                    : "border-gray-300"
+                                                ? "bg-primary-600 border-primary-600"
+                                                : "border-gray-300"
                                                 }`}
                                         >
                                             {formPermissions.includes(perm) && (
@@ -444,8 +444,8 @@ export default function TeamPage() {
                                             <td className="px-6 py-4">
                                                 <span
                                                     className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full ${member.isActive
-                                                            ? "bg-green-100 text-green-700"
-                                                            : "bg-red-100 text-red-700"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-red-100 text-red-700"
                                                         }`}
                                                 >
                                                     {member.isActive ? "Active" : "Inactive"}
@@ -465,8 +465,8 @@ export default function TeamPage() {
                                                             <button
                                                                 onClick={() => toggleActive(member)}
                                                                 className={`p-2 rounded-lg ${member.isActive
-                                                                        ? "text-yellow-600 hover:bg-yellow-50"
-                                                                        : "text-green-600 hover:bg-green-50"
+                                                                    ? "text-yellow-600 hover:bg-yellow-50"
+                                                                    : "text-green-600 hover:bg-green-50"
                                                                     }`}
                                                                 title={member.isActive ? "Deactivate" : "Activate"}
                                                             >
