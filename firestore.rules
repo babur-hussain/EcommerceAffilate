@@ -30,6 +30,15 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
     
+    // Admin Users for RBAC (super-admin panel)
+    match /adminUsers/{docId} {
+      // Anyone authenticated can read (needed for login check by UID or email query)
+      allow read: if request.auth != null;
+      // Only the super admin can write (add/edit/delete team members)
+      allow write: if request.auth != null
+        && request.auth.token.email == 'thebaburhussain2@gmail.com';
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
