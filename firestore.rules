@@ -34,8 +34,12 @@ service cloud.firestore {
     match /adminUsers/{docId} {
       // Anyone authenticated can read (needed for login check by UID or email query)
       allow read: if request.auth != null;
-      // Only the super admin can write (add/edit/delete team members)
-      allow write: if request.auth != null
+      // Super admin can write any doc (add/edit/delete team members)
+      // Authenticated users can write their own UID doc (needed for UID migration on first login)
+      allow create, update: if request.auth != null
+        && (request.auth.token.email == 'thebaburhussain2@gmail.com'
+            || request.auth.uid == docId);
+      allow delete: if request.auth != null
         && request.auth.token.email == 'thebaburhussain2@gmail.com';
     }
 

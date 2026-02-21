@@ -110,7 +110,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updatedAt: new Date().toISOString(),
       });
       if (existingDoc.id !== firebaseUser.uid) {
-        await deleteDoc(doc(db, "adminUsers", existingDoc.id));
+        // Try to clean up placeholder doc; may fail if user lacks delete permission (non-fatal)
+        try {
+          await deleteDoc(doc(db, "adminUsers", existingDoc.id));
+        } catch (delErr) {
+          console.warn("Could not delete placeholder doc (will be cleaned up by super admin):", delErr);
+        }
       }
 
       setAdminRole(data.role as AdminRole);
