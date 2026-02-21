@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:4000/api';
+// Server-side API routes need the full backend URL
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    const res = await fetch(`${API_BASE}/payments/webhook`, {
+    const res = await fetch(`${BACKEND_URL}/api/payments/webhook`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
