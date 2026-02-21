@@ -1,3 +1,19 @@
+// ─── RBAC Types ──────────────────────────────────────────────────────
+export type AdminRole = 'super_admin' | 'manager' | 'staff';
+
+export interface AdminUser {
+  uid: string;
+  email: string;
+  name: string;
+  role: AdminRole;
+  permissions: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy: string;
+}
+
+// ─── Existing Types ──────────────────────────────────────────────────
 export interface User {
   uid: string;
   email: string;

@@ -4,50 +4,50 @@ import React, { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { LogOut, Shield } from "lucide-react";
 import {
-  LayoutDashboard,
-  Users,
-  TrendingUp,
-  FileText,
-  Settings,
-  LogOut,
-  Store,
-  UserCheck,
-  BarChart3,
-  Shield,
-  Tags,
-  Sliders,
-  Percent,
-  ClipboardCheck,
-} from "lucide-react";
+  NAVIGATION,
+  hasPermission,
+  getRequiredPermission,
+  PermissionKey,
+} from "@/lib/permissions";
+import toast from "react-hot-toast";
 
-const navigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Review Products", href: "/admin/review-products", icon: ClipboardCheck },
-  { name: "Sellers", href: "/admin/sellers", icon: Store },
-  { name: "Influencers", href: "/admin/influencers", icon: UserCheck },
-  { name: "Categories", href: "/admin/categories", icon: Tags },
-  { name: "Attributes", href: "/admin/attributes", icon: Sliders },
-  { name: "All Users", href: "/admin/users", icon: Users },
-  { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { name: "Steal Deals", href: "/admin/offers", icon: Percent },
-  { name: "Delivery Rules", href: "/admin/delivery-rules", icon: TrendingUp },
-  { name: "Reports", href: "/admin/reports", icon: FileText },
-  { name: "Layout Manager", href: "/admin/homepage", icon: LayoutDashboard },
-  { name: "Advanced Layouts", href: "/admin/layout-manager", icon: Sliders },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-];
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Super Admin",
+  manager: "Manager",
+  staff: "Staff",
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  super_admin: "bg-purple-100 text-purple-700",
+  manager: "bg-blue-100 text-blue-700",
+  staff: "bg-green-100 text-green-700",
+};
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, adminRole, permissions, loading, signOut, userName, userEmail } =
+    useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
     }
   }, [user, loading, router]);
+
+  // Route-level permission check
+  useEffect(() => {
+    if (loading || !user || !adminRole) return;
+
+    const required = getRequiredPermission(pathname);
+    if (required && !hasPermission(permissions, required)) {
+      toast.error("You don't have permission to access that page.");
+      router.replace("/admin");
+    }
+  }, [pathname, permissions, loading, user, adminRole, router]);
 
   if (loading) {
     return (
@@ -60,9 +60,14 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user || !profile) {
+  if (!user || !adminRole) {
     return null;
   }
+
+  // Filter navigation based on permissions
+  const visibleNavigation = NAVIGATION.filter((item) =>
+    hasPermission(permissions, item.permission)
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -81,15 +86,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href;
+          {visibleNavigation.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/admin" && pathname.startsWith(item.href + "/"));
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
-                  ? "bg-primary-50 text-primary-700"
-                  : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-primary-50 text-primary-700"
+                    : "text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 <item.icon className="h-5 w-5" />
@@ -99,20 +106,29 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* User Profile - No longer absolute, just the last flex item */}
+        {/* User Profile */}
         <div className="p-4 border-t border-gray-200 flex-shrink-0">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-2">
             <div className="flex-shrink-0 w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-sm">
-                {profile.name?.charAt(0).toUpperCase() || "A"}
+                {userName?.charAt(0).toUpperCase() || "A"}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {profile.name || "Admin"}
+                {userName || "Admin"}
               </p>
-              <p className="text-xs text-gray-500 truncate">{profile.email}</p>
+              <p className="text-xs text-gray-500 truncate">{userEmail}</p>
             </div>
+          </div>
+          {/* Role Badge */}
+          <div className="mb-3">
+            <span
+              className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-full ${ROLE_COLORS[adminRole] || "bg-gray-100 text-gray-700"
+                }`}
+            >
+              {ROLE_LABELS[adminRole] || adminRole}
+            </span>
           </div>
           <button
             onClick={signOut}
@@ -131,11 +147,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                {navigation.find((item) => item.href === pathname)?.name ||
+                {NAVIGATION.find((item) => item.href === pathname)?.name ||
                   "Dashboard"}
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">
-                Welcome back, {profile.name || "Admin"}
+                Welcome back, {userName || "Admin"}
               </p>
             </div>
             <div className="flex items-center gap-2">
