@@ -154,7 +154,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelect, initial
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col">
+            <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-2xl overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900">Select Pickup Location</h3>
                     <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg">
@@ -184,7 +184,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelect, initial
                         </button>
                     </form>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         <input
                             type="text"
                             value={address}
@@ -202,7 +202,7 @@ export default function LocationPickerModal({ isOpen, onClose, onSelect, initial
                         </button>
                     </div>
 
-                    <div className="rounded-lg overflow-hidden border border-gray-300 h-[400px] relative z-0">
+                    <div className="rounded-lg overflow-hidden border border-gray-300 h-[250px] sm:h-[400px] relative z-0">
                         <MapContainer
                             center={position || defaultCenter}
                             zoom={5}

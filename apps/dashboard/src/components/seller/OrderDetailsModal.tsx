@@ -145,7 +145,7 @@ export default function OrderDetailsModal({ order: initialOrder, onClose }: Orde
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-3xl sm:max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
 
                 {/* Header */}
                 <div className="flex justify-between items-center p-6 border-b border-gray-100">
@@ -521,7 +521,7 @@ export default function OrderDetailsModal({ order: initialOrder, onClose }: Orde
                             <span className="p-1.5 bg-orange-50 text-orange-600 rounded-md"><Package className="w-4 h-4" /></span>
                             Order Items
                         </h3>
-                        <div className="border rounded-lg overflow-hidden">
+                        <div className="border rounded-lg overflow-hidden overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-gray-50 text-gray-500 border-b">
                                     <tr>

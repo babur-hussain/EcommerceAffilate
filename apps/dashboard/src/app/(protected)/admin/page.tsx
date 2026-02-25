@@ -60,10 +60,10 @@ export default function AdminDashboard() {
 
   return (
     <ProtectedRoute allowedRoles={['ADMIN']}>
-      <DashboardLayout userRole={user.role}>
+      <DashboardLayout>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="text-gray-600 mt-1">Platform overview and analytics</p>
           </div>
 
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
             </div>
           ) : analytics ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <StatCard
                   title="Total Revenue"
                   value={`$${analytics.revenue.toLocaleString()}`}
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
 
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Revenue Breakdown</h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Sponsored Sales</p>
                     <p className="text-2xl font-bold text-primary-600">

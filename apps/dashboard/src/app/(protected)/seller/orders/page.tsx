@@ -230,7 +230,7 @@ export default function OrdersPage() {
     <ProtectedRoute allowedRoles={['SELLER_OWNER', 'SELLER_MANAGER', 'SELLER_STAFF']}>
       <div className="space-y-6">
         {/* Header with Settings Toggle */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
             <p className="text-gray-600">Manage and track your customer orders</p>
@@ -326,7 +326,7 @@ export default function OrdersPage() {
         )}
 
         {/* Order Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>

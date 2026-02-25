@@ -49,7 +49,7 @@ export default function FeesManager({ fees, onChange }: FeesManagerProps) {
             {fees.length > 0 && (
                 <div className="space-y-3">
                     {fees.map((fee, index) => (
-                        <div key={index} className="flex gap-3 items-start p-3 bg-gray-50 rounded-lg">
+                        <div key={index} className="flex flex-col sm:flex-row gap-3 items-start p-3 bg-gray-50 rounded-lg">
                             <div className="flex-1">
                                 <input
                                     type="text"
