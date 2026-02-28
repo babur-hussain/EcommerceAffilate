@@ -194,6 +194,7 @@ struct ContentView: View {
                             )
                         }
                     }
+                    .background(Color.white)
                     .environmentObject(navigationManager)
                     .environmentObject(cartManager)
                     .environmentObject(basketManager)
@@ -262,9 +263,11 @@ struct HomeTabContent: View {
             } else if navigationManager.activeTab == .services {
                 ServicesPageView()
                     .frame(maxWidth: .infinity)
+                    .background(Color.white)
             } else if navigationManager.activeTab == .influencers {
                 InfluencersPageView()
                     .frame(maxWidth: .infinity)
+                    .background(Color.white)
             } else {
                 // Default Home / Shopping
                 NavigationView {
@@ -346,6 +349,7 @@ struct HomeTabContent: View {
                         .ignoresSafeArea(edges: .top)
                         .zIndex(2)
                     }
+                    .background(Color.white)
                     .navigationBarHidden(true)
                 }
             }

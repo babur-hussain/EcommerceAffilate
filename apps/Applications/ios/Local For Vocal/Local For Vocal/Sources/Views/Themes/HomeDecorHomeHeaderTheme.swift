@@ -14,10 +14,7 @@ public struct HomeDecorThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "home-decor-header-theme",
-            pageSlug: "home",
-            defaultGradientColors: [
-                Color(hex: "#4E342E"), Color(hex: "#5D4037"), Color(hex: "#6D4C41"),
-            ]
+            pageSlug: "home"
         )
     }
 }

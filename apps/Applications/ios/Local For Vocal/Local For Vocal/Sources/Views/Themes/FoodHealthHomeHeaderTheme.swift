@@ -14,10 +14,7 @@ public struct FoodHealthThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "food-health-header-theme",
-            pageSlug: "food-health",
-            defaultGradientColors: [
-                Color(hex: "#2E7D32"), Color(hex: "#388E3C"), Color(hex: "#43A047"),
-            ]
+            pageSlug: "food-health"
         )
     }
 }

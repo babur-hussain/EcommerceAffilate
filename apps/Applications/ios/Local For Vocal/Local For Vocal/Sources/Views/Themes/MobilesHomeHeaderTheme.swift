@@ -14,10 +14,7 @@ public struct MobilesThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "mobiles-header-theme",
-            pageSlug: "mobiles",
-            defaultGradientColors: [
-                Color(hex: "#0D47A1"), Color(hex: "#1565C0"), Color(hex: "#1976D2"),
-            ]
+            pageSlug: "mobiles"
         )
     }
 }

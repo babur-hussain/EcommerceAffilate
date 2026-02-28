@@ -11,6 +11,9 @@ final class SDUILayoutStore: ObservableObject {
     /// Cached layouts keyed by slug
     @Published var layouts: [String: AdvancedLayoutResponse] = [:]
 
+    /// Whether the preloader has finished loading disk cache into memory
+    @Published var isPreloaded: Bool = false
+
     /// Track which slugs are currently being fetched (prevents duplicate requests)
     var activeFetches: Set<String> = []
 
@@ -23,7 +26,20 @@ final class SDUILayoutStore: ObservableObject {
     /// Minimum interval between network fetches for the same slug (5 minutes)
     let minFetchInterval: TimeInterval = 5 * 60
 
-    private init() {}
+    /// Stale threshold matching SDUICacheManager (1 hour)
+    private let staleCacheAge: TimeInterval = 60 * 60
+
+    private init() {
+        // Synchronously load ALL cached layouts from disk at init.
+        // This runs before any view is created, so layouts are in RAM instantly.
+        let startTime = CFAbsoluteTimeGetCurrent()
+        loadAllFromDiskSync()
+        let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+        print(
+            "[SDUILayoutStore] Sync-loaded \(layouts.count) layouts from disk in \(String(format: "%.1f", elapsed))ms"
+        )
+        isPreloaded = true
+    }
 
     func shouldFetchFromNetwork(slug: String) -> Bool {
         // Don't fetch if already fetching
@@ -38,6 +54,55 @@ final class SDUILayoutStore: ObservableObject {
 
         return true
     }
+
+    // MARK: - Synchronous Disk Cache Loading
+
+    /// Reads ALL .cache files from the SDUI cache directory synchronously.
+    /// Bypasses the SDUICacheManager actor entirely for zero-latency init.
+    private func loadAllFromDiskSync() {
+        let fileManager = FileManager.default
+        guard let cacheBase = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
+        else { return }
+        let cacheDir = cacheBase.appendingPathComponent("SDUI", isDirectory: true)
+
+        guard fileManager.fileExists(atPath: cacheDir.path) else { return }
+
+        // Internal format matching SDUICacheManager.CacheFile
+        struct CacheFile: Codable {
+            let rawJSON: Data
+            let version: Int
+            let timestamp: Date
+            let slug: String
+        }
+
+        guard
+            let files = try? fileManager.contentsOfDirectory(
+                at: cacheDir, includingPropertiesForKeys: nil)
+        else { return }
+
+        for fileURL in files {
+            // Only process .cache files (skip metadata file)
+            guard fileURL.pathExtension == "cache" else { continue }
+
+            guard let fileData = try? Data(contentsOf: fileURL),
+                let cacheFile = try? JSONDecoder().decode(CacheFile.self, from: fileData),
+                let components = try? JSONDecoder().decode(
+                    [SDUIComponent].self, from: cacheFile.rawJSON)
+            else { continue }
+
+            let isStale = Date().timeIntervalSince(cacheFile.timestamp) > staleCacheAge
+
+            let response = AdvancedLayoutResponse(
+                slug: cacheFile.slug,
+                name: "Preloaded",
+                isActive: true,
+                components: components
+            )
+
+            layouts[cacheFile.slug] = response
+            staleFlags[cacheFile.slug] = isStale
+        }
+    }
 }
 
 // MARK: - SDUIPage View
@@ -50,10 +115,69 @@ final class SDUILayoutStore: ObservableObject {
 struct SDUIPage: View {
     let slug: String
     @ObservedObject private var store = SDUILayoutStore.shared
-    @State private var showSkeleton = true
+    @State private var showSkeleton: Bool
     @State private var errorMessage: String?
     @State private var isLoading = false
     @State private var hasTriggeredLoad = false
+
+    init(slug: String) {
+        self.slug = slug
+
+        // Check 1: Already in memory store?
+        if SDUILayoutStore.shared.layouts[slug] != nil {
+            _showSkeleton = State(initialValue: false)
+            print("[SDUIPage] INSTANT: '\(slug)' found in memory store")
+        }
+        // Check 2: Synchronous disk cache fallback (belt-and-suspenders)
+        else if let layout = SDUIPage.loadFromDiskSync(slug: slug) {
+            // Promote to memory store immediately
+            SDUILayoutStore.shared.layouts[slug] = layout
+            _showSkeleton = State(initialValue: false)
+            print("[SDUIPage] SYNC-DISK: '\(slug)' loaded from disk and promoted to store")
+        } else {
+            _showSkeleton = State(initialValue: true)
+            print("[SDUIPage] MISS: '\(slug)' not cached, will show skeleton")
+        }
+    }
+
+    /// Synchronously reads a single slug's cache file directly from FileManager.
+    /// This bypasses the SDUICacheManager actor entirely for zero-latency.
+    static func loadFromDiskSync(slug: String) -> AdvancedLayoutResponse? {
+        let fileManager = FileManager.default
+        guard let cacheBase = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
+        else { return nil }
+        let cacheDir = cacheBase.appendingPathComponent("SDUI", isDirectory: true)
+        let fileName = "\(slug)_v1.cache"
+        let fileURL = cacheDir.appendingPathComponent(fileName)
+
+        guard fileManager.fileExists(atPath: fileURL.path) else {
+            print("[SDUIPage] SYNC-DISK: No cache file at \(fileURL.lastPathComponent)")
+            return nil
+        }
+
+        struct CacheFile: Codable {
+            let rawJSON: Data
+            let version: Int
+            let timestamp: Date
+            let slug: String
+        }
+
+        guard let fileData = try? Data(contentsOf: fileURL),
+            let cacheFile = try? JSONDecoder().decode(CacheFile.self, from: fileData),
+            let components = try? JSONDecoder().decode(
+                [SDUIComponent].self, from: cacheFile.rawJSON)
+        else {
+            print("[SDUIPage] SYNC-DISK: Failed to decode cache file for '\(slug)'")
+            return nil
+        }
+
+        return AdvancedLayoutResponse(
+            slug: cacheFile.slug,
+            name: "Preloaded",
+            isActive: true,
+            components: components
+        )
+    }
 
     private var layout: AdvancedLayoutResponse? {
         store.layouts[slug]
@@ -235,14 +359,16 @@ struct SDUIPage: View {
                     isLoading = false
                 }
 
-                // Save to disk cache
+                // Save to disk cache and register slug for future preloading
                 if let rawData = try? JSONEncoder().encode(response.components) {
+                    let slugToRegister = currentSlug
                     Task.detached {
                         await SDUICacheManager.shared.saveRawJSON(
                             rawData,
-                            slug: currentSlug,
+                            slug: slugToRegister,
                             userId: nil
                         )
+                        LayoutPreloader.shared.registerCachedSlug(slugToRegister)
                     }
                 }
 

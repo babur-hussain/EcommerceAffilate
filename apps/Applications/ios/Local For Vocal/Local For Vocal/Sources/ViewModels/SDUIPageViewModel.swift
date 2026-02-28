@@ -68,7 +68,7 @@ class SDUIPageViewModel: ObservableObject {
             self.isFromCache = false
             print("[SDUI] Updated with \(freshComponents.count) fresh components")
 
-            // 4. Save raw JSON to cache (non-blocking)
+            // 4. Save raw JSON to cache and register for preloading (non-blocking)
             if let rawData = rawData {
                 let slug = self.pageSlug
                 Task.detached {
@@ -77,6 +77,7 @@ class SDUIPageViewModel: ObservableObject {
                         slug: slug,
                         userId: nil
                     )
+                    LayoutPreloader.shared.registerCachedSlug(slug)
                 }
             }
 

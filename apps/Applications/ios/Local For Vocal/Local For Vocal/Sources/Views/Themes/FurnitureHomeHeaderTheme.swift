@@ -14,10 +14,7 @@ public struct FurnitureThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "furniture-header-theme",
-            pageSlug: "furniture",
-            defaultGradientColors: [
-                Color(hex: "#3E2723"), Color(hex: "#4E342E"), Color(hex: "#5D4037"),
-            ]
+            pageSlug: "furniture"
         )
     }
 }

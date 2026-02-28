@@ -1011,12 +1011,41 @@ extension SDUIComponentView {
             component.prop(for: "bannerImage")
             ?? "https://png.pngtree.com/png-vector/20240125/ourmid/pngtree-grocery-shopping-bag-isolated-png-image_11549419.png"
         let discountText = component.prop(for: "discountText") ?? "50%"
+        let categoryId = component.prop(for: "categoryId") as String?
+
+        // Parse subCategoryIds from JSON (can be array or comma-separated string)
+        let subCategoryIds: [String] = {
+            let decoded: [String] = component.decodeItems(for: "subCategoryIds")
+            if !decoded.isEmpty { return decoded }
+            if let idsString: String = component.prop(for: "subCategoryIds"), !idsString.isEmpty {
+                return idsString.components(separatedBy: ",").map {
+                    $0.trimmingCharacters(in: .whitespaces)
+                }
+            }
+            return []
+        }()
+
+        // Detect grocery based on prop or category name heuristic
+        let isGrocery: Bool = {
+            if let grocery: Bool = component.prop(for: "isGrocery") { return grocery }
+            if let groceryStr: String = component.prop(for: "isGrocery") {
+                return groceryStr == "true"
+            }
+            // Heuristic: check if category slug or name hints at grocery
+            let catId = categoryId?.lowercased() ?? ""
+            let titleLower = title.lowercased()
+            return catId.contains("grocery") || catId.contains("food")
+                || titleLower.contains("grocery") || titleLower.contains("food")
+        }()
 
         FiftyPercentOffZoneView(
             title: title,
             subtitle: subtitle,
             bannerImage: bannerImage,
-            discountText: discountText
+            discountText: discountText,
+            categoryId: categoryId,
+            subCategoryIds: subCategoryIds,
+            isGrocery: isGrocery
         )
     }
 

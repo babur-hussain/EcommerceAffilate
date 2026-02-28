@@ -14,10 +14,7 @@ public struct AutoThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "auto-header-theme",
-            pageSlug: "auto",
-            defaultGradientColors: [
-                Color(hex: "#263238"), Color(hex: "#37474F"), Color(hex: "#455A64"),
-            ]
+            pageSlug: "auto"
         )
     }
 }

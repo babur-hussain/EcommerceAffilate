@@ -145,10 +145,10 @@ public struct CategoryThemePage: View {
     /// Default gradient colors when no JSON is loaded
     let defaultGradientColors: [Color]
 
-    @State private var headerComponents: [SDUIComponent] = []
+    @State private var headerComponents: [SDUIComponent]
     @State private var backgroundImage: String?
-    @State private var lottieLayers: [LottieLayerConfig] = []
-    @State private var gradientColors: [String] = []
+    @State private var lottieLayers: [LottieLayerConfig]
+    @State private var gradientColors: [String]
 
     @State private var hasError = false
 
@@ -156,12 +156,36 @@ public struct CategoryThemePage: View {
         headerSlug: String,
         pageSlug: String,
         defaultGradientColors: [Color] = [
-            Color(hex: "#1A1A2E"), Color(hex: "#16213E"), Color(hex: "#0F3460"),
+            Color(hex: "#2874F0")
         ]
     ) {
         self.headerSlug = headerSlug
         self.pageSlug = pageSlug
         self.defaultGradientColors = defaultGradientColors
+
+        // Try to load header from cache immediately (sync) & extract background data
+        let cachedComponents: [SDUIComponent]
+        if let cached = SDUILayoutStore.shared.layouts[headerSlug] {
+            cachedComponents = cached.components
+            print("[CategoryThemePage] INSTANT: header '\(headerSlug)' from memory store")
+        } else if let layout = SDUIPage.loadFromDiskSync(slug: headerSlug) {
+            SDUILayoutStore.shared.layouts[headerSlug] = layout
+            cachedComponents = layout.components
+            print("[CategoryThemePage] SYNC-DISK: header '\(headerSlug)' from disk cache")
+        } else {
+            cachedComponents = []
+        }
+
+        // Set header components
+        _headerComponents = State(initialValue: cachedComponents)
+
+        // Extract background data synchronously from cached components
+        let bg = cachedComponents.first(where: { $0.type == .headerBackground })
+        _backgroundImage = State(initialValue: bg?.prop(for: "imageUrl") as String?)
+        _lottieLayers = State(
+            initialValue: bg?.decodeItems(for: "lottieLayers", as: [LottieLayerConfig].self) ?? [])
+        _gradientColors = State(
+            initialValue: bg?.decodeItems(for: "gradientColors", as: [String].self) ?? [])
     }
 
     public var body: some View {
@@ -263,13 +287,8 @@ public struct CategoryThemePage: View {
         .padding(.bottom, 100)
         .background(Color(hex: "#F9FAFB"))
         .task(id: headerSlug) {
+            // Background refresh header from network (non-blocking)
             await loadComponents()
-        }
-        .onAppear {
-            // Safety net: reload if data is empty (LazyVStack may not re-fire .task)
-            if headerComponents.isEmpty && !hasError {
-                Task { await loadComponents() }
-            }
         }
         .id(headerSlug)  // FORCE RECREATION of the view when slug changes
     }
@@ -298,6 +317,19 @@ public struct CategoryThemePage: View {
                     await MainActor.run {
                         self.headerComponents = layout.components
                         updateBackgroundData()
+
+                        // Save to store for next launch
+                        SDUILayoutStore.shared.layouts[headerSlug] = layout
+                    }
+
+                    // Save to disk cache for instant load next time
+                    if let rawData = try? JSONEncoder().encode(layout.components) {
+                        let slug = headerSlug
+                        Task.detached {
+                            await SDUICacheManager.shared.saveRawJSON(
+                                rawData, slug: slug, userId: nil)
+                            LayoutPreloader.shared.registerCachedSlug(slug)
+                        }
                     }
                     return  // Success
                 } else {
@@ -317,7 +349,9 @@ public struct CategoryThemePage: View {
         print(
             "DEBUG: All \(maxRetries) attempts failed for \(headerSlug). Default gradient remains.")
         await MainActor.run {
-            self.hasError = true
+            if headerComponents.isEmpty {
+                self.hasError = true
+            }
         }
     }
 
@@ -337,10 +371,7 @@ public struct ForYouPage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "for-you-header-theme",
-            pageSlug: "for-you",
-            defaultGradientColors: [
-                Color(safeHex: "#EE204D"), Color(safeHex: "#58111A"), Color(safeHex: "#EE204D"),
-            ]
+            pageSlug: "for-you"
         )
     }
 }
@@ -473,7 +504,9 @@ public struct GlobalLottieLayer: View {
                 self.failedToLoadDotLottie = false
             }
         } catch {
-            print("GlobalLottieLayer: Failed DotLottie '\(layer.animationName)', trying JSON fallback.")
+            print(
+                "GlobalLottieLayer: Failed DotLottie '\(layer.animationName)', trying JSON fallback."
+            )
             await MainActor.run {
                 self.dotLottieFile = nil
                 self.failedToLoadDotLottie = true

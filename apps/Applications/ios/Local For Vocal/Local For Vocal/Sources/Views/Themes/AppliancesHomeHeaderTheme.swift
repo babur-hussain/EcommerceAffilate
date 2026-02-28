@@ -14,10 +14,7 @@ public struct AppliancesThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "appliances-header-theme",
-            pageSlug: "appliances",
-            defaultGradientColors: [
-                Color(hex: "#37474F"), Color(hex: "#455A64"), Color(hex: "#546E7A"),
-            ]
+            pageSlug: "appliances"
         )
     }
 }

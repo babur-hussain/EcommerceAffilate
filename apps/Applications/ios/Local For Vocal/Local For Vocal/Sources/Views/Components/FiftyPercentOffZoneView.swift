@@ -1,15 +1,21 @@
 import SwiftUI
 
 struct FiftyPercentOffZoneView: View {
-    @State private var products: [Product] = []
-    private let api = APIService.shared
+    @ObservedObject private var wishlistManager = WishlistManager.shared
 
-    // Props
+    // Props from SDUI JSON
     var title: String = "50% OFF ZONE"
     var subtitle: String = "Half the price, double the joy!"
     var bannerImage: String =
-        "https://png.pngtree.com/png-vector/20240125/ourmid/pngtree-grocery-shopping-bag-isolated-png-image_11549419.png"  // Default fallback
+        "https://png.pngtree.com/png-vector/20240125/ourmid/pngtree-grocery-shopping-bag-isolated-png-image_11549419.png"
     var discountText: String = "50%"
+    var categoryId: String?
+    var subCategoryIds: [String] = []
+    var isGrocery: Bool = false
+
+    @State private var products: [Product] = []
+    @State private var isLoading = true
+    private let api = APIService.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -68,18 +74,40 @@ struct FiftyPercentOffZoneView: View {
             .frame(height: 140)
 
             // Product List
-            if products.isEmpty {
+            if isLoading {
                 HStack {
                     Spacer()
                     ProgressView()
                     Spacer()
                 }
                 .padding(20)
+            } else if products.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "tag.slash")
+                        .font(.system(size: 28))
+                        .foregroundColor(.gray)
+                    Text("No deals available right now")
+                        .font(.system(size: 13))
+                        .foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(20)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(products) { product in
-                            ProductCardView(product: product, width: 150)
+                            NavigationLink(
+                                destination: ProductDetailView(
+                                    productId: product.id,
+                                    productFragment: product
+                                )
+                            ) {
+                                ProductCardWithWishlist(
+                                    product: product,
+                                    width: 150
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(.horizontal, 16)
@@ -88,9 +116,15 @@ struct FiftyPercentOffZoneView: View {
             }
 
             // See All Button
-            Button(action: {
-                // Navigate to list
-            }) {
+            NavigationLink(
+                destination: CategoryProductsListView(
+                    categoryId: categoryId,
+                    subCategoryIds: subCategoryIds,
+                    isGrocery: isGrocery,
+                    title: title,
+                    minimumDiscount: 50
+                )
+            ) {
                 HStack {
                     Text("See all")
                         .font(.system(size: 14, weight: .semibold))
@@ -108,22 +142,174 @@ struct FiftyPercentOffZoneView: View {
         }
         .background(Color.white)
         .padding(.vertical, 12)
-        .onAppear {
-            loadProducts()
+        .task {
+            await loadProducts()
         }
     }
 
-    private func loadProducts() {
-        Task {
-            do {
-                let fetchedProducts = try await api.fetchProducts(limit: 10)
-                // In a real app we might filter by discount here
-                DispatchQueue.main.async {
-                    self.products = fetchedProducts
-                }
-            } catch {
-                print("Error fetching products: \(error)")
+    private func loadProducts() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            var fetchedProducts: [Product] = []
+
+            if !subCategoryIds.isEmpty {
+                // Fetch by sub-category IDs (most specific)
+                fetchedProducts = try await api.fetchProductsBySubCategoryIds(
+                    subCategoryIds, limit: 30)
+            } else if let catId = categoryId, !catId.isEmpty {
+                // Fetch by category ID
+                fetchedProducts = try await api.fetchProducts(
+                    limit: 30, categoryId: catId)
+            } else {
+                // Fallback: fetch general products
+                fetchedProducts = try await api.fetchProducts(limit: 30)
             }
+
+            // Filter to only products with ≥50% discount
+            let discounted = fetchedProducts.filter { product in
+                if let discount = product.discountPercentage, discount >= 50 {
+                    return true
+                }
+                // Calculate from MRP if discountPercentage not set
+                if let mrp = product.mrp, mrp > product.price {
+                    let calculatedDiscount = Int(((mrp - product.price) / mrp) * 100)
+                    return calculatedDiscount >= 50
+                }
+                return false
+            }
+
+            await MainActor.run {
+                // Show discounted products, or first 10 of fetched if no discounts found
+                self.products =
+                    discounted.isEmpty
+                    ? Array(fetchedProducts.prefix(10))
+                    : Array(discounted.prefix(10))
+            }
+        } catch {
+            print("[FiftyPercentOffZone] Error fetching products: \(error)")
         }
+    }
+}
+
+// MARK: - Product Card with Working Wishlist
+
+private struct ProductCardWithWishlist: View {
+    let product: Product
+    let width: CGFloat
+    @ObservedObject private var wishlistManager = WishlistManager.shared
+
+    var isWishlisted: Bool {
+        wishlistManager.isInWishlist(productId: product.id)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Image Container
+            ZStack(alignment: .topTrailing) {
+                Color(hex: "#F3F4F6")
+
+                if let imageUrl = product.images.first, let url = URL(string: imageUrl) {
+                    CachedAsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color(hex: "#F3F4F6")
+                    }
+                    .frame(width: width, height: 160)
+                    .clipped()
+                } else {
+                    Image(systemName: "photo")
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray)
+                        .frame(width: width, height: 160)
+                }
+
+                // Wishlist Button (functional)
+                Button(action: {
+                    HapticManager.shared.impact(style: .medium)
+                    Task {
+                        _ = await wishlistManager.toggleWishlist(productId: product.id)
+                    }
+                }) {
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 32, height: 32)
+                        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                        .overlay(
+                            Image(systemName: isWishlisted ? "heart.fill" : "heart")
+                                .font(.system(size: 16))
+                                .foregroundColor(
+                                    isWishlisted
+                                        ? Color(hex: "#EF4444") : Color(hex: "#4F46E5"))
+                        )
+                }
+                .padding(8)
+
+                // Discount Badge
+                if let discount = product.discountPercentage, discount > 0 {
+                    Text("-\(discount)%")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color(hex: "#EF4444"))
+                        .cornerRadius(4)
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                }
+            }
+            .frame(height: 160)
+
+            // Content
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.name)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color(hex: "#111827"))
+                    .lineLimit(2)
+                    .frame(height: 40, alignment: .topLeading)
+
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("₹\(Int(product.price))")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(Color(hex: "#4F46E5"))
+
+                        if let mrp = product.mrp, mrp > product.price {
+                            Text("₹\(Int(mrp))")
+                                .font(.system(size: 10))
+                                .foregroundColor(Color(hex: "#9CA3AF"))
+                                .strikethrough()
+                        }
+                    }
+
+                    Spacer()
+
+                    // Rating
+                    if let rating = product.rating {
+                        HStack(spacing: 2) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(Color(hex: "#F59E0B"))
+                            Text(String(format: "%.1f", rating))
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(Color(hex: "#B45309"))
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color(hex: "#FFFBEB"))
+                        .cornerRadius(4)
+                    }
+                }
+                .padding(.top, 4)
+            }
+            .padding(12)
+        }
+        .frame(width: width)
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }

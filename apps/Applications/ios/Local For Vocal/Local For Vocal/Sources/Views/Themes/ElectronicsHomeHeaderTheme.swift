@@ -15,10 +15,7 @@ public struct ElectronicsThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "electronics-header-theme",
-            pageSlug: "electronics",
-            defaultGradientColors: [
-                Color(hex: "#1A237E"), Color(hex: "#283593"), Color(hex: "#303F9F"),
-            ]
+            pageSlug: "electronics"
         )
     }
 }

@@ -57,14 +57,22 @@ actor SDUICacheManager {
         cacheDirectory = cacheBase.appendingPathComponent("SDUI", isDirectory: true)
         metadataFile = cacheDirectory.appendingPathComponent("cache_metadata.json")
 
-        // Initialize metadata
-        metadata = CacheMetadata()
+        // Initialize metadata (synchronously so it's ready for preloading)
+        var loadedMetadata = CacheMetadata()
+        if fileManager.fileExists(
+            atPath: cacheDirectory.appendingPathComponent("cache_metadata.json").path)
+        {
+            if let data = try? Data(
+                contentsOf: cacheDirectory.appendingPathComponent("cache_metadata.json")),
+                let decoded = try? JSONDecoder().decode(CacheMetadata.self, from: data)
+            {
+                loadedMetadata = decoded
+            }
+        }
+        metadata = loadedMetadata
 
         // Create directory if needed
         try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
-
-        // Load existing metadata
-        Task { await loadMetadata() }
     }
 
     // MARK: - Public API

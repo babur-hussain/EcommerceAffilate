@@ -14,10 +14,7 @@ public struct FashionThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "fashion-header-theme",
-            pageSlug: "fashion",
-            defaultGradientColors: [
-                Color(hex: "#D4145A"), Color(hex: "#FBB03B"), Color(hex: "#D4145A"),
-            ]
+            pageSlug: "fashion"
         )
     }
 }

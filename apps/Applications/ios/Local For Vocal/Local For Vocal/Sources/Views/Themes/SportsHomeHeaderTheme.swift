@@ -14,10 +14,7 @@ public struct SportsThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "sports-header-theme",
-            pageSlug: "sports",
-            defaultGradientColors: [
-                Color(hex: "#00695C"), Color(hex: "#00796B"), Color(hex: "#00897B"),
-            ]
+            pageSlug: "sports"
         )
     }
 }

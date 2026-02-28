@@ -14,10 +14,7 @@ public struct ToysThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "toys-header-theme",
-            pageSlug: "toys",
-            defaultGradientColors: [
-                Color(hex: "#FF6F00"), Color(hex: "#FF8F00"), Color(hex: "#FFA000"),
-            ]
+            pageSlug: "toys"
         )
     }
 }

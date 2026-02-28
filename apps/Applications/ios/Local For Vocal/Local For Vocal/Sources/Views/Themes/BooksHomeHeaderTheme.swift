@@ -14,10 +14,7 @@ public struct BooksThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "books-header-theme",
-            pageSlug: "books",
-            defaultGradientColors: [
-                Color(hex: "#4A148C"), Color(hex: "#6A1B9A"), Color(hex: "#7B1FA2"),
-            ]
+            pageSlug: "books"
         )
     }
 }

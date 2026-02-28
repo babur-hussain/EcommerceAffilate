@@ -14,10 +14,7 @@ public struct DryFruitsThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "dry-fruits-header-theme",
-            pageSlug: "dry-fruits",
-            defaultGradientColors: [
-                Color(hex: "#795548"), Color(hex: "#8D6E63"), Color(hex: "#A1887F"),
-            ]
+            pageSlug: "dry-fruits"
         )
     }
 }

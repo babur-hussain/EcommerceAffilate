@@ -14,10 +14,7 @@ public struct RamadanPage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "ramadan-header-theme",
-            pageSlug: "ramadan-slider-theme",
-            defaultGradientColors: [
-                Color(hex: "#1B4332"), Color(hex: "#2D6A4F"), Color(hex: "#40916C"),
-            ]
+            pageSlug: "ramadan-slider-theme"
         )
     }
 }

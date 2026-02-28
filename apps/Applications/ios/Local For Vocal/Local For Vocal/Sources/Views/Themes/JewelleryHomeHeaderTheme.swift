@@ -14,10 +14,7 @@ public struct JewelleryThemePage: View {
     public var body: some View {
         CategoryThemePage(
             headerSlug: "jewellery-header-theme",
-            pageSlug: "jewellery",
-            defaultGradientColors: [
-                Color(hex: "#BF360C"), Color(hex: "#D84315"), Color(hex: "#E64A19"),
-            ]
+            pageSlug: "jewellery"
         )
     }
 }
