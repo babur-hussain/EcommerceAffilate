@@ -12,9 +12,9 @@ struct ProductDetailView: View {
     // Environment
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var cartManager: CartManager
-    @ObservedObject private var wishlistManager = WishlistManager.shared
-    @ObservedObject private var reviewManager = ReviewManager.shared
-    @ObservedObject private var authManager = AuthManager.shared
+    private var wishlistManager: WishlistManager { WishlistManager.shared }
+    private var reviewManager: ReviewManager { ReviewManager.shared }
+    private var authManager: AuthManager { AuthManager.shared }
 
     // State
     @State private var product: Product?
@@ -317,13 +317,22 @@ struct ProductDetailView: View {
                         }
                     )
 
-                    // Hidden NavigationLink for Cart - REPLACE WITH navigationDestination
-                    /*
+                    // Hidden NavigationLinks for navigation
                     NavigationLink(
                         destination: CartPageView(),
                         isActive: $navigateToCart
                     ) { EmptyView() }
-                     */
+                    .hidden()
+
+                    NavigationLink(
+                        destination: CheckoutView(
+                            product: product,
+                            quantity: 1,
+                            selectedOfferIds: selectedLastChanceOfferIds
+                        ),
+                        isActive: $navigateToCheckout
+                    ) { EmptyView() }
+                    .hidden()
                 } else {
                     VStack(spacing: 16) {
                         Image(systemName: "magnifyingglass")

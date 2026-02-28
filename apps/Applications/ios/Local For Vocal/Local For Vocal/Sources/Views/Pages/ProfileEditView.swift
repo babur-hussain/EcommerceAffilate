@@ -3,7 +3,8 @@ import SwiftUI
 // MARK: - Profile Edit View
 struct ProfileEditView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var authManager = AuthManager.shared
+    // Fix #13: Direct singleton access
+    private var authManager: AuthManager { AuthManager.shared }
 
     @State private var name: String = ""
     @State private var phone: String = ""
@@ -305,23 +306,12 @@ struct ProfileEditView: View {
             return
         }
 
+        // Fix #3: Use APIService.shared.session with central 401 handler
         Task {
             do {
-                let (_, response) = try await URLSession.shared.data(for: request)
+                let (data, response) = try await APIService.shared.session.data(for: request)
+                let _ = try APIService.shared.handleResponse(data, response)
 
-                guard let httpResponse = response as? HTTPURLResponse,
-                    (200...299).contains(httpResponse.statusCode)
-                else {
-                    await MainActor.run {
-                        alertMessage = "Failed to update profile"
-                        alertSuccess = false
-                        showAlert = true
-                        isLoading = false
-                    }
-                    return
-                }
-
-                // Refresh user data would be ideal here if AuthManager supports it
                 await MainActor.run {
                     alertMessage = "Profile updated successfully"
                     alertSuccess = true

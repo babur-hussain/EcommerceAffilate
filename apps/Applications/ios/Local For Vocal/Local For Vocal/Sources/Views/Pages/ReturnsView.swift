@@ -93,7 +93,8 @@ struct ReturnStatusConfig {
 // MARK: - Returns View
 struct ReturnsView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var authManager = AuthManager.shared
+    // Fix #13: Direct singleton access
+    private var authManager: AuthManager { AuthManager.shared }
 
     @State private var returns: [ReturnRequest] = []
     @State private var isLoading = true
@@ -197,14 +198,14 @@ struct ReturnsView: View {
         }
     }
 
-    // MARK: - Fetch Data
-    private func fetchReturns() {
+    // MARK: - Fetch Data (Fix #3: Use APIService.shared.session, Fix #8: Unified)
+    private func fetchReturns(isRefresh: Bool = false) {
         guard let token = authManager.authToken else {
             isLoading = false
             return
         }
 
-        isLoading = true
+        if !isRefresh { isLoading = true }
 
         guard let url = URL(string: "\(APIService.shared.baseURL)/returns/mine") else {
             isLoading = false
@@ -217,17 +218,11 @@ struct ReturnsView: View {
 
         Task {
             do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-
-                guard let httpResponse = response as? HTTPURLResponse,
-                    (200...299).contains(httpResponse.statusCode)
-                else {
-                    await MainActor.run { isLoading = false }
-                    return
-                }
+                let (data, response) = try await APIService.shared.session.data(for: request)
+                let validData = try APIService.shared.handleResponse(data, response)
 
                 let returnsResponse = try JSONDecoder().decode(
-                    ReturnsResponse.self, from: data)
+                    ReturnsResponse.self, from: validData)
 
                 await MainActor.run {
                     returns = returnsResponse.returns
@@ -240,33 +235,9 @@ struct ReturnsView: View {
         }
     }
 
+    // Fix #8: Reuse unified fetch for pull-to-refresh
     private func refreshData() async {
-        guard let token = authManager.authToken else { return }
-
-        guard let url = URL(string: "\(APIService.shared.baseURL)/returns/mine") else {
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                (200...299).contains(httpResponse.statusCode)
-            else { return }
-
-            let returnsResponse = try JSONDecoder().decode(
-                ReturnsResponse.self, from: data)
-
-            await MainActor.run {
-                returns = returnsResponse.returns
-            }
-        } catch {
-            AppLogger.error("Returns refresh error: \(error)")
-        }
+        fetchReturns(isRefresh: true)
     }
 }
 
@@ -366,23 +337,30 @@ struct ReturnCard: View {
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 
+    // Fix #5: Static formatters — avoid per-cell allocations
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoFormatterNoFrac: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+    private static let displayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy"
+        return f
+    }()
+
     private func formatDate(_ dateString: String) -> String {
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        if let date = isoFormatter.date(from: dateString) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy"
-            return formatter.string(from: date)
+        if let date = Self.isoFormatter.date(from: dateString) {
+            return Self.displayFormatter.string(from: date)
         }
-
-        isoFormatter.formatOptions = [.withInternetDateTime]
-        if let date = isoFormatter.date(from: dateString) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy"
-            return formatter.string(from: date)
+        if let date = Self.isoFormatterNoFrac.date(from: dateString) {
+            return Self.displayFormatter.string(from: date)
         }
-
         return ""
     }
 }

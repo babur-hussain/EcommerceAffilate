@@ -7,7 +7,7 @@ struct PromoPosterView: View {
     var body: some View {
         Button(action: {
             if let action = actionUrl {
-                print("Navigate to: \(action)")
+                AppLogger.debug("Navigate to: \(action)")
             }
         }) {
             if let url = URL(string: image) {

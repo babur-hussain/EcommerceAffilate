@@ -15,6 +15,15 @@ actor ImageDiskCache {
     // In-memory index for fast lookups: URL hash → file exists
     private var fileIndex: Set<String> = []
 
+    // Fix #13: Track total cache size incrementally
+    private var currentCacheSize: Int64 = 0
+
+    // Fix #22: Cache hash results to avoid repeated SHA256
+    private var hashCache: [String: String] = [:]
+
+    // Fix #12: In-memory LRU tracking instead of filesystem writes
+    private var accessTimes: [String: Date] = [:]
+
     // In-memory image cache (NSCache auto-evicts under memory pressure)
     // This prevents re-reading from disk when LazyVStack recycles views
     private let memoryCache = NSCache<NSString, UIImage>()
@@ -38,11 +47,13 @@ actor ImageDiskCache {
     /// Load image from cache (memory → disk)
     /// Returns instantly from memory if previously loaded this session
     func loadImage(for urlString: String) -> UIImage? {
-        let hash = hashString(urlString)
+        let hash = cachedHash(urlString)
         let cacheKey = hash as NSString
 
         // Layer 1: Check in-memory cache (instant, no disk I/O)
         if let memImage = memoryCache.object(forKey: cacheKey) {
+            // Fix #12: Track access time in memory, not filesystem
+            accessTimes[hash] = Date()
             return memImage
         }
 
@@ -60,18 +71,15 @@ actor ImageDiskCache {
         // Promote to memory cache for next access
         memoryCache.setObject(image, forKey: cacheKey)
 
-        // Update access date for LRU (background, non-blocking)
-        try? fileManager.setAttributes(
-            [.modificationDate: Date()],
-            ofItemAtPath: filePath.path
-        )
+        // Fix #12: Track access in-memory (no filesystem write)
+        accessTimes[hash] = Date()
 
         return image
     }
 
     /// Save image to disk cache
     func saveImage(_ image: UIImage, for urlString: String) {
-        let hash = hashString(urlString)
+        let hash = cachedHash(urlString)
         let cacheKey = hash as NSString
 
         // Save to memory cache immediately
@@ -84,22 +92,30 @@ actor ImageDiskCache {
         try? data.write(to: filePath, options: .atomic)
 
         fileIndex.insert(hash)
+        accessTimes[hash] = Date()
+        // Fix #13: Track size incrementally
+        currentCacheSize += Int64(data.count)
 
-        // Trigger eviction check in background
-        Task.detached(priority: .utility) {
-            await self.evictIfNeeded()
+        // Trigger eviction check in background (only if over limit)
+        if currentCacheSize > maxCacheSize {
+            Task.detached(priority: .utility) {
+                await self.evictIfNeeded()
+            }
         }
     }
 
     /// Save raw image data to disk cache (avoids re-encoding)
     func saveData(_ data: Data, for urlString: String) {
-        let hash = hashString(urlString)
+        let hash = cachedHash(urlString)
         let cacheKey = hash as NSString
 
         let filePath = cacheDirectory.appendingPathComponent(hash)
         try? data.write(to: filePath, options: .atomic)
 
         fileIndex.insert(hash)
+        accessTimes[hash] = Date()
+        // Fix #13: Track size incrementally
+        currentCacheSize += Int64(data.count)
 
         // Also promote to memory cache
         if let image = UIImage(data: data) {
@@ -109,17 +125,26 @@ actor ImageDiskCache {
 
     /// Check if image exists in disk cache
     func hasImage(for urlString: String) -> Bool {
-        return fileIndex.contains(hashString(urlString))
+        return fileIndex.contains(cachedHash(urlString))
     }
 
     /// Prefetch multiple image URLs in parallel
+    /// Fix #23: Prefetch with limited concurrency (max 6 concurrent downloads)
     func prefetch(urls: [String]) async {
+        let maxConcurrent = 6
         await withTaskGroup(of: Void.self) { group in
+            var active = 0
             for urlString in urls {
                 // Skip if already cached
                 guard !hasImage(for: urlString) else { continue }
                 guard let url = URL(string: urlString) else { continue }
 
+                if active >= maxConcurrent {
+                    await group.next()  // Wait for one to finish
+                    active -= 1
+                }
+
+                active += 1
                 group.addTask {
                     do {
                         let request = URLRequest(
@@ -172,55 +197,48 @@ actor ImageDiskCache {
     private func buildIndex() {
         guard
             let files = try? fileManager.contentsOfDirectory(
-                at: cacheDirectory, includingPropertiesForKeys: nil)
+                at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey])
         else { return }
+        currentCacheSize = 0
         for file in files {
             fileIndex.insert(file.lastPathComponent)
-        }
-        print("[ImageDiskCache] Indexed \(fileIndex.count) cached images")
-    }
-
-    private func evictIfNeeded() {
-        let stats = getStats()
-        guard stats.totalSize > maxCacheSize else { return }
-
-        // LRU eviction: delete oldest accessed files first
-        guard
-            let files = try? fileManager.contentsOfDirectory(
-                at: cacheDirectory,
-                includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey]
-            )
-        else { return }
-
-        let sorted = files.sorted { a, b in
-            let dateA =
-                (try? a.resourceValues(forKeys: [.contentModificationDateKey]))?
-                .contentModificationDate
-                ?? .distantPast
-            let dateB =
-                (try? b.resourceValues(forKeys: [.contentModificationDateKey]))?
-                .contentModificationDate
-                ?? .distantPast
-            return dateA < dateB  // Oldest first
-        }
-
-        var currentSize = stats.totalSize
-        let targetSize = maxCacheSize / 2  // Evict down to 50% of max
-
-        for file in sorted {
-            guard currentSize > targetSize else { break }
             let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-            try? fileManager.removeItem(at: file)
-            fileIndex.remove(file.lastPathComponent)
-            currentSize -= Int64(size)
+            currentCacheSize += Int64(size)
         }
-
-        print("[ImageDiskCache] Evicted to \(currentSize / 1024 / 1024)MB")
+        AppLogger.debug(
+            "[ImageDiskCache] Indexed \(fileIndex.count) cached images (\(currentCacheSize / 1024 / 1024)MB)"
+        )
     }
 
-    private func hashString(_ string: String) -> String {
+    // Fix #13: Uses in-memory accessTimes for LRU instead of re-scanning directory
+    private func evictIfNeeded() {
+        guard currentCacheSize > maxCacheSize else { return }
+
+        // Sort by in-memory access times (oldest first)
+        let sortedHashes = accessTimes.sorted { $0.value < $1.value }.map { $0.key }
+
+        let targetSize = maxCacheSize / 2
+
+        for hash in sortedHashes {
+            guard currentCacheSize > targetSize else { break }
+            let filePath = cacheDirectory.appendingPathComponent(hash)
+            let size = (try? filePath.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            try? fileManager.removeItem(at: filePath)
+            fileIndex.remove(hash)
+            accessTimes.removeValue(forKey: hash)
+            currentCacheSize -= Int64(size)
+        }
+
+        AppLogger.debug("[ImageDiskCache] Evicted to \(currentCacheSize / 1024 / 1024)MB")
+    }
+
+    // Fix #22: Cache SHA256 results to avoid repeated computation
+    private func cachedHash(_ string: String) -> String {
+        if let cached = hashCache[string] { return cached }
         let inputData = Data(string.utf8)
         let hashed = SHA256.hash(data: inputData)
-        return hashed.compactMap { String(format: "%02x", $0) }.joined()
+        let result = hashed.compactMap { String(format: "%02x", $0) }.joined()
+        hashCache[string] = result
+        return result
     }
 }

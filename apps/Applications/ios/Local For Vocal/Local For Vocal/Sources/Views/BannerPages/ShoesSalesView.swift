@@ -33,7 +33,7 @@ struct ShoesSalesView: View {
     }
 
     private func loadData() {
-        print("Loading Shoes Sales SDUI Data from API...")
+        AppLogger.debug("Loading Shoes Sales SDUI Data from API...")
         isLoading = true
 
         Task {
@@ -43,16 +43,16 @@ struct ShoesSalesView: View {
                     await MainActor.run {
                         self.components = layout.components
                         self.isLoading = false
-                        print(
+                        AppLogger.debug(
                             "Successfully loaded \(layout.components.count) components for Shoes Sales"
                         )
                     }
                 } else {
-                    print("No layout found for shoes-sales")
+                    AppLogger.debug("No layout found for shoes-sales")
                     await MainActor.run { self.isLoading = false }
                 }
             } catch {
-                print("Error loading Shoes SDUI: \(error)")
+                AppLogger.debug("Error loading Shoes SDUI: \(error)")
                 await MainActor.run { self.isLoading = false }
             }
         }

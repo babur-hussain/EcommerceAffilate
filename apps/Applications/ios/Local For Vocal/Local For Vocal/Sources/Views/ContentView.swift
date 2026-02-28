@@ -72,18 +72,16 @@ struct ContentView: View {
     // Header States
     @State private var currentTab: MainTab = .home
 
-    // Safe area
-    private var safeAreaTop: CGFloat {
-        let scenes = UIApplication.shared.connectedScenes
-        let windowScene = scenes.first as? UIWindowScene
-        return windowScene?.windows.first?.safeAreaInsets.top ?? 59
-    }
+    // Fix #2: Cache safeAreaTop to avoid scene traversal on every body eval
+    @State private var safeAreaTop: CGFloat = 59
 
     // Managers
     @StateObject private var locationManager = LocationManager()
     @StateObject private var cartManager = CartManager()
     @StateObject private var beautyManager = BeautyManager()
     @StateObject private var basketManager = BasketManager()
+    // Fix #24: Initialize WishlistManager at root level
+    private let wishlistManager = WishlistManager.shared
 
     init() {
         configureTabBarAppearance()
@@ -138,96 +136,96 @@ struct ContentView: View {
             .environmentObject(basketManager)
             .environmentObject(navigationManager)
             .environmentObject(locationManager)
+            .environmentObject(wishlistManager)
             .onChange(of: navigationManager.activeTab) { newVal in
             }
             .onAppear {
                 locationManager.requestPermission()
                 locationManager.fetchSavedAddresses()
-            }
-            .fullScreenCover(isPresented: $navigationManager.showBeautyPage) {
-                NavigationView { BeautyProductView() }
-                    .environmentObject(navigationManager)
-                    .environmentObject(cartManager)
-                    .environmentObject(beautyManager)
-                    .environmentObject(basketManager)
-            }
-            .fullScreenCover(isPresented: $navigationManager.showSpecialDealPage) {
-                SpecialDealNewStyleView()
-                    .environmentObject(navigationManager)
-                    .environmentObject(cartManager)
-                    .environmentObject(beautyManager)
-                    .environmentObject(basketManager)
-            }
-            .fullScreenCover(isPresented: $navigationManager.showBrandNewArrivalPage) {
-                BrandNewArrivalView().environmentObject(navigationManager)
-            }
-            .fullScreenCover(isPresented: $navigationManager.showMenFashionPage) {
-                MenFashionView()
-                    .environmentObject(navigationManager)
-                    .environmentObject(cartManager)
-                    .environmentObject(beautyManager)
-                    .environmentObject(basketManager)
-            }
-            .fullScreenCover(isPresented: $navigationManager.showGrandMobilesPage) {
-                GrandMobilesView().environmentObject(navigationManager)
-            }
-            .fullScreenCover(isPresented: $navigationManager.showShoesSalesPage) {
-                ShoesSalesView().environmentObject(navigationManager)
-            }
-            .fullScreenCover(isPresented: $navigationManager.showCyberSalePage) {
-                CyberSaleView().environmentObject(navigationManager)
-            }
-            .fullScreenCover(isPresented: $navigationManager.showCategoryPage) {
-                if let params = navigationManager.categoryNavigation {
-                    NavigationView {
-                        if params.layoutType == "grocery" {
-                            GroceryListingView(
-                                categoryId: params.categoryId,
-                                categoryName: params.categoryName,
-                                initialSubCategoryId: params.subCategoryId,
-                                initialFilters: params.filters
-                            )
-                        } else {
-                            CommonCategoryPageView(
-                                categoryId: params.categoryId,
-                                categoryName: params.categoryName,
-                                initialSubCategoryId: params.subCategoryId,
-                                initialFilters: params.filters
-                            )
-                        }
-                    }
-                    .background(Color.white)
-                    .environmentObject(navigationManager)
-                    .environmentObject(cartManager)
-                    .environmentObject(basketManager)
-                    .environmentObject(WishlistManager.shared)
+                // Fix #2: Cache safe area insets once
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                    let window = windowScene.windows.first
+                {
+                    safeAreaTop = window.safeAreaInsets.top
                 }
+            }
+            // Fix #6: Single fullScreenCover replaces 8 separate ones
+            .fullScreenCover(item: $navigationManager.activeOverlay) { destination in
+                overlayView(for: destination)
+                    .environmentObject(navigationManager)
+                    .environmentObject(cartManager)
+                    .environmentObject(beautyManager)
+                    .environmentObject(basketManager)
+                    .environmentObject(wishlistManager)
             }
 
-            // Global Address Selector
-            UserAddressSelectorView(
-                isVisible: $locationManager.showAddressSelector,
-                savedUserAddresses: locationManager.savedAddresses,
-                selectedUserAddressId: .constant(nil),
-                onSelectUserAddress: { address in
-                    locationManager.address = address.addressLine1
-                    locationManager.city = address.city
-                    locationManager.showAddressSelector = false
-                },
-                onUseCurrentLocation: {
-                    locationManager.startUpdating()
-                    locationManager.showAddressSelector = false
-                },
-                onAddNewUserAddress: {
-                    locationManager.showAddressSelector = false
-                }
-            )
-            .zIndex(1000)
-            .ignoresSafeArea()
-            .allowsHitTesting(locationManager.showAddressSelector)
+            // Fix #20: Only render address selector when visible
+            if locationManager.showAddressSelector {
+                UserAddressSelectorView(
+                    isVisible: $locationManager.showAddressSelector,
+                    savedUserAddresses: locationManager.savedAddresses,
+                    selectedUserAddressId: .constant(nil),
+                    onSelectUserAddress: { address in
+                        locationManager.address = address.addressLine1
+                        locationManager.city = address.city
+                        locationManager.showAddressSelector = false
+                    },
+                    onUseCurrentLocation: {
+                        locationManager.startUpdating()
+                        locationManager.showAddressSelector = false
+                    },
+                    onAddNewUserAddress: {
+                        locationManager.showAddressSelector = false
+                    }
+                )
+                .zIndex(1000)
+                .ignoresSafeArea()
+                .transition(.opacity)
+            }
         }
     }
 
+    // Fix #6: Single overlay builder replaces 8 fullScreenCovers
+    @ViewBuilder
+    private func overlayView(for destination: OverlayDestination) -> some View {
+        switch destination {
+        case .beauty:
+            NavigationView { BeautyProductView() }
+        case .specialDeal:
+            SpecialDealNewStyleView()
+        case .brandNewArrival:
+            BrandNewArrivalView()
+        case .menFashion:
+            MenFashionView()
+        case .grandMobiles:
+            GrandMobilesView()
+        case .shoesSales:
+            ShoesSalesView()
+        case .cyberSale:
+            CyberSaleView()
+        case .categoryPage:
+            if let params = navigationManager.categoryNavigation {
+                NavigationView {
+                    if params.layoutType == "grocery" {
+                        GroceryListingView(
+                            categoryId: params.categoryId,
+                            categoryName: params.categoryName,
+                            initialSubCategoryId: params.subCategoryId,
+                            initialFilters: params.filters
+                        )
+                    } else {
+                        CommonCategoryPageView(
+                            categoryId: params.categoryId,
+                            categoryName: params.categoryName,
+                            initialSubCategoryId: params.subCategoryId,
+                            initialFilters: params.filters
+                        )
+                    }
+                }
+                .background(Color.white)
+            }
+        }
+    }
 }
 
 // MARK: - Home Tab Content View
@@ -243,16 +241,13 @@ struct HomeTabContent: View {
     @State private var headerHeight: CGFloat = 300
     @State private var scrollOffset: CGFloat = 0
 
-    // Computed props
-    var currentSlug: String {
-        navigationManager.selectedCategory.lowercased().replacingOccurrences(of: " ", with: "-")
-    }
+    // Fix #15: Cache slug in @State, computed on category change
+    @State private var currentSlug: String = "for-you"
+    // Fix #3: Cache theme in @State
+    @State private var cachedTheme: (category: String, showIcons: Bool, theme: HomeHeaderTheme)?
 
-    var safeAreaTop: CGFloat {
-        let scenes = UIApplication.shared.connectedScenes
-        let windowScene = scenes.first as? UIWindowScene
-        return windowScene?.windows.first?.safeAreaInsets.top ?? 59
-    }
+    // Fix #2: Cache safe area insets
+    @State private var safeAreaTop: CGFloat = 59
 
     var body: some View {
         Group {
@@ -273,9 +268,8 @@ struct HomeTabContent: View {
             } else {
                 // Default Home / Shopping
                 NavigationView {
-                    let theme: HomeHeaderTheme = themeForCategory(
-                        navigationManager.selectedCategory, showIcons: showIcons)
-
+                    // Fix #3: Use cached theme, only recompute when category/showIcons change
+                    let theme: HomeHeaderTheme = resolvedTheme
                     ZStack(alignment: .top) {
                         // SCROLLABLE CONTENT (Top Layer)
                         ScrollView {
@@ -327,8 +321,24 @@ struct HomeTabContent: View {
                                 },
                                 alignment: .top
                             )
-                            .onChange(of: navigationManager.selectedCategory) { _, _ in
+                            .onChange(of: navigationManager.selectedCategory) { _, newValue in
                                 showIcons = true
+                                // Fix #15: Update cached slug on category change
+                                currentSlug = newValue.lowercased().replacingOccurrences(
+                                    of: " ", with: "-")
+                                // Fix #3: Eagerly rebuild cached theme
+                                cachedTheme = (
+                                    category: newValue, showIcons: showIcons,
+                                    theme: themeForCategory(newValue, showIcons: showIcons)
+                                )
+                            }
+                            .onChange(of: showIcons) { _, newValue in
+                                // Fix #3: Eagerly rebuild cached theme on showIcons change
+                                let cat = navigationManager.selectedCategory
+                                cachedTheme = (
+                                    category: cat, showIcons: newValue,
+                                    theme: themeForCategory(cat, showIcons: newValue)
+                                )
                             }
                         }
                         .coordinateSpace(name: "scroll")
@@ -356,6 +366,35 @@ struct HomeTabContent: View {
                 }
             }
         }
+        .onAppear {
+            // Fix #2: Cache safe area insets once
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                let window = windowScene.windows.first
+            {
+                safeAreaTop = window.safeAreaInsets.top
+            }
+            // Fix #15: Initialize slug
+            currentSlug = navigationManager.selectedCategory.lowercased().replacingOccurrences(
+                of: " ", with: "-")
+            // Fix #3: Initialize cached theme on first appear
+            let cat = navigationManager.selectedCategory
+            cachedTheme = (
+                category: cat, showIcons: showIcons,
+                theme: themeForCategory(cat, showIcons: showIcons)
+            )
+        }
+    }
+
+    // Fix #3: Resolve theme from cache — always populated by onChange/onAppear
+    private var resolvedTheme: HomeHeaderTheme {
+        if let cached = cachedTheme,
+            cached.category == navigationManager.selectedCategory,
+            cached.showIcons == showIcons
+        {
+            return cached.theme
+        }
+        // Fallback: should rarely hit since cachedTheme is populated in onAppear/onChange
+        return themeForCategory(navigationManager.selectedCategory, showIcons: showIcons)
     }
 
     // MARK: - Theme per category

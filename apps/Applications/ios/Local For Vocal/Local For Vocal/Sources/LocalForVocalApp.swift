@@ -16,26 +16,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Force-init SDUILayoutStore to synchronously load all cached layouts from disk into RAM.
         _ = SDUILayoutStore.shared
 
-        // Preload keyboard to prevent lag
-        preloadKeyboard()
-
         return true
     }
 
-    private func preloadKeyboard() {
-        DispatchQueue.main.async {
-            let lagFreeField = UITextField()
-            // Find the key window to add the field to
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                let window = windowScene.windows.first
-            {
-                window.addSubview(lagFreeField)
-                lagFreeField.becomeFirstResponder()
-                lagFreeField.resignFirstResponder()
-                lagFreeField.removeFromSuperview()
-            }
-        }
-    }
 }
 
 // MARK: - App Root View (Splash → Content transition)
@@ -68,15 +51,31 @@ struct AppRootView: View {
 
             if LayoutPreloader.shared.isFirstLaunch {
                 // First launch — fetch everything from network
-                print("[AppRootView] First launch — downloading all layouts...")
+                AppLogger.debug("[AppRootView] First launch — downloading all layouts...")
                 await LayoutPreloader.shared.prefetchAll()
-                // After prefetch, give SwiftUI a moment to render views with fresh data
-                try? await Task.sleep(nanoseconds: 500_000_000)  // 500ms for rendering
+                // Brief pause for SwiftUI to render with fresh data
+                try? await Task.sleep(nanoseconds: 300_000_000)  // 300ms
             } else {
-                // Subsequent launch — disk cache already loaded in SDUILayoutStore.init.
-                // Keep splash visible long enough for SwiftUI to fully render all views
-                // with the cached data, so no fallback gradient ever flashes.
-                try? await Task.sleep(nanoseconds: 1_500_000_000)  // 1.5s for buttery smooth
+                // Subsequent launch — disk cache loaded in SDUILayoutStore.init.
+                // Wait until layouts are ready instead of hardcoding delay.
+                let startTime = CFAbsoluteTimeGetCurrent()
+                let maxWait: Double = 3.0  // max 3s fallback
+                let minWait: Double = 0.3  // min 300ms for rendering
+
+                // Poll until layouts populated or timeout
+                while store.layouts.isEmpty {
+                    let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+                    if elapsed >= maxWait { break }
+                    try? await Task.sleep(nanoseconds: 50_000_000)  // check every 50ms
+                }
+
+                // Ensure minimum wait for smooth rendering
+                let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+                if elapsed < minWait {
+                    let remaining = UInt64((minWait - elapsed) * 1_000_000_000)
+                    try? await Task.sleep(nanoseconds: remaining)
+                }
+
                 LayoutPreloader.shared.refreshStaleInBackground()
             }
 
@@ -84,6 +83,22 @@ struct AppRootView: View {
             await MainActor.run {
                 store.isPreloaded = true
                 showSplash = false
+            }
+
+            // Preload keyboard AFTER splash dismissed to avoid blocking launch
+            await MainActor.run {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    let lagFreeField = UITextField()
+                    if let windowScene = UIApplication.shared.connectedScenes.first
+                        as? UIWindowScene,
+                        let window = windowScene.windows.first
+                    {
+                        window.addSubview(lagFreeField)
+                        lagFreeField.becomeFirstResponder()
+                        lagFreeField.resignFirstResponder()
+                        lagFreeField.removeFromSuperview()
+                    }
+                }
             }
         }
     }

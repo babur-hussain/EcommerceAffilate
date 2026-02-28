@@ -80,7 +80,7 @@ struct GroceryRowView: View {
             // Mock category filter if needed, or just take first 6
             self.products = Array(fetched.prefix(6))
         } catch {
-            print("Error fetching grocery products: \(error)")
+            AppLogger.debug("Error fetching grocery products: \(error)")
         }
         isLoading = false
     }

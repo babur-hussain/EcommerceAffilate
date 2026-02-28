@@ -33,7 +33,7 @@ struct BeautyKBeautyView: View {
 
                 if let action = headerActionUrl {
                     Button(action: {
-                        print("Navigate to: \(action)")
+                        AppLogger.debug("Navigate to: \(action)")
                     }) {
                         Text("View All")
                             .font(.system(size: 14, weight: .semibold))
@@ -172,7 +172,7 @@ struct KBeautyCard: View {
         .padding(.horizontal, 16)  // Padding to simulate card width < screen width
         .onTapGesture {
             if let action = item.actionUrl {
-                print("Navigate to: \(action)")
+                AppLogger.debug("Navigate to: \(action)")
             }
         }
     }

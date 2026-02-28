@@ -4,7 +4,10 @@ import SwiftUI
 // MARK: - In-Memory Layout Store (singleton, survives view recreation)
 
 /// Keeps decoded SDUI layouts in RAM so tab switches are instant.
+/// Backed by NSCache (via SDUIMemoryCache) for memory-pressure eviction.
 /// Disk cache (SDUICacheManager) is the durable layer; this is the fast layer.
+// Fix #10: @MainActor prevents data races on @Published layouts/isPreloaded
+@MainActor
 final class SDUILayoutStore: ObservableObject {
     static let shared = SDUILayoutStore()
 
@@ -30,15 +33,18 @@ final class SDUILayoutStore: ObservableObject {
     private let staleCacheAge: TimeInterval = 60 * 60
 
     private init() {
-        // Synchronously load ALL cached layouts from disk at init.
-        // This runs before any view is created, so layouts are in RAM instantly.
-        let startTime = CFAbsoluteTimeGetCurrent()
-        loadAllFromDiskSync()
-        let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-        print(
-            "[SDUILayoutStore] Sync-loaded \(layouts.count) layouts from disk in \(String(format: "%.1f", elapsed))ms"
-        )
-        isPreloaded = true
+        // Fix #11: Load disk cache off main thread — only hop to MainActor for property updates
+        Task.detached(priority: .userInitiated) {
+            let loaded = Self.loadAllFromDisk()
+            await MainActor.run {
+                for (slug, entry) in loaded {
+                    self.layouts[slug] = entry.response
+                    self.staleFlags[slug] = entry.isStale
+                    SDUIMemoryCache.shared.saveToMemory(key: slug, jsonData: entry.rawJSON)
+                }
+                self.isPreloaded = true
+            }
+        }
     }
 
     func shouldFetchFromNetwork(slug: String) -> Bool {
@@ -52,36 +58,50 @@ final class SDUILayoutStore: ObservableObject {
             return false
         }
 
+        // Don't fetch if offline
+        if !NetworkMonitor.shared.isConnected { return false }
+
         return true
     }
 
-    // MARK: - Synchronous Disk Cache Loading
+    // MARK: - Background Disk Cache Loading
 
-    /// Reads ALL .cache files from the SDUI cache directory synchronously.
-    /// Bypasses the SDUICacheManager actor entirely for zero-latency init.
-    private func loadAllFromDiskSync() {
+    /// Entry loaded from disk cache — used to transfer data from background to main thread
+    private struct DiskCacheEntry {
+        let response: AdvancedLayoutResponse
+        let isStale: Bool
+        let rawJSON: Data
+    }
+
+    /// Reads ALL .cache files from the SDUI cache directory.
+    /// Runs entirely off the main thread — no @MainActor dependency.
+    /// Returns parsed entries for the caller to apply on MainActor.
+    private nonisolated static func loadAllFromDisk() -> [String: DiskCacheEntry] {
         let fileManager = FileManager.default
         guard let cacheBase = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
-        else { return }
+        else { return [:] }
         let cacheDir = cacheBase.appendingPathComponent("SDUI", isDirectory: true)
 
-        guard fileManager.fileExists(atPath: cacheDir.path) else { return }
+        guard fileManager.fileExists(atPath: cacheDir.path) else { return [:] }
 
-        // Internal format matching SDUICacheManager.CacheFile
+        // Internal format matching SDUIDiskCache.CacheFile
         struct CacheFile: Codable {
             let rawJSON: Data
             let version: Int
             let timestamp: Date
             let slug: String
+            let checksum: String?
         }
 
         guard
             let files = try? fileManager.contentsOfDirectory(
                 at: cacheDir, includingPropertiesForKeys: nil)
-        else { return }
+        else { return [:] }
+
+        let staleCacheAge: TimeInterval = 60 * 60
+        var result: [String: DiskCacheEntry] = [:]
 
         for fileURL in files {
-            // Only process .cache files (skip metadata file)
             guard fileURL.pathExtension == "cache" else { continue }
 
             guard let fileData = try? Data(contentsOf: fileURL),
@@ -99,9 +119,14 @@ final class SDUILayoutStore: ObservableObject {
                 components: components
             )
 
-            layouts[cacheFile.slug] = response
-            staleFlags[cacheFile.slug] = isStale
+            result[cacheFile.slug] = DiskCacheEntry(
+                response: response,
+                isStale: isStale,
+                rawJSON: cacheFile.rawJSON
+            )
         }
+
+        return result
     }
 }
 
@@ -126,17 +151,18 @@ struct SDUIPage: View {
         // Check 1: Already in memory store?
         if SDUILayoutStore.shared.layouts[slug] != nil {
             _showSkeleton = State(initialValue: false)
-            print("[SDUIPage] INSTANT: '\(slug)' found in memory store")
+            AppLogger.debug("[SDUIPage] INSTANT: '\(slug)' found in memory store")
         }
         // Check 2: Synchronous disk cache fallback (belt-and-suspenders)
         else if let layout = SDUIPage.loadFromDiskSync(slug: slug) {
             // Promote to memory store immediately
             SDUILayoutStore.shared.layouts[slug] = layout
             _showSkeleton = State(initialValue: false)
-            print("[SDUIPage] SYNC-DISK: '\(slug)' loaded from disk and promoted to store")
+            AppLogger.debug(
+                "[SDUIPage] SYNC-DISK: '\(slug)' loaded from disk and promoted to store")
         } else {
             _showSkeleton = State(initialValue: true)
-            print("[SDUIPage] MISS: '\(slug)' not cached, will show skeleton")
+            AppLogger.debug("[SDUIPage] MISS: '\(slug)' not cached, will show skeleton")
         }
     }
 
@@ -151,7 +177,7 @@ struct SDUIPage: View {
         let fileURL = cacheDir.appendingPathComponent(fileName)
 
         guard fileManager.fileExists(atPath: fileURL.path) else {
-            print("[SDUIPage] SYNC-DISK: No cache file at \(fileURL.lastPathComponent)")
+            AppLogger.debug("[SDUIPage] SYNC-DISK: No cache file at \(fileURL.lastPathComponent)")
             return nil
         }
 
@@ -160,6 +186,7 @@ struct SDUIPage: View {
             let version: Int
             let timestamp: Date
             let slug: String
+            let checksum: String?  // Optional for backward compatibility
         }
 
         guard let fileData = try? Data(contentsOf: fileURL),
@@ -167,9 +194,12 @@ struct SDUIPage: View {
             let components = try? JSONDecoder().decode(
                 [SDUIComponent].self, from: cacheFile.rawJSON)
         else {
-            print("[SDUIPage] SYNC-DISK: Failed to decode cache file for '\(slug)'")
+            AppLogger.debug("[SDUIPage] SYNC-DISK: Failed to decode cache file for '\(slug)'")
             return nil
         }
+
+        // Also populate NSCache on disk hit
+        SDUIMemoryCache.shared.saveToMemory(key: slug, jsonData: cacheFile.rawJSON)
 
         return AdvancedLayoutResponse(
             slug: cacheFile.slug,
@@ -240,11 +270,12 @@ struct SDUIPage: View {
         }
         .animation(.easeInOut(duration: 0.2), value: layout?.components.count ?? 0)
         .task(id: slug) {
-            // Reload whenever slug changes
-            if !hasTriggeredLoad || layout == nil || store.layouts[slug] == nil {
-                hasTriggeredLoad = true
-                await loadLayout()
-            }
+            // Reload whenever slug changes. Guard via hasTriggeredLoad
+            // to prevent re-entry. The store.layouts check only fires if
+            // view was recreated (hasTriggeredLoad reset).
+            guard !hasTriggeredLoad else { return }
+            hasTriggeredLoad = true
+            await loadLayout()
         }
     }
 
@@ -343,6 +374,12 @@ struct SDUIPage: View {
             do {
                 try Task.checkCancellation()
 
+                // Skip if gone offline mid-retry
+                guard NetworkMonitor.shared.isConnected else {
+                    AppLogger.debug("[SDUIPage] Gone offline during fetch for \(currentSlug)")
+                    break
+                }
+
                 guard
                     let response = try await APIService.shared.fetchLayout(
                         slug: currentSlug, forceRefresh: true)
@@ -350,26 +387,36 @@ struct SDUIPage: View {
                     throw APIService.APIError.serverError
                 }
 
-                // Update in-memory store + UI
+                // Encode for caching — non-fatal if this fails
+                var contentChanged = true
+                if let rawData = try? JSONEncoder().encode(response.components) {
+                    contentChanged = await SDUICacheManager.shared.hasContentChanged(
+                        key: currentSlug, newData: rawData)
+
+                    let slugToSave = currentSlug
+                    Task.detached {
+                        await SDUICacheManager.shared.saveSDUI(
+                            key: slugToSave, jsonData: rawData)
+                        LayoutPreloader.shared.registerCachedSlug(slugToSave)
+                    }
+                }
+
+                // ALWAYS update the store to prevent .task re-trigger loop.
+                // Only skip the assignment if store already has this slug AND content is unchanged.
                 await MainActor.run {
-                    store.layouts[currentSlug] = response
+                    if contentChanged || store.layouts[currentSlug] == nil {
+                        store.layouts[currentSlug] = response
+                    }
                     store.staleFlags[currentSlug] = false
                     store.lastFetchTime[currentSlug] = Date()
                     showSkeleton = false
                     isLoading = false
                 }
 
-                // Save to disk cache and register slug for future preloading
-                if let rawData = try? JSONEncoder().encode(response.components) {
-                    let slugToRegister = currentSlug
-                    Task.detached {
-                        await SDUICacheManager.shared.saveRawJSON(
-                            rawData,
-                            slug: slugToRegister,
-                            userId: nil
-                        )
-                        LayoutPreloader.shared.registerCachedSlug(slugToRegister)
-                    }
+                if contentChanged {
+                    AppLogger.debug("[SDUIPage] Network: Updated \(currentSlug) with new content")
+                } else {
+                    AppLogger.debug("[SDUIPage] Network: \(currentSlug) unchanged (checksum match)")
                 }
 
                 // Prefetch images

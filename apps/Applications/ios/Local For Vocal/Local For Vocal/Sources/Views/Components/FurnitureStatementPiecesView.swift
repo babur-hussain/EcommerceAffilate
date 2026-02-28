@@ -40,7 +40,7 @@ struct FurnitureStatementPiecesView: View {
                         .foregroundColor(.black)
                     Spacer()
                     if let action = headerActionUrl {
-                        Button(action: { print("Navigate to \(action)") }) {
+                        Button(action: { AppLogger.debug("Navigate to \(action)") }) {
                             Image(systemName: "chevron.right")
                                 .foregroundColor(.black)
                         }

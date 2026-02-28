@@ -3,6 +3,8 @@ import CoreLocation
 import Foundation
 import SwiftUI
 
+// Fix #1: @MainActor prevents data race on @Published properties from CLLocationManager delegates
+@MainActor
 public class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     public static let shared = LocationManager()
     private let locationManager = CLLocationManager()
@@ -135,7 +137,7 @@ public class LocationManager: NSObject, ObservableObject, CLLocationManagerDeleg
                     }
                 }
             } catch {
-                print("Failed to fetch addresses: \(error)")
+                AppLogger.debug("Failed to fetch addresses: \(error)")
             }
         }
     }

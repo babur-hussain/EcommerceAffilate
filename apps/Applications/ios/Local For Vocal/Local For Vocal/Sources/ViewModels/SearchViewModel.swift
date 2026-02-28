@@ -7,15 +7,23 @@ class SearchViewModel: ObservableObject {
     @Published var trendingTerms: [String] = []
     @Published var searchState: SearchState = .idle
     @Published var globalResults: GlobalSearchResponse?
+    @Published var groceryResults: GlobalSearchResponse?
 
     private var cancellables = Set<AnyCancellable>()
     private var categoryId: String?  // Optional filter
+    // Fix #21: Track active search task for cancellation
+    private var searchTask: Task<Void, Never>?
 
     enum SearchState {
         case idle
         case loading
         case results
         case error(String)
+    }
+
+    /// If true, search both products AND grocery in parallel (unified search)
+    var isUnifiedSearch: Bool {
+        categoryId == nil
     }
 
     init(categoryId: String? = nil) {
@@ -25,7 +33,9 @@ class SearchViewModel: ObservableObject {
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .removeDuplicates()
             .sink { [weak self] val in
-                Task {
+                // Fix #21: Cancel previous search before starting new one
+                self?.searchTask?.cancel()
+                self?.searchTask = Task {
                     await self?.performSearch(query: val)
                 }
             }
@@ -40,7 +50,7 @@ class SearchViewModel: ObservableObject {
         do {
             self.trendingTerms = try await APIService.shared.fetchTrendingTerms()
         } catch {
-            print("Failed to fetch trending: \(error)")
+            AppLogger.debug("Failed to fetch trending: \(error)")
         }
     }
 
@@ -48,34 +58,47 @@ class SearchViewModel: ObservableObject {
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
             self.searchState = .idle
             self.globalResults = nil
+            self.groceryResults = nil
             return
         }
 
         self.searchState = .loading
         do {
-            let results: GlobalSearchResponse
-
             if self.categoryId == "grocery" {
-                // Use dedicated grocery search endpoint
-                results = try await APIService.shared.fetchGrocerySearch(query: query)
+                // Grocery-only search
+                let results = try await APIService.shared.fetchGrocerySearch(query: query)
+                self.globalResults = results
+                self.groceryResults = nil
+            } else if isUnifiedSearch {
+                // Unified search: fetch BOTH in parallel
+                async let productTask = APIService.shared.fetchGlobalSearch(query: query)
+                async let groceryTask = APIService.shared.fetchGrocerySearch(query: query)
+
+                let (productResults, groceryResultsFetched) = try await (productTask, groceryTask)
+                self.globalResults = productResults
+                self.groceryResults = groceryResultsFetched
             } else {
-                // Pass categoryId to APIService if available (assuming API supports it)
-                // For now, we'll just search globally but in future we can add category filter
-                results = try await APIService.shared.fetchGlobalSearch(query: query)
+                // Category-specific product search
+                let results = try await APIService.shared.fetchGlobalSearch(query: query)
+                self.globalResults = results
+                self.groceryResults = nil
             }
 
-            // Client-side filtering if API doesn't support it yet (Optional optimization)
-            /*
-            if let categoryId = categoryId {
-                // This would require results to have category IDs, which they might not fully have yet.
-                // For now, rely on global search.
-            }
-            */
-
-            self.globalResults = results
             self.searchState = .results
         } catch {
             self.searchState = .error(error.localizedDescription)
         }
+    }
+
+    /// Combined flag: true if both product and grocery results are empty
+    var hasNoResults: Bool {
+        let productEmpty = globalResults?.products.isEmpty ?? true
+        let groceryEmpty = groceryResults?.products.isEmpty ?? true
+        return productEmpty && groceryEmpty
+    }
+
+    /// True if either result set has items
+    var hasAnyResults: Bool {
+        !hasNoResults
     }
 }

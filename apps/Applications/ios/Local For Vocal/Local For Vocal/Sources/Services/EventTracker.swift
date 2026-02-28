@@ -28,7 +28,7 @@ public class EventTracker {
         self.sessionId = UUID().uuidString
         startFlushTimer()
 
-        // Flush on app going to background
+        // Flush on app going to background + stop timer
         NotificationCenter.default.addObserver(
             forName: UIApplication.willResignActiveNotification,
             object: nil,
@@ -36,6 +36,20 @@ public class EventTracker {
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.flush()
+                // Fix #18: Stop timer when backgrounded
+                self?.flushTimer?.invalidate()
+                self?.flushTimer = nil
+            }
+        }
+
+        // Fix #18: Restart timer when foregrounded
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.startFlushTimer()
             }
         }
 
@@ -170,7 +184,7 @@ public class EventTracker {
             let body = try JSONEncoder().encode(payload)
             request.httpBody = body
 
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (_, response) = try await APIService.shared.session.data(for: request)
 
             if let httpResponse = response as? HTTPURLResponse,
                 (200...299).contains(httpResponse.statusCode)

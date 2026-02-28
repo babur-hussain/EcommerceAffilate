@@ -33,7 +33,7 @@ struct BeautyInternetFamedView: View {
 
                 if let action = headerActionUrl {
                     Button(action: {
-                        print("Navigate to: \(action)")
+                        AppLogger.debug("Navigate to: \(action)")
                     }) {
                         Text("View All")
                             .font(.system(size: 14, weight: .semibold))
@@ -122,7 +122,7 @@ struct InternetFamedCard: View {
         }
         .onTapGesture {
             if let action = item.actionUrl {
-                print("Navigate to: \(action)")
+                AppLogger.debug("Navigate to: \(action)")
             }
         }
     }

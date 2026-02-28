@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - Account View
 struct AccountView: View {
-    @ObservedObject private var authManager = AuthManager.shared
+    private var authManager: AuthManager { AuthManager.shared }
     @State private var showLoginView = false
     @State private var showLogoutAlert = false
     @State private var showMyOrders = false

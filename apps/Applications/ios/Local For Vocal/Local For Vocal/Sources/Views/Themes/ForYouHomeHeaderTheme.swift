@@ -167,11 +167,11 @@ public struct CategoryThemePage: View {
         let cachedComponents: [SDUIComponent]
         if let cached = SDUILayoutStore.shared.layouts[headerSlug] {
             cachedComponents = cached.components
-            print("[CategoryThemePage] INSTANT: header '\(headerSlug)' from memory store")
+            AppLogger.debug("[CategoryThemePage] INSTANT: header '\(headerSlug)' from memory store")
         } else if let layout = SDUIPage.loadFromDiskSync(slug: headerSlug) {
             SDUILayoutStore.shared.layouts[headerSlug] = layout
             cachedComponents = layout.components
-            print("[CategoryThemePage] SYNC-DISK: header '\(headerSlug)' from disk cache")
+            AppLogger.debug("[CategoryThemePage] SYNC-DISK: header '\(headerSlug)' from disk cache")
         } else {
             cachedComponents = []
         }
@@ -303,7 +303,7 @@ public struct CategoryThemePage: View {
     }
 
     private func loadComponents() async {
-        print("DEBUG: Loading components for slug: \(headerSlug)")
+        AppLogger.debug("DEBUG: Loading components for slug: \(headerSlug)")
         hasError = false  // Reset error state
         let maxRetries = 3
 
@@ -312,7 +312,7 @@ public struct CategoryThemePage: View {
                 if let layout = try await APIService.shared.fetchLayout(
                     slug: headerSlug, forceRefresh: true)
                 {
-                    print(
+                    AppLogger.debug(
                         "DEBUG: Successfully fetched layout for \(headerSlug) (Attempt \(attempt))")
                     await MainActor.run {
                         self.headerComponents = layout.components
@@ -333,10 +333,10 @@ public struct CategoryThemePage: View {
                     }
                     return  // Success
                 } else {
-                    print("DEBUG: Fetch returned nil layout for \(headerSlug) (Attempt \(attempt))")
+                    AppLogger.debug("DEBUG: Fetch returned nil layout for \(headerSlug) (Attempt \(attempt))")
                 }
             } catch {
-                print(
+                AppLogger.debug(
                     "DEBUG: Failed to fetch layout for \(headerSlug) (Attempt \(attempt)): \(error)"
                 )
             }
@@ -346,7 +346,7 @@ public struct CategoryThemePage: View {
                 try? await Task.sleep(nanoseconds: 500_000_000)
             }
         }
-        print(
+        AppLogger.debug(
             "DEBUG: All \(maxRetries) attempts failed for \(headerSlug). Default gradient remains.")
         await MainActor.run {
             if headerComponents.isEmpty {
@@ -504,7 +504,7 @@ public struct GlobalLottieLayer: View {
                 self.failedToLoadDotLottie = false
             }
         } catch {
-            print(
+            AppLogger.debug(
                 "GlobalLottieLayer: Failed DotLottie '\(layer.animationName)', trying JSON fallback."
             )
             await MainActor.run {

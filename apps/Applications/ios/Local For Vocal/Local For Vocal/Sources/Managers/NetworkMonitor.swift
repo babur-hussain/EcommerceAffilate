@@ -5,6 +5,8 @@ import Network
 /// Lightweight network reachability monitor
 /// Uses NWPathMonitor to track connectivity state
 /// Published property can be observed from SwiftUI views
+// Fix #11: @MainActor formalizes main-thread contract for @Published properties
+@MainActor
 class NetworkMonitor: ObservableObject {
     static let shared = NetworkMonitor()
 
@@ -37,7 +39,7 @@ class NetworkMonitor: ObservableObject {
                 }
 
                 #if DEBUG
-                    print(
+                    AppLogger.debug(
                         "[Network] Status: \(path.status == .satisfied ? "Connected" : "Disconnected") (\(String(describing: self?.connectionType)))"
                     )
                 #endif

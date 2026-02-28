@@ -39,7 +39,7 @@ struct Order: Identifiable, Decodable {
 // MARK: - My Orders View
 struct MyOrdersView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var authManager = AuthManager.shared
+    private var authManager: AuthManager { AuthManager.shared }
 
     @State private var orders: [Order] = []
     @State private var isLoading = true
@@ -203,16 +203,11 @@ struct MyOrdersView: View {
                 var request = URLRequest(url: url)
                 request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-                let (data, response) = try await URLSession.shared.data(for: request)
-
-                guard let httpResponse = response as? HTTPURLResponse,
-                    (200...299).contains(httpResponse.statusCode)
-                else {
-                    throw URLError(.badServerResponse)
-                }
+                let (data, response) = try await APIService.shared.session.data(for: request)
+                let validData = try APIService.shared.handleResponse(data, response)
 
                 let decoder = JSONDecoder()
-                let fetchedOrders = try decoder.decode([Order].self, from: data)
+                let fetchedOrders = try decoder.decode([Order].self, from: validData)
 
                 await MainActor.run {
                     orders = fetchedOrders
@@ -248,15 +243,21 @@ struct OrderCard: View {
         }
     }
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let displayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy"
+        return f
+    }()
+
     private var formattedDate: String {
         guard let dateStr = order.createdAt else { return "" }
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        if let date = isoFormatter.date(from: dateStr) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy"
-            return formatter.string(from: date)
+        if let date = Self.isoFormatter.date(from: dateStr) {
+            return Self.displayFormatter.string(from: date)
         }
         return ""
     }

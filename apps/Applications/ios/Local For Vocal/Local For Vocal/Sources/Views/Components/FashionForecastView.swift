@@ -22,7 +22,7 @@ struct FashionForecastView: View {
             // Header
             Button(action: {
                 if let action = headerActionUrl {
-                    print("Navigate to: \(action)")
+                    AppLogger.debug("Navigate to: \(action)")
                 }
             }) {
                 Text("\(title) ›")
@@ -88,7 +88,7 @@ struct FashionForecastCard: View {
     var body: some View {
         Button(action: {
             if let action = item.actionUrl {
-                print("Navigate to: \(action)")
+                AppLogger.debug("Navigate to: \(action)")
             }
         }) {
             ZStack(alignment: alignment) {

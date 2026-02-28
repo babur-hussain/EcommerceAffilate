@@ -81,7 +81,7 @@ struct LightningDealsView: View {
                 self.products = fetched
             }
         } catch {
-            print("Failed to load lightning deals: \(error)")
+            AppLogger.debug("Failed to load lightning deals: \(error)")
         }
         isLoading = false
     }

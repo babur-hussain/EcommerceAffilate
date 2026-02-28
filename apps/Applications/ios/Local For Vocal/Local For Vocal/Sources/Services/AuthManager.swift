@@ -151,6 +151,16 @@ public class AuthManager: ObservableObject {
 
     // MARK: - Login
     public func login(email: String, password: String) async throws {
+        // Fix S5: Validate inputs before network request
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty, trimmedEmail.contains("@"), trimmedEmail.contains(".") else {
+            throw AuthError.loginFailed
+        }
+        guard trimmedPassword.count >= 6 else {
+            throw AuthError.loginFailed
+        }
+
         guard let url = URL(string: "\(APIService.shared.baseURL)/auth/login") else {
             throw APIService.APIError.invalidURL
         }
@@ -158,10 +168,10 @@ public class AuthManager: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let body = ["email": email, "password": password]
+        let body = ["email": trimmedEmail, "password": trimmedPassword]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await APIService.shared.session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
@@ -183,6 +193,17 @@ public class AuthManager: ObservableObject {
     public func register(name: String, email: String, phone: String, password: String)
         async throws
     {
+        // Fix S5: Validate inputs before network request
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedPhone = phone.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { throw AuthError.registrationFailed }
+        guard !trimmedEmail.isEmpty, trimmedEmail.contains("@"), trimmedEmail.contains(".") else {
+            throw AuthError.registrationFailed
+        }
+        guard trimmedPassword.count >= 6 else { throw AuthError.registrationFailed }
+
         guard let url = URL(string: "\(APIService.shared.baseURL)/auth/register") else {
             throw APIService.APIError.invalidURL
         }
@@ -191,14 +212,14 @@ public class AuthManager: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body: [String: Any] = [
-            "name": name,
-            "email": email,
-            "phone": phone,
-            "password": password,
+            "name": trimmedName,
+            "email": trimmedEmail,
+            "phone": trimmedPhone,
+            "password": trimmedPassword,
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await APIService.shared.session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
@@ -231,7 +252,7 @@ public class AuthManager: ObservableObject {
         }
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await APIService.shared.session.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                 (200...299).contains(httpResponse.statusCode)
             else {
@@ -333,7 +354,7 @@ public class AuthManager: ObservableObject {
 
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await APIService.shared.session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
@@ -379,7 +400,7 @@ public class AuthManager: ObservableObject {
         let body = ["token": idToken]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await APIService.shared.session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
@@ -405,6 +426,8 @@ public class AuthManager: ObservableObject {
         currentUser = nil
         isLoggedIn = false
 
+        // Fix S1: Clear token from Keychain (was missing — users couldn't truly log out)
+        KeychainManager.shared.authToken = nil
         UserDefaults.standard.removeObject(forKey: tokenKey)
         UserDefaults.standard.removeObject(forKey: userKey)
     }

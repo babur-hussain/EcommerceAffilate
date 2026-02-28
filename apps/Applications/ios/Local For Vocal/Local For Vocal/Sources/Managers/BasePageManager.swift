@@ -4,6 +4,8 @@ import SwiftUI
 
 // MARK: - Base Page Manager
 // Shared logic for pages that fetch subcategories and products based on a parent category ID.
+// Fix #7: @MainActor at class level ensures all @Published mutations are thread-safe
+@MainActor
 class BasePageManager: ObservableObject {
     @Published var subCategories: [SubCategory] = []
     @Published var products: [Product] = []
@@ -34,7 +36,7 @@ class BasePageManager: ObservableObject {
                 parentId: parentCategoryId)
             self.subCategories = fetchedCategories
         } catch {
-            print("Error fetching subcategories for \(parentCategoryId): \(error)")
+            AppLogger.debug("Error fetching subcategories for \(parentCategoryId): \(error)")
             // Fallback to empty or local if needed
         }
     }
@@ -100,7 +102,7 @@ class BasePageManager: ObservableObject {
 
             self.isLoading = false
         } catch {
-            print("Error fetching products: \(error)")
+            AppLogger.debug("Error fetching products: \(error)")
             self.errorMessage = error.localizedDescription
             self.isLoading = false
         }

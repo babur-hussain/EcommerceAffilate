@@ -15,22 +15,21 @@ struct GroceryEventsComponent: View {
             }
 
             // Horizontal Scroll List
-            GeometryReader { geo in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 16) {
-                        let items = component.decodeItems(for: "items", as: [GroceryEventItem].self)
+            // Fix #8: Use screen width instead of GeometryReader (avoids two-pass layout in ScrollView)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    let items = component.decodeItems(for: "items", as: [GroceryEventItem].self)
 
-                        // Card Width: 75% of screen (or parent container)
-                        let cardWidth = geo.size.width * 0.75
+                    // Card Width: 75% of screen
+                    let cardWidth = UIScreen.main.bounds.width * 0.75
 
-                        ForEach(items, id: \.self) { item in
-                            GroceryEventCardView(item: item, width: cardWidth)
-                        }
+                    ForEach(items, id: \.self) { item in
+                        GroceryEventCardView(item: item, width: cardWidth)
                     }
-                    .padding(.horizontal, 16)
                 }
+                .padding(.horizontal, 16)
             }
-            .frame(height: 420)  // Increased height to 420
+            .frame(height: 420)
         }
         .padding(.vertical, 24)
     }

@@ -74,7 +74,7 @@ struct CuratedCollectionsView: View {
                     ], spacing: 16) {
                         ForEach(collection.items) { item in
                             Button(action: {
-                                print("Navigate to: \(item.actionUrl)")
+                                AppLogger.debug("Navigate to: \(item.actionUrl)")
                             }) {
                                 HStack(spacing: 12) {
                                     // Icon Container

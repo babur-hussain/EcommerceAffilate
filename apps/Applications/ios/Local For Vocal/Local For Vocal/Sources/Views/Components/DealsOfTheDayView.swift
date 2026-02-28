@@ -36,7 +36,7 @@ struct DealsOfTheDayView: View {
 
                 if headerActionUrl != nil {
                     Button(action: {
-                        print("Navigate to: \(headerActionUrl!)")
+                        AppLogger.debug("Navigate to: \(headerActionUrl!)")
                     }) {
                         Text("View All ›")
                             .font(.system(size: 13, weight: .semibold))
@@ -76,7 +76,7 @@ struct DealsOfTheDayCard: View {
     var body: some View {
         Button(action: {
             if let action = item.actionUrl {
-                print("Navigate to: \(action)")
+                AppLogger.debug("Navigate to: \(action)")
             }
         }) {
             VStack(alignment: .leading, spacing: 0) {

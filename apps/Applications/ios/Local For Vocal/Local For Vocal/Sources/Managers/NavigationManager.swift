@@ -49,20 +49,63 @@ enum TabType: String, CaseIterable, Identifiable {
     }
 }
 
+// Enum for overlay navigation — replaces 7 separate @Published booleans
+enum OverlayDestination: String, Identifiable {
+    case beauty
+    case specialDeal
+    case brandNewArrival
+    case menFashion
+    case grandMobiles
+    case shoesSales
+    case cyberSale
+    case categoryPage
+
+    var id: String { rawValue }
+}
+
 class NavigationManager: ObservableObject {
     @Published var selectedCategory: String = "For You"
     @Published var activeTab: TabType = .shopping
-    @Published var showBeautyPage: Bool = false
-    @Published var showSpecialDealPage: Bool = false
-    @Published var showBrandNewArrivalPage: Bool = false
-    @Published var showMenFashionPage: Bool = false
-    @Published var showGrandMobilesPage: Bool = false
-    @Published var showShoesSalesPage: Bool = false
-    @Published var showCyberSalePage: Bool = false
+
+    // Single enum replaces 7+ booleans — one objectWillChange instead of many
+    @Published var activeOverlay: OverlayDestination? = nil
 
     // Category navigation state
     @Published var categoryNavigation: CategoryNavigationParams?
-    @Published var showCategoryPage: Bool = false
+
+    // Computed compatibility properties for existing code
+    var showBeautyPage: Bool {
+        get { activeOverlay == .beauty }
+        set { activeOverlay = newValue ? .beauty : nil }
+    }
+    var showSpecialDealPage: Bool {
+        get { activeOverlay == .specialDeal }
+        set { activeOverlay = newValue ? .specialDeal : nil }
+    }
+    var showBrandNewArrivalPage: Bool {
+        get { activeOverlay == .brandNewArrival }
+        set { activeOverlay = newValue ? .brandNewArrival : nil }
+    }
+    var showMenFashionPage: Bool {
+        get { activeOverlay == .menFashion }
+        set { activeOverlay = newValue ? .menFashion : nil }
+    }
+    var showGrandMobilesPage: Bool {
+        get { activeOverlay == .grandMobiles }
+        set { activeOverlay = newValue ? .grandMobiles : nil }
+    }
+    var showShoesSalesPage: Bool {
+        get { activeOverlay == .shoesSales }
+        set { activeOverlay = newValue ? .shoesSales : nil }
+    }
+    var showCyberSalePage: Bool {
+        get { activeOverlay == .cyberSale }
+        set { activeOverlay = newValue ? .cyberSale : nil }
+    }
+    var showCategoryPage: Bool {
+        get { activeOverlay == .categoryPage }
+        set { activeOverlay = newValue ? .categoryPage : nil }
+    }
 
     func navigate(to url: String) {
         // Handle grocery category deep links with multiple IDs
@@ -111,9 +154,9 @@ class NavigationManager: ObservableObject {
         } else if url == "cyber-sale" {
             self.showCyberSalePage = true
         } else if url.starts(with: "/collection/") {
-            print("Navigate to collection: \(url)")
+            AppLogger.debug("Navigate to collection: \(url)")
         } else {
-            print("Unhandled navigation: \(url)")
+            AppLogger.debug("Unhandled navigation: \(url)")
         }
     }
 

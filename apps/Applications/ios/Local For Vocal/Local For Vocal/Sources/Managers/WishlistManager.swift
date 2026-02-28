@@ -38,22 +38,17 @@ public class WishlistManager: ObservableObject {
                 request.setValue(value, forHTTPHeaderField: key)
             }
 
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                (200...299).contains(httpResponse.statusCode)
-            else {
-                throw APIService.APIError.serverError
-            }
+            let (data, response) = try await APIService.shared.session.data(for: request)
+            let validData = try APIService.shared.handleResponse(data, response)
 
             // Backend returns { wishlist: [Product] } or just [Product]
             let decoder = JSONDecoder()
 
-            if let wrapper = try? decoder.decode(WishlistResponse.self, from: data) {
+            if let wrapper = try? decoder.decode(WishlistResponse.self, from: validData) {
                 self.wishlistItems = wrapper.wishlist
                 self.wishlistIds = Set(wrapper.wishlist.map { $0.id })
                 self.isLoading = false
-            } else if let products = try? decoder.decode([Product].self, from: data) {
+            } else if let products = try? decoder.decode([Product].self, from: validData) {
                 self.wishlistItems = products
                 self.wishlistIds = Set(products.map { $0.id })
                 self.isLoading = false
@@ -61,7 +56,7 @@ public class WishlistManager: ObservableObject {
                 throw APIService.APIError.decodingError
             }
         } catch {
-            print("Wishlist fetch error: \(error)")
+            AppLogger.debug("Wishlist fetch error: \(error)")
             self.error = error.localizedDescription
             self.isLoading = false
         }
@@ -85,13 +80,8 @@ public class WishlistManager: ObservableObject {
                 request.setValue(value, forHTTPHeaderField: key)
             }
 
-            let (_, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                (200...299).contains(httpResponse.statusCode)
-            else {
-                return false
-            }
+            let (_, response) = try await APIService.shared.session.data(for: request)
+            let _ = try APIService.shared.handleResponse(Data(), response)
 
             self.wishlistIds.insert(productId)
 
@@ -99,7 +89,7 @@ public class WishlistManager: ObservableObject {
             await fetchWishlist()
             return true
         } catch {
-            print("Add to wishlist error: \(error)")
+            AppLogger.debug("Add to wishlist error: \(error)")
             return false
         }
     }
@@ -121,20 +111,15 @@ public class WishlistManager: ObservableObject {
                 request.setValue(value, forHTTPHeaderField: key)
             }
 
-            let (_, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                (200...299).contains(httpResponse.statusCode)
-            else {
-                return false
-            }
+            let (_, response) = try await APIService.shared.session.data(for: request)
+            let _ = try APIService.shared.handleResponse(Data(), response)
 
             self.wishlistIds.remove(productId)
             self.wishlistItems.removeAll { $0.id == productId }
 
             return true
         } catch {
-            print("Remove from wishlist error: \(error)")
+            AppLogger.debug("Remove from wishlist error: \(error)")
             return false
         }
     }

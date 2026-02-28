@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - Wishlist View
 struct WishlistView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var wishlistManager = WishlistManager.shared
-    @ObservedObject private var authManager = AuthManager.shared
+    private var wishlistManager: WishlistManager { WishlistManager.shared }
+    private var authManager: AuthManager { AuthManager.shared }
 
     @State private var selectedProduct: Product? = nil
 

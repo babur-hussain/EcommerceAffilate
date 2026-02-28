@@ -24,7 +24,10 @@ public class APIService {
 
     let config = URLSessionConfiguration.default
     config.urlCache = cache
-    config.requestCachePolicy = .useProtocolCachePolicy  // Default to protocol (server headers)
+    config.requestCachePolicy = .useProtocolCachePolicy
+    // Fix #15: Prevent 60s hangs — mobile users abandon long before
+    config.timeoutIntervalForRequest = 15
+    config.timeoutIntervalForResource = 30
 
     self.session = URLSession(configuration: config)
   }
@@ -184,7 +187,17 @@ public class APIService {
 
     AppLogger.debug("🛒 Fetching grocery products from: \(url.absoluteString)")
 
-    let (data, _) = try await session.data(from: url)
+    let (rawData, response) = try await session.data(from: url)
+
+    // Fix #14: Check status code — was silently ignoring 404/500
+    guard let httpResponse = response as? HTTPURLResponse,
+      (200...299).contains(httpResponse.statusCode)
+    else {
+      AppLogger.error(
+        "🛒 Grocery fetch failed with status: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+      throw APIError.serverError
+    }
+    let data = rawData
 
     // Debug: Print raw JSON
     if let jsonString = String(data: data, encoding: .utf8) {
@@ -474,6 +487,25 @@ public class APIService {
     let result = try JSONDecoder().decode(AffiliateLinkResponse.self, from: data)
     return result.link
   }
+  // MARK: - Fix #4: Central 401 Handler
+  /// Checks response for 401 and auto-logs out. Returns data for further processing.
+  func handleResponse(_ data: Data, _ response: URLResponse) throws -> Data {
+    guard let httpResponse = response as? HTTPURLResponse else {
+      throw APIError.serverError
+    }
+    if httpResponse.statusCode == 401 {
+      Task { @MainActor in
+        AppLogger.error("Session expired (401). Logging out.")
+        AuthManager.shared.logout()
+      }
+      throw APIError.custom(message: "Session expired. Please log in again.")
+    }
+    guard (200...299).contains(httpResponse.statusCode) else {
+      throw APIError.serverError
+    }
+    return data
+  }
+
   // MARK: - Private Helper
   private func makeURL(_ path: String, queryItems: [URLQueryItem]? = nil) throws -> URL {
     guard var components = URLComponents(string: baseURL) else {
@@ -481,8 +513,6 @@ public class APIService {
       throw APIError.invalidURL
     }
 
-    // Append path safely
-    // components.path deals with unencoded strings and will handle encoding when accessing .url
     let cleanPath = path.hasPrefix("/") ? path : "/" + path
     components.path.append(cleanPath)
 
@@ -695,6 +725,19 @@ public struct GlobalSearchResponse: Decodable {
   public let categories: [SearchResultItem]
   public let brands: [SearchResultItem]
   public let suggestions: [SearchSuggestion]
+
+  // Grocery endpoint omits categories and brands arrays
+  enum CodingKeys: String, CodingKey {
+    case products, categories, brands, suggestions
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    products = (try? container.decode([SearchResultItem].self, forKey: .products)) ?? []
+    categories = (try? container.decode([SearchResultItem].self, forKey: .categories)) ?? []
+    brands = (try? container.decode([SearchResultItem].self, forKey: .brands)) ?? []
+    suggestions = (try? container.decode([SearchSuggestion].self, forKey: .suggestions)) ?? []
+  }
 }
 
 public struct SearchResultItem: Decodable, Identifiable {
@@ -706,22 +749,54 @@ public struct SearchResultItem: Decodable, Identifiable {
   public let rating: Double?
   public let brand: String?
   public let category: String?
+  public let mrp: Double?
 
   // Computed helper for display name
   public var displayName: String {
     return title ?? name ?? "Unknown"
   }
+
+  // Handle both "id" (global search) and "_id" (grocery search)
+  enum CodingKeys: String, CodingKey {
+    case id, _id, title, name, image, price, rating, brand, category, mrp
+    case primaryImage
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    // Try "id" first, then "_id"
+    if let idVal = try? container.decode(String.self, forKey: .id) {
+      id = idVal
+    } else if let idVal = try? container.decode(String.self, forKey: ._id) {
+      id = idVal
+    } else {
+      id = UUID().uuidString
+    }
+    title = try? container.decode(String.self, forKey: .title)
+    name = try? container.decode(String.self, forKey: .name)
+    // Try "image" first, then "primaryImage" (grocery uses both)
+    if let img = try? container.decode(String.self, forKey: .image), !img.isEmpty {
+      image = img
+    } else {
+      image = try? container.decode(String.self, forKey: .primaryImage)
+    }
+    price = try? container.decode(Double.self, forKey: .price)
+    rating = try? container.decode(Double.self, forKey: .rating)
+    brand = try? container.decode(String.self, forKey: .brand)
+    category = try? container.decode(String.self, forKey: .category)
+    mrp = try? container.decode(Double.self, forKey: .mrp)
+  }
 }
 
 public struct SearchSuggestion: Decodable, Identifiable {
   // Unique composite ID for SwiftUI List (satisfies Identifiable)
-  public var id: String { text + type + suggestionId }
+  public var id: String { text + type + (suggestionId ?? "") }
 
   public let text: String
   public let type: String
 
-  // Backend ID field (renamed to avoid conflict with Identifiable.id)
-  public let suggestionId: String
+  // Backend ID field — optional because grocery suggestions don't include it
+  public let suggestionId: String?
 
   enum CodingKeys: String, CodingKey {
     case text, type

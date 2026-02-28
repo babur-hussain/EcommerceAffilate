@@ -3,6 +3,7 @@ import Foundation
 
 /// Enhanced SDUI Page ViewModel with cache-first loading strategy
 /// Loads cached content immediately, then refreshes from network in background
+/// Uses checksum comparison to avoid unnecessary re-renders
 @MainActor
 class SDUIPageViewModel: ObservableObject {
     @Published var components: [SDUIComponent] = []
@@ -26,10 +27,10 @@ class SDUIPageViewModel: ObservableObject {
     // MARK: - Cache-First Loading (Recommended)
 
     /// Load layout with cache-first strategy
-    /// 1. Load from cache immediately
+    /// 1. Load from cache immediately (memory → disk)
     /// 2. Show skeleton if no cache
-    /// 3. Fetch fresh data in background
-    /// 4. Update UI only if data changed
+    /// 3. Fetch fresh data in background (only if online)
+    /// 4. Update UI only if JSON actually changed (checksum comparison)
     func loadLayout() {
         guard !isLoading else { return }
 
@@ -48,34 +49,62 @@ class SDUIPageViewModel: ObservableObject {
             self.components = cached.components
             self.isFromCache = true
             self.showSkeleton = false
-            print("[SDUI] Loaded \(cached.components.count) components from cache")
+            AppLogger.debug(
+                "[SDUI] Loaded \(cached.components.count) components from cache (stale: \(cached.isStale))"
+            )
         } else {
             // No cache - show skeleton
             self.showSkeleton = true
-            print("[SDUI] No cache, showing skeleton for \(pageSlug)")
+            AppLogger.debug("[SDUI] No cache, showing skeleton for \(pageSlug)")
         }
 
-        // 2. Fetch fresh data from network (background)
+        // 2. Fetch fresh data from network (only if online)
+        guard NetworkMonitor.shared.isConnected else {
+            // Offline — use whatever cache we have, no error if we have content
+            if self.components.isEmpty {
+                self.errorMessage = "You're offline and no cached content is available"
+                self.showSkeleton = false
+            }
+            isLoading = false
+            AppLogger.debug("[SDUI] Offline — using cached content for \(pageSlug)")
+            return
+        }
+
         do {
             let (freshComponents, rawData) = try await fetchFromNetworkWithRawData()
 
             // Check if task was cancelled
             guard !Task.isCancelled else { return }
 
-            // 3. Always update UI with fresh data from network
-            self.components = freshComponents
-            self.showSkeleton = false
-            self.isFromCache = false
-            print("[SDUI] Updated with \(freshComponents.count) fresh components")
+            // 3. Check if content actually changed (SHA256 checksum comparison)
+            var shouldUpdateUI = true
+            if let rawData = rawData {
+                shouldUpdateUI = await SDUICacheManager.shared.hasContentChanged(
+                    key: pageSlug, newData: rawData)
+            }
 
-            // 4. Save raw JSON to cache and register for preloading (non-blocking)
+            if shouldUpdateUI {
+                // Content changed — update UI
+                self.components = freshComponents
+                self.showSkeleton = false
+                self.isFromCache = false
+                AppLogger.debug(
+                    "[SDUI] Updated with \(freshComponents.count) fresh components (content changed)"
+                )
+            } else {
+                // Content identical — skip re-render
+                self.showSkeleton = false
+                self.isFromCache = false
+                AppLogger.debug("[SDUI] Content unchanged for \(pageSlug), skipping re-render")
+            }
+
+            // 4. Save to both memory + disk cache (non-blocking)
             if let rawData = rawData {
                 let slug = self.pageSlug
                 Task.detached {
-                    await SDUICacheManager.shared.saveRawJSON(
-                        rawData,
-                        slug: slug,
-                        userId: nil
+                    await SDUICacheManager.shared.saveSDUI(
+                        key: slug,
+                        jsonData: rawData
                     )
                     LayoutPreloader.shared.registerCachedSlug(slug)
                 }
@@ -86,9 +115,9 @@ class SDUIPageViewModel: ObservableObject {
             if self.components.isEmpty {
                 self.errorMessage = error.localizedDescription
                 self.showSkeleton = false
-                print("[SDUI] Network error and no cache: \(error)")
+                AppLogger.debug("[SDUI] Network error and no cache: \(error)")
             } else {
-                print("[SDUI] Network failed but using cached content")
+                AppLogger.debug("[SDUI] Network failed but using cached content")
             }
         }
 
@@ -113,7 +142,7 @@ class SDUIPageViewModel: ObservableObject {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await APIService.shared.session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
@@ -123,7 +152,7 @@ class SDUIPageViewModel: ObservableObject {
 
         // Log cache header from backend
         if let cacheHit = httpResponse.value(forHTTPHeaderField: "X-Cache") {
-            print("[SDUI] Backend cache: \(cacheHit)")
+            AppLogger.debug("[SDUI] Backend cache: \(cacheHit)")
         }
 
         // Decode components
@@ -157,7 +186,7 @@ class SDUIPageViewModel: ObservableObject {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        URLSession.shared.dataTaskPublisher(for: request)
+        APIService.shared.session.dataTaskPublisher(for: request)
             .map(\.data)
             .decode(type: [SDUIComponent].self, decoder: JSONDecoder())
             .receive(on: DispatchQueue.main)
@@ -169,7 +198,7 @@ class SDUIPageViewModel: ObservableObject {
                         break
                     case .failure(let error):
                         self?.errorMessage = error.localizedDescription
-                        print("[SDUI] Error: \(error)")
+                        AppLogger.debug("[SDUI] Error: \(error)")
                     }
                 },
                 receiveValue: { [weak self] components in
@@ -188,6 +217,13 @@ class SDUIPageViewModel: ObservableObject {
             isLoading = true
             errorMessage = nil
 
+            // Check connectivity first
+            guard NetworkMonitor.shared.isConnected else {
+                self.errorMessage = "You're offline. Cannot refresh."
+                isLoading = false
+                return
+            }
+
             do {
                 let (freshComponents, rawData) = try await fetchFromNetworkWithRawData()
                 self.components = freshComponents
@@ -197,10 +233,9 @@ class SDUIPageViewModel: ObservableObject {
                 if let rawData = rawData {
                     let slug = self.pageSlug
                     Task.detached {
-                        await SDUICacheManager.shared.saveRawJSON(
-                            rawData,
-                            slug: slug,
-                            userId: nil
+                        await SDUICacheManager.shared.saveSDUI(
+                            key: slug,
+                            jsonData: rawData
                         )
                     }
                 }
@@ -214,8 +249,8 @@ class SDUIPageViewModel: ObservableObject {
 
     /// Clear local cache for this page
     func clearCache() async {
-        await SDUICacheManager.shared.invalidate(
-            slug: pageSlug,
+        await SDUICacheManager.shared.clearCache(
+            key: pageSlug,
             userId: nil
         )
     }

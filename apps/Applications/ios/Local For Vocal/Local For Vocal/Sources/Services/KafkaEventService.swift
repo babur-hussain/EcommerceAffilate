@@ -84,15 +84,20 @@ public class KafkaEventService: ObservableObject {
             return
         }
 
-        let sseURL = URL(string: "\(AppEnvironment.current.sseEndpoint)")!
+        // Fix S4: Guard against invalid URL instead of force unwrap
+        guard let sseURL = URL(string: "\(AppEnvironment.current.sseEndpoint)") else {
+            AppLogger.error("❌ KafkaEventService: Invalid SSE endpoint URL")
+            return
+        }
         var request = URLRequest(url: sseURL)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = TimeInterval.infinity  // SSE connections are long-lived
+        // Fix #14: No request-level timeout override — use session config's 300s timeout
 
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = TimeInterval.infinity
-        config.timeoutIntervalForResource = TimeInterval.infinity
+        // Fix #14: Finite timeout prevents zombie connections; SSE reconnects on timeout
+        config.timeoutIntervalForRequest = 300  // 5 minutes — server should send heartbeat before this
+        config.timeoutIntervalForResource = TimeInterval.infinity  // Resource itself is long-lived (OK for SSE)
 
         let session = URLSession(
             configuration: config, delegate: SSEDelegate(service: self), delegateQueue: nil)

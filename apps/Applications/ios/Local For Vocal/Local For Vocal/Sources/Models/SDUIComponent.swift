@@ -98,7 +98,7 @@ public struct SDUIComponent: Identifiable, Codable, Hashable {
                 let decoded = try JSONDecoder().decode([T].self, from: data)
                 return decoded
             } catch {
-                print("Error decoding items for key \(key): \(error)")
+                AppLogger.debug("Error decoding items for key \(key): \(error)")
                 return []
             }
         }

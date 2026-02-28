@@ -9,6 +9,8 @@ struct GroceryPageView: View {
     @State private var typingText = ""
     private let fullText = "Lowest price..."
     @State private var isDeleting = false
+    // Fix P1: Store timer reference to invalidate on disappear
+    @State private var typingTimer: Timer?
 
     @State private var isSearching = false
     @State private var scrollOffset: CGFloat = 0
@@ -95,13 +97,20 @@ struct GroceryPageView: View {
         .onAppear {
             startTypingAnimation()
         }
+        // Fix P1: Invalidate timer when view disappears
+        .onDisappear {
+            typingTimer?.invalidate()
+            typingTimer = nil
+        }
         .fullScreenCover(isPresented: $isSearching) {
             GroceryGlobalSearchView()
         }
     }
 
     func startTypingAnimation() {
-        Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { timer in
+        // Fix P1: Guard against duplicate timers
+        guard typingTimer == nil else { return }
+        typingTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { timer in
             if !isDeleting {
                 if typingText.count < fullText.count {
                     let index = fullText.index(fullText.startIndex, offsetBy: typingText.count)
@@ -127,7 +136,10 @@ struct GroceryPageView: View {
 
 struct GroceryStaticHeader: View {
     var onLocationTap: () -> Void
-    @ObservedObject var locationManager = LocationManager.shared
+    // Fix P4: Use EnvironmentObject instead of creating own instance
+    @EnvironmentObject var locationManager: LocationManager
+    // Fix S6: Cache date strings to avoid allocation on every render
+    @State private var dateDisplay: (day: String, month: String, weekday: String) = ("", "", "")
 
     var body: some View {
         VStack(spacing: 0) {
@@ -163,13 +175,13 @@ struct GroceryStaticHeader: View {
                 Spacer()
 
                 HStack(spacing: 4) {
-                    Text("\(Date().formatted(.dateTime.day()))")
+                    Text(dateDisplay.day)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white)
-                    Text(Date().formatted(.dateTime.month()))
+                    Text(dateDisplay.month)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white)
-                    Text(Date().formatted(.dateTime.weekday()))
+                    Text(dateDisplay.weekday)
                         .font(.system(size: 9))
                         .foregroundColor(.white.opacity(0.9))
                 }
@@ -181,6 +193,15 @@ struct GroceryStaticHeader: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(Color(hex: "#FFF8E7"))
+            // Fix S6: Compute date strings once on appear
+            .onAppear {
+                let now = Date()
+                dateDisplay = (
+                    day: now.formatted(.dateTime.day()),
+                    month: now.formatted(.dateTime.month()),
+                    weekday: now.formatted(.dateTime.weekday())
+                )
+            }
         }
     }
 }

@@ -17,7 +17,8 @@ class CheckoutViewModel: ObservableObject {
     var firstProduct: Product? { items.first?.product }
 
     // MARK: - Dependencies
-    @Published var locationManager = LocationManager()
+    // Fix #2: Use shared singleton instead of creating duplicate GPS tracker
+    @Published var locationManager = LocationManager.shared
 
     // MARK: - Step State
     @Published var currentStep = 2
@@ -152,11 +153,16 @@ class CheckoutViewModel: ObservableObject {
         protectFee + shippingFee
     }
 
+    // Fix #9: Cached instead of recomputing DateFormatter on every render
+    private static let deliveryDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, EEE"
+        return f
+    }()
+
     var deliveryDate: String {
         let date = Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, EEE"
-        return formatter.string(from: date)
+        return Self.deliveryDateFormatter.string(from: date)
     }
 
     // MARK: - Methods

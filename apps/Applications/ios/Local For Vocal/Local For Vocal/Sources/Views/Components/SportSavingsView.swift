@@ -26,7 +26,7 @@ struct SportSavingsView: View {
                     if let action = headerActionUrl {
                         Spacer()
                         Button(action: {
-                            print("Navigate to: \(action)")
+                            AppLogger.debug("Navigate to: \(action)")
                         }) {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 14, weight: .bold))
@@ -59,7 +59,7 @@ struct SavingsCard: View {
     var body: some View {
         Button(action: {
             if let action = item.actionUrl {
-                print("Navigate to: \(action)")
+                AppLogger.debug("Navigate to: \(action)")
             }
         }) {
             ZStack {

@@ -63,7 +63,7 @@ public final class KeychainManager {
 
         let status = SecItemAdd(query as CFDictionary, nil)
         if status != errSecSuccess {
-            print("[KeychainManager] Failed to save \(key): \(status)")
+            AppLogger.debug("[KeychainManager] Failed to save \(key): \(status)")
         }
     }
 

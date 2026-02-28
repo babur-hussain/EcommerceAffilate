@@ -91,7 +91,7 @@ struct TrendingNearYouView: View {
                 self.products = fetched
             }
         } catch {
-            print("Failed to load trending products: \(error)")
+            AppLogger.debug("Failed to load trending products: \(error)")
         }
         isLoading = false
     }

@@ -31,7 +31,8 @@ struct WalletHistoryResponse: Decodable {
 // MARK: - Wallet View
 struct WalletView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var authManager = AuthManager.shared
+    // Fix #13: Access singleton directly rather than @ObservedObject wrapper
+    private var authManager: AuthManager { AuthManager.shared }
 
     @State private var transactions: [WalletTransaction] = []
     @State private var isLoading = true
@@ -274,15 +275,15 @@ struct WalletView: View {
         .padding()
     }
 
-    // MARK: - Fetch Data
-    private func fetchWalletHistory() {
+    // MARK: - Fetch Data (Fix #3: Use APIService.shared.session, Fix #8: Unified fetch/refresh)
+    private func fetchWalletHistory(isRefresh: Bool = false) {
         guard let token = authManager.authToken else {
             error = "Please login to view wallet"
             isLoading = false
             return
         }
 
-        isLoading = true
+        if !isRefresh { isLoading = true }
         error = nil
 
         guard let url = URL(string: "\(APIService.shared.baseURL)/wallet/history") else {
@@ -297,83 +298,59 @@ struct WalletView: View {
 
         Task {
             do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-
-                guard let httpResponse = response as? HTTPURLResponse,
-                    (200...299).contains(httpResponse.statusCode)
-                else {
-                    await MainActor.run {
-                        error = "Failed to load wallet history"
-                        isLoading = false
-                    }
-                    return
-                }
+                let (data, response) = try await APIService.shared.session.data(for: request)
+                // Fix #4: Use central 401 handler
+                let validData = try APIService.shared.handleResponse(data, response)
 
                 let walletResponse = try JSONDecoder().decode(
-                    WalletHistoryResponse.self, from: data)
+                    WalletHistoryResponse.self, from: validData)
 
                 await MainActor.run {
                     transactions = walletResponse.transactions
                     isLoading = false
                 }
             } catch {
-                await MainActor.run {
-                    self.error = "Failed to load wallet history"
-                    isLoading = false
+                if !isRefresh {
+                    await MainActor.run {
+                        self.error = "Failed to load wallet history"
+                        self.isLoading = false
+                    }
                 }
                 AppLogger.error("Wallet fetch error: \(error)")
             }
         }
     }
 
+    // Fix #8: Reuse unified fetch for pull-to-refresh
     private func refreshData() async {
-        guard let token = authManager.authToken else { return }
-
-        guard let url = URL(string: "\(APIService.shared.baseURL)/wallet/history") else {
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                (200...299).contains(httpResponse.statusCode)
-            else { return }
-
-            let walletResponse = try JSONDecoder().decode(
-                WalletHistoryResponse.self, from: data)
-
-            await MainActor.run {
-                transactions = walletResponse.transactions
-            }
-        } catch {
-            AppLogger.error("Wallet refresh error: \(error)")
-        }
+        fetchWalletHistory(isRefresh: true)
     }
 
     // MARK: - Helpers
+    // Fix #5: Static formatters — avoid 40+ allocations per list render
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoFormatterNoFrac: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+    private static let displayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy 'at' h:mm a"
+        return f
+    }()
+
     private func formatDate(_ dateString: String) -> String {
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        if let date = isoFormatter.date(from: dateString) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy 'at' h:mm a"
-            return formatter.string(from: date)
+        if let date = Self.isoFormatter.date(from: dateString) {
+            return Self.displayFormatter.string(from: date)
         }
-
-        // Try without fractional seconds
-        isoFormatter.formatOptions = [.withInternetDateTime]
-        if let date = isoFormatter.date(from: dateString) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy 'at' h:mm a"
-            return formatter.string(from: date)
+        if let date = Self.isoFormatterNoFrac.date(from: dateString) {
+            return Self.displayFormatter.string(from: date)
         }
-
         return ""
     }
 }

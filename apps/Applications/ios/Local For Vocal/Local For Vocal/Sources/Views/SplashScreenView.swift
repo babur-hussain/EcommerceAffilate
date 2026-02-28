@@ -56,7 +56,7 @@ struct SplashScreenView: View {
                     self.dotLottieFile = file
                 }
             } catch {
-                print("[SplashScreen] Failed to load lottie: \(error)")
+                AppLogger.debug("[SplashScreen] Failed to load lottie: \(error)")
             }
         }
     }

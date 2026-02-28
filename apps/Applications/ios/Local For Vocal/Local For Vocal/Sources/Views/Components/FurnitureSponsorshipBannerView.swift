@@ -13,7 +13,7 @@ struct FurnitureSponsorshipBannerView: View {
         if let banner = items.first {
             Button(action: {
                 if let action = banner.actionUrl {
-                    print("Navigate to: \(action)")
+                    AppLogger.debug("Navigate to: \(action)")
                 }
             }) {
                 if let url = URL(string: banner.image) {

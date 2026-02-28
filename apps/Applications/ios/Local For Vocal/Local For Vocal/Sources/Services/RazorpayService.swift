@@ -8,10 +8,18 @@
     class RazorpayService: NSObject, RazorpayPaymentCompletionProtocolWithData {
         static let shared = RazorpayService()
 
-        // Razorpay Key ID - Configure via Info.plist RAZORPAY_KEY_ID for production
-        private let keyId: String =
-            Bundle.main.object(forInfoDictionaryKey: "RAZORPAY_KEY_ID") as? String
-            ?? "rzp_test_S2fkx4mZP0xAQm"
+        // Fix S2: Live Razorpay key — no hardcoded test key fallback in production
+        private let keyId: String = {
+            if let plistKey = Bundle.main.object(forInfoDictionaryKey: "RAZORPAY_KEY_ID") as? String
+            {
+                return plistKey
+            }
+            #if DEBUG
+                return "rzp_test_S2fkx4mZP0xAQm"  // Test key for debug only
+            #else
+                return "rzp_live_SIs9DUNl6RGng7"
+            #endif
+        }()
 
         // SDK instance
         private var razorpay: RazorpayCheckout!
@@ -100,7 +108,7 @@
             let body = ["provider": "RAZORPAY"]
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await APIService.shared.session.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse,
                 (200...299).contains(httpResponse.statusCode)
@@ -202,7 +210,8 @@
         }
 
         func onPaymentSuccess(_ payment_id: String, andData response: [AnyHashable: Any]?) {
-            AppLogger.info("Razorpay Payment Success: \(payment_id)")
+            // Fix S3: Don't log payment ID (PCI-sensitive)
+            AppLogger.info("Razorpay Payment Success")
 
             guard let response = response else {
                 DispatchQueue.main.async {
@@ -253,7 +262,7 @@
             ]
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (_, response) = try await APIService.shared.session.data(for: request)
 
             if let httpResponse = response as? HTTPURLResponse {
                 return httpResponse.statusCode == 200

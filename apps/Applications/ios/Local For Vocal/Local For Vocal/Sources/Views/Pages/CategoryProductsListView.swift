@@ -10,7 +10,7 @@ struct CategoryProductsListView: View {
     let minimumDiscount: Int
 
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var wishlistManager = WishlistManager.shared
+    private var wishlistManager: WishlistManager { WishlistManager.shared }
 
     @State private var products: [Product] = []
     @State private var isLoading = true
@@ -143,7 +143,7 @@ struct CategoryProductsListView: View {
                 self.products = discounted.isEmpty ? fetched : discounted
             }
         } catch {
-            print("[CategoryProductsList] Error: \(error)")
+            AppLogger.debug("[CategoryProductsList] Error: \(error)")
         }
     }
 }
@@ -152,7 +152,7 @@ struct CategoryProductsListView: View {
 
 private struct CategoryProductCard: View {
     let product: Product
-    @ObservedObject private var wishlistManager = WishlistManager.shared
+    private var wishlistManager: WishlistManager { WishlistManager.shared }
 
     var isWishlisted: Bool {
         wishlistManager.isInWishlist(productId: product.id)

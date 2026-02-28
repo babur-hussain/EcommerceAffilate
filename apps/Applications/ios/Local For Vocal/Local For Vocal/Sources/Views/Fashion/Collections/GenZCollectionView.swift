@@ -207,21 +207,32 @@ struct GenZCollectionView: View {
         .onAppear(perform: fetchCategories)
     }
 
+    // Fix #6: Modern async/await instead of legacy callback-based URLSession
     func fetchCategories() {
-        // Fetch from API
         let urlString = "\(APIService.shared.baseURL)/api/categories?group=GenZ"
         guard let url = URL(string: urlString) else { return }
 
-        URLSession.shared.dataTask(with: url) { data, _, _ in
-            if let data = data {
-                if let decoded = try? JSONDecoder().decode([GenZCategory].self, from: data) {
-                    DispatchQueue.main.async {
-                        self.categories = decoded
-                        self.isLoading = false
-                    }
+        Task {
+            do {
+                let (data, response) = try await APIService.shared.session.data(from: url)
+
+                guard let httpResponse = response as? HTTPURLResponse,
+                    (200...299).contains(httpResponse.statusCode)
+                else {
+                    await MainActor.run { self.isLoading = false }
+                    return
                 }
+
+                let decoded = try JSONDecoder().decode([GenZCategory].self, from: data)
+                await MainActor.run {
+                    self.categories = decoded
+                    self.isLoading = false
+                }
+            } catch {
+                AppLogger.error("GenZ categories fetch error: \(error)")
+                await MainActor.run { self.isLoading = false }
             }
-        }.resume()
+        }
     }
 }
 

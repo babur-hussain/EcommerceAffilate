@@ -59,7 +59,7 @@ struct SubCategorySliderView: View {
                 }
             } catch {
                 // Other errors - retry with exponential backoff
-                print("Error loading subcategories (attempt \(attempt + 1)): \(error)")
+                AppLogger.debug("Error loading subcategories (attempt \(attempt + 1)): \(error)")
                 if attempt < maxRetries - 1 {
                     try? await Task.sleep(nanoseconds: UInt64(500_000_000 * (attempt + 1)))  // 500ms * attempt
                 }
@@ -76,7 +76,7 @@ struct SubCategoryCell: View {
 
     var body: some View {
         Button(action: {
-            print("Navigate to sub-category: \(sub.name)")
+            AppLogger.debug("Navigate to sub-category: \(sub.name)")
         }) {
             VStack(spacing: 6) {
                 // Icon Container

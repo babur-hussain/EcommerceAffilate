@@ -12,7 +12,7 @@ struct ConsultationBannerView: View {
     var body: some View {
         Button(action: {
             if let action = actionUrl {
-                print("Navigate to: \(action)")
+                AppLogger.debug("Navigate to: \(action)")
             }
         }) {
             HStack(alignment: .center, spacing: 0) {

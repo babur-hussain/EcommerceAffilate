@@ -38,7 +38,7 @@ struct BeautyLaunchPartyView: View {
                     if headerActionUrl != nil {
                         Button(action: {
                             if let action = headerActionUrl {
-                                print("Navigate to: \(action)")
+                                AppLogger.debug("Navigate to: \(action)")
                             }
                         }) {
                             VStack(spacing: 0) {
@@ -80,7 +80,7 @@ struct BeautyLaunchPartyView: View {
                             LaunchCard(item: item)
                                 .onTapGesture {
                                     if let action = item.actionUrl {
-                                        print("Navigate to: \(action)")
+                                        AppLogger.debug("Navigate to: \(action)")
                                     }
                                 }
                         }

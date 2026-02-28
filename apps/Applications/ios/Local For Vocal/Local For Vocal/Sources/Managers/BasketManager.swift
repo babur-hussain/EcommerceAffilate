@@ -2,108 +2,62 @@ import Combine
 import Foundation
 import SwiftUI
 
-// Reuse CartItem struct or define BasketItem if identical?
-// BasketContext uses BasketItem which is basically CartItem.
-// We can treat them similarly but BasketManager enforces category rules.
+// MARK: - Basket Manager (Grocery)
+// Fix #17: Thin wrapper around UnifiedCartCore — no duplicate logic
 
 @MainActor
 class BasketManager: ObservableObject {
+    private let core = UnifiedCartCore.shared
+    private let type: CartType = .grocery
+
+    // Expose items as published for view reactivity
     @Published var items: [CartItem] = []  // using CartItem for consistency
     @Published var isLoading = false
+    // Fix #16: Exposed for backward compatibility (views may observe this)
+    @Published private(set) var quantityIndex: [String: Int] = [:]
 
-    // Computed Properties
-    var basketTotal: Double {
-        items.reduce(0) { $0 + ($1.product.price * Double($1.quantity)) }
-    }
-
-    var basketCount: Int {
-        items.reduce(0) { $0 + $1.quantity }
-    }
-
-    var basketSavings: Double {
-        items.reduce(0) { total, item in
-            let mrp = item.product.mrp ?? item.product.price
-            let price = item.product.price
-            // Ensure savings is non-negative
-            let savingsPerItem = max(0, mrp - price)
-            return total + (savingsPerItem * Double(item.quantity))
-        }
-    }
-
-    private let saveKey = "grocery_basket"
     private let GROCERY_CATEGORY_ID = "696686d02c5aacc146652e03"
 
     init() {
-        loadBasket()
+        syncFromCore()
     }
 
-    // MARK: - Persistence
-
-    private func loadBasket() {
-        if let data = UserDefaults.standard.data(forKey: saveKey),
-            let decoded = try? JSONDecoder().decode([CartItem].self, from: data)
-        {
-            self.items = decoded
-        } else {
-            self.items = []
-        }
-    }
-
-    private func saveBasket() {
-        if let encoded = try? JSONEncoder().encode(items) {
-            UserDefaults.standard.set(encoded, forKey: saveKey)
-        }
-    }
+    // Computed Properties
+    var basketTotal: Double { core.total(for: type) }
+    var basketCount: Int { core.count(for: type) }
+    var basketSavings: Double { core.savings(for: type) }
 
     // MARK: - Actions
 
     func addToBasket(product: Product, quantity: Int = 1) {
-        // Enforce Grocery Restriction (BasketContext.tsx:84)
-        // We need category ID on Product. Product model has `category: String` (name)
-        // but maybe we need to check if we have the ID.
-        // The RN code checks `product.categoryDetails?._id`.
-        // Our iOS Product model doesn't seem to have `categoryDetails` object, just `category` string.
-        // I will add a TODO/Comment about strict validation limitation or assume `category` field holds ID if that's how it's mapped.
-        // For now, I'll allow add to demonstrate UI.
-
-        if let index = items.firstIndex(where: { $0.productId == product.id }) {
-            items[index].quantity += quantity
-        } else {
-            let newItem = CartItem(productId: product.id, quantity: quantity, product: product)
-            items.append(newItem)
-        }
-        saveBasket()
-
-        // Haptic feedback
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
+        core.addItem(type: type, product: product, quantity: quantity)
+        syncFromCore()
     }
 
     func removeFromBasket(productId: String) {
-        items.removeAll { $0.productId == productId }
-        saveBasket()
+        core.removeItem(type: type, productId: productId)
+        syncFromCore()
     }
 
     func updateQuantity(productId: String, quantity: Int) {
-        if quantity <= 0 {
-            removeFromBasket(productId: productId)
-            return
-        }
-
-        if let index = items.firstIndex(where: { $0.productId == productId }) {
-            items[index].quantity = quantity
-            saveBasket()
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
-        }
+        core.updateQuantity(type: type, productId: productId, quantity: quantity)
+        syncFromCore()
     }
 
     func clearBasket() {
-        items = []
-        saveBasket()
+        core.clear(type: type)
+        syncFromCore()
     }
 
+    // Fix #16: O(1) item count lookup
     func getItemCount(productId: String) -> Int {
-        items.first(where: { $0.productId == productId })?.quantity ?? 0
+        core.getItemCount(type: type, productId: productId)
+    }
+
+    // MARK: - Sync
+
+    private func syncFromCore() {
+        items = core.getItems(for: type)
+        quantityIndex = core.quantityIndex[type] ?? [:]
     }
 }

@@ -7,6 +7,17 @@ struct ProductTimerView: View {
     @State private var timeRemaining: String = ""
     @State private var timer: Timer? = nil
 
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoFormatterBasic: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+
     var body: some View {
         if targetDate != nil && !timeRemaining.isEmpty {
             HStack(spacing: 8) {
@@ -39,14 +50,10 @@ struct ProductTimerView: View {
 
     private func updateTime() {
         guard let targetDate = targetDate else { return }
-        // Simple mock parser, expecting ISO string or similar.
-        // In real app, standard ISO8601DateFormatter
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
+        // Use static cached ISO8601DateFormatter
         guard
-            let endDate = formatter.date(from: targetDate)
-                ?? ISO8601DateFormatter().date(from: targetDate)
+            let endDate = Self.isoFormatter.date(from: targetDate)
+                ?? Self.isoFormatterBasic.date(from: targetDate)
         else { return }
 
         let diff = endDate.timeIntervalSinceNow
@@ -78,7 +85,7 @@ struct ProductImageCarouselView: View {
     }
 
     var body: some View {
-        let _ = print("ProductImageCarouselView images: \(images)")
+        let _ = AppLogger.debug("ProductImageCarouselView images: \(images)")
         ZStack(alignment: .bottom) {
             // Images
             TabView(selection: $currentIndex) {
@@ -370,6 +377,12 @@ struct DeliveryInfoView: View {
     let trustBadges: [TrustBadge]?
     let productId: String?
 
+    private static let deliveryDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMM d"
+        return f
+    }()
+
     // For computed delivery date
     @State private var deliveryDateText: String = ""
     @State private var timeLeftText: String = ""
@@ -476,9 +489,7 @@ struct DeliveryInfoView: View {
         let calendar = Calendar.current
         let deliveryDays = 5
         if let futureDate = calendar.date(byAdding: .day, value: deliveryDays, to: Date()) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE, MMM d"
-            deliveryDateText = "Delivery by \(formatter.string(from: futureDate))"
+            deliveryDateText = "Delivery by \(Self.deliveryDateFormatter.string(from: futureDate))"
         }
     }
 

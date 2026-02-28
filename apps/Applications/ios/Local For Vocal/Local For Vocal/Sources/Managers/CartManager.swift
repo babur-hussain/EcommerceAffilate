@@ -13,94 +13,54 @@ public struct CartItem: Codable, Identifiable {
     public let product: Product
 }
 
-// MARK: - Cart Manager
+// MARK: - Cart Manager (Shopping)
+// Fix #17: Thin wrapper around UnifiedCartCore — no duplicate logic
+
 @MainActor
 public class CartManager: ObservableObject {
+    private let core = UnifiedCartCore.shared
+    private let type: CartType = .shopping
+
+    // Expose items as published for view reactivity
     @Published var items: [CartItem] = []
     @Published var isLoading = false
 
+    private var syncTimer: Timer?
+
     // Computed Properties
-    var cartTotal: Double {
-        items.reduce(0) { $0 + ($1.product.price * Double($1.quantity)) }
-    }
-
-    var cartCount: Int {
-        items.reduce(0) { $0 + $1.quantity }
-    }
-
-    var cartSavings: Double {
-        items.reduce(0) { total, item in
-            let mrp = item.product.mrp ?? item.product.price
-            let price = item.product.price
-            let savingsPerItem = max(0, mrp - price)
-            return total + (savingsPerItem * Double(item.quantity))
-        }
-    }
-
-    private let saveKey = "guest_cart"
+    var cartTotal: Double { core.total(for: type) }
+    var cartCount: Int { core.count(for: type) }
+    var cartSavings: Double { core.savings(for: type) }
 
     init() {
-        loadCart()
-    }
-
-    // MARK: - Persistence
-
-    private func loadCart() {
-        if let data = UserDefaults.standard.data(forKey: saveKey) {
-            if let decoded = try? JSONDecoder().decode([CartItem].self, from: data) {
-                self.items = decoded
-                return
-            }
-        }
-        self.items = []
-    }
-
-    private func saveCart() {
-        if let encoded = try? JSONEncoder().encode(items) {
-            UserDefaults.standard.set(encoded, forKey: saveKey)
-        }
+        syncFromCore()
     }
 
     // MARK: - Actions
 
     func addToCart(product: Product, quantity: Int = 1) {
-        if let index = items.firstIndex(where: { $0.productId == product.id }) {
-            // Update existing
-            items[index].quantity += quantity
-        } else {
-            // Add new
-            let newItem = CartItem(productId: product.id, quantity: quantity, product: product)
-            items.append(newItem)
-        }
-        saveCart()
-
-        // Haptic feedback could be added here
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
+        core.addItem(type: type, product: product, quantity: quantity)
+        syncFromCore()
     }
 
     func removeFromCart(productId: String) {
-        items.removeAll { $0.productId == productId }
-        saveCart()
+        core.removeItem(type: type, productId: productId)
+        syncFromCore()
     }
 
     func updateQuantity(productId: String, quantity: Int) {
-        if quantity <= 0 {
-            removeFromCart(productId: productId)
-            return
-        }
-
-        if let index = items.firstIndex(where: { $0.productId == productId }) {
-            items[index].quantity = quantity
-            saveCart()
-
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
-        }
+        core.updateQuantity(type: type, productId: productId, quantity: quantity)
+        syncFromCore()
     }
 
     func clearCart() {
-        items = []
-        saveCart()
+        core.clear(type: type)
+        syncFromCore()
+    }
+
+    // MARK: - Sync
+
+    private func syncFromCore() {
+        items = core.getItems(for: type)
     }
 }

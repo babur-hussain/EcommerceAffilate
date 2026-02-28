@@ -9,7 +9,7 @@ struct GroceryProductDetailView: View {
 
     @State private var selectedImageIndex = 0
     @State private var addedAnimation = false
-    @ObservedObject var locationManager = LocationManager.shared
+    private var locationManager: LocationManager { LocationManager.shared }
 
     // Computed
     var quantity: Int {
@@ -370,11 +370,15 @@ struct GroceryProductDetailView: View {
         .padding(.top, 8)
     }
 
+    private static let deliveryDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "d MMM, EEEE"
+        return f
+    }()
+
     private var deliveryDateString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMM, EEEE"
         let deliveryDate = Calendar.current.date(byAdding: .day, value: 2, to: Date()) ?? Date()
-        return formatter.string(from: deliveryDate)
+        return Self.deliveryDateFormatter.string(from: deliveryDate)
     }
 
     private var sellerDetailsSectionNew: some View {

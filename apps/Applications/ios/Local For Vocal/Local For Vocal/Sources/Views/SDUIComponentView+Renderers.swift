@@ -302,7 +302,7 @@ extension SDUIComponentView {
                     viewModel.isLoading = false
                 }
             } catch {
-                print("Failed to load dynamic products: \(error)")
+                AppLogger.debug("Failed to load dynamic products: \(error)")
                 await MainActor.run {
                     viewModel.isLoading = false
                 }

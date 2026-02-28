@@ -254,7 +254,7 @@ struct GroceryTopPicksView: View {
                     self.isLoading = false
                 }
             } catch {
-                print("❌ [GroceryTopPicksView] Error: \(error)")
+                AppLogger.debug("❌ [GroceryTopPicksView] Error: \(error)")
                 await MainActor.run {
                     self.errorMessage = "Unable to load products."
                     self.isLoading = false

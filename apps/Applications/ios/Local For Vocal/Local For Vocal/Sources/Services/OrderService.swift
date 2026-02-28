@@ -140,24 +140,13 @@ public class OrderService {
 
         // DEBUG: Log the JSON payload
         if let jsonString = String(data: jsonData, encoding: .utf8) {
-            print("📦 [OrderService] Sending order payload: \(jsonString)")
+            AppLogger.debug("📦 [OrderService] Sending order payload: \(jsonString)")
         }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await APIService.shared.session.data(for: request)
+        let validData = try APIService.shared.handleResponse(data, response)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw OrderError.creationFailed
-        }
-
-        if !(200...299).contains(httpResponse.statusCode) {
-            print("Order Create failed with status: \(httpResponse.statusCode)")
-            if let errorText = String(data: data, encoding: .utf8) {
-                print("Response: \(errorText)")
-            }
-            throw OrderError.creationFailed
-        }
-
-        let orderResponse = try JSONDecoder().decode(OrderResponse.self, from: data)
+        let orderResponse = try JSONDecoder().decode(OrderResponse.self, from: validData)
         return orderResponse
     }
 
@@ -176,12 +165,8 @@ public class OrderService {
         let body = ["status": status]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200
-        else {
-            throw OrderError.updateFailed
-        }
+        let (data, response) = try await APIService.shared.session.data(for: request)
+        let _ = try APIService.shared.handleResponse(data, response)
     }
 
     // MARK: - Order Error

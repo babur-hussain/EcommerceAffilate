@@ -135,7 +135,14 @@ struct SmartBasketPageView: View {
                     }
                     return
                 }
-                let (data, _) = try await URLSession.shared.data(from: url)
+                let (data, response) = try await APIService.shared.session.data(from: url)
+
+                guard let httpResponse = response as? HTTPURLResponse,
+                    (200...299).contains(httpResponse.statusCode)
+                else {
+                    throw URLError(.badServerResponse)
+                }
+
                 let allProducts = try JSONDecoder().decode([Product].self, from: data)
 
                 let filtered = allProducts.filter { categoryIds.contains($0.id) }  // Filtering by ID as proxy

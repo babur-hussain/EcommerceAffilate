@@ -47,24 +47,29 @@ struct ReviewRowView: View {
         .padding(.vertical, 8)
     }
 
+    private static let isoFormatterFull: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoFormatterBasic: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+    private static let displayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy"
+        return f
+    }()
+
     private func formatDate(_ dateString: String) -> String {
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        if let date = isoFormatter.date(from: dateString) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy"
-            return formatter.string(from: date)
+        if let date = Self.isoFormatterFull.date(from: dateString) {
+            return Self.displayFormatter.string(from: date)
         }
-
-        // Try without fractional seconds
-        isoFormatter.formatOptions = [.withInternetDateTime]
-        if let date = isoFormatter.date(from: dateString) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, yyyy"
-            return formatter.string(from: date)
+        if let date = Self.isoFormatterBasic.date(from: dateString) {
+            return Self.displayFormatter.string(from: date)
         }
-
         return ""
     }
 }

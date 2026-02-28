@@ -33,7 +33,7 @@ struct FurnitureGrabOrGoneView: View {
                         if let action = headerActionUrl {
                             Spacer()
                             Button(action: {
-                                print("Navigate to: \(action)")
+                                AppLogger.debug("Navigate to: \(action)")
                             }) {
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 14, weight: .bold))
@@ -63,7 +63,7 @@ struct GrabCard: View {
     var body: some View {
         Button(action: {
             if let action = item.actionUrl {
-                print("Navigate to: \(action)")
+                AppLogger.debug("Navigate to: \(action)")
             }
         }) {
             VStack(alignment: .leading, spacing: 8) {

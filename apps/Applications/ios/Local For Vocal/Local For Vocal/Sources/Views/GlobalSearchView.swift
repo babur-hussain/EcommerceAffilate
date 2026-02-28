@@ -13,6 +13,10 @@ struct GlobalSearchView: View {
     @Environment(\.presentationMode) var presentationMode
     @FocusState private var isFocused: Bool
 
+    // Tab for filtering results
+    @State private var selectedResultTab = "All"
+    let resultTabs = ["All", "Products", "Groceries"]
+
     // UI States for filters (Visual only for now)
     let filters = ["Brand", "Size", "Color", "Price", "Rating"]
     @State private var selectedFilter = "Brand"
@@ -42,7 +46,9 @@ struct GlobalSearchView: View {
                                 // Search Bar Container
                                 searchBarSection
 
-                                if viewModel.query.isEmpty && viewModel.globalResults == nil {
+                                if viewModel.query.isEmpty && viewModel.globalResults == nil
+                                    && viewModel.groceryResults == nil
+                                {
                                     // Live Suggestions / Trending
                                     liveSuggestionsSection
                                 } else {
@@ -51,11 +57,15 @@ struct GlobalSearchView: View {
                                         loadingView
                                     } else if case .error(let msg) = viewModel.searchState {
                                         errorView(msg: msg)
-                                    } else if let results = viewModel.globalResults,
-                                        !results.products.isEmpty
+                                    } else if viewModel.hasAnyResults {
+                                        // Result Tabs (only in unified mode)
+                                        if viewModel.isUnifiedSearch {
+                                            resultTabsView
+                                        }
+                                        resultsContent(itemWidth: itemWidth)
+                                    } else if viewModel.globalResults != nil
+                                        || viewModel.groceryResults != nil
                                     {
-                                        resultsContent(results: results, itemWidth: itemWidth)
-                                    } else if viewModel.globalResults != nil {  // No results found
                                         emptyResultsView
                                     }
                                 }
@@ -118,7 +128,7 @@ struct GlobalSearchView: View {
                     .frame(width: 48, height: 48)
 
                 // Input
-                TextField("Oversized", text: $viewModel.query)
+                TextField("Search products & groceries...", text: $viewModel.query)
                     .font(.system(size: 16))
                     .foregroundColor(.searchTextDark)
                     .focused($isFocused)
@@ -128,6 +138,7 @@ struct GlobalSearchView: View {
                 if !viewModel.query.isEmpty {
                     Button(action: {
                         viewModel.query = ""
+                        selectedResultTab = "All"
                         HapticManager.shared.impact(style: .medium)
                     }) {
                         Image(systemName: "xmark.circle.fill")
@@ -155,7 +166,7 @@ struct GlobalSearchView: View {
 
             let suggestions =
                 viewModel.trendingTerms.isEmpty
-                ? ["Oversized Hoodie", "Oversized T-shirt", "Oversized Blazer"]
+                ? ["Oversized Hoodie", "Rice", "Oversized T-shirt", "Oil", "Milk"]
                 : viewModel.trendingTerms
 
             ForEach(suggestions, id: \.self) { term in
@@ -191,6 +202,62 @@ struct GlobalSearchView: View {
         }
     }
 
+    // MARK: - Result Tabs
+
+    var resultTabsView: some View {
+        HStack(spacing: 0) {
+            ForEach(resultTabs, id: \.self) { tab in
+                let count = resultCount(for: tab)
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedResultTab = tab
+                    }
+                    HapticManager.shared.selection()
+                }) {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            Text(tab)
+                                .font(
+                                    .system(
+                                        size: 14, weight: selectedResultTab == tab ? .bold : .medium
+                                    )
+                                )
+                                .foregroundColor(
+                                    selectedResultTab == tab ? .searchPrimary : .searchTextGrey
+                                )
+
+                            if count > 0 {
+                                Text("(\(count))")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(
+                                        selectedResultTab == tab ? .searchPrimary : .searchTextGrey
+                                    )
+                            }
+                        }
+
+                        Rectangle()
+                            .fill(selectedResultTab == tab ? Color.searchPrimary : Color.clear)
+                            .frame(height: 2)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.horizontal, 16)
+        .background(Color.white)
+    }
+
+    private func resultCount(for tab: String) -> Int {
+        switch tab {
+        case "Products": return viewModel.globalResults?.products.count ?? 0
+        case "Groceries": return viewModel.groceryResults?.products.count ?? 0
+        case "All":
+            return (viewModel.globalResults?.products.count ?? 0)
+                + (viewModel.groceryResults?.products.count ?? 0)
+        default: return 0
+        }
+    }
+
     var loadingView: some View {
         LazyVGrid(columns: columns, spacing: 16) {
             ForEach(0..<4, id: \.self) { _ in
@@ -217,8 +284,54 @@ struct GlobalSearchView: View {
             .padding()
     }
 
-    func resultsContent(results: GlobalSearchResponse, itemWidth: CGFloat) -> some View {
+    // MARK: - Results Content
+
+    func resultsContent(itemWidth: CGFloat) -> some View {
+        VStack(spacing: 20) {
+            // Product Results
+            if shouldShowProducts, let results = viewModel.globalResults, !results.products.isEmpty
+            {
+                productResultsSection(results: results, itemWidth: itemWidth)
+            }
+
+            // Grocery Results
+            if shouldShowGroceries, let groceryResults = viewModel.groceryResults,
+                !groceryResults.products.isEmpty
+            {
+                groceryResultsSection(results: groceryResults, itemWidth: itemWidth)
+            }
+        }
+    }
+
+    private var shouldShowProducts: Bool {
+        selectedResultTab == "All" || selectedResultTab == "Products"
+    }
+
+    private var shouldShowGroceries: Bool {
+        selectedResultTab == "All" || selectedResultTab == "Groceries"
+    }
+
+    // MARK: - Product Results Section
+
+    func productResultsSection(results: GlobalSearchResponse, itemWidth: CGFloat) -> some View {
         VStack(spacing: 16) {
+            // Section Header
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "bag.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.searchPrimary)
+                    Text("Products")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.searchTextDark)
+                }
+                Spacer()
+                Text("\(results.products.count) items")
+                    .font(.system(size: 14))
+                    .foregroundColor(.searchTextGrey)
+            }
+            .padding(.horizontal, 16)
+
             // Quick Filters
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -250,18 +363,6 @@ struct GlobalSearchView: View {
                 .padding(.horizontal, 16)
             }
 
-            // Product Grid Headers
-            HStack {
-                Text("Product Results")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.searchTextDark)
-                Spacer()
-                Text("\(results.products.count) items found")
-                    .font(.system(size: 14))
-                    .foregroundColor(.searchTextGrey)
-            }
-            .padding(.horizontal, 16)
-
             // Grid
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(results.products) { product in
@@ -274,7 +375,6 @@ struct GlobalSearchView: View {
                     .buttonStyle(PlainButtonStyle())
                     .simultaneousGesture(
                         TapGesture().onEnded {
-                            // Dismiss keyboard before navigation to prevent visual glitch
                             UIApplication.shared.sendAction(
                                 #selector(UIResponder.resignFirstResponder), to: nil, from: nil,
                                 for: nil)
@@ -285,7 +385,49 @@ struct GlobalSearchView: View {
         }
     }
 
-    // Helper to map lightweight search result to partial Product object
+    // MARK: - Grocery Results Section
+
+    func groceryResultsSection(results: GlobalSearchResponse, itemWidth: CGFloat) -> some View {
+        VStack(spacing: 16) {
+            // Section Header
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "carrot.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.green)
+                    Text("Groceries")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.searchTextDark)
+                }
+                Spacer()
+                Text("\(results.products.count) items")
+                    .font(.system(size: 14))
+                    .foregroundColor(.searchTextGrey)
+            }
+            .padding(.horizontal, 16)
+
+            // Divider line between sections
+            if selectedResultTab == "All" {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(height: 1)
+                    .padding(.horizontal, 16)
+            }
+
+            // Grid
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(results.products) { product in
+                    let domainProduct = mapToGroceryProduct(product)
+                    GroceryProductCard(product: domainProduct)
+                        .frame(height: 280)
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    // MARK: - Mappers
+
     private func mapToProduct(_ item: SearchResultItem) -> Product {
         return Product(
             _id: item.id,
@@ -293,6 +435,30 @@ struct GlobalSearchView: View {
             price: item.price ?? 0.0,
             images: item.image != nil ? [item.image!] : [],
             category: "General",
+            rating: item.rating,
+            reviewCount: 0,
+            stock: 10,
+            mrp: nil,
+            discountPercentage: nil,
+            subtitle: nil,
+            description: nil,
+            shortDescription: nil,
+            saleEndDate: nil,
+            protectPromiseFee: nil,
+            sellerName: nil,
+            offers: nil,
+            trustBadges: nil,
+            lastChanceOffers: nil
+        )
+    }
+
+    private func mapToGroceryProduct(_ item: SearchResultItem) -> Product {
+        return Product(
+            _id: item.id,
+            name: item.displayName,
+            price: item.price ?? 0.0,
+            images: item.image != nil ? [item.image!] : [],
+            category: "Grocery",
             rating: item.rating,
             reviewCount: 0,
             stock: 10,

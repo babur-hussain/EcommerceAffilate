@@ -8,7 +8,7 @@ import SwiftUI
 
 struct StoryUploadView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var authManager = AuthManager.shared
+    private var authManager: AuthManager { AuthManager.shared }
 
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImageData: Data?
@@ -330,7 +330,7 @@ struct StoryUploadView: View {
                     return
                 }
             } catch {
-                print("Failed to load video duration: \(error)")
+                AppLogger.debug("Failed to load video duration: \(error)")
                 // Handle error or proceed cautiously? For now, we'll assume it's okay or fail safe.
                 // If we can't check duration, maybe we should let it pass or fail?
                 // Let's assume fail safe:
@@ -471,7 +471,7 @@ struct StoryUploadView: View {
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await APIService.shared.session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw StoryUploadError.serverError
@@ -479,7 +479,7 @@ struct StoryUploadView: View {
 
         if httpResponse.statusCode != 200 {
             let responseBody = String(data: data, encoding: .utf8) ?? "No body"
-            print(
+            AppLogger.debug(
                 "❌ Upload URL Request Failed: Status \(httpResponse.statusCode), Body: \(responseBody)"
             )
             errorMessage = "Server Error: \(httpResponse.statusCode) - \(responseBody)"  // Temporarily show details in UI
@@ -500,7 +500,7 @@ struct StoryUploadView: View {
         request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         request.httpBody = data
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await APIService.shared.session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
@@ -527,7 +527,7 @@ struct StoryUploadView: View {
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await APIService.shared.session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
@@ -547,7 +547,7 @@ struct StoryUploadView: View {
                 self.myStories = stories
             }
         } catch {
-            print("Failed to load my stories: \(error)")
+            AppLogger.debug("Failed to load my stories: \(error)")
         }
     }
 
@@ -661,24 +661,28 @@ struct StoryUploadView: View {
                 withAllowedCharacters: .urlQueryAllowed)
             {
                 finalURL = URL(string: encoded)
-                print("StoryUploadView: Encoded URL to: \(encoded)")
+                AppLogger.debug("StoryUploadView: Encoded URL to: \(encoded)")
             }
         }
 
         return finalURL
     }
 
-    // Simple helper for time ago
-    func timeAgoDisplay(dateString: String) -> String {
-        // ... (Implement time ago logic or use simple formatter)
-        // For now just return "Just now" or implement properly
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = formatter.date(from: dateString) else { return "" }
+    // Fix: Static cached formatters for timeAgoDisplay
+    private static let timeAgoISOFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .abbreviated
+        return f
+    }()
 
-        let formatter2 = RelativeDateTimeFormatter()
-        formatter2.unitsStyle = .abbreviated
-        return formatter2.localizedString(for: date, relativeTo: Date())
+    func timeAgoDisplay(dateString: String) -> String {
+        guard let date = Self.timeAgoISOFormatter.date(from: dateString) else { return "" }
+        return Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 }
 
@@ -770,7 +774,7 @@ struct VideoPreviewView: View {
                     thumbnail = UIImage(cgImage: cgImage)
                 }
             } catch {
-                print("Failed to generate thumbnail: \(error)")
+                AppLogger.debug("Failed to generate thumbnail: \(error)")
             }
         }
     }

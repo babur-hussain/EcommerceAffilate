@@ -24,23 +24,22 @@ struct LoginView: View {
     @State private var showSignup = false
 
     var body: some View {
-        GeometryReader { _ in
-            ZStack {
-                // Blue background - tappable to dismiss keyboard
-                Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255)
-                    .ignoresSafeArea()
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        hideKeyboard()
-                    }
-
-                VStack(spacing: 0) {
-                    // Header
-                    headerView
-
-                    // Content
-                    formContent
+        // Fix #8: Removed unused GeometryReader
+        ZStack {
+            // Blue background - tappable to dismiss keyboard
+            Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    hideKeyboard()
                 }
+
+            VStack(spacing: 0) {
+                // Header
+                headerView
+
+                // Content
+                formContent
             }
         }
         .alert("Login Failed", isPresented: $showError) {
@@ -277,143 +276,142 @@ struct SignupView: View {
     }
 
     var body: some View {
-        GeometryReader { _ in
-            ZStack {
-                Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255)
-                    .ignoresSafeArea()
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        hideKeyboard()
+        // Fix #8: Removed unused GeometryReader
+        ZStack {
+            Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    hideKeyboard()
+                }
+
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
                     }
 
-                VStack(spacing: 0) {
-                    // Header
-                    HStack {
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "arrow.left")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
+                    Spacer()
+
+                    Text("Local For Vocal")
+                        .font(.system(size: 18, weight: .bold))
+                        .italic()
+                        .foregroundColor(.white)
+
+                    Spacer()
+
+                    Color.clear.frame(width: 44, height: 44)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 12)
+
+                // Form
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Create your account")
+                            .font(.system(size: 18, weight: .bold))
+                        Text("Fill in your details to get started")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                            .padding(.bottom, 16)
+
+                        formField("Full Name", placeholder: "Enter your name", text: $name)
+                        formField(
+                            "Email Address", placeholder: "Enter your email", text: $email,
+                            keyboard: .emailAddress)
+                        formField(
+                            "Phone Number", placeholder: "Enter phone", text: $phone,
+                            keyboard: .phonePad)
+
+                        // Password
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Password")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(
+                                    Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255))
+
+                            HStack {
+                                if showPassword {
+                                    TextField("Enter password", text: $password)
+                                        .textInputAutocapitalization(.never)
+                                } else {
+                                    SecureField("Enter password", text: $password)
+                                }
+
+                                Button(showPassword ? "Hide" : "Show") {
+                                    showPassword.toggle()
+                                }
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(
+                                    Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255))
+                            }
+                            .padding(12)
+                            .background(Color.white)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8).stroke(
+                                    Color.gray.opacity(0.3)))
                         }
 
-                        Spacer()
+                        // Confirm Password
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Confirm Password")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(
+                                    Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255))
 
-                        Text("Local For Vocal")
-                            .font(.system(size: 18, weight: .bold))
-                            .italic()
-                            .foregroundColor(.white)
-
-                        Spacer()
-
-                        Color.clear.frame(width: 44, height: 44)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 12)
-
-                    // Form
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Create your account")
-                                .font(.system(size: 18, weight: .bold))
-                            Text("Fill in your details to get started")
-                                .font(.system(size: 14))
-                                .foregroundColor(.gray)
-                                .padding(.bottom, 16)
-
-                            formField("Full Name", placeholder: "Enter your name", text: $name)
-                            formField(
-                                "Email Address", placeholder: "Enter your email", text: $email,
-                                keyboard: .emailAddress)
-                            formField(
-                                "Phone Number", placeholder: "Enter phone", text: $phone,
-                                keyboard: .phonePad)
-
-                            // Password
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Password")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(
-                                        Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255))
-
-                                HStack {
-                                    if showPassword {
-                                        TextField("Enter password", text: $password)
-                                            .textInputAutocapitalization(.never)
-                                    } else {
-                                        SecureField("Enter password", text: $password)
-                                    }
-
-                                    Button(showPassword ? "Hide" : "Show") {
-                                        showPassword.toggle()
-                                    }
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(
-                                        Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255))
-                                }
+                            SecureField("Confirm password", text: $confirmPassword)
+                                .textInputAutocapitalization(.never)
                                 .padding(12)
                                 .background(Color.white)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8).stroke(
-                                        Color.gray.opacity(0.3)))
-                            }
-
-                            // Confirm Password
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Confirm Password")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(
-                                        Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255))
-
-                                SecureField("Confirm password", text: $confirmPassword)
-                                    .textInputAutocapitalization(.never)
-                                    .padding(12)
-                                    .background(Color.white)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8).stroke(
-                                            password == confirmPassword || confirmPassword.isEmpty
-                                                ? Color.gray.opacity(0.3) : Color.red))
-                            }
-
-                            Text("By signing up, you agree to our Terms of Use and Privacy Policy.")
-                                .font(.system(size: 12))
-                                .foregroundColor(.gray)
-                                .padding(.vertical, 8)
-
-                            Button(action: handleSignup) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(
-                                            Color(red: 251 / 255, green: 100 / 255, blue: 27 / 255)
-                                                .opacity(isFormValid ? 1 : 0.5))
-
-                                    if isLoading {
-                                        ProgressView().tint(.white)
-                                    } else {
-                                        Text("Sign Up")
-                                            .font(.system(size: 15, weight: .bold))
-                                            .foregroundColor(.white)
-                                    }
-                                }
-                                .frame(height: 48)
-                            }
-                            .disabled(isLoading || !isFormValid)
-
-                            HStack {
-                                Spacer()
-                                Button("Already have an account? Log In") { dismiss() }
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(
-                                        Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255))
-                                Spacer()
-                            }
-                            .padding(.top, 16)
+                                        password == confirmPassword || confirmPassword.isEmpty
+                                            ? Color.gray.opacity(0.3) : Color.red))
                         }
-                        .padding(24)
+
+                        Text("By signing up, you agree to our Terms of Use and Privacy Policy.")
+                            .font(.system(size: 12))
+                            .foregroundColor(.gray)
+                            .padding(.vertical, 8)
+
+                        Button(action: handleSignup) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(
+                                        Color(red: 251 / 255, green: 100 / 255, blue: 27 / 255)
+                                            .opacity(isFormValid ? 1 : 0.5))
+
+                                if isLoading {
+                                    ProgressView().tint(.white)
+                                } else {
+                                    Text("Sign Up")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .frame(height: 48)
+                        }
+                        .disabled(isLoading || !isFormValid)
+
+                        HStack {
+                            Spacer()
+                            Button("Already have an account? Log In") { dismiss() }
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(
+                                    Color(red: 40 / 255, green: 116 / 255, blue: 240 / 255))
+                            Spacer()
+                        }
+                        .padding(.top, 16)
                     }
-                    .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .ignoresSafeArea(edges: .bottom)
+                    .padding(24)
                 }
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .ignoresSafeArea(edges: .bottom)
             }
         }
         .alert("Registration Failed", isPresented: $showError) {

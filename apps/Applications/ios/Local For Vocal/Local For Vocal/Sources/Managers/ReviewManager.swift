@@ -18,6 +18,8 @@ struct Review: Identifiable, Decodable {
     }
 }
 
+// Fix #7: @MainActor ensures @Published properties are safely updated from async contexts
+@MainActor
 class ReviewManager: ObservableObject {
     static let shared = ReviewManager()
 
@@ -48,7 +50,8 @@ class ReviewManager: ObservableObject {
                 request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             }
 
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await APIService.shared.session.data(for: request)
+            let validData = try APIService.shared.handleResponse(data, response)
 
             guard let httpResponse = response as? HTTPURLResponse,
                 (200...299).contains(httpResponse.statusCode)
@@ -67,7 +70,7 @@ class ReviewManager: ObservableObject {
                 self.error = "Failed to fetch reviews"
                 self.isLoading = false
             }
-            print("Fetch reviews error: \(error)")
+            AppLogger.debug("Fetch reviews error: \(error)")
         }
     }
 
@@ -78,7 +81,7 @@ class ReviewManager: ObservableObject {
 
         do {
             guard let url = URL(string: "\(APIService.shared.baseURL)/reviews") else {
-                print("Submit review error: Invalid URL")
+                AppLogger.debug("Submit review error: Invalid URL")
                 return false
             }
             var request = URLRequest(url: url)
@@ -93,7 +96,8 @@ class ReviewManager: ObservableObject {
             ]
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await APIService.shared.session.data(for: request)
+            let _ = try APIService.shared.handleResponse(data, response)
 
             guard let httpResponse = response as? HTTPURLResponse,
                 (200...299).contains(httpResponse.statusCode)
@@ -106,7 +110,7 @@ class ReviewManager: ObservableObject {
             return true
 
         } catch {
-            print("Submit review error: \(error)")
+            AppLogger.debug("Submit review error: \(error)")
             return false
         }
     }

@@ -5,7 +5,7 @@ struct CheckoutView: View {
     @StateObject private var viewModel: CheckoutViewModel
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var cartManager: CartManager
-    @ObservedObject private var authManager = AuthManager.shared
+    private var authManager: AuthManager { AuthManager.shared }
 
     init(product: Product, quantity: Int, selectedOfferIds: [String]) {
         _viewModel = StateObject(

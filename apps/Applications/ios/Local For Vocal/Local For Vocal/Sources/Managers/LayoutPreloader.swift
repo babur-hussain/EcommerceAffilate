@@ -1,7 +1,8 @@
 import Foundation
 
 /// Handles prefetching all SDUI layouts (headers + pages) on first launch,
-/// and background refresh of stale layouts on subsequent launches.
+/// background refresh of stale layouts on subsequent launches,
+/// and on-demand preloading via `preloadScreens(keys:)`.
 final class LayoutPreloader {
     static let shared = LayoutPreloader()
 
@@ -64,7 +65,7 @@ final class LayoutPreloader {
     /// Called when no cache exists. Updates SDUILayoutStore on completion.
     func prefetchAll() async {
         let startTime = CFAbsoluteTimeGetCurrent()
-        print(
+        AppLogger.debug(
             "[LayoutPreloader] First launch — prefetching all \(Self.allHeaderSlugs.count) headers + \(Self.allPageSlugs.count) pages..."
         )
 
@@ -82,24 +83,56 @@ final class LayoutPreloader {
         UserDefaults.standard.set(true, forKey: firstLaunchCompleteKey)
 
         let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-        print(
+        AppLogger.debug(
             "[LayoutPreloader] Prefetch complete: \(SDUILayoutStore.shared.layouts.count) layouts in \(String(format: "%.0f", elapsed))ms"
         )
+    }
+
+    /// Preload SDUI JSON for specific important screens.
+    /// Call this at app startup to warm the cache for key screens.
+    ///
+    /// Example:
+    /// ```
+    /// LayoutPreloader.shared.preloadScreens(keys: ["home", "fashion", "beauty", "for-you"])
+    /// ```
+    func preloadScreens(keys: [String]) async {
+        guard NetworkMonitor.shared.isConnected else {
+            AppLogger.debug("[LayoutPreloader] Offline — skipping preload for \(keys.count) screens")
+            return
+        }
+
+        AppLogger.debug("[LayoutPreloader] Preloading \(keys.count) screens: \(keys.joined(separator: ", "))")
+
+        await withTaskGroup(of: Void.self) { group in
+            for key in keys {
+                group.addTask {
+                    await self.fetchAndCache(slug: key)
+                }
+            }
+        }
+
+        AppLogger.debug("[LayoutPreloader] Preload complete for \(keys.count) screens")
     }
 
     /// Background refresh for stale layouts (subsequent launches)
     func refreshStaleInBackground() {
         Task(priority: .utility) {
+            // Skip if offline
+            guard NetworkMonitor.shared.isConnected else {
+                AppLogger.debug("[LayoutPreloader] Offline — skipping stale refresh")
+                return
+            }
+
             let staleSlugs = await MainActor.run {
                 SDUILayoutStore.shared.staleFlags.filter { $0.value }.map { $0.key }
             }
 
             guard !staleSlugs.isEmpty else {
-                print("[LayoutPreloader] No stale layouts to refresh")
+                AppLogger.debug("[LayoutPreloader] No stale layouts to refresh")
                 return
             }
 
-            print("[LayoutPreloader] Refreshing \(staleSlugs.count) stale layouts in background")
+            AppLogger.debug("[LayoutPreloader] Refreshing \(staleSlugs.count) stale layouts in background")
 
             for slug in staleSlugs {
                 Task.detached(priority: .utility) {
@@ -121,28 +154,47 @@ final class LayoutPreloader {
     // MARK: - Private
 
     private func fetchAndCache(slug: String) async {
+        // Skip network fetch if offline
+        guard NetworkMonitor.shared.isConnected else {
+            AppLogger.debug("[LayoutPreloader] Offline — skipping fetch for \(slug)")
+            return
+        }
+
         do {
             guard
                 let response = try await APIService.shared.fetchLayout(
                     slug: slug, forceRefresh: true)
             else { return }
 
-            await MainActor.run {
-                SDUILayoutStore.shared.layouts[slug] = response
-                SDUILayoutStore.shared.staleFlags[slug] = false
-                SDUILayoutStore.shared.lastFetchTime[slug] = Date()
-            }
+            // Encode components to raw JSON for caching
+            guard let rawData = try? JSONEncoder().encode(response.components) else { return }
 
-            // Save to disk cache
-            if let rawData = try? JSONEncoder().encode(response.components) {
-                await SDUICacheManager.shared.saveRawJSON(rawData, slug: slug, userId: nil)
+            // Check if content actually changed (avoid unnecessary UI updates)
+            let changed = await SDUICacheManager.shared.hasContentChanged(
+                key: slug, newData: rawData)
+
+            // Save to both memory + disk via unified cache manager
+            await SDUICacheManager.shared.saveSDUI(key: slug, jsonData: rawData)
+
+            // Update in-memory layout store (only if changed, to avoid SwiftUI diff churn)
+            if changed {
+                await MainActor.run {
+                    SDUILayoutStore.shared.layouts[slug] = response
+                    SDUILayoutStore.shared.staleFlags[slug] = false
+                    SDUILayoutStore.shared.lastFetchTime[slug] = Date()
+                }
+            } else {
+                await MainActor.run {
+                    SDUILayoutStore.shared.staleFlags[slug] = false
+                    SDUILayoutStore.shared.lastFetchTime[slug] = Date()
+                }
             }
 
             registerCachedSlug(slug)
-            print("[LayoutPreloader] Fetched + cached: \(slug)")
+            AppLogger.debug("[LayoutPreloader] Fetched + cached: \(slug) (changed: \(changed))")
 
         } catch {
-            print("[LayoutPreloader] Failed to fetch \(slug): \(error.localizedDescription)")
+            AppLogger.debug("[LayoutPreloader] Failed to fetch \(slug): \(error.localizedDescription)")
         }
     }
 }

@@ -4,66 +4,69 @@ struct GroceryDealsComponent: View {
     let component: SDUIComponent
     @EnvironmentObject var navigationManager: NavigationManager
 
+    // Fix #8: Calculate width from screen bounds instead of GeometryReader (avoids two-pass layout in ScrollView)
+    private var containerWidth: CGFloat {
+        UIScreen.main.bounds.width - 32 // 16pt padding on each side
+    }
+
     var body: some View {
         if let backgroundImage = component.prop(for: "backgroundImage") as String? {
-            GeometryReader { geo in
-                ZStack {
-                    // Background Image
-                    CachedAsyncImage(url: URL(string: backgroundImage)) { image in
-                        image.resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: geo.size.width, height: 400)
-                            .clipped()
-                    } placeholder: {
-                        Color.gray.opacity(0.1)
-                    }
-                    .frame(width: geo.size.width, height: 400)
-
-                    // Content
-                    VStack(spacing: 0) {
-                        Spacer()
-
-                        // Cards Row
-                        let spacing: CGFloat = 10
-                        let horizontalPadding: CGFloat = 10
-                        let totalSpacing = (spacing * 2) + (horizontalPadding * 2)
-                        let cardWidth = (geo.size.width - totalSpacing) / 3
-
-                        HStack(spacing: spacing) {
-                            let items = component.decodeItems(
-                                for: "items", as: [GroceryDealItem].self)
-
-                            ForEach(items.prefix(3), id: \.self) { item in
-                                GroceryDealCardView(item: item)
-                                    .frame(width: cardWidth, height: 130)
-                            }
-                        }
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 4)
-
-                        // Explore More Button
-                        if let exploreUrl = component.prop(for: "exploreUrl") as String? {
-                            Button(action: {
-                                navigationManager.navigate(to: exploreUrl)
-                            }) {
-                                HStack(spacing: 8) {
-                                    Text("Explore more")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(.white)
-
-                                    Image(systemName: "arrow.right.circle.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(.white)
-                                }
-                            }
-                            .padding(.bottom, 20)
-                        }
-                    }
-                    .frame(width: geo.size.width)
+            ZStack {
+                // Background Image
+                CachedAsyncImage(url: URL(string: backgroundImage)) { image in
+                    image.resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: containerWidth, height: 400)
+                        .clipped()
+                } placeholder: {
+                    Color.gray.opacity(0.1)
                 }
-                .frame(width: geo.size.width, height: 400)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .frame(width: containerWidth, height: 400)
+
+                // Content
+                VStack(spacing: 0) {
+                    Spacer()
+
+                    // Cards Row
+                    let spacing: CGFloat = 10
+                    let horizontalPadding: CGFloat = 10
+                    let totalSpacing = (spacing * 2) + (horizontalPadding * 2)
+                    let cardWidth = (containerWidth - totalSpacing) / 3
+
+                    HStack(spacing: spacing) {
+                        let items = component.decodeItems(
+                            for: "items", as: [GroceryDealItem].self)
+
+                        ForEach(items.prefix(3), id: \.self) { item in
+                            GroceryDealCardView(item: item)
+                                .frame(width: cardWidth, height: 130)
+                        }
+                    }
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 4)
+
+                    // Explore More Button
+                    if let exploreUrl = component.prop(for: "exploreUrl") as String? {
+                        Button(action: {
+                            navigationManager.navigate(to: exploreUrl)
+                        }) {
+                            HStack(spacing: 8) {
+                                Text("Explore more")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding(.bottom, 20)
+                    }
+                }
+                .frame(width: containerWidth)
             }
+            .frame(width: containerWidth, height: 400)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .frame(height: 400)
             .padding(.horizontal, 16)
             .padding(.top, 24)

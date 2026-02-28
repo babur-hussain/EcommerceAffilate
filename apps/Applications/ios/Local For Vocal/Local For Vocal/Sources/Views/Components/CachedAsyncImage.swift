@@ -1,13 +1,15 @@
-import Combine
 import SwiftUI
 import UIKit
 
+// Fix #9 + #10: Pure async/await image loader — no Combine, no @StateObject per instance
 struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     let url: URL?
     let content: (Image) -> Content
     let placeholder: () -> Placeholder
 
-    @StateObject private var loader = ImageLoaderObservable()
+    @State private var loadedImage: UIImage?
+    @State private var hasError = false
+    @State private var loadTask: Task<Void, Never>?
 
     init(
         url: URL?,
@@ -21,10 +23,9 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
 
     var body: some View {
         Group {
-            if let image = loader.image {
+            if let image = loadedImage {
                 content(Image(uiImage: image))
-            } else if loader.hasError {
-                // Show a fallback for failed images
+            } else if hasError {
                 ZStack {
                     Color(hex: "#F3F4F6")
                     Image(systemName: "photo")
@@ -36,38 +37,29 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
             }
         }
         .onAppear {
-            loader.load(url: url)
+            startLoad(url: url)
         }
         .onChange(of: url) { _, newURL in
-            loader.load(url: newURL)
+            startLoad(url: newURL)
+        }
+        .onDisappear {
+            loadTask?.cancel()
         }
     }
-}
 
-// Observable wrapper that can reload with new URLs
-class ImageLoaderObservable: ObservableObject {
-    @Published var image: UIImage?
-    @Published var isLoading = false
-    @Published var hasError = false
-
-    private var cancellable: AnyCancellable?
-    private var currentURL: URL?
-
-    func load(url: URL?) {
-        guard url != currentURL else { return }
-
-        // Reset state
-        self.image = nil
-        self.hasError = false
-        self.currentURL = url
+    private func startLoad(url: URL?) {
+        // Cancel previous task
+        loadTask?.cancel()
+        loadedImage = nil
+        hasError = false
 
         guard let url = url else {
             hasError = true
             return
         }
 
-        let originalString = url.absoluteString
         var finalURL = url
+        let originalString = url.absoluteString
 
         // URL SANITIZATION: Strict PNG Enforcement for placehold.co
         if originalString.contains("placehold.co")
@@ -86,76 +78,59 @@ class ImageLoaderObservable: ObservableObject {
 
         let urlString = finalURL.absoluteString
 
-        // --- LAYER 1: Check persistent ImageDiskCache (survives app restarts) ---
-        Task {
+        loadTask = Task {
+            // Layer 1: Check persistent ImageDiskCache
             if let diskImage = await ImageDiskCache.shared.loadImage(for: urlString) {
-                await MainActor.run {
-                    self.image = diskImage
-                }
+                guard !Task.isCancelled else { return }
+                await MainActor.run { self.loadedImage = diskImage }
                 return
             }
 
-            // --- LAYER 2: Check URLCache (system-managed, may evict) ---
+            // Layer 2: Check URLCache
             let request = URLRequest(
                 url: finalURL, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 60)
 
             if let cachedResponse = APIService.shared.session.configuration.urlCache?
-                .cachedResponse(
-                    for: request),
+                .cachedResponse(for: request),
                 let cachedImage = UIImage(data: cachedResponse.data)
             {
-                await MainActor.run {
-                    self.image = cachedImage
-                }
-                // Also save to disk cache for persistence
+                guard !Task.isCancelled else { return }
+                await MainActor.run { self.loadedImage = cachedImage }
                 await ImageDiskCache.shared.saveData(cachedResponse.data, for: urlString)
                 return
             }
 
-            // --- LAYER 3: Check if offline → show placeholder ---
+            // Layer 3: Check if offline
             let isOnline = await MainActor.run { NetworkMonitor.shared.isConnected }
             if !isOnline {
-                await MainActor.run {
-                    self.hasError = true
-                }
+                guard !Task.isCancelled else { return }
+                await MainActor.run { self.hasError = true }
                 return
             }
 
-            // --- LAYER 4: Download from network ---
-            await MainActor.run {
-                self.isLoading = true
-            }
+            // Layer 4: Download
+            do {
+                let (data, response) = try await APIService.shared.session.data(for: request)
+                guard !Task.isCancelled else { return }
 
-            self.cancellable = APIService.shared.session.dataTaskPublisher(for: request)
-                .tryMap { data, response -> UIImage in
-                    if let httpResponse = response as? HTTPURLResponse {
-                        if httpResponse.statusCode != 200 {
-                            throw URLError(.badServerResponse)
-                        }
-                    }
-
-                    if let uiImage = UIImage(data: data) {
-                        // Save to persistent disk cache in background
-                        Task.detached(priority: .utility) {
-                            await ImageDiskCache.shared.saveData(data, for: urlString)
-                        }
-                        return uiImage
-                    }
-
-                    throw URLError(.cannotDecodeContentData)
+                guard let httpResponse = response as? HTTPURLResponse,
+                    httpResponse.statusCode == 200,
+                    let image = UIImage(data: data)
+                else {
+                    await MainActor.run { self.hasError = true }
+                    return
                 }
-                .receive(on: DispatchQueue.main)
-                .sink(
-                    receiveCompletion: { [weak self] completion in
-                        self?.isLoading = false
-                        if case .failure = completion {
-                            self?.hasError = true
-                        }
-                    },
-                    receiveValue: { [weak self] downloadedImage in
-                        self?.image = downloadedImage
-                    }
-                )
+
+                // Save to cache
+                Task.detached(priority: .utility) {
+                    await ImageDiskCache.shared.saveData(data, for: urlString)
+                }
+
+                await MainActor.run { self.loadedImage = image }
+            } catch {
+                guard !Task.isCancelled else { return }
+                await MainActor.run { self.hasError = true }
+            }
         }
     }
 }

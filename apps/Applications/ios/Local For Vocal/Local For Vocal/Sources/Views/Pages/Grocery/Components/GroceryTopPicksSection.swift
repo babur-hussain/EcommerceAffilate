@@ -87,7 +87,7 @@ struct GroceryTopPicksSection: View {
         // Extract subCategoryIds if available
         let subCategoryIds = component.decodeItems(for: "subCategoryIds", as: [String].self)
 
-        print("🛒 [GroceryTopPicks] Config - Limit: \(limit), SubCats: \(subCategoryIds)")
+        AppLogger.debug("🛒 [GroceryTopPicks] Config - Limit: \(limit), SubCats: \(subCategoryIds)")
 
         Task {
             do {
@@ -102,14 +102,14 @@ struct GroceryTopPicksSection: View {
                     products = try await APIService.shared.fetchGroceryProducts(limit: limit)
                 }
 
-                print("🛒 [GroceryTopPicks] Fetched \(products.count) products")
+                AppLogger.debug("🛒 [GroceryTopPicks] Fetched \(products.count) products")
 
                 await MainActor.run {
                     self.viewModel.data = products
                     self.viewModel.isLoading = false
                 }
             } catch {
-                print("❌ [GroceryTopPicks] Error: \(error)")
+                AppLogger.debug("❌ [GroceryTopPicks] Error: \(error)")
                 await MainActor.run {
                     self.viewModel.isLoading = false
                 }

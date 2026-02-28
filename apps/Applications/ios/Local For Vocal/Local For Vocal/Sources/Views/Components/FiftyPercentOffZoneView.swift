@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FiftyPercentOffZoneView: View {
-    @ObservedObject private var wishlistManager = WishlistManager.shared
+    private var wishlistManager: WishlistManager { WishlistManager.shared }
 
     // Props from SDUI JSON
     var title: String = "50% OFF ZONE"
@@ -16,6 +16,7 @@ struct FiftyPercentOffZoneView: View {
     @State private var products: [Product] = []
     @State private var isLoading = true
     @State private var hasLoaded = false
+    @State private var fetchTask: Task<Void, Never>? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -143,17 +144,27 @@ struct FiftyPercentOffZoneView: View {
         .background(Color.white)
         .padding(.vertical, 12)
         .task {
-            if !hasLoaded {
+            guard !hasLoaded else { return }
+            // Cancel any existing fetch to avoid duplicates
+            fetchTask?.cancel()
+            let task = Task {
                 await loadProducts()
             }
+            fetchTask = task
+            await task.value
         }
     }
 
     private func loadProducts() async {
+        // Prevent re-entry if already loaded or currently loading
+        guard !hasLoaded else { return }
+
         isLoading = true
-        defer { isLoading = false }
 
         do {
+            // Check for cancellation before starting network request
+            try Task.checkCancellation()
+
             var fetchedProducts: [Product] = []
 
             if !subCategoryIds.isEmpty {
@@ -169,6 +180,9 @@ struct FiftyPercentOffZoneView: View {
                 fetchedProducts = try await APIService.shared.fetchProducts(limit: 30)
             }
 
+            // Check cancellation after network call
+            try Task.checkCancellation()
+
             // Filter to only products with >=50% discount
             let discounted = fetchedProducts.filter { product in
                 if let discount = product.discountPercentage, discount >= 50 {
@@ -182,17 +196,29 @@ struct FiftyPercentOffZoneView: View {
                 return false
             }
 
-            await MainActor.run {
-                // Show discounted products, or first 10 of fetched if no discounts found
-                self.products =
-                    discounted.isEmpty
-                    ? Array(fetchedProducts.prefix(10))
-                    : Array(discounted.prefix(10))
+            // Show discounted products, or first 10 of fetched if no discounts found
+            self.products =
+                discounted.isEmpty
+                ? Array(fetchedProducts.prefix(10))
+                : Array(discounted.prefix(10))
 
-                self.hasLoaded = true
-            }
+            self.hasLoaded = true
+            self.isLoading = false
+        } catch is CancellationError {
+            // SwiftUI cancelled the task — do NOT retry, just exit silently
+            AppLogger.debug("[FiftyPercentOffZone] Task cancelled, not retrying")
+            return
+        } catch let error as NSError
+            where error.domain == NSURLErrorDomain && error.code == -999
+        {
+            // URLSession cancelled (error -999) — same as CancellationError, exit silently
+            AppLogger.debug("[FiftyPercentOffZone] URLSession cancelled (-999), not retrying")
+            return
         } catch {
-            print("[FiftyPercentOffZone] Error fetching products: \(error)")
+            AppLogger.debug("[FiftyPercentOffZone] Error fetching products: \(error)")
+            // Mark as loaded even on error to prevent infinite retry loop
+            self.hasLoaded = true
+            self.isLoading = false
         }
     }
 }
@@ -202,7 +228,7 @@ struct FiftyPercentOffZoneView: View {
 private struct ProductCardWithWishlist: View {
     let product: Product
     let width: CGFloat
-    @ObservedObject private var wishlistManager = WishlistManager.shared
+    private var wishlistManager: WishlistManager { WishlistManager.shared }
 
     var isWishlisted: Bool {
         wishlistManager.isInWishlist(productId: product.id)

@@ -66,10 +66,13 @@ public struct TrackingEvent: Codable {
     public let properties: [String: AnyCodableValue]?
     public let timestamp: String
 
+    // Fix: Static cached formatter — avoids allocation per event
+    private static let isoFormatter = ISO8601DateFormatter()
+
     public init(eventType: String, properties: [String: AnyCodableValue]? = nil) {
         self.eventType = eventType
         self.properties = properties
-        self.timestamp = ISO8601DateFormatter().string(from: Date())
+        self.timestamp = Self.isoFormatter.string(from: Date())
     }
 }
 

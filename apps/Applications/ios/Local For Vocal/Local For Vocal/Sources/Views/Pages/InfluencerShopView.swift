@@ -44,7 +44,7 @@ struct ShopProductDetail: Identifiable {
 
 struct InfluencerShopView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject private var authManager = AuthManager.shared
+    private var authManager: AuthManager { AuthManager.shared }
     @State private var productDetails: [String: ShopProductDetail] = [:]
     @State private var isLoading = false
     @State private var stories: [Story] = []
@@ -103,7 +103,7 @@ struct InfluencerShopView: View {
                 self.stories = fetchedStories.filter { $0.isActive }
             }
         } catch {
-            print("Failed to fetch stories: \(error)")  // Silent fail for UI
+            AppLogger.debug("Failed to fetch stories: \(error)")  // Silent fail for UI
         }
     }
 

@@ -31,7 +31,7 @@ struct FashionTrendingView: View {
                 ForEach(items) { item in
                     Button(action: {
                         if let action = item.actionUrl {
-                            print("Navigate to: \(action)")
+                            AppLogger.debug("Navigate to: \(action)")
                         }
                     }) {
                         ZStack(alignment: .bottomLeading) {

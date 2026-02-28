@@ -3,58 +3,61 @@ import SwiftUI
 struct GroceryPromoCardsComponent: View {
     let component: SDUIComponent
 
+    // Fix #8: Calculate width from screen bounds instead of GeometryReader
+    private var containerWidth: CGFloat {
+        UIScreen.main.bounds.width - 32  // 16pt padding on each side
+    }
+
     var body: some View {
         if let backgroundImage = component.prop(for: "backgroundImage") as String? {
-            GeometryReader { geo in
-                ZStack {
-                    // Background Image
-                    CachedAsyncImage(url: URL(string: backgroundImage)) { image in
-                        image.resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: geo.size.width, height: 300)
-                            .clipped()
-                    } placeholder: {
-                        Color.gray.opacity(0.1)
-                    }
-                    .frame(width: geo.size.width, height: 300)
-
-                    // Content Overlay
-                    VStack(spacing: 0) {
-                        // Title
-                        if let title = component.prop(for: "title") as String? {
-                            Text(title)
-                                .font(.system(size: 24, weight: .heavy))
-                                .foregroundColor(.white)
-                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                .multilineTextAlignment(.center)
-                                .padding(.top, 40)
-                        }
-
-                        Spacer()
-
-                        // Cards
-                        let spacing: CGFloat = 10
-                        let horizontalPadding: CGFloat = 10
-                        let totalSpacing = (spacing * 2) + (horizontalPadding * 2)
-                        let cardWidth = (geo.size.width - totalSpacing) / 3
-
-                        HStack(spacing: spacing) {
-                            let items = component.decodeItems(
-                                for: "items", as: [GroceryPromoCardItem].self)
-
-                            ForEach(items.prefix(3), id: \.self) { item in
-                                GroceryPromoCardView(item: item)
-                                    .frame(width: cardWidth)
-                            }
-                        }
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 20)
-                    }
-                    .frame(width: geo.size.width)
+            ZStack {
+                // Background Image
+                CachedAsyncImage(url: URL(string: backgroundImage)) { image in
+                    image.resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: containerWidth, height: 300)
+                        .clipped()
+                } placeholder: {
+                    Color.gray.opacity(0.1)
                 }
-                .frame(width: geo.size.width, height: 300)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .frame(width: containerWidth, height: 300)
+
+                // Content Overlay
+                VStack(spacing: 0) {
+                    // Title
+                    if let title = component.prop(for: "title") as String? {
+                        Text(title)
+                            .font(.system(size: 24, weight: .heavy))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 40)
+                    }
+
+                    Spacer()
+
+                    // Cards
+                    let spacing: CGFloat = 10
+                    let horizontalPadding: CGFloat = 10
+                    let totalSpacing = (spacing * 2) + (horizontalPadding * 2)
+                    let cardWidth = (containerWidth - totalSpacing) / 3
+
+                    HStack(spacing: spacing) {
+                        let items = component.decodeItems(
+                            for: "items", as: [GroceryPromoCardItem].self)
+
+                        ForEach(items.prefix(3), id: \.self) { item in
+                            GroceryPromoCardView(item: item)
+                                .frame(width: cardWidth)
+                        }
+                    }
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 20)
+                }
+                .frame(width: containerWidth)
             }
+            .frame(width: containerWidth, height: 300)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .frame(height: 300)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)

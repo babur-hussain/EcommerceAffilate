@@ -147,14 +147,20 @@ struct StoryView: View {
         return finalURL
     }
 
-    func timeAgoDisplay(dateString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = formatter.date(from: dateString) else { return "" }
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .abbreviated
+        return f
+    }()
 
-        let formatter2 = RelativeDateTimeFormatter()
-        formatter2.unitsStyle = .abbreviated
-        return formatter2.localizedString(for: date, relativeTo: Date())
+    func timeAgoDisplay(dateString: String) -> String {
+        guard let date = Self.isoFormatter.date(from: dateString) else { return "" }
+        return Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 }
 

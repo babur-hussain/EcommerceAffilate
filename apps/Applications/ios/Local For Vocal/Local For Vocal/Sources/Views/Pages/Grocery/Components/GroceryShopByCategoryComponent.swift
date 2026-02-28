@@ -128,7 +128,7 @@ struct GroceryShopByCategoryComponent: View {
                                 actionUrl: "/category/\(category.id)"
                             )
                         } catch {
-                            print("Failed to fetch category \(id): \(error)")
+                            AppLogger.debug("Failed to fetch category \(id): \(error)")
                             return nil
                         }
                     }

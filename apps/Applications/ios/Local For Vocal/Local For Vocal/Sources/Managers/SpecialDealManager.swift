@@ -35,7 +35,7 @@ class SpecialDealManager: BasePageManager {
                     }
                 }
             } catch {
-                print("Error loading Special Deal layout: \(error)")
+                AppLogger.debug("Error loading Special Deal layout: \(error)")
             }
 
             // 2. Fetch Products from API
