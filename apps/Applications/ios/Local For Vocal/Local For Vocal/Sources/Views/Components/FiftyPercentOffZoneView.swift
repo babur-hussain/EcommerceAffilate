@@ -15,7 +15,7 @@ struct FiftyPercentOffZoneView: View {
 
     @State private var products: [Product] = []
     @State private var isLoading = true
-    private let api = APIService.shared
+    @State private var hasLoaded = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -74,7 +74,7 @@ struct FiftyPercentOffZoneView: View {
             .frame(height: 140)
 
             // Product List
-            if isLoading {
+            if isLoading && !hasLoaded {
                 HStack {
                     Spacer()
                     ProgressView()
@@ -143,7 +143,9 @@ struct FiftyPercentOffZoneView: View {
         .background(Color.white)
         .padding(.vertical, 12)
         .task {
-            await loadProducts()
+            if !hasLoaded {
+                await loadProducts()
+            }
         }
     }
 
@@ -156,18 +158,18 @@ struct FiftyPercentOffZoneView: View {
 
             if !subCategoryIds.isEmpty {
                 // Fetch by sub-category IDs (most specific)
-                fetchedProducts = try await api.fetchProductsBySubCategoryIds(
+                fetchedProducts = try await APIService.shared.fetchProductsBySubCategoryIds(
                     subCategoryIds, limit: 30)
             } else if let catId = categoryId, !catId.isEmpty {
                 // Fetch by category ID
-                fetchedProducts = try await api.fetchProducts(
+                fetchedProducts = try await APIService.shared.fetchProducts(
                     limit: 30, categoryId: catId)
             } else {
                 // Fallback: fetch general products
-                fetchedProducts = try await api.fetchProducts(limit: 30)
+                fetchedProducts = try await APIService.shared.fetchProducts(limit: 30)
             }
 
-            // Filter to only products with ≥50% discount
+            // Filter to only products with >=50% discount
             let discounted = fetchedProducts.filter { product in
                 if let discount = product.discountPercentage, discount >= 50 {
                     return true
@@ -186,6 +188,8 @@ struct FiftyPercentOffZoneView: View {
                     discounted.isEmpty
                     ? Array(fetchedProducts.prefix(10))
                     : Array(discounted.prefix(10))
+
+                self.hasLoaded = true
             }
         } catch {
             print("[FiftyPercentOffZone] Error fetching products: \(error)")

@@ -77,7 +77,7 @@ struct CartPageView: View {
                 GroceryView(basketManager: basketManager)
             }
         }
-        .background(Color(hex: "#F1F3F6"))
+        .background(Color.white)
     }
 }
 
@@ -223,6 +223,7 @@ struct ShoppingView: View {
 
 struct GroceryView: View {
     @ObservedObject var basketManager: BasketManager
+    @State private var isCheckoutActive = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -260,54 +261,59 @@ struct GroceryView: View {
                         if basketManager.basketSavings > 0 {
                             SavingsBannerView(savings: basketManager.basketSavings)
                                 .padding(.horizontal, 16)
-                                .padding(.bottom, 100)
+                                .padding(.bottom, 80)
                         } else {
-                            Color.clear.frame(height: 100)
+                            Color.clear.frame(height: 80)
                         }
                     }
                 }
-                .background(Color(hex: "#F3F4F6"))
+                .background(Color.white)
             }
 
             // Checkout Bar (if not empty)
             if !basketManager.items.isEmpty {
-                VStack {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Total")
-                                .font(.system(size: 12))
-                                .foregroundColor(Color(hex: "#6B7280"))
-                            Text("₹\(Int(basketManager.basketTotal + 2))")  // +2 handling
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(Color(hex: "#111827"))
-                        }
-                        Spacer()
-                        Button(action: {
-                            // Checkout action
-                        }) {
-                            HStack {
-                                Text("Proceed to Pay")
-                                    .font(.system(size: 14, weight: .bold))
-                                Image(systemName: "arrow.right")
-                            }
-                            .foregroundColor(.white)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 20)
-                            .background(Color(hex: "#15803d"))
-                            .cornerRadius(8)
-                        }
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Total")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "#6B7280"))
+                        Text("₹\(Int(basketManager.basketTotal + 2))")  // +2 handling
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(Color(hex: "#111827"))
                     }
-                    .padding(12)
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    Spacer()
+                    Button(action: {
+                        isCheckoutActive = true
+                    }) {
+                        HStack {
+                            Text("Proceed to Pay")
+                                .font(.system(size: 14, weight: .bold))
+                            Image(systemName: "arrow.right")
+                        }
+                        .foregroundColor(.white)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 20)
+                        .background(Color(hex: "#15803d"))
+                        .cornerRadius(8)
+                    }
+                    .navigationDestination(isPresented: $isCheckoutActive) {
+                        CheckoutView(
+                            items: basketManager.items.map { item in
+                                CheckoutViewModel.CheckoutItem(
+                                    product: item.product,
+                                    quantity: item.quantity,
+                                    selectedOfferIds: []
+                                )
+                            }
+                        )
+                    }
                 }
-                .padding(16)
-                .background(Color.clear)  // Floating feel
-                .padding(.bottom, 0)
-                .zIndex(2)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color.white)
             }
         }
+        .background(Color.white)
     }
 }
 

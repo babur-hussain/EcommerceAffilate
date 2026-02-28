@@ -113,12 +113,14 @@ struct ContentView: View {
                     .tag(MainTab.categories)
 
                 // Cart Tab
-                CartPageView()
-                    .tabItem {
-                        Image(systemName: "cart")
-                        Text("Cart")
-                    }
-                    .tag(MainTab.cart)
+                NavigationStack {
+                    CartPageView()
+                }
+                .tabItem {
+                    Image(systemName: "cart")
+                    Text("Cart")
+                }
+                .tag(MainTab.cart)
 
                 // Account Tab
                 AccountView()
