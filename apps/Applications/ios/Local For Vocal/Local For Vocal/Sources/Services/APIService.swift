@@ -501,6 +501,8 @@ public class APIService {
       throw APIError.custom(message: "Session expired. Please log in again.")
     }
     guard (200...299).contains(httpResponse.statusCode) else {
+      let body = String(data: data, encoding: .utf8) ?? "No body"
+      AppLogger.error("❌ Server error \(httpResponse.statusCode): \(body)")
       throw APIError.serverError
     }
     return data

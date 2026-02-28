@@ -52,7 +52,7 @@ export const createPaymentOrder = async (
         amount,
         currency: 'INR',
         receipt: order._id.toString(),
-        payment_capture: true, // Fixed type error (boolean)
+        payment_capture: 1, // Razorpay expects 1 (number), not true (boolean)
         notes: {
           userId: order.userId.toString(),
           orderId: order._id.toString(),
