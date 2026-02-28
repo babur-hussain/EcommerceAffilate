@@ -99,6 +99,23 @@ struct LocalForVocalApp: App {
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
                 }
+                .onAppear {
+                    // Initialize EventTracker (auto-tracks app.open)
+                    _ = EventTracker.shared
+
+                    // Connect SSE if user is already logged in
+                    if let token = AuthManager.shared.authToken {
+                        KafkaEventService.shared.connect(token: token)
+                    }
+                }
+                .onReceive(AuthManager.shared.$authToken) { token in
+                    // Auto-connect/disconnect SSE on auth state changes
+                    if let token = token, !token.isEmpty {
+                        KafkaEventService.shared.connect(token: token)
+                    } else {
+                        KafkaEventService.shared.disconnect()
+                    }
+                }
         }
     }
 }

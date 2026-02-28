@@ -16,11 +16,12 @@ export interface RedisConfig {
 }
 
 // Redis Cloud configuration (non-TLS endpoint)
+// IMPORTANT: Set REDIS_HOST, REDIS_PORT, REDIS_PASSWORD in environment variables
 export const redisConfig: RedisConfig = {
-    host: process.env.REDIS_HOST || 'redis-14835.crce179.ap-south-1-1.ec2.cloud.redislabs.com',
-    port: parseInt(process.env.REDIS_PORT || '14835', 10),
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
     username: process.env.REDIS_USERNAME || 'default',
-    password: process.env.REDIS_PASSWORD || 'QTUnzdCEs5klMt2IMl50jG0OURuCsnit',
+    password: process.env.REDIS_PASSWORD || '',
     db: parseInt(process.env.REDIS_DB || '0', 10),
     maxRetriesPerRequest: 3,
     connectTimeout: 10000,    // 10 seconds to connect (cloud may be slower)

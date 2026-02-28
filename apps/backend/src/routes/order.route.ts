@@ -9,6 +9,8 @@ import { applyCoupon } from '../services/coupon.service';
 import { logAction } from '../services/audit.service';
 import { createInfluencerAttribution, rejectInfluencerAttribution } from '../services/influencer.service';
 import { InfluencerAttribution } from '../models/influencerAttribution.model';
+import { kafkaProducer } from '../services/kafka.producer';
+import { KAFKA_TOPICS } from '../config/kafka';
 
 import { Business } from '../models/business.model';
 import { admin } from '../config/firebaseAdmin';
@@ -71,6 +73,13 @@ router.post('/orders/:id/cancel', requireCustomer, async (req: Request, res: Res
         entityId: id,
         metadata: { totalAmount: (updatedOrder as any).totalAmount },
       });
+
+      // Kafka: order.cancelled event
+      void kafkaProducer.sendEvent(KAFKA_TOPICS.ORDER_EVENTS, 'order.cancelled', {
+        orderId: id,
+        userId: user.id,
+        totalAmount: (updatedOrder as any).totalAmount,
+      }, user.id);
     }
 
   } catch (error: any) {
@@ -408,6 +417,16 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
         metadata: { totalAmount: createdOrder.totalAmount, itemCount: createdOrder.items.length },
       });
 
+      // Kafka: order.created event
+      void kafkaProducer.sendEvent(KAFKA_TOPICS.ORDER_EVENTS, 'order.created', {
+        orderId: createdOrder._id.toString(),
+        userId: user.id,
+        totalAmount: createdOrder.totalAmount,
+        itemCount: createdOrder.items.length,
+        paymentMethod: paymentMethod || 'ONLINE',
+        shippingMethod: createdOrder.shippingMethod,
+      }, user.id);
+
       // Create influencer attribution if influencer code provided
       if (influencerCode) {
         try {
@@ -505,11 +524,18 @@ router.post('/orders/:id/verify', requireCustomer, async (req: Request, res: Res
     const result = await verifyPayment(id, req.body);
     res.json({ status: result });
 
-    // If payment verified, notify sellers
+    // If payment verified, notify sellers + Kafka event
     if (result === 'SUCCESS' || (result as any)?.status === 'SUCCESS') {
       const order = await Order.findById(id).populate('items.productId');
       if (order) {
         void notifySellers(order);
+
+        // Kafka: payment.success event
+        void kafkaProducer.sendEvent(KAFKA_TOPICS.PAYMENT_EVENTS, 'payment.success', {
+          orderId: id,
+          userId: (order as any).userId?.toString(),
+          amount: (order as any).payableAmount || (order as any).totalAmount,
+        }, (order as any).userId?.toString());
       }
     }
   } catch (error: any) {
@@ -535,6 +561,16 @@ router.post('/orders/:id/ship', requireAdmin, async (req: Request, res: Response
     }
 
     res.json(order);
+
+    // Kafka: order.status-changed (shipped)
+    if (order) {
+      void kafkaProducer.sendEvent(KAFKA_TOPICS.ORDER_EVENTS, 'order.status-changed', {
+        orderId: order._id.toString(),
+        userId: order.userId?.toString(),
+        newStatus: 'SHIPPED',
+        previousStatus: 'PAID',
+      }, order.userId?.toString());
+    }
 
     void logAction({
       userId: (req as any)?.user?.id,
@@ -567,6 +603,16 @@ router.post('/orders/:id/deliver', requireAdmin, async (req: Request, res: Respo
     }
 
     res.json(order);
+
+    // Kafka: order.status-changed (delivered)
+    if (order) {
+      void kafkaProducer.sendEvent(KAFKA_TOPICS.ORDER_EVENTS, 'order.status-changed', {
+        orderId: order._id.toString(),
+        userId: order.userId?.toString(),
+        newStatus: 'DELIVERED',
+        previousStatus: 'SHIPPED',
+      }, order.userId?.toString());
+    }
 
     if (order) {
       await createNotification(

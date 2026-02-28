@@ -3,6 +3,7 @@
 
 import Redis from 'ioredis';
 import { redisConfig } from '../config/redis.config';
+import { logger } from '../utils/logger';
 
 class RedisService {
     private static instance: RedisService;
@@ -50,41 +51,41 @@ class RedisService {
                             return null;
                         }
                         const delay = Math.min(times * 200, 3000);
-                        console.log(`[Redis] Retrying connection in ${delay}ms (attempt ${times})`);
+                        logger.info(`[Redis] Retrying connection in ${delay}ms (attempt ${times})`);
                         return delay;
                     },
                 });
 
                 this.client.on('ready', () => {
-                    console.log('[Redis] Connected to Redis Cloud and ready');
+                    logger.info('[Redis] Connected to Redis Cloud and ready');
                     this.isConnected = true;
                     resolve();
                 });
 
                 this.client.on('error', (err) => {
-                    console.error('[Redis] Connection error:', err.message);
+                    logger.error({ err }, '[Redis] Connection error');
                     // Don't set isConnected false here, let 'close' handle it
                 });
 
                 this.client.on('close', () => {
-                    console.log('[Redis] Connection closed');
+                    logger.warn('[Redis] Connection closed');
                     this.isConnected = false;
                 });
 
                 this.client.on('reconnecting', () => {
-                    console.log('[Redis] Reconnecting...');
+                    logger.info('[Redis] Reconnecting...');
                 });
 
                 // Timeout for initial connection
                 setTimeout(() => {
                     if (!this.isConnected) {
-                        console.error('[Redis] Connection timeout');
+                        logger.error('[Redis] Connection timeout');
                         reject(new Error('Redis connection timeout'));
                     }
                 }, redisConfig.connectTimeout);
 
             } catch (error) {
-                console.error('[Redis] Failed to create client:', error);
+                logger.error({ err: error }, '[Redis] Failed to create client');
                 this.connectionPromise = null;
                 reject(error);
             }
@@ -103,7 +104,7 @@ class RedisService {
             if (!this.client) return null;
             return await this.client.get(key);
         } catch (error) {
-            console.error(`[Redis] GET error for key ${key}:`, error);
+            logger.error({ key, err: error }, '[Redis] GET error');
             return null;
         }
     }
@@ -119,7 +120,7 @@ class RedisService {
             await this.client.setex(key, ttl, value);
             return true;
         } catch (error) {
-            console.error(`[Redis] SETEX error for key ${key}:`, error);
+            logger.error({ key, err: error }, '[Redis] SETEX error');
             return false;
         }
     }
@@ -134,7 +135,7 @@ class RedisService {
             await this.client.set(key, value);
             return true;
         } catch (error) {
-            console.error(`[Redis] SET error for key ${key}:`, error);
+            logger.error({ key, err: error }, '[Redis] SET error');
             return false;
         }
     }
@@ -149,7 +150,7 @@ class RedisService {
             await this.client.del(key);
             return true;
         } catch (error) {
-            console.error(`[Redis] DEL error for key ${key}:`, error);
+            logger.error({ key, err: error }, '[Redis] DEL error');
             return false;
         }
     }
@@ -167,7 +168,7 @@ class RedisService {
 
             return await this.client.del(...keys);
         } catch (error) {
-            console.error(`[Redis] DEL pattern error for ${pattern}:`, error);
+            logger.error({ pattern, err: error }, '[Redis] DEL pattern error');
             return 0;
         }
     }
@@ -182,7 +183,7 @@ class RedisService {
             const pong = await this.client.ping();
             return pong === 'PONG';
         } catch (error) {
-            console.error('[Redis] Health check failed:', error);
+            logger.error({ err: error }, '[Redis] Health check failed');
             return false;
         }
     }
@@ -216,10 +217,10 @@ class RedisService {
             const result = await this.client.get(testKey);
             await this.client.del(testKey);
 
-            console.log('[Redis] Connection test passed');
+            logger.info('[Redis] Connection test passed');
             return result === 'ok';
         } catch (error) {
-            console.error('[Redis] Connection test failed:', error);
+            logger.error({ err: error }, '[Redis] Connection test failed');
             return false;
         }
     }
@@ -233,7 +234,7 @@ class RedisService {
             this.client = null;
             this.isConnected = false;
             this.connectionPromise = null;
-            console.log('[Redis] Disconnected gracefully');
+            logger.info('[Redis] Disconnected gracefully');
         }
     }
 }

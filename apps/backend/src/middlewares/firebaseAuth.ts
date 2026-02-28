@@ -41,16 +41,16 @@ const attachUserContext = async (req: Request, decodedToken: any) => {
 
   let user = await User.findOne({ firebaseUid: decodedToken.uid });
   if (user) {
-    logger.info({ userId: user._id }, "✅ User found by firebaseUid");
+    logger.debug({ userId: user._id }, 'User found by firebaseUid');
   } else if (normalizedEmail) {
-    logger.info({ email: normalizedEmail }, "🔍 User not found by firebaseUid, checking email");
+    logger.debug({ email: normalizedEmail }, 'User not found by firebaseUid, checking email');
     user = await User.findOne({ email: normalizedEmail });
-    if (user) logger.info({ userId: user._id }, "✅ User found by email");
+    if (user) logger.debug({ userId: user._id }, 'User found by email');
   }
 
   if (!user) {
-    logger.info("---------- CREATING NEW USER ----------");
-    logger.info({ uid: decodedToken.uid, email: normalizedEmail }, "👤 Creating new user...");
+    logger.info('Creating new user');
+    logger.debug({ uid: decodedToken.uid, email: normalizedEmail }, 'Creating user...');
     // Use role from custom claims if available, otherwise default to CUSTOMER
     // Map legacy role names to valid enum values
     let role = decodedToken.role || "CUSTOMER";
@@ -75,7 +75,7 @@ const attachUserContext = async (req: Request, decodedToken: any) => {
         role: role,
         isActive: true,
       });
-      logger.info({ newUserId: user._id }, "🎉 User CREATED successfully");
+      logger.info({ newUserId: user._id }, 'User created successfully');
     } catch (createError: any) {
       logger.error({ error: createError, validationErrors: createError.errors }, "❌ Failed to create user in Mongo");
 
@@ -106,7 +106,7 @@ const attachUserContext = async (req: Request, decodedToken: any) => {
     }
   } else {
     // Update existing user fields if missing
-    logger.info("🔄 Checking for user updates...");
+    logger.debug('Checking for user field updates');
     let updated = false;
     if (!user.firebaseUid) {
       user.firebaseUid = decodedToken.uid;
@@ -162,7 +162,7 @@ export const verifyFirebaseToken = async (
           ? authHeader.substring(0, 30) + "..."
           : "undefined",
       },
-      "🔐 verifyFirebaseToken called"
+      "verifyFirebaseToken called"
     );
 
     if (!authHeader) {
@@ -194,13 +194,13 @@ export const verifyFirebaseToken = async (
       return;
     }
 
-    logger.info(
+    logger.debug(
       { tokenLength: token.length },
-      "🔍 Attempting to verify Firebase token"
+      'Verifying Firebase token'
     );
     // Verify the Firebase ID token
     const decodedToken = await adminAuth.verifyIdToken(token);
-    logger.info({ uid: decodedToken.uid }, "✅ Token verified successfully");
+    logger.debug({ uid: decodedToken.uid }, 'Token verified');
 
     // Attach user + firebase context
     await attachUserContext(req, decodedToken);

@@ -1,6 +1,8 @@
 import express, { Express, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 import multer from "multer";
 import healthRouter from "./routes/health.route";
 import productRouter from "./routes/product.route";
@@ -61,6 +63,9 @@ import { logger, loggerWithContext } from "./utils/logger";
 
 const app: Express = express();
 
+// Trust first proxy (nginx) — required for rate limiting and correct IP detection
+app.set('trust proxy', 1);
+
 // CORS: allow web frontend and dashboard origins (MUST be before helmet)
 // In development, allow all origins for mobile app compatibility
 // In production, use whitelist for security
@@ -102,12 +107,57 @@ app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    contentSecurityPolicy: false, // CSP handled at CDN/proxy layer
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    hsts: { maxAge: 63072000, includeSubDomains: true, preload: true }, // 2 years
+    noSniff: true,
+    frameguard: { action: "deny" },
   })
 );
 
-// Body parsing with size limits (MUST come BEFORE multer for JSON requests)
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+// Response compression (gzip/brotli)
+app.use(compression({
+  level: 6,
+  threshold: 1024, // Only compress responses > 1KB
+  filter: (req, res) => {
+    // Don't compress SSE streams
+    if (req.path.includes('/sse/')) return false;
+    return compression.filter(req, res);
+  },
+}));
+
+// Body parsing with size limits
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ limit: "2mb", extended: true }));
+
+// Global API rate limiter — 200 requests per minute per IP
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+  skip: (req) => req.path === '/health' || req.path === '/ready',
+});
+
+// Auth-specific rate limiter — 20 per minute
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many auth attempts, please try again later" },
+});
+
+// Request timeout — 30 seconds
+app.use((req: Request, res: Response, next: NextFunction) => {
+  req.setTimeout(30000, () => {
+    if (!res.headersSent) {
+      res.status(408).json({ error: "Request timeout" });
+    }
+  });
+  next();
+});
 
 // Serve static files from public directory (for AASA file)
 import path from "path";
@@ -130,33 +180,18 @@ const upload = multer({
 // Only use multer on routes that need file uploads
 // Don't apply globally as it interferes with JSON parsing
 
-// DEBUG: Log ALL incoming requests
-app.use((req, res, next) => {
-  console.log(
-    `🌐 INCOMING: ${req.method} ${req.url} - Auth: ${req.headers.authorization ? "YES" : "NO"
-    }`
-  );
-  if (req.url.includes("/business/register")) {
-    console.log(`🔍 BUSINESS REGISTER REQUEST DETECTED`);
-    console.log(`📊 Headers:`, JSON.stringify(req.headers, null, 2));
-  }
-  next();
-});
-
 app.use(requestLogger);
 
 // Handle OPTIONS requests for CORS preflight
 app.options("*", cors());
 
-// DEBUG: Test route to verify routing works
-app.get("/api/test-early", (req, res) => {
-  console.log("🎯 EARLY TEST ROUTE HIT!");
-  res.json({ message: "Early test route works!" });
-});
+// Apply rate limiters
+app.use("/api", globalLimiter);
+app.use("/api/auth", authLimiter);
 
 // Routes
 app.use(healthRouter);
-app.use("/api", authRouter);
+app.use("/api", authRouter); // auth routes also hit global + authLimiter
 app.use("/api", searchRouter); // Use Search Router
 app.use("/api", brandRouter);
 app.use("/api", productRouter);
@@ -215,6 +250,12 @@ app.use('/api', adminLayoutRouter);
 app.use('/api', advancedLayoutRouter);
 app.use('/api', browserHistoryRouter);
 app.use('/api', homepageRouter);
+
+// Kafka SSE and Event Tracking routes
+import sseRouter from "./routes/sse.route";
+import eventsRouter from "./routes/events.route";
+app.use("/api", sseRouter);
+app.use("/api", eventsRouter);
 
 
 // Global error handler

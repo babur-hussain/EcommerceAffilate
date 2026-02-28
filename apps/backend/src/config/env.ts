@@ -72,4 +72,8 @@ export const env = {
       max: numberFromEnv('RATE_LIMIT_CLICKS_MAX', 10),
     },
   },
+  kafka: {
+    brokers: (process.env.KAFKA_BROKERS || '72.62.196.61:9092').split(','),
+    clientId: process.env.KAFKA_CLIENT_ID || 'ecommerce-backend',
+  },
 };

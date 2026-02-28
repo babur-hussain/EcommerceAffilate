@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import { IUser } from '../models/user.model';
 import { env } from '../config/env';
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = 12;
 const getJwtSecret = (): string => {
   return env.JWT_SECRET;
 };
@@ -25,7 +25,7 @@ export const generateJWT = (user: Pick<IUser, '_id' | 'role'>): string => {
       role: user.role,
     },
     secret,
-    { expiresIn: '365d' }
+    { expiresIn: '7d' }
   );
 };
 

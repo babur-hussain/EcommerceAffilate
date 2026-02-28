@@ -21,6 +21,9 @@ const connectWithRetry = async (attempt = 1): Promise<void> => {
       heartbeatFrequencyMS: 10_000,
       family: 4, // Force IPv4
       autoIndex: false,
+      maxPoolSize: 20,   // Max connections in pool
+      minPoolSize: 5,    // Keep 5 warm connections
+      maxIdleTimeMS: 30_000, // Close idle connections after 30s
     });
     isConnected = true;
     logger.info({ attempt }, 'MongoDB connected');

@@ -51,4 +51,16 @@ public enum AppEnvironment {
             return false
         }
     }
+
+    /// SSE endpoint for real-time Kafka events
+    public var sseEndpoint: String {
+        switch self {
+        case .development:
+            return "https://api.lfvs.in/api/sse/events"
+        case .staging:
+            return "https://staging.lfvs.in/api/sse/events"
+        case .production:
+            return "https://api.lfvs.in/api/sse/events"
+        }
+    }
 }

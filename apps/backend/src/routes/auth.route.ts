@@ -3,6 +3,8 @@ import { User, UserRole } from '../models/user.model';
 import { Business } from '../models/business.model';
 import { hashPassword, comparePassword, generateJWT } from '../utils/auth';
 import axios from 'axios';
+import { kafkaProducer } from '../services/kafka.producer';
+import { KAFKA_TOPICS } from '../config/kafka';
 
 
 const router = Router();
@@ -48,6 +50,13 @@ router.post('/auth/register', async (req: Request, res: Response) => {
 
     const token = generateJWT(user);
     res.status(201).json({ token, role: user.role });
+
+    // Kafka: user.registered event
+    void kafkaProducer.sendEvent(KAFKA_TOPICS.USER_EVENTS, 'user.registered', {
+      userId: user._id.toString(),
+      email: normalizedEmail,
+      role: user.role,
+    }, user._id.toString());
   } catch (error: any) {
     res.status(500).json({ error: 'Registration failed', message: error.message });
   }
@@ -100,6 +109,13 @@ router.post('/auth/login', async (req: Request, res: Response) => {
         affiliateLinks: user.affiliateLinks
       }
     });
+
+    // Kafka: user.login event
+    void kafkaProducer.sendEvent(KAFKA_TOPICS.USER_EVENTS, 'user.login', {
+      userId: user._id.toString(),
+      email: normalizedEmail,
+      method: 'email',
+    }, user._id.toString());
   } catch (error: any) {
     res.status(500).json({ error: 'Login failed', message: error.message });
   }
@@ -175,6 +191,14 @@ router.post('/auth/google', async (req: Request, res: Response) => {
         affiliateLinks: user.affiliateLinks
       }
     });
+
+    // Kafka: user.login event (Google)
+    void kafkaProducer.sendEvent(KAFKA_TOPICS.USER_EVENTS, 'user.login', {
+      userId: user._id.toString(),
+      email: normalizedEmail,
+      method: 'google',
+      isNewUser: !user.createdAt || (Date.now() - new Date(user.createdAt).getTime()) < 5000,
+    }, user._id.toString());
 
   } catch (error: any) {
     console.error('Google Login Error:', error.message);
