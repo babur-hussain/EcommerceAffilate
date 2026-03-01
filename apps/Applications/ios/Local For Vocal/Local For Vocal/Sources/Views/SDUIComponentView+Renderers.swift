@@ -1100,6 +1100,41 @@ extension SDUIComponentView {
     }
 
     @ViewBuilder
+    func renderBeautifulImageSlider() -> some View {
+        let title = component.prop(for: "title") as String?
+        let items: [BeautifulImageSliderView.BannerData] = {
+            var loaded = component.decodeItems(
+                for: "items", as: [BeautifulImageSliderView.BannerData].self)
+            if loaded.isEmpty {
+                loaded = component.decodeItems(
+                    for: "banners", as: [BeautifulImageSliderView.BannerData].self)
+            }
+            return loaded
+        }()
+
+        BeautifulImageSliderView(title: title, banners: items)
+    }
+
+    @ViewBuilder
+    func renderEidCelebrationDeals() -> some View {
+        let title = component.prop(for: "title") as String?
+        let backgroundImage = component.prop(for: "backgroundImage") as String?
+        let lanternsImage = component.prop(for: "lanternsImage") as String?
+        let items: [EidCelebrationDealsView.DealItem] = {
+            var loaded = component.decodeItems(
+                for: "items", as: [EidCelebrationDealsView.DealItem].self)
+            return loaded
+        }()
+
+        EidCelebrationDealsView(
+            title: title,
+            backgroundImage: backgroundImage,
+            lanternsImage: lanternsImage,
+            items: items
+        )
+    }
+
+    @ViewBuilder
     func renderShoppingForOthersHub() -> some View {
         // Try multiple keys for robustness
         let items: [ShoppingForOthersHubView.CategoryItem] = {

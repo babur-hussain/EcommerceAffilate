@@ -82,7 +82,7 @@ struct ShoppingForOthersHubView: View {
             }
         }
         .padding(.vertical, 16)
-        .background(Color.white)
+        .background(Color.clear)
     }
 }
 
@@ -94,7 +94,7 @@ struct ShoppingCategoryCard: View {
             VStack(spacing: 8) {
                 // Image Container
                 ZStack {
-                    Color(hex: "#F3F4F6")
+                    Color.clear
 
                     if !item.displayImage.isEmpty, let url = URL(string: item.displayImage) {
                         CachedAsyncImage(url: url) { image in
@@ -113,7 +113,7 @@ struct ShoppingCategoryCard: View {
                     }
                 }
                 .frame(width: 110, height: 110)
-                .background(Color(hex: "#F3F4F6"))
+                .background(Color.clear)
                 .cornerRadius(12)
                 .clipped()
 

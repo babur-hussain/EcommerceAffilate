@@ -129,86 +129,23 @@ struct HeroSliderContentView: View {
 
     @EnvironmentObject var navigationManager: NavigationManager
 
-    @State private var dragOffset: CGFloat = 0
-    @State private var isDragging: Bool = false
-
     var body: some View {
-        GeometryReader { geometry in
-            let width = geometry.size.width
-
-            HStack(spacing: 0) {
-                ForEach(0..<banners.count, id: \.self) { index in
-                    let banner = banners[index]
-                    HeroBannerCard(banner: banner)
-                        .padding(.vertical, 8)
-                        .frame(width: width)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            // Only navigate if user didn't drag
-                            if !isDragging, let action = banner.actionUrl {
-                                navigationManager.navigate(to: action)
-                            }
+        TabView(selection: $selection) {
+            ForEach(0..<banners.count, id: \.self) { index in
+                let banner = banners[index]
+                HeroBannerCard(banner: banner)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if let action = banner.actionUrl {
+                            navigationManager.navigate(to: action)
                         }
-                }
+                    }
+                    .tag(index)
             }
-            .offset(x: -CGFloat(selection) * width + dragOffset)
-            .animation(.easeInOut(duration: 0.5), value: selection)
-            .animation(.interactiveSpring(), value: dragOffset)
-            .gesture(
-                banners.count > 1
-                    ? DragGesture(minimumDistance: 10)
-                        .onChanged { value in
-                            isDragging = true
-                            onInteraction(true)
-                            dragOffset = value.translation.width
-                        }
-                        .onEnded { value in
-                            let threshold = width * 0.2
-                            let predictedEnd = value.predictedEndTranslation.width
-
-                            if value.translation.width < -threshold || predictedEnd < -width / 2 {
-                                // Swipe Left -> Next
-                                if selection < banners.count - 1 {
-                                    selection += 1
-                                } else {
-                                    withAnimation {
-                                        dragOffset = 0
-                                    }
-                                }
-                            } else if value.translation.width > threshold
-                                || predictedEnd > width / 2
-                            {
-                                // Swipe Right -> Previous
-                                if selection > 0 {
-                                    selection -= 1
-                                } else {
-                                    withAnimation {
-                                        dragOffset = 0
-                                    }
-                                }
-                            } else {
-                                // Snap back
-                                withAnimation {
-                                    dragOffset = 0
-                                }
-                            }
-
-                            // Clear drag offset after decision
-                            withAnimation {
-                                dragOffset = 0
-                            }
-
-                            onInteraction(false)
-
-                            // Reset dragging flag after a short delay
-                            // so onTapGesture doesn't fire immediately
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                isDragging = false
-                            }
-                        } : nil
-            )
         }
-        .clipped()  // Ensure content doesn't bleed
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .clipped()
     }
 }
 

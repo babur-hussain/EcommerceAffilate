@@ -43,8 +43,7 @@ struct ServicesPageView: View {
                         Color.clear.frame(height: 160)
 
                         // Render SDUI components (skip service_header since we're using our own)
-                        ForEach(components.indices, id: \.self) { index in
-                            let component = components[index]
+                        ForEach(components.filter { $0.isHidden != true }) { component in
                             if component.type != .serviceHeader {
                                 SDUIComponentView(component: component)
                             }

@@ -187,6 +187,12 @@ struct CheckoutView: View {
                 )
                 .frame(width: 0, height: 0)
             }
+
+            // Payment Loading Overlay (Lottie animation while Razorpay initializes)
+            if viewModel.showPaymentLoading {
+                PaymentLoadingOverlay()
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.showPaymentLoading)
+            }
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $viewModel.isLocationPickerVisible) {

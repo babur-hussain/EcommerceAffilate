@@ -12,6 +12,7 @@ export interface IAdvancedComponent {
         data?: any; // Static data if type is STATIC
     };
     children?: IAdvancedComponent[]; // For nested structures like Containers
+    isHidden?: boolean;
 }
 
 export interface IAdvancedLayout extends Document {
@@ -44,7 +45,8 @@ const advancedComponentSchema = new Schema({
     // Recursive definition for children handled by Mongoose via 'add' if strictly needed,
     // but often Mixed is easier for arbitrary nesting depth in SDUI. 
     // Let's use Mixed for children array to avoid complex recursive schema issues initially.
-    children: { type: [Schema.Types.Mixed], default: [] }
+    children: { type: [Schema.Types.Mixed], default: [] },
+    isHidden: { type: Boolean, default: false }
 }, { _id: false }); // Disable auto-generated _id for subdocuments
 
 const advancedLayoutSchema = new Schema<IAdvancedLayout>(

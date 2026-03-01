@@ -6,7 +6,7 @@ struct ShoesSalesView: View {
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
-        ScrollView(showsIndicators: false) { 
+        ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 if components.isEmpty {
                     // Loading state
@@ -18,7 +18,7 @@ struct ShoesSalesView: View {
                         .frame(width: geo.size.width, height: geo.size.height)
                     }
                 } else {
-                    ForEach(components, id: \.id) { component in
+                    ForEach(components.filter { $0.isHidden != true }, id: \.id) { component in
                         SDUIComponentView(component: component)
                     }
                 }

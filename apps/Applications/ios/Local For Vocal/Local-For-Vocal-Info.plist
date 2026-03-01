@@ -115,5 +115,22 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tez</string>
+		<string>phonepe</string>
+		<string>paytmmp</string>
+		<string>credpay</string>
+		<string>bhim</string>
+		<string>amazonpay</string>
+		<string>whatsapp</string>
+		<string>upi</string>
+		<string>gpay</string>
+		<string>mobikwik</string>
+		<string>freecharge</string>
+		<string>slice</string>
+		<string>jupiter</string>
+		<string>cred</string>
+	</array>
 </dict>
 </plist>

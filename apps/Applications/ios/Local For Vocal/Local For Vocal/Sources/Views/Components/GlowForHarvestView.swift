@@ -103,7 +103,7 @@ struct HarvestCard: View {
                     } placeholder: {
                         Color.clear
                     }
-                    .frame(width: 90, height: 90)
+                    .frame(width: 140, height: 140)
 
                     // 4. Offer Badge
                     VStack {

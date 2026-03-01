@@ -403,6 +403,7 @@ public struct GlobalLottieLayer: View {
     @State private var dotLottieFile: DotLottieFile?
     @State private var failedToLoadDotLottie = false
     @State private var hasAppeared = false
+    @State private var animationCompleted = false
 
     // Computed Normalized Frame (Stateless & Optimized)
     private var nX: Double { layer.frame.x / 100.0 }
@@ -434,6 +435,14 @@ public struct GlobalLottieLayer: View {
                     } else {
                         LottieView(dotLottieFile: dotLottieFile)
                             .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .playbackMode(
+                                animationCompleted
+                                    ? .paused(at: .progress(1))
+                                    : .playing(.fromProgress(0, toProgress: 1, loopMode: .playOnce))
+                            )
+                            .animationDidFinish { _ in
+                                animationCompleted = true
+                            }
                             .animationSpeed(layer.speed)
                             .resizable()
                             .aspectRatio(contentMode: layer.contentMode == "fill" ? .fill : .fit)
@@ -454,6 +463,14 @@ public struct GlobalLottieLayer: View {
                     } else {
                         LottieView(animation: .named(layer.animationName, bundle: .main))
                             .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .playbackMode(
+                                animationCompleted
+                                    ? .paused(at: .progress(1))
+                                    : .playing(.fromProgress(0, toProgress: 1, loopMode: .playOnce))
+                            )
+                            .animationDidFinish { _ in
+                                animationCompleted = true
+                            }
                             .animationSpeed(layer.speed)
                             .resizable()
                             .aspectRatio(contentMode: layer.contentMode == "fill" ? .fill : .fit)

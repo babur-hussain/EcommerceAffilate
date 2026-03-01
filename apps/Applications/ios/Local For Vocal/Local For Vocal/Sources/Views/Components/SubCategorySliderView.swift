@@ -1,7 +1,10 @@
+import Foundation
 import SwiftUI
 
 struct SubCategorySliderView: View {
     let parentCategoryId: String
+
+    @EnvironmentObject var navigationManager: NavigationManager
 
     @State private var subCategories: [SubCategory] = []
     @State private var isLoading = true
@@ -20,7 +23,11 @@ struct SubCategorySliderView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHGrid(rows: rows, spacing: 12) {
                         ForEach(subCategories, id: \.id) { sub in
-                            SubCategoryCell(sub: sub)
+                            SubCategoryCell(
+                                sub: sub,
+                                parentCategoryId: parentCategoryId
+                            )
+                            .environmentObject(navigationManager)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -73,10 +80,17 @@ struct SubCategorySliderView: View {
 
 struct SubCategoryCell: View {
     let sub: SubCategory
+    let parentCategoryId: String
+
+    @EnvironmentObject var navigationManager: NavigationManager
 
     var body: some View {
         Button(action: {
-            AppLogger.debug("Navigate to sub-category: \(sub.name)")
+            let encodedName =
+                sub.name.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? sub.name
+            let url =
+                "category://\(encodedName)?categoryId=\(parentCategoryId)&subCategoryId=\(sub.id)"
+            navigationManager.navigate(to: url)
         }) {
             VStack(spacing: 6) {
                 // Icon Container

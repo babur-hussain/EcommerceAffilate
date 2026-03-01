@@ -22,12 +22,12 @@ struct BeautyKBeautyView: View {
     private let timer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             // Header
-            HStack {
+            HStack(alignment: .center) {
                 Text(title)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color(hexString: "#000000"))
+                    .foregroundColor(.primary)
 
                 Spacer()
 
@@ -37,172 +37,166 @@ struct BeautyKBeautyView: View {
                     }) {
                         Text("View All")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color(hexString: "#FF6F00"))
+                            .foregroundColor(Color(hex: "#FF6F00"))
                     }
                 }
             }
             .padding(.horizontal, 16)
 
             // Carousel
-            VStack(spacing: 12) {
-                TabView(selection: $activeIndex) {
-                    ForEach(0..<items.count, id: \.self) { index in
-                        KBeautyCard(item: items[index])
-                            .tag(index)
-                    }
-                }
-                // .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // Unavailable in macOS
-                .frame(height: 340)  // Height from native: 340
-
-                // Pagination Dots
-                HStack(spacing: 8) {
-                    ForEach(0..<items.count, id: \.self) { index in
-                        Capsule()
-                            .fill(index == activeIndex ? Color.black : Color(hexString: "#E0E0E0"))
-                            .frame(width: index == activeIndex ? 24 : 12, height: 4)
-                            .animation(.spring(), value: activeIndex)
-                    }
+            TabView(selection: $activeIndex) {
+                ForEach(0..<items.count, id: \.self) { index in
+                    KBeautyCard(item: items[index])
+                        .tag(index)
                 }
             }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            .frame(height: 360)
+
+            // Pagination Dots
+            HStack(spacing: 6) {
+                ForEach(0..<items.count, id: \.self) { index in
+                    Capsule()
+                        .fill(index == activeIndex ? Color.primary : Color.gray.opacity(0.3))
+                        .frame(width: index == activeIndex ? 20 : 8, height: 4)
+                        .animation(.easeInOut(duration: 0.3), value: activeIndex)
+                }
+            }
+            .frame(maxWidth: .infinity)
         }
-        .padding(.bottom, 32)
+        .padding(.bottom, 24)
         .onReceive(timer) { _ in
-            withAnimation {
+            guard items.count > 1 else { return }
+            withAnimation(.easeInOut(duration: 0.4)) {
                 activeIndex = (activeIndex + 1) % items.count
             }
         }
     }
 }
 
+// MARK: - K-Beauty Card
 struct KBeautyCard: View {
     let item: BeautyKBeautyView.KBeautyItem
 
+    private var useDarkText: Bool {
+        item.darkText ?? false
+    }
+
+    private var textColor: Color {
+        useDarkText ? .black : .white
+    }
+
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Background Color
-                Color(hexString: item.bg ?? "#FFFFFF")
+        ZStack(alignment: .bottom) {
+            // Background
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(hex: item.bg ?? "#F5F5F5"))
 
-                // Main Image
-                AsyncImage(url: URL(string: item.image)) { image in
-                    image.resizable()
+            // Main Image — fills the card
+            AsyncImage(url: URL(string: item.image)) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
                         .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.1)
-                }
-                .frame(width: geometry.size.width, height: geometry.size.height)
-
-                // Brand Pill (Top Left)
-                // Native: top: 20, left: 20
-                VStack {
-                    HStack {
-                        Text(item.brand)
-                            .font(.system(size: 24, weight: .light))
-                            .tracking(2)
-                            .foregroundColor((item.darkText ?? false) ? .black : .white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.white.opacity(0.3))
-                            .clipShape(Capsule())
-                        Spacer()
-                    }
-                    Spacer()
-                }
-                .padding(.top, 20)
-                .padding(.leading, 20)
-
-                // Ingredient Box (Floating Right Middle)
-                // Native: right: 0, top: '45%'
-                // We typically use alignment .trailing in ZStack or GeometryReader
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.ingredientTitle ?? "STAR\nINGREDIENT")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.white)
-                                .textCase(.uppercase)
-
-                            Rectangle()
-                                .fill(Color.white.opacity(0.5))
-                                .frame(height: 1)
-                                .frame(maxWidth: .infinity)
-
-                            Text(item.ingredient)
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                        .padding(.vertical, 16)
-                        .padding(.horizontal, 12)
-                        .background(Color(hexString: "#E91E63"))
-                        .clipShape(
-                            CustomCorner(corners: [.topLeft, .bottomLeft], radius: 16)
+                        .transition(.opacity.animation(.easeIn(duration: 0.3)))
+                case .failure:
+                    Color(hex: item.bg ?? "#F5F5F5")
+                @unknown default:
+                    Color(hex: item.bg ?? "#F5F5F5")
+                        .overlay(
+                            ProgressView()
+                                .tint(.gray)
                         )
-                        .shadow(radius: 4)
-                        // No padding on the right to flush with edge
-                    }
-                    // Adjust spacer ratio to approximate top 45%
-                    // Using spacers is rough. Let's use alignment.bottom + offset or padding.
-                    // If we want it roughly vertically centered but slightly up?
-                    Spacer().frame(height: 80)
-                }
-
-                // Gradient Footer with Offer
-                VStack {
-                    Spacer()
-                    LinearGradient(
-                        gradient: Gradient(colors: [.clear, Color.black.opacity(0.6)]),
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 100)
-                    .overlay(
-                        Text(item.offer)
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.5), radius: 4, x: 0, y: 1)
-                            .padding(.bottom, 20),
-                        alignment: .bottom
-                    )
                 }
             }
+            .clipped()
+
+            // Top-left: Brand Pill
+            VStack {
+                HStack {
+                    Text(item.brand)
+                        .font(.system(size: 20, weight: .medium))
+                        .tracking(2)
+                        .foregroundColor(useDarkText ? .black : .white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                        )
+                    Spacer()
+                }
+                .padding(.top, 16)
+                .padding(.leading, 16)
+                Spacer()
+            }
+
+            // Right side: Ingredient Badge
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    ingredientBadge
+                }
+                Spacer()
+                    .frame(height: 70)
+            }
+
+            // Bottom: Gradient Overlay + Offer Text
+            LinearGradient(
+                colors: [.clear, .clear, Color.black.opacity(0.6)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 140)
+            .overlay(alignment: .bottom) {
+                Text(item.offer)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 2)
+                    .padding(.bottom, 16)
+            }
         }
-        .cornerRadius(20)
-        .padding(.horizontal, 16)  // Padding to simulate card width < screen width
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        .padding(.horizontal, 16)
         .onTapGesture {
             if let action = item.actionUrl {
                 AppLogger.debug("Navigate to: \(action)")
             }
         }
     }
-}
 
-extension Color {
-    fileprivate init(hexString: String) {
-        let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a: UInt64
-        let r: UInt64
-        let g: UInt64
-        let b: UInt64
-        switch hex.count {
-        case 3:  // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6:  // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8:  // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
+    // Floating ingredient badge on the right edge
+    private var ingredientBadge: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.ingredientTitle ?? "STAR\nINGREDIENT")
+                .font(.system(size: 9, weight: .heavy))
+                .foregroundColor(.white.opacity(0.85))
+                .textCase(.uppercase)
+                .lineSpacing(2)
+
+            Rectangle()
+                .fill(Color.white.opacity(0.35))
+                .frame(height: 1)
+
+            Text(item.ingredient)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
         }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
+        .padding(.vertical, 14)
+        .padding(.horizontal, 14)
+        .background(
+            LinearGradient(
+                colors: [Color(hex: "#E91E63"), Color(hex: "#C2185B")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         )
+        .clipShape(
+            CustomCorner(corners: [.topLeft, .bottomLeft], radius: 14)
+        )
+        .shadow(color: Color(hex: "#E91E63").opacity(0.4), radius: 8, x: -2, y: 4)
     }
 }

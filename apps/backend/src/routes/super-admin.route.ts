@@ -6,6 +6,7 @@ import { Business } from "../models/business.model";
 import { Product } from "../models/product.model";
 import { Order } from "../models/order.model";
 import { InfluencerAttribution } from "../models/influencerAttribution.model";
+import { env } from "../config/env";
 
 const router = Router();
 
@@ -136,15 +137,17 @@ router.get(
 
       console.log("[Super Admin Profile] Found user:", user);
 
-      // If user doesn't exist, return 404 so frontend knows to register
+      // If user doesn't exist, check env-configured whitelist (replaces hardcoded email)
       if (!user) {
-        // [AUTO-FIX] If whitelist email, create them immediately
-        if (email?.toLowerCase() === "thebaburhussain2@gmail.com") {
-          console.log("[Super Admin Profile] Auto-creating whitelisted Super Admin");
+        const normalizedEmail = email?.toLowerCase();
+        const isWhitelisted = normalizedEmail && env.security.superAdminEmails.includes(normalizedEmail);
+
+        if (isWhitelisted) {
+          console.log("[Super Admin Profile] Auto-creating whitelisted Super Admin from env config");
           user = await User.create({
             uid,
             firebaseUid: uid,
-            email: email.toLowerCase(),
+            email: normalizedEmail,
             name: "Super Admin",
             role: "SUPER_ADMIN",
             isActive: true
@@ -155,8 +158,9 @@ router.get(
         }
       }
 
-      // [AUTO-FIX] If whitelist email, force update role
-      if (email?.toLowerCase() === "thebaburhussain2@gmail.com" && user.role !== "SUPER_ADMIN") {
+      // Auto-promote whitelisted emails (from env config, not hardcoded)
+      const normalizedEmail = email?.toLowerCase();
+      if (normalizedEmail && env.security.superAdminEmails.includes(normalizedEmail) && user.role !== "SUPER_ADMIN") {
         console.log("[Super Admin Profile] Auto-promoting whitelisted user to SUPER_ADMIN");
         user.role = "SUPER_ADMIN";
         await user.save();

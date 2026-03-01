@@ -12,10 +12,11 @@ public struct SDUIComponent: Identifiable, Codable, Hashable {
     public let dataSource: [String: SDUIAnyCodable]?
     public let style: [String: SDUIAnyCodable]?
     public let children: [SDUIComponent]?
+    public let isHidden: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id, _id, type, style, children, dataSource
-        case props
+        case props, isHidden
         case content  // Keep for decoding compatibility
     }
 
@@ -44,6 +45,7 @@ public struct SDUIComponent: Identifiable, Codable, Hashable {
 
         self.style = try? container.decode([String: SDUIAnyCodable].self, forKey: .style)
         self.children = try? container.decode([SDUIComponent].self, forKey: .children)
+        self.isHidden = try? container.decode(Bool.self, forKey: .isHidden)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -56,13 +58,13 @@ public struct SDUIComponent: Identifiable, Codable, Hashable {
         try container.encodeIfPresent(dataSource, forKey: .dataSource)
         try container.encodeIfPresent(style, forKey: .style)
         try container.encodeIfPresent(children, forKey: .children)
+        try container.encodeIfPresent(isHidden, forKey: .isHidden)
     }
 
-    // Memberwise init for manual creation
     public init(
         id: String, _id: String? = nil, type: ComponentType, props: [String: SDUIAnyCodable]? = nil,
         dataSource: [String: SDUIAnyCodable]? = nil, style: [String: SDUIAnyCodable]? = nil,
-        children: [SDUIComponent]? = nil
+        children: [SDUIComponent]? = nil, isHidden: Bool? = nil
     ) {
         // For manual creation, use a fresh UUID for SwiftUI identity
         self.id = UUID().uuidString
@@ -73,6 +75,7 @@ public struct SDUIComponent: Identifiable, Codable, Hashable {
         self.dataSource = dataSource
         self.style = style
         self.children = children
+        self.isHidden = isHidden
     }
 
     // Helper to extract specific props
@@ -142,6 +145,8 @@ public enum ComponentType: String, Codable {
     case activeOrders = "active_orders"
     case subCategorySlider = "sub_category_slider"
     case shoppingForOthersHub = "shopping_for_others_hub"
+    case beautifulImageSlider = "beautiful_image_slider"
+    case eidCelebrationDeals = "eid_celebration_deals"
 
     // --- For You Custom Sections ---
     case forYouBentoGrid = "for_you_bento_grid"

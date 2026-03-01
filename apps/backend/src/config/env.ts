@@ -63,6 +63,18 @@ export const env = {
     rankingSearchTtl: numberFromEnv('CACHE_RANKING_SEARCH_TTL', 30),
   },
   rateLimit: {
+    global: {
+      windowMs: numberFromEnv('RATE_LIMIT_GLOBAL_WINDOW_MS', 60_000),
+      max: numberFromEnv('RATE_LIMIT_GLOBAL_MAX', 200),
+    },
+    auth: {
+      windowMs: numberFromEnv('RATE_LIMIT_AUTH_WINDOW_MS', 60_000),
+      max: numberFromEnv('RATE_LIMIT_AUTH_MAX', 20),
+    },
+    sensitive: {
+      windowMs: numberFromEnv('RATE_LIMIT_SENSITIVE_WINDOW_MS', 60_000),
+      max: numberFromEnv('RATE_LIMIT_SENSITIVE_MAX', 30),
+    },
     views: {
       windowMs: numberFromEnv('RATE_LIMIT_VIEWS_WINDOW_MS', 60_000),
       max: numberFromEnv('RATE_LIMIT_VIEWS_MAX', 20),
@@ -71,6 +83,16 @@ export const env = {
       windowMs: numberFromEnv('RATE_LIMIT_CLICKS_WINDOW_MS', 60_000),
       max: numberFromEnv('RATE_LIMIT_CLICKS_MAX', 10),
     },
+  },
+  cors: {
+    origins: process.env.CORS_ALLOWED_ORIGINS
+      ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(s => s.trim())
+      : [], // empty = use defaults per NODE_ENV
+  },
+  security: {
+    superAdminEmails: process.env.SUPER_ADMIN_EMAILS
+      ? process.env.SUPER_ADMIN_EMAILS.split(',').map(s => s.trim().toLowerCase())
+      : [],
   },
   kafka: {
     brokers: (process.env.KAFKA_BROKERS || '72.62.196.61:9092').split(','),

@@ -2,12 +2,14 @@ import { Router, Request, Response } from 'express';
 import { kafkaProducer } from '../services/kafka.producer';
 import { KAFKA_TOPICS } from '../config/kafka';
 import { logger } from '../utils/logger';
+import { verifyFirebaseTokenOptional } from '../middlewares/firebaseAuth';
 
 const router = Router();
 
 /**
  * POST /api/events/track — Receives batched tracking events from iOS app
  * Events are produced to the 'tracking-events' Kafka topic.
+ * Optional auth: captures user identity when available, allows anonymous tracking.
  * 
  * Body: {
  *   events: [
@@ -17,7 +19,7 @@ const router = Router();
  *   sessionId: string
  * }
  */
-router.post('/events/track', async (req: Request, res: Response) => {
+router.post('/events/track', verifyFirebaseTokenOptional, async (req: Request, res: Response) => {
     try {
         const user = (req as any).user as { id?: string } | undefined;
         const userId = user?.id || 'anonymous';

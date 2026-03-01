@@ -8,17 +8,14 @@
     class RazorpayService: NSObject, RazorpayPaymentCompletionProtocolWithData {
         static let shared = RazorpayService()
 
-        // Fix S2: Live Razorpay key — no hardcoded test key fallback in production
+        // Fix S2: Live Razorpay key — must match backend's key
         private let keyId: String = {
             if let plistKey = Bundle.main.object(forInfoDictionaryKey: "RAZORPAY_KEY_ID") as? String
             {
                 return plistKey
             }
-            #if DEBUG
-                return "rzp_test_S2fkx4mZP0xAQm"  // Test key for debug only
-            #else
-                return "rzp_live_SIs9DUNl6RGng7"
-            #endif
+            // Backend uses live key, so iOS must use the same to avoid mismatch
+            return "rzp_live_SIs9DUNl6RGng7"
         }()
 
         // SDK instance
@@ -81,6 +78,7 @@
                             description: paymentData.description,
                             prefillEmail: paymentData.prefillEmail,
                             prefillPhone: paymentData.prefillPhone,
+                            prefillName: paymentData.prefillName,
                             themeColor: "#2563EB"  // Default blue
                         )
                     }
@@ -174,6 +172,7 @@
             description: String?,
             prefillEmail: String?,
             prefillPhone: String?,
+            prefillName: String?,
             themeColor: String
         ) {
 
@@ -186,6 +185,7 @@
                 "prefill": [
                     "contact": prefillPhone ?? "",
                     "email": prefillEmail ?? "",
+                    "name": prefillName ?? "",
                 ],
                 "theme": ["color": themeColor],
             ]

@@ -45,6 +45,7 @@ class CheckoutViewModel: ObservableObject {
     @Published var createdOrderId: String? = nil
     @Published var createdOrderNumber: String? = nil
     @Published var isProcessingPayment = false
+    @Published var showPaymentLoading = false
 
     // MARK: - Auth State
     @Published var showLoginPrompt = false
@@ -300,10 +301,16 @@ class CheckoutViewModel: ObservableObject {
                 // Close Payment View First to avoid "Multiple sheets" error
                 self.isPaymentViewVisible = false
 
+                // Show loading overlay for Razorpay payments
+                if method == "RAZORPAY" {
+                    self.showPaymentLoading = true
+                }
+
                 // Allow time for sheet dismissal animation
                 try? await Task.sleep(nanoseconds: 600_000_000)  // 0.6s
 
                 if method == "RAZORPAY" {
+                    self.showPaymentLoading = false
                     self.showRazorpay = true
                 } else {
                     self.showPaymentSuccess = true
@@ -311,6 +318,7 @@ class CheckoutViewModel: ObservableObject {
 
             } catch {
                 AppLogger.error("Error creating order: \(error)")
+                self.showPaymentLoading = false
                 self.isPaymentViewVisible = false
                 try? await Task.sleep(nanoseconds: 500_000_000)
                 self.showPaymentFailed = true

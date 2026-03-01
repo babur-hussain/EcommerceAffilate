@@ -52,13 +52,13 @@ export const createPaymentOrder = async (
         amount,
         currency: 'INR',
         receipt: order._id.toString(),
-        payment_capture: 1, // Razorpay expects 1 (number), not true (boolean)
+        payment_capture: true, // Razorpay expects true (boolean) in this sdk version
         notes: {
           userId: order.userId.toString(),
           orderId: order._id.toString(),
         },
       });
-      paymentOrderId = rzpOrder.id;
+      paymentOrderId = (rzpOrder as any).id;
       paymentOrderData = rzpOrder;
     } else if (provider === 'PAYTM') {
       // Paytm Integration
@@ -189,6 +189,11 @@ export const createPaymentOrder = async (
       name: 'Local For Vocal Startup',
       description: 'Order Payment',
       orderId: order._id,
+      prefill: {
+        name: (order as any).shippingAddress?.name || '',
+        contact: (order as any).shippingAddress?.phone || '',
+        email: '',
+      },
     };
   } catch (error: any) {
     logDebug('Error in createPaymentOrder:', error.message);

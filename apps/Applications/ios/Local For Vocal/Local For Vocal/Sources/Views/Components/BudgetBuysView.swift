@@ -82,12 +82,12 @@ struct BudgetBuysCard: View {
                         .font(.custom("Didot", size: 18))  // Native uses Didot on iOS
                         .fontWeight(.medium)
                         .tracking(2)  // letterSpacing
-                        .foregroundColor(Color(hex: "#111111"))
+                        .foregroundColor(.white)
 
                     Text("₹\(item.price)")
                         .font(.custom("Didot", size: 42))  // Native uses Didot
                         .fontWeight(.bold)
-                        .foregroundColor(Color(hex: "#111111"))
+                        .foregroundColor(.white)
                 }
             }
             .aspectRatio(1, contentMode: .fit)

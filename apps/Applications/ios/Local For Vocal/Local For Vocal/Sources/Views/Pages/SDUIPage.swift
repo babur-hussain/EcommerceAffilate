@@ -257,7 +257,7 @@ struct SDUIPage: View {
             } else if let components = layout?.components {
                 // Content loaded (from memory, disk cache, or network)
                 LazyVStack(spacing: 0) {
-                    ForEach(components) { component in
+                    ForEach(components.filter { $0.isHidden != true }) { component in
                         SDUIComponentView(component: component)
                             .transition(.opacity)
                     }

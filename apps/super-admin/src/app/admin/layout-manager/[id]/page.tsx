@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Save, ArrowLeft, Code, Clock, Bookmark, BookmarkPlus, Trash2, RotateCcw, Pencil, X, Check, User } from "lucide-react";
+import { Save, ArrowLeft, Code, Clock, Bookmark, BookmarkPlus, Trash2, RotateCcw, Pencil, X, Check, User, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -400,17 +400,40 @@ export default function LayoutEditorPage({ params }: { params: { id: string } })
                                     try {
                                         const sections = JSON.parse(jsonContent);
                                         if (Array.isArray(sections)) {
-                                            return sections.map((section: any, idx: number) => (
-                                                <div key={idx} className="p-2 bg-white border border-gray-200 rounded text-sm hover:border-primary-400 cursor-default">
-                                                    <div className="font-semibold text-gray-900 truncate">
-                                                        {section.props?.title || section.id || `Section ${idx + 1}`}
+                                            return sections.map((section: any, idx: number) => {
+                                                const isHidden = section.isHidden === true;
+                                                return (
+                                                    <div key={idx} className={`p-2 bg-white border border-gray-200 rounded text-sm hover:border-primary-400 cursor-default transition-opacity ${isHidden ? 'opacity-60' : ''}`}>
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="font-semibold text-gray-900 truncate pr-2 flex items-center">
+                                                                {section.props?.title || section.id || `Section ${idx + 1}`}
+                                                                {isHidden && <span className="ml-2 text-[10px] uppercase bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full font-medium">Hidden</span>}
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const newSections = [...sections];
+                                                                    newSections[idx] = { ...newSections[idx] };
+                                                                    if (newSections[idx].isHidden) {
+                                                                        delete newSections[idx].isHidden;
+                                                                    } else {
+                                                                        newSections[idx].isHidden = true;
+                                                                    }
+                                                                    setJsonContent(JSON.stringify(newSections, null, 2));
+                                                                }}
+                                                                className={`p-1 rounded transition-colors ${isHidden ? 'text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'}`}
+                                                                title={isHidden ? "Show Section" : "Hide Section"}
+                                                            >
+                                                                {isHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                                            </button>
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 font-mono mt-1.5 flex justify-between items-center">
+                                                            <span>{section.type}</span>
+                                                            {section.dataSource && <span className="text-blue-600">⚡ Dynamic</span>}
+                                                        </div>
                                                     </div>
-                                                    <div className="text-xs text-gray-500 font-mono mt-1 flex justify-between">
-                                                        <span>{section.type}</span>
-                                                        {section.dataSource && <span className="text-blue-600">⚡ Dynamic</span>}
-                                                    </div>
-                                                </div>
-                                            ));
+                                                )
+                                            });
                                         }
                                     } catch (e) {
                                         return <div className="p-3 text-xs text-red-500">Invalid JSON</div>;

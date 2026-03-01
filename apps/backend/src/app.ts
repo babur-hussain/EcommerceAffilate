@@ -2,8 +2,9 @@ import express, { Express, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
-import rateLimit from "express-rate-limit";
 import multer from "multer";
+import { env } from "./config/env";
+import { globalLimiter, authLimiter, sensitiveLimiter, userLimiter } from "./middlewares/rateLimiter";
 import healthRouter from "./routes/health.route";
 import productRouter from "./routes/product.route";
 import sponsorshipRouter from "./routes/sponsorship.route";
@@ -66,37 +67,63 @@ const app: Express = express();
 // Trust first proxy (nginx) — required for rate limiting and correct IP detection
 app.set('trust proxy', 1);
 
-// CORS: allow web frontend and dashboard origins (MUST be before helmet)
-// In development, allow all origins for mobile app compatibility
-// In production, use whitelist for security
-const whitelistRegex = [
-  /^http:\/\/localhost:\d+$/, // Allow any localhost port
-  /^https:\/\/.*\.localforvocalstartup\.com$/, // Allow subdomains
-  /^https:\/\/localforvocalstartup\.com$/,
-  /^https:\/\/api\.lfvs\.in$/ // Allow self
-];
+// CORS: environment-configurable origin whitelist
+// - In development: allows localhost ports + env-specified origins
+// - In production: STRICT whitelist from CORS_ALLOWED_ORIGINS env var only
+// Mobile apps (no origin header) are always allowed through
+const envOrigins = env.cors.origins; // from CORS_ALLOWED_ORIGINS
+
+const productionOrigins = envOrigins.length > 0
+  ? envOrigins
+  : [
+    'https://localforvocalstartup.com',
+    'https://admin.localforvocalstartup.com',
+    'https://api.lfvs.in',
+  ];
+
+const developmentRegex = /^http:\/\/localhost:\d+$/; // Any localhost port
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
 
-    // Check if origin matches any regex
-    const isAllowed = whitelistRegex.some(regex => regex.test(origin));
-
-    if (isAllowed) {
-      return callback(null, true);
+    if (env.isProduction) {
+      // Production: strict whitelist only — no regex, no wildcards
+      if (productionOrigins.includes(origin)) {
+        return callback(null, true);
+      }
     } else {
-      console.log(`🚫 CORS Blocked: ${origin}`);
-      return callback(new Error('Not allowed by CORS'));
+      // Development/Staging: allow localhost + any env-specified origins
+      if (developmentRegex.test(origin)) {
+        return callback(null, true);
+      }
+      if (envOrigins.length > 0 && envOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      // In dev, also allow the production domains for testing
+      if (productionOrigins.includes(origin)) {
+        return callback(null, true);
+      }
     }
+
+    console.log(`🚫 CORS Blocked: ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Content-Length", "X-Request-Id"],
+  exposedHeaders: [
+    "Content-Length",
+    "X-Request-Id",
+    "RateLimit-Limit",
+    "RateLimit-Remaining",
+    "RateLimit-Reset",
+    "Retry-After",
+  ],
   credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 204,
+  maxAge: 86400, // Cache preflight for 24 hours
 };
 
 app.use(cors(corsOptions));
@@ -130,24 +157,11 @@ app.use(compression({
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ limit: "2mb", extended: true }));
 
-// Global API rate limiter — 200 requests per minute per IP
-const globalLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many requests, please try again later" },
-  skip: (req) => req.path === '/health' || req.path === '/ready',
-});
-
-// Auth-specific rate limiter — 20 per minute
-const authLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Too many auth attempts, please try again later" },
-});
+// Rate limiters are imported from middlewares/rateLimiter.ts
+// All limits are configurable via environment variables:
+//   RATE_LIMIT_GLOBAL_MAX (default: 200/min)
+//   RATE_LIMIT_AUTH_MAX (default: 20/min)
+//   RATE_LIMIT_SENSITIVE_MAX (default: 30/min)
 
 // Request timeout — 30 seconds
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -185,9 +199,16 @@ app.use(requestLogger);
 // Handle OPTIONS requests for CORS preflight
 app.options("*", cors());
 
-// Apply rate limiters
-app.use("/api", globalLimiter);
-app.use("/api/auth", authLimiter);
+// Apply rate limiters (tiered)
+app.use("/api", globalLimiter);          // 200 req/min per IP (all API routes)
+app.use("/api/auth", authLimiter);       // 20 req/min per IP (auth routes)
+
+// Sensitive operations get additional rate limiting
+app.use("/api/payments", sensitiveLimiter);     // 30 req/min
+app.use("/api/orders", sensitiveLimiter);       // 30 req/min
+app.use("/api/super-admin", sensitiveLimiter);  // 30 req/min
+app.use("/api/admin", sensitiveLimiter);        // 30 req/min
+app.use("/api/wallet", sensitiveLimiter);       // 30 req/min
 
 // Routes
 app.use(healthRouter);

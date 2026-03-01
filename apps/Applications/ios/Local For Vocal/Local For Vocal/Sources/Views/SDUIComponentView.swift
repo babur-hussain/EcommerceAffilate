@@ -370,6 +370,10 @@ struct SDUIComponentView: View {
             renderSubCategorySlider()
         case .shoppingForOthersHub:
             renderShoppingForOthersHub()
+        case .beautifulImageSlider:
+            renderBeautifulImageSlider()
+        case .eidCelebrationDeals:
+            renderEidCelebrationDeals()
         case .earlyBirdDeals:
             renderEarlyBirdDeals()
         case .sankrantiFestival:

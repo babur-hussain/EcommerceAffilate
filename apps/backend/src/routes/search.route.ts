@@ -2,13 +2,15 @@ import { Router, Request, Response } from "express";
 import { Product } from "../models/product.model";
 import Category from "../models/category.model";
 import { Brand } from "../models/brand.model";
+import { verifyFirebaseTokenOptional } from "../middlewares/firebaseAuth";
 import mongoose from "mongoose";
 
 const router = Router();
 
 // GET /api/search/global
 // Advanced search across multiple entities with robust matching
-router.get("/search/global", async (req: Request, res: Response) => {
+// Uses optional auth to capture user context for analytics (guest access allowed)
+router.get("/search/global", verifyFirebaseTokenOptional, async (req: Request, res: Response) => {
     try {
         const { q } = req.query;
 
@@ -51,7 +53,7 @@ router.get("/search/global", async (req: Request, res: Response) => {
 
 // GET /api/search/trending
 // Returns popular/trending search terms
-router.get("/search/trending", async (req: Request, res: Response) => {
+router.get("/search/trending", verifyFirebaseTokenOptional, async (req: Request, res: Response) => {
     try {
         // In a real app, this would aggregate actual search logs or product views.
         // For now, we return a curated list mixed with popular categories.
@@ -177,7 +179,7 @@ async function searchBrands(query: string) {
 
 // GET /api/search/grocery
 // Specific search for grocery products from grocery_products collection
-router.get("/search/grocery", async (req: Request, res: Response) => {
+router.get("/search/grocery", verifyFirebaseTokenOptional, async (req: Request, res: Response) => {
     try {
         const { q } = req.query;
 

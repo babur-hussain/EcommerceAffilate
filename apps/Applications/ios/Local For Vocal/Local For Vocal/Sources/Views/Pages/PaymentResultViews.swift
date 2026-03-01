@@ -1,3 +1,4 @@
+import Lottie
 import SwiftUI
 
 // MARK: - Payment Success View
@@ -8,56 +9,64 @@ struct PaymentSuccessView: View {
     let onViewOrder: () -> Void
 
     // Animation states
-    @State private var showCheckmark = false
-    @State private var checkmarkScale: CGFloat = 0.3
-    @State private var showConfetti = false
-    @State private var confettiOffset: CGFloat = -100
+    @State private var dotLottieFile: DotLottieFile?
     @State private var showContent = false
+    @State private var showConfetti = false
+    @State private var showButtons = false
 
     var body: some View {
         ZStack {
-            // Main Content
+            // Gradient Background
+            LinearGradient(
+                colors: [Color(hex: "#F0FDF4"), Color.white, Color.white],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
             VStack(spacing: 0) {
                 Spacer()
 
-                // Success Animation Circle
+                // Lottie Animation
                 ZStack {
-                    // Outer glow ring
-                    Circle()
-                        .fill(Color(hex: "#DCFCE7"))
-                        .frame(width: 140, height: 140)
-                        .scaleEffect(showCheckmark ? 1.0 : 0.5)
-                        .opacity(showCheckmark ? 1.0 : 0)
-
-                    // Inner solid circle
+                    // Subtle glow behind animation
                     Circle()
                         .fill(
-                            LinearGradient(
-                                colors: [Color(hex: "#22C55E"), Color(hex: "#16A34A")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(hex: "#22C55E").opacity(0.12),
+                                    Color.clear,
+                                ]),
+                                center: .center,
+                                startRadius: 30,
+                                endRadius: 120
                             )
                         )
-                        .frame(width: 100, height: 100)
-                        .scaleEffect(checkmarkScale)
-                        .shadow(color: Color(hex: "#22C55E").opacity(0.4), radius: 20, y: 8)
+                        .frame(width: 240, height: 240)
 
-                    // Checkmark
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 50, weight: .bold))
-                        .foregroundColor(.white)
-                        .scaleEffect(showCheckmark ? 1.0 : 0)
-                        .rotationEffect(.degrees(showCheckmark ? 0 : -30))
+                    if let dotLottieFile = dotLottieFile {
+                        LottieView(dotLottieFile: dotLottieFile)
+                            .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .playing()
+                            .animationSpeed(1.0)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 180, height: 180)
+                    } else {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .frame(width: 180, height: 180)
+                    }
                 }
-                .padding(.bottom, 32)
+                .padding(.bottom, 16)
 
                 // Title
                 Text("Payment Successful!")
-                    .font(.system(size: 26, weight: .bold))
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundColor(Color(hex: "#111827"))
                     .opacity(showContent ? 1 : 0)
                     .offset(y: showContent ? 0 : 20)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 6)
 
                 Text("Your order has been placed successfully")
                     .font(.system(size: 15))
@@ -67,43 +76,59 @@ struct PaymentSuccessView: View {
                     .padding(.bottom, 24)
 
                 // Order Details Card
-                VStack(spacing: 12) {
+                VStack(spacing: 14) {
                     if let orderNumber = orderNumber {
                         HStack {
-                            Text("Order ID")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(hex: "#6B7280"))
+                            HStack(spacing: 6) {
+                                Image(systemName: "number")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Color(hex: "#9CA3AF"))
+                                Text("Order ID")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#6B7280"))
+                            }
                             Spacer()
                             Text("#\(String(orderNumber.suffix(8)).uppercased())")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 14, weight: .bold, design: .monospaced))
                                 .foregroundColor(Color(hex: "#111827"))
                         }
                     }
 
                     HStack {
-                        Text("Amount Paid")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#6B7280"))
+                        HStack(spacing: 6) {
+                            Image(systemName: "indianrupeesign.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#22C55E"))
+                            Text("Amount Paid")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#6B7280"))
+                        }
                         Spacer()
                         Text("₹\(formatPrice(amount))")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(Color(hex: "#22C55E"))
                     }
 
-                    Divider()
+                    Rectangle()
+                        .fill(Color(hex: "#E5E7EB"))
+                        .frame(height: 1)
 
-                    HStack {
+                    HStack(spacing: 8) {
                         Image(systemName: "truck.box.fill")
                             .font(.system(size: 14))
                             .foregroundColor(Color(hex: "#3B82F6"))
                         Text("Estimated delivery: 3-5 business days")
                             .font(.system(size: 13))
                             .foregroundColor(Color(hex: "#6B7280"))
+                        Spacer()
                     }
                 }
                 .padding(16)
-                .background(Color(hex: "#F9FAFB"))
-                .cornerRadius(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color(hex: "#F9FAFB"))
+                        .shadow(color: Color.black.opacity(0.04), radius: 8, y: 4)
+                )
                 .padding(.horizontal, 24)
                 .padding(.bottom, 40)
                 .opacity(showContent ? 1 : 0)
@@ -114,42 +139,41 @@ struct PaymentSuccessView: View {
                 // Action Buttons
                 VStack(spacing: 12) {
                     Button(action: onViewOrder) {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "cube.box.fill")
                                 .font(.system(size: 16))
                             Text("View Order")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 16, weight: .bold))
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 52)
+                        .frame(height: 54)
                         .background(
                             LinearGradient(
-                                colors: [Color(hex: "#2563EB"), Color(hex: "#1D4ED8")],
+                                colors: [Color(hex: "#22C55E"), Color(hex: "#16A34A")],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
-                        .cornerRadius(12)
+                        .cornerRadius(14)
+                        .shadow(color: Color(hex: "#22C55E").opacity(0.3), radius: 8, y: 4)
                     }
 
                     Button(action: onContinueShopping) {
                         Text("Continue Shopping")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Color(hex: "#2563EB"))
+                            .foregroundColor(Color(hex: "#374151"))
                             .frame(maxWidth: .infinity)
-                            .frame(height: 52)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color(hex: "#2563EB"), lineWidth: 1.5)
-                            )
+                            .frame(height: 54)
+                            .background(Color(hex: "#F3F4F6"))
+                            .cornerRadius(14)
                     }
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 40)
-                .opacity(showContent ? 1 : 0)
+                .opacity(showButtons ? 1 : 0)
+                .offset(y: showButtons ? 0 : 20)
             }
-            .background(Color.white)
 
             // Confetti Overlay
             if showConfetti {
@@ -158,32 +182,39 @@ struct PaymentSuccessView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear {
-            animateSuccess()
+        .task {
+            do {
+                let file = try await DotLottieFile.named("Payment Successfull")
+                await MainActor.run { self.dotLottieFile = file }
+            } catch {
+                AppLogger.debug("[PaymentSuccess] Failed to load lottie: \(error)")
+            }
         }
+        .onAppear { animateSuccess() }
     }
 
     private func animateSuccess() {
-        // Step 1: Scale up checkmark circle with bounce
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-            checkmarkScale = 1.0
-            showCheckmark = true
-        }
-
-        // Step 2: Show confetti
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Step 1: Show confetti
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             showConfetti = true
         }
 
-        // Step 3: Show content
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            withAnimation(.easeOut(duration: 0.5)) {
+        // Step 2: Show content
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation(.easeOut(duration: 0.6)) {
                 showContent = true
             }
         }
 
-        // Step 4: Hide confetti after 3 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+        // Step 3: Show buttons
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.easeOut(duration: 0.5)) {
+                showButtons = true
+            }
+        }
+
+        // Step 4: Hide confetti
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
             showConfetti = false
         }
     }
@@ -269,109 +300,226 @@ struct PaymentFailedView: View {
     let onRetry: () -> Void
     let onCancel: () -> Void
 
+    // Animation states
+    @State private var dotLottieFile: DotLottieFile?
+    @State private var showContent = false
+    @State private var showButtons = false
+    @State private var shakeOffset: CGFloat = 0
+
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        ZStack {
+            // Gradient Background
+            LinearGradient(
+                colors: [Color(hex: "#FEF2F2"), Color.white, Color.white],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            // Failure Animation Circle
-            ZStack {
-                Circle()
-                    .fill(Color(hex: "#FEE2E2"))
-                    .frame(width: 120, height: 120)
+            VStack(spacing: 0) {
+                Spacer()
 
-                Circle()
-                    .fill(Color(hex: "#EF4444"))
-                    .frame(width: 80, height: 80)
+                // Lottie Animation
+                ZStack {
+                    // Subtle red glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(hex: "#EF4444").opacity(0.1),
+                                    Color.clear,
+                                ]),
+                                center: .center,
+                                startRadius: 30,
+                                endRadius: 120
+                            )
+                        )
+                        .frame(width: 240, height: 240)
 
-                Image(systemName: "xmark")
-                    .font(.system(size: 40, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            .padding(.bottom, 32)
-
-            Text("Payment Failed")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(Color(hex: "#111827"))
-                .padding(.bottom, 8)
-
-            Text("Your payment could not be processed.\nPlease try again.")
-                .font(.system(size: 14))
-                .foregroundColor(Color(hex: "#6B7280"))
-                .multilineTextAlignment(.center)
-                .padding(.bottom, 24)
-
-            // Details Card
-            VStack(spacing: 12) {
-                if let orderId = orderId {
-                    HStack {
-                        Text("Order ID")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#6B7280"))
-                        Spacer()
-                        Text(orderId)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color(hex: "#111827"))
+                    if let dotLottieFile = dotLottieFile {
+                        LottieView(dotLottieFile: dotLottieFile)
+                            .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .playing()
+                            .animationSpeed(0.8)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 180, height: 180)
+                    } else {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .frame(width: 180, height: 180)
                     }
                 }
+                .offset(x: shakeOffset)
+                .padding(.bottom, 16)
 
-                HStack {
-                    Text("Amount")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#6B7280"))
-                    Spacer()
-                    Text("₹\(formatPrice(amount))")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Color(hex: "#EF4444"))
+                // Title
+                Text("Payment Failed")
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(Color(hex: "#DC2626"))
+                    .opacity(showContent ? 1 : 0)
+                    .offset(y: showContent ? 0 : 20)
+                    .padding(.bottom, 6)
+
+                Text("Your payment could not be processed.\nPlease try again.")
+                    .font(.system(size: 15))
+                    .foregroundColor(Color(hex: "#6B7280"))
+                    .multilineTextAlignment(.center)
+                    .opacity(showContent ? 1 : 0)
+                    .offset(y: showContent ? 0 : 20)
+                    .padding(.bottom, 24)
+
+                // Details Card
+                VStack(spacing: 14) {
+                    if let orderId = orderId {
+                        HStack {
+                            HStack(spacing: 6) {
+                                Image(systemName: "number")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Color(hex: "#9CA3AF"))
+                                Text("Order ID")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#6B7280"))
+                            }
+                            Spacer()
+                            Text("#\(String(orderId.suffix(8)).uppercased())")
+                                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                .foregroundColor(Color(hex: "#111827"))
+                        }
+                    }
+
+                    HStack {
+                        HStack(spacing: 6) {
+                            Image(systemName: "indianrupeesign.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#EF4444"))
+                            Text("Amount")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#6B7280"))
+                        }
+                        Spacer()
+                        Text("₹\(formatPrice(amount))")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(Color(hex: "#EF4444"))
+                    }
+
+                    Rectangle()
+                        .fill(Color(hex: "#FECACA"))
+                        .frame(height: 1)
+
+                    HStack(spacing: 8) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "#F59E0B"))
+                        Text("If money was debited, it will be refunded within 5-7 business days")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "#6B7280"))
+                        Spacer()
+                    }
                 }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color(hex: "#FEF2F2"))
+                        .shadow(color: Color(hex: "#EF4444").opacity(0.08), radius: 8, y: 4)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(hex: "#FECACA"), lineWidth: 1)
+                )
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 30)
 
-                Divider()
+                Spacer()
 
-                HStack {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#F59E0B"))
-                    Text("If money was debited, it will be refunded within 5-7 business days")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#6B7280"))
-                }
-            }
-            .padding(16)
-            .background(Color(hex: "#FEF2F2"))
-            .cornerRadius(12)
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
-
-            Spacer()
-
-            // Action Buttons
-            VStack(spacing: 12) {
-                Button(action: onRetry) {
-                    Text("Retry Payment")
-                        .font(.system(size: 16, weight: .semibold))
+                // Action Buttons
+                VStack(spacing: 12) {
+                    Button(action: onRetry) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Retry Payment")
+                                .font(.system(size: 16, weight: .bold))
+                        }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(Color(hex: "#2563EB"))
-                        .cornerRadius(12)
-                }
-
-                Button(action: onCancel) {
-                    Text("Cancel Order")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(hex: "#EF4444"))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(hex: "#EF4444"), lineWidth: 1.5)
+                        .frame(height: 54)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(hex: "#2563EB"), Color(hex: "#1D4ED8")],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
+                        .cornerRadius(14)
+                        .shadow(color: Color(hex: "#2563EB").opacity(0.3), radius: 8, y: 4)
+                    }
+
+                    Button(action: onCancel) {
+                        Text("Cancel Order")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(hex: "#EF4444"))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 54)
+                            .background(Color(hex: "#FEF2F2"))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color(hex: "#FECACA"), lineWidth: 1.5)
+                            )
+                            .cornerRadius(14)
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+                .opacity(showButtons ? 1 : 0)
+                .offset(y: showButtons ? 0 : 20)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
         }
-        .background(Color.white)
         .navigationBarHidden(true)
+        .task {
+            do {
+                let file = try await DotLottieFile.named("Payment Failed")
+                await MainActor.run { self.dotLottieFile = file }
+            } catch {
+                AppLogger.debug("[PaymentFailed] Failed to load lottie: \(error)")
+            }
+        }
+        .onAppear { animateFailure() }
+    }
+
+    private func animateFailure() {
+        // Step 1: Shake the animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.default) { shakeOffset = 12 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                withAnimation(.default) { shakeOffset = -10 }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                withAnimation(.default) { shakeOffset = 8 }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+                withAnimation(.default) { shakeOffset = -5 }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { shakeOffset = 0 }
+            }
+        }
+
+        // Step 2: Show content
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation(.easeOut(duration: 0.6)) {
+                showContent = true
+            }
+        }
+
+        // Step 3: Show buttons
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.easeOut(duration: 0.5)) {
+                showButtons = true
+            }
+        }
     }
 
     private func formatPrice(_ price: Double) -> String {
