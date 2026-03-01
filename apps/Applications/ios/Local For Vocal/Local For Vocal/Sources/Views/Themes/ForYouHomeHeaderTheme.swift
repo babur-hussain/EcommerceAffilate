@@ -220,7 +220,6 @@ public struct CategoryThemePage: View {
                         }
                         .frame(maxWidth: CGFloat.infinity)
                         .frame(height: 450)
-                        .clipped()
                     }
                 }
                 .offset(y: -300)
@@ -333,7 +332,8 @@ public struct CategoryThemePage: View {
                     }
                     return  // Success
                 } else {
-                    AppLogger.debug("DEBUG: Fetch returned nil layout for \(headerSlug) (Attempt \(attempt))")
+                    AppLogger.debug(
+                        "DEBUG: Fetch returned nil layout for \(headerSlug) (Attempt \(attempt))")
                 }
             } catch {
                 AppLogger.debug(
