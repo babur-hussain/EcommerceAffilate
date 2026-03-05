@@ -3,7 +3,7 @@ import { FadeIn, SectionHeading } from "./AnimatedSection";
 import { Check, X, Minus, Crown } from "lucide-react";
 
 const features = [
-    { feature: "Platform Commission", lfv: "2–5%", amazon: "15–42%", flipkart: "15–30%", highlight: true },
+    { feature: "Platform Commission", lfv: "As low as 2%", amazon: "15–42%", flipkart: "15–30%", highlight: true },
     { feature: "Seller Profit (₹1,000 sale)", lfv: "₹950–980", amazon: "₹580–850", flipkart: "₹700–850", highlight: true },
     { feature: "Listing Fees", lfv: "Free", amazon: "₹499+/mo", flipkart: "Free/Paid", highlight: false },
     { feature: "Influencer Marketing", lfv: true, amazon: false, flipkart: false, highlight: false },
