@@ -206,6 +206,32 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
         }
     };
 
+    const validateStep = (currentStep: Step): boolean => {
+        switch (currentStep) {
+            case 2:
+                return !!(formData.legalBusinessName.trim() && formData.tradeName.trim());
+            case 3:
+                return !!(formData.ownerFullName.trim() && formData.ownerMobile.trim() && formData.ownerEmail.trim() && formData.govIdType && formData.govIdType !== 'Select ID Type' && formData.govIdNumber.trim());
+            case 4:
+                return !!(formData.registeredAddress.trim() && formData.city.trim() && formData.state.trim() && formData.pincode.trim());
+            case 5:
+                if (!formData.panNumber.trim()) return false;
+                if (formData.hasGST && !formData.gstin.trim()) return false;
+                return true;
+            default:
+                return true;
+        }
+    };
+
+    const handleNext = () => {
+        if (validateStep(step)) {
+            setError(null);
+            setStep(Math.min(6, step + 1) as Step);
+        } else {
+            setError("Please fill all required fields (*) before proceeding to the next step.");
+        }
+    };
+
     // Robust submit with retry logic
     const submitWithRetry = async (attempt: number = 0): Promise<void> => {
         try {
@@ -620,7 +646,6 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg"
                                 onChange={(e) => handleFileChange(e, 'idProofFile')}
-                                key={formData.idProofFile?.name || 'id-proof'}
                                 className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 transition-all duration-200"
                             />
                         </div>
@@ -770,7 +795,6 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                         type="file"
                                         accept=".pdf,.jpg,.jpeg"
                                         onChange={(e) => handleFileChange(e, 'gstCertFile')}
-                                        key={formData.gstCertFile?.name || 'gst-cert'}
                                         className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 transition-all duration-200"
                                     />
                                 </div>
@@ -798,7 +822,6 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg"
                                 onChange={(e) => handleFileChange(e, 'panFile')}
-                                key={formData.panFile?.name || 'pan-file'}
                                 className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 transition-all duration-200"
                             />
                         </div>
@@ -885,7 +908,6 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg"
                                 onChange={(e) => handleFileChange(e, 'chequeFile')}
-                                key={formData.chequeFile?.name || 'cheque-file'}
                                 className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 outline-none text-slate-900 transition-all duration-200"
                             />
                         </div>
@@ -1001,7 +1023,7 @@ export default function InfluencerRegistrationModal({ open, onClose, onSuccess }
                                 ) : (
                                     <button
                                         type="button"
-                                        onClick={() => setStep(Math.min(6, step + 1) as Step)}
+                                        onClick={handleNext}
                                         className="px-8 py-3 bg-linear-to-r from-pink-500 to-fuchsia-600 text-white font-bold rounded-xl shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-2"
                                     >
                                         Next

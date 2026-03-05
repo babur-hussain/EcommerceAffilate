@@ -7,14 +7,14 @@ type AccountType = 'new' | 'convert';
 
 interface BusinessFormData {
   accountType: AccountType;
-  
+
   // Business Identity
   legalBusinessName: string;
   tradeName: string;
   businessType: string;
   natureOfBusiness: string;
   yearOfEstablishment: string;
-  
+
   // Owner Details
   ownerFullName: string;
   ownerDesignation: string;
@@ -24,7 +24,7 @@ interface BusinessFormData {
   ownerGender: string;
   govIdType: string;
   govIdNumber: string;
-  
+
   // Registered Address
   regAddressLine1: string;
   regAddressLine2: string;
@@ -33,7 +33,7 @@ interface BusinessFormData {
   regState: string;
   regCountry: string;
   regPincode: string;
-  
+
   // Operational Address
   opSameAsReg: boolean;
   opAddressLine1: string;
@@ -43,14 +43,14 @@ interface BusinessFormData {
   opState: string;
   opCountry: string;
   opPincode: string;
-  
+
   // Tax & Legal
   gstinNumber: string;
   gstRegistrationType: string;
   panNumber: string;
   cinLlpin: string;
   msmeUdyamNumber: string;
-  
+
   // Bank Details
   bankAccountHolder: string;
   bankName: string;
@@ -58,13 +58,13 @@ interface BusinessFormData {
   bankIfscCode: string;
   bankAccountType: string;
   settlementCycle: string;
-  
+
   // Store Profile
   storeDescription: string;
   brandOwnership: string;
   websiteUrl: string;
   categories: string[];
-  
+
   // Logistics
   pickupAddress: string;
   pickupTimeSlot: string;
@@ -72,12 +72,12 @@ interface BusinessFormData {
   courierPreference: string;
   returnAddress: string;
   returnPolicyAccepted: boolean;
-  
+
   // Compliance
   sellerAgreementAccepted: boolean;
   platformPoliciesAccepted: boolean;
   taxResponsibilityAccepted: boolean;
-  
+
   // Optional Advanced
   multipleWarehouses: boolean;
   apiAccessRequested: boolean;
@@ -90,7 +90,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<BusinessFormData>({
     accountType: 'new',
     legalBusinessName: '',
@@ -153,7 +153,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
@@ -218,7 +218,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
       console.log('Getting fresh token...');
       const token = await firebaseUser.getIdToken(true);
       console.log('Token obtained:', token ? 'Yes' : 'No');
-      
+
       if (!token) {
         throw new Error('Unable to get authentication token');
       }
@@ -329,11 +329,11 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
 
       const result = await response.json();
       console.log('✅ Business registered:', result);
-      
+
       alert('Business registered successfully! Please wait for verification.');
       onClose();
       window.location.reload(); // Refresh to update user role
-      
+
     } catch (err) {
       console.error('❌ Registration error:', err);
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -342,7 +342,35 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
     }
   };
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, 8));
+  const validateStep = (currentStep: number): boolean => {
+    switch (currentStep) {
+      case 2:
+        return !!(formData.legalBusinessName.trim() && formData.tradeName.trim() && formData.businessType && formData.natureOfBusiness && formData.yearOfEstablishment);
+      case 3:
+        return !!(formData.ownerFullName.trim() && formData.ownerDesignation.trim() && formData.ownerMobile.trim() && formData.ownerEmail.trim() && formData.govIdType && formData.govIdNumber.trim());
+      case 4:
+        return !!(formData.regAddressLine1.trim() && formData.regCity.trim() && formData.regState.trim() && formData.regCountry.trim() && formData.regPincode.trim());
+      case 5:
+        return !!(formData.gstinNumber.trim() && formData.gstRegistrationType && formData.panNumber.trim());
+      case 6:
+        return !!(formData.bankAccountHolder.trim() && formData.bankName.trim() && formData.bankAccountNumber.trim() && formData.bankIfscCode.trim() && formData.bankAccountType && formData.settlementCycle);
+      case 7:
+        return !!(formData.storeDescription.trim() && formData.brandOwnership);
+      case 8:
+        return !!(formData.packagingType && formData.sellerAgreementAccepted && formData.platformPoliciesAccepted && formData.taxResponsibilityAccepted && formData.returnPolicyAccepted);
+      default:
+        return true;
+    }
+  };
+
+  const nextStep = () => {
+    if (validateStep(step)) {
+      setError(null);
+      setStep(prev => Math.min(prev + 1, 8));
+    } else {
+      setError("Please fill all required fields (*) before proceeding.");
+    }
+  };
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
   const renderStep = () => {
@@ -372,11 +400,10 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-gray-900">Account Type</h3>
       <div className="space-y-3">
-        <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
-          formData.accountType === 'new' 
-            ? 'border-blue-600 bg-blue-50' 
+        <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.accountType === 'new'
+            ? 'border-blue-600 bg-blue-50'
             : 'border-gray-300 hover:border-blue-300 hover:bg-gray-50'
-        }`}>
+          }`}>
           <input
             type="radio"
             name="accountType"
@@ -390,11 +417,10 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
             <div className="text-sm text-gray-700">Create a fresh business account</div>
           </div>
         </label>
-        <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
-          formData.accountType === 'convert' 
-            ? 'border-blue-600 bg-blue-50' 
+        <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.accountType === 'convert'
+            ? 'border-blue-600 bg-blue-50'
             : 'border-gray-300 hover:border-blue-300 hover:bg-gray-50'
-        }`}>
+          }`}>
           <input
             type="radio"
             name="accountType"
@@ -415,7 +441,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
   const renderBusinessIdentity = () => (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-gray-900">Business Identity</h3>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Legal Business Name *</label>
         <input
@@ -494,7 +520,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
   const renderOwnerDetails = () => (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-gray-900">Owner / Authorized Person Details</h3>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
         <input
@@ -576,9 +602,9 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
   const renderAddressDetails = () => (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-gray-900">Business Address Details</h3>
-      
+
       <div className="font-semibold text-sm text-gray-800 bg-gray-50 px-3 py-2 rounded-lg">Registered Address</div>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
         <input
@@ -670,7 +696,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
   const renderTaxLegal = () => (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-gray-900">Tax & Legal Information</h3>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">GSTIN Number *</label>
         <input
@@ -736,7 +762,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
   const renderBankDetails = () => (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-gray-900">Bank & Payment Details</h3>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Account Holder Name *</label>
         <input
@@ -819,7 +845,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
   const renderStoreProfile = () => (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-gray-900">Store / Seller Profile</h3>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Store Description *</label>
         <textarea
@@ -863,7 +889,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
   const renderLogisticsCompliance = () => (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-gray-900">Logistics & Compliance</h3>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Packaging Type *</label>
         <select
@@ -880,7 +906,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
 
       <div className="space-y-3 pt-4 border-t border-gray-200">
         <div className="font-semibold text-sm text-gray-900">Compliance & Agreements *</div>
-        
+
         <label className="flex items-start gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -932,7 +958,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
 
       <div className="space-y-3 pt-4 border-t border-gray-200">
         <div className="font-semibold text-sm text-gray-900">Optional Advanced Features</div>
-        
+
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -973,7 +999,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
               <span className="font-medium">Step {step} of 8</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
+              <div
                 className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                 style={{ width: `${(step / 8) * 100}%` }}
               />
@@ -996,7 +1022,7 @@ export default function BusinessRegisterForm({ onClose }: { onClose: () => void 
             >
               Previous
             </button>
-            
+
             {step < 8 ? (
               <button
                 onClick={nextStep}
