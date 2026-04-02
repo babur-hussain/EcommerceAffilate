@@ -23,6 +23,11 @@ import androidx.compose.foundation.layout.statusBars // Added
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -76,15 +81,18 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import com.ecommerceearn.app.ui.components.SDUIHeaderViewModel
+import com.ecommerceearn.app.ui.components.safeParseColor
+import com.ecommerceearn.app.ui.components.GlobalLottieLayer
+import com.ecommerceearn.app.ui.components.LottieLayerConfig
+import com.ecommerceearn.app.data.model.ComponentType
 
-// Inlined Colors to fix build references
-val iOSBlue = Color(0xFF2563EB)
+// Tab accent colors used by TopCategoryBoxesView (these are UI chrome, not header bg)
+val iOSBlue   = Color(0xFF2563EB)
 val iOSViolet = Color(0xFF7C3AED)
-val iOSGreen = Color(0xFF10B981)
-val iOSPink = Color(0xFFEC4899)
+val iOSGreen  = Color(0xFF10B981)
+val iOSPink   = Color(0xFFEC4899)
 val iOSActiveBg = Color(0xFFFFD700)
-val iOSBgStart = Color(0xFF8A2387)
-val iOSBgEnd = Color(0xFFE94057)
 
 
 // MARK: - Type
@@ -392,12 +400,14 @@ fun CategoriesSliderView(
 fun HomeHeaderWithContent(
     locationViewModel: LocationViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     forYouViewModel: ForYouViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    headerViewModel: SDUIHeaderViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onProductClick: (com.ecommerceearn.app.data.model.Product) -> Unit = {}
 ) {
     var activeTab by remember { mutableStateOf(TabType.Shopping) }
     var selectedCategory by remember { mutableStateOf("For You") }
     val locationState by locationViewModel.locationState.collectAsState()
     val forYouState by forYouViewModel.state.collectAsState()
+    val headerState by headerViewModel.state.collectAsState()
     
     val listState = rememberLazyListState()
     val showIcons by remember {
@@ -417,82 +427,167 @@ fun HomeHeaderWithContent(
     androidx.compose.runtime.LaunchedEffect(Unit) {
         locationViewModel.fetchCurrentLocation()
     }
+    
+    // Build header slug from active tab + category
+    val headerSlug = if (activeTab == TabType.Shopping) {
+        val cat = selectedCategory.lowercase().replace(" ", "-").replace("&", "and")
+        "$cat-header-theme"
+    } else {
+        "${activeTab.id.lowercase()}-header-theme"
+    }
 
-    Box( // Use Box to allow status bar background
+    androidx.compose.runtime.LaunchedEffect(headerSlug) {
+        headerViewModel.fetchLayout(headerSlug)
+    }
+
+    // Extract gradient + lottie layers purely from SDUI
+    val headerBackgroundComponent = headerState.components.find { it.type == ComponentType.HEADER_BACKGROUND }
+    val gradientColorsHex = headerBackgroundComponent?.decodeItems("gradientColors", String::class.java) ?: emptyList()
+    val lottieLayers = headerBackgroundComponent?.decodeItems("lottieLayers", LottieLayerConfig::class.java) ?: emptyList()
+
+    // Use SDUI colors; semi-transparent dark while loading
+    val parsedGradient: List<Color> = if (gradientColorsHex.isNotEmpty()) {
+        gradientColorsHex.map { safeParseColor(it) }
+    } else {
+        listOf(Color(0xFF2874F0), Color(0xFF2874F0)) // Default Flipkart-style blue while loading
+    }
+
+    // iOS: resolvedGradientColors.last used for the fade below header
+    val lastGradientColor = parsedGradient.lastOrNull() ?: Color(0xFF2874F0)
+    val pageBgColor = Color(0xFFF9FAFB)
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF3F4F6))
+            .background(pageBgColor)
     ) {
         androidx.compose.foundation.lazy.LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 20.dp)
+            contentPadding = PaddingValues(bottom = 100.dp) // iOS: .padding(.bottom, 100)
         ) {
-            // 1. Scrollable Top Header (Scrolls Away)
+            // ── 1. Scrollable Top Header (Tabs + Location + Lottie) ──
             item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(iOSBgStart, iOSBgEnd)
-                            )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    // Gradient background
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(Brush.verticalGradient(colors = parsedGradient))
+                    )
+
+                    // Lottie animations — matchParentSize doesn't expand parent,
+                    // graphicsLayer(clip=false) allows overflow, requiredHeight forces 450dp
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .graphicsLayer { clip = false }
+                    ) {
+                        lottieLayers.forEach { layer ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .statusBarsPadding()
+                                    .requiredHeight(450.dp)
+                                    .align(Alignment.TopStart)
+                            ) {
+                                GlobalLottieLayer(layer = layer)
+                            }
+                        }
+                    }
+
+                    // UI content
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                    ) {
+                        TopCategoryBoxesView(
+                            activeTab = activeTab,
+                            onTabSelected = { activeTab = it }
                         )
-                        .statusBarsPadding() // Add padding only here
-                ) {
-                    TopCategoryBoxesView(
-                        activeTab = activeTab,
-                        onTabSelected = { activeTab = it }
-                    )
-                    LocationBarView(
-                        locationState = locationState,
-                        onRequestLocation = { locationViewModel.fetchCurrentLocation() }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                        LocationBarView(
+                            locationState = locationState,
+                            onRequestLocation = { locationViewModel.fetchCurrentLocation() }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
-            
-            // 2. Sticky Header (Sticks to top)
+
+            // ── 2. Sticky Header (Search + Categories) — right below location bar ──
             stickyHeader {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = if (showIcons) 
-                                    listOf(iOSBgEnd, Color(0xFFF27121)) 
-                                else 
-                                    listOf(iOSBgStart, iOSBgEnd, Color(0xFFF27121))
-                            )
-                        )
-                        .padding(top = stickyTopPadding) // Apply animated padding
+                        .background(lastGradientColor)
+                        .padding(top = stickyTopPadding)
                 ) {
-                   // Ensure status bar padding if stuck at top (approx logic)
-                   // In complex sticky headers, handling inset padding is tricky.
-                   // As it sticks, it goes under status bar. 
-                   // We will assume simpler implementation first.
-                   
-                   SearchBarView()
-                   CategoriesSliderView(
+                    SearchBarView()
+                    CategoriesSliderView(
                         selectedCategory = selectedCategory,
                         showIcons = showIcons,
                         onCategoryResult = { selectedCategory = it }
-                   )
+                    )
                 }
             }
 
-            // 3. Content
-             if (activeTab == TabType.Shopping && selectedCategory == "For You") {
+            // ── 3. SDUI Header Components (Spacer + Bento Grid) on gradient ──
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(lastGradientColor)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        val otherHeaderComponents = headerState.components.filter {
+                            it.type != ComponentType.HEADER_BACKGROUND
+                        }
+                        otherHeaderComponents.forEach { component ->
+                            SDUIRenderer(component, onProductClick = onProductClick)
+                        }
+                    }
+                }
+            }
+
+            // ── 3. Fading gradient transition (header → page background) ──
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    lastGradientColor,
+                                    lastGradientColor.copy(alpha = 0.4f),
+                                    pageBgColor
+                                )
+                            )
+                        )
+                )
+            }
+
+            // ── 5. Page content (iOS: SDUIPage(slug: pageSlug)) ──
+            if (activeTab == TabType.Shopping && selectedCategory == "For You") {
+                // For You uses the dedicated ForYouViewModel (pre-loaded)
                 if (forYouState.isLoading) {
                     item {
                         Box(modifier = Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
-                            androidx.compose.material3.CircularProgressIndicator()
+                            androidx.compose.material3.CircularProgressIndicator(
+                                color = lastGradientColor
+                            )
                         }
                     }
                 } else if (forYouState.error != null) {
                     item {
-                        Box(modifier = Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
-                            Text("Error: ${forYouState.error}", color = Color.Red)
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Could not load content", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(forYouState.error ?: "", color = Color.Gray, fontSize = 12.sp)
                         }
                     }
                 } else {
@@ -500,43 +595,28 @@ fun HomeHeaderWithContent(
                         SDUIRenderer(component, onProductClick = onProductClick)
                     }
                 }
-            } else if (activeTab == TabType.Shopping && selectedCategory == "Fashion") {
-                // Fashion category - Load fashion SDUI page
-                item {
-                    SDUIPage(slug = "fashion", onProductClick = onProductClick)
-                }
-            } else if (activeTab == TabType.Shopping && selectedCategory == "Beauty") {
-                // Beauty category - Load beauty SDUI page
-                item {
-                    SDUIPage(slug = "beauty", onProductClick = onProductClick)
-                }
-            } else if (activeTab == TabType.Shopping && selectedCategory == "Sports") {
-                // Sports category - Load sports SDUI page
-                item {
-                    SDUIPage(slug = "sports", onProductClick = onProductClick)
-                }
-            } else if (activeTab == TabType.Shopping && selectedCategory == "Books") {
-                // Books category - Load books SDUI page
-                item {
-                    SDUIPage(slug = "books", onProductClick = onProductClick)
-                }
             } else if (activeTab == TabType.Shopping) {
-                // Other Shopping categories - try loading via slug
+                // All other shopping categories — generic SDUIPage by slug (same as iOS)
                 val categorySlug = selectedCategory.lowercase().replace(" ", "-").replace("&", "and")
                 item {
                     SDUIPage(slug = categorySlug, onProductClick = onProductClick)
                 }
             } else {
+                // Non-shopping tabs (Services, Grocery, Influencers)
                 item {
-                    // Placeholder for non-Shopping tabs
                     Box(
-                        modifier = Modifier.fillMaxWidth().height(500.dp),
+                        modifier = Modifier.fillMaxWidth().height(400.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Content for ${activeTab.id} - $selectedCategory")
+                        Text(
+                            "Coming soon — ${activeTab.id}",
+                            color = Color.Gray,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }
         }
     }
 }
+
