@@ -84,4 +84,7 @@ dependencies {
 
     // Security
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // Lottie Animations
+    implementation("com.airbnb.android:lottie-compose:6.4.0")
 }

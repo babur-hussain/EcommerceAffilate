@@ -89,8 +89,10 @@ object ImageDiskCache {
             if (currentCacheSize > MAX_CACHE_SIZE) {
                 evictIfNeeded()
             }
+            Unit
         } catch (e: Exception) {
             AppLogger.error("[ImageDiskCache] Failed to save image: ${e.message}")
+            Unit
         }
     }
 
@@ -113,8 +115,10 @@ object ImageDiskCache {
             if (currentCacheSize > MAX_CACHE_SIZE) {
                 evictIfNeeded()
             }
+            Unit
         } catch (e: Exception) {
             AppLogger.error("[ImageDiskCache] Failed to save raw data: ${e.message}")
+            Unit
         }
     }
 

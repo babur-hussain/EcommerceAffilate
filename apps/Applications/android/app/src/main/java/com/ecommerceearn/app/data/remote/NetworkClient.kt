@@ -10,20 +10,21 @@ object NetworkClient {
 
     private val client by lazy {
         okhttp3.OkHttpClient.Builder()
+            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val original = chain.request()
-                // Use tempToken if available (during login), otherwise try AuthManager (if initialized/persisted)
-                // Since AuthManager depends on Context, checking it here might be circular or tricky if lazy loaded.
-                // ideally read from a generic TokenProvider. For now, rely on tempToken or manual header passing if needed.
-                // Or better: AuthManager.getToken() if we move it to a non-context dependent object or init early.
-                
                 val token = tempToken ?: com.ecommerceearn.app.data.manager.AuthManager.getToken()
                 
                 val requestBuilder = original.newBuilder()
                 if (token != null) {
                     requestBuilder.header("Authorization", "Bearer $token")
                 }
-                chain.proceed(requestBuilder.build())
+                android.util.Log.d("NetworkClient", "→ ${original.method} ${original.url}")
+                val response = chain.proceed(requestBuilder.build())
+                android.util.Log.d("NetworkClient", "← ${response.code} ${original.url}")
+                response
             }
             .build()
     }

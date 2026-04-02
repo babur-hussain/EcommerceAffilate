@@ -15,6 +15,7 @@ import com.ecommerceearn.app.data.manager.NavigationManager
 import com.ecommerceearn.app.data.manager.OverlayDestination
 import com.ecommerceearn.app.data.manager.TabType
 import com.ecommerceearn.app.utils.AppTheme
+import com.ecommerceearn.app.ui.home.HomeHeaderWithContent
 
 @Composable
 fun ContentView() {
@@ -106,13 +107,7 @@ fun ContentView() {
 
 @Composable
 fun HomeTabContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        Text("Home / Shopping View — Server Driven UI Engine")
-    }
+    HomeHeaderWithContent()
 }
 
 @Composable

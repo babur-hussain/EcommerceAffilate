@@ -49,6 +49,15 @@ fun SDUIRenderer(
     onProductClick: (Product) -> Unit = {}
 ) {
     when (component.rawType) {
+        // Skip header_background — handled directly by HomeHeader gradient/lottie logic
+        "header_background" -> { /* no-op */ }
+        // Spacer from JSON: { "type":"spacer", "props": { "height": 330 } }
+        "spacer" -> {
+            val h = component.props?.get("height")?.asDouble ?: 16.0
+            Spacer(modifier = Modifier.fillMaxWidth().height(h.dp))
+        }
+        // For You bento grid  
+        "for_you_bento_grid" -> RenderForYouBentoGrid(component)
         "Container" -> RenderContainer(component, onProductClick)
         "Gradient" -> RenderGradient(component, onProductClick)
         "Text" -> RenderText(component)
@@ -755,4 +764,11 @@ fun RenderBooksReadingLists(component: SDUIComponent) {
     val headerActionUrl = props.getString("headerActionUrl")
     val items = parseItems<ReadingListItem>(props.getArray("items"))
     BooksReadingListsView(title, headerActionUrl, items)
+}
+
+// ============= For You Bento Grid =============
+
+@Composable
+fun RenderForYouBentoGrid(component: SDUIComponent) {
+    com.ecommerceearn.app.ui.pages.ForYouBentoGridSDUI()
 }
