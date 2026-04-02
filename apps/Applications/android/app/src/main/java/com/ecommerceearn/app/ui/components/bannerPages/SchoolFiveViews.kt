@@ -201,28 +201,9 @@ fun SchoolFiveHeaderView(
 fun SchoolFiveGridView(
     component: SDUIComponent
 ) {
-    val products = listOf(
-        BTSProduct(
-            id = "1", title = "Sports Backpack", subtitle = "Outdoor",
-            price = "$39.99", badge = "🔥 Hot", badgeColor = "#F97316",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "2", title = "Water Bottle Set", subtitle = "Essentials",
-            price = "$15.99", badge = "-25%", badgeColor = "#10B981",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "3", title = "Lunch Box Kit", subtitle = "Food",
-            price = "$22.99",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "4", title = "Pencil Case", subtitle = "Stationery",
-            price = "$8.99", badge = "New", badgeColor = "#3B82F6",
-            image = "https://via.placeholder.com/150"
-        )
-    )
+    val items = parseBTSProducts(component.props?.get("products"))
+    if (items.isEmpty()) return
+
 
     Column(
         modifier = Modifier
@@ -258,7 +239,7 @@ fun SchoolFiveGridView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        val rows = products.chunked(2)
+        val rows = items.chunked(2)
         rows.forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),

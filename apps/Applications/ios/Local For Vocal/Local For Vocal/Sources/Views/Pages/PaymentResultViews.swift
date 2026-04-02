@@ -552,3 +552,235 @@ struct PaymentFailedView_Previews: PreviewProvider {
         )
     }
 }
+
+// MARK: - Payment Cancelled View (User dismissed Razorpay popup)
+struct PaymentCancelledView: View {
+    let orderId: String?
+    let amount: Double
+    let onRetry: () -> Void
+    let onGoBack: () -> Void
+
+    // Animation states
+    @State private var dotLottieFile: DotLottieFile?
+    @State private var showContent = false
+    @State private var showButtons = false
+    @State private var pulseScale: CGFloat = 1.0
+
+    var body: some View {
+        ZStack {
+            // Warm amber gradient background
+            LinearGradient(
+                colors: [Color(hex: "#FFFBEB"), Color.white, Color.white],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                // Lottie Animation
+                ZStack {
+                    // Amber glow behind animation
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(hex: "#F59E0B").opacity(0.12),
+                                    Color.clear,
+                                ]),
+                                center: .center,
+                                startRadius: 30,
+                                endRadius: 120
+                            )
+                        )
+                        .frame(width: 240, height: 240)
+                        .scaleEffect(pulseScale)
+
+                    if let dotLottieFile = dotLottieFile {
+                        LottieView(dotLottieFile: dotLottieFile)
+                            .configuration(LottieConfiguration(renderingEngine: .coreAnimation))
+                            .playing()
+                            .animationSpeed(0.7)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 160, height: 160)
+                    } else {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .frame(width: 160, height: 160)
+                    }
+                }
+                .padding(.bottom, 20)
+
+                // Title
+                Text("Payment Cancelled")
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(Color(hex: "#B45309"))
+                    .opacity(showContent ? 1 : 0)
+                    .offset(y: showContent ? 0 : 20)
+                    .padding(.bottom, 6)
+
+                Text("You closed the payment window.\nNo money has been deducted.")
+                    .font(.system(size: 15))
+                    .foregroundColor(Color(hex: "#6B7280"))
+                    .multilineTextAlignment(.center)
+                    .opacity(showContent ? 1 : 0)
+                    .offset(y: showContent ? 0 : 20)
+                    .padding(.bottom, 24)
+
+                // Details Card
+                VStack(spacing: 14) {
+                    if let orderId = orderId {
+                        HStack {
+                            HStack(spacing: 6) {
+                                Image(systemName: "number")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Color(hex: "#9CA3AF"))
+                                Text("Order ID")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#6B7280"))
+                            }
+                            Spacer()
+                            Text("#\(String(orderId.suffix(8)).uppercased())")
+                                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                .foregroundColor(Color(hex: "#111827"))
+                        }
+                    }
+
+                    HStack {
+                        HStack(spacing: 6) {
+                            Image(systemName: "indianrupeesign.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#F59E0B"))
+                            Text("Amount")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#6B7280"))
+                        }
+                        Spacer()
+                        Text("₹\(formatPrice(amount))")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(Color(hex: "#B45309"))
+                    }
+
+                    Rectangle()
+                        .fill(Color(hex: "#FDE68A"))
+                        .frame(height: 1)
+
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.shield.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "#22C55E"))
+                        Text("Your order is saved. Complete payment to confirm it.")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "#6B7280"))
+                        Spacer()
+                    }
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color(hex: "#FFFBEB"))
+                        .shadow(color: Color(hex: "#F59E0B").opacity(0.08), radius: 8, y: 4)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(hex: "#FDE68A"), lineWidth: 1)
+                )
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 30)
+
+                Spacer()
+
+                // Action Buttons
+                VStack(spacing: 12) {
+                    Button(action: onRetry) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Retry Payment")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(hex: "#F59E0B"), Color(hex: "#D97706")],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(14)
+                        .shadow(color: Color(hex: "#F59E0B").opacity(0.3), radius: 8, y: 4)
+                    }
+
+                    Button(action: onGoBack) {
+                        Text("Go Back")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(hex: "#374151"))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 54)
+                            .background(Color(hex: "#F3F4F6"))
+                            .cornerRadius(14)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+                .opacity(showButtons ? 1 : 0)
+                .offset(y: showButtons ? 0 : 20)
+            }
+        }
+        .navigationBarHidden(true)
+        .task {
+            do {
+                let file = try await DotLottieFile.named("Payment Failed")
+                await MainActor.run { self.dotLottieFile = file }
+            } catch {
+                AppLogger.debug("[PaymentCancelled] Failed to load lottie: \(error)")
+            }
+        }
+        .onAppear { animateCancelled() }
+    }
+
+    private func animateCancelled() {
+        // Step 1: Gentle pulse on the glow
+        withAnimation(.easeInOut(duration: 1.5).repeatCount(2, autoreverses: true)) {
+            pulseScale = 1.08
+        }
+
+        // Step 2: Show content
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.easeOut(duration: 0.6)) {
+                showContent = true
+            }
+        }
+
+        // Step 3: Show buttons
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.easeOut(duration: 0.5)) {
+                showButtons = true
+            }
+        }
+    }
+
+    private func formatPrice(_ price: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: price)) ?? "\(Int(price))"
+    }
+}
+
+struct PaymentCancelledView_Previews: PreviewProvider {
+    static var previews: some View {
+        PaymentCancelledView(
+            orderId: "ORD123456",
+            amount: 1499,
+            onRetry: {},
+            onGoBack: {}
+        )
+    }
+}

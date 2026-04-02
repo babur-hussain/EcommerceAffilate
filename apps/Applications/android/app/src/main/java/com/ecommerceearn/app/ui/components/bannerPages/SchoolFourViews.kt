@@ -214,28 +214,9 @@ fun SchoolFourHeaderView(
 fun SchoolFourGridView(
     component: SDUIComponent
 ) {
-    val products = listOf(
-        BTSProduct(
-            id = "1", title = "Premium Leather Bag", subtitle = "Accessories",
-            price = "$49.99", badge = "Hot", badgeColor = "#EC4899",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "2", title = "Graphing Calculator", subtitle = "Electronics",
-            price = "$89.99",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "3", title = "Art Portfolio Set", subtitle = "Art",
-            price = "$29.99", badge = "-30%", badgeColor = "#7C3AED",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "4", title = "Lab Coat", subtitle = "Science",
-            price = "$24.99",
-            image = "https://via.placeholder.com/150"
-        )
-    )
+    val items = parseBTSProducts(component.props?.get("products"))
+    if (items.isEmpty()) return
+
 
     Column(
         modifier = Modifier
@@ -264,7 +245,7 @@ fun SchoolFourGridView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        val rows = products.chunked(2)
+        val rows = items.chunked(2)
         rows.forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),

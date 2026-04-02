@@ -1,5 +1,5 @@
-import ServiceTypeListPage from '@/modules/service-types/pages/ServiceTypeListPage';
+import ServiceTypesPage from '@/modules/service-types/pages/ServiceTypesPage';
 
 export default function Page() {
-    return <ServiceTypeListPage />;
+    return <ServiceTypesPage />;
 }

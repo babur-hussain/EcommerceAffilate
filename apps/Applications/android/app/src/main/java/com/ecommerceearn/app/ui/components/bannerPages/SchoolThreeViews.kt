@@ -158,28 +158,9 @@ fun SchoolThreeHeaderView(
 fun SchoolThreeGridView(
     component: SDUIComponent
 ) {
-    val products = listOf(
-        BTSProduct(
-            id = "1", title = "Colorful Markers Set", subtitle = "Art Supplies",
-            price = "$9.99", badge = "Popular", badgeColor = "#FF8C42",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "2", title = "Geometry Set", subtitle = "Math Tools",
-            price = "$14.99",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "3", title = "Eco Notebook", subtitle = "Stationery",
-            price = "$6.99", badge = "Eco", badgeColor = "#4ADE80",
-            image = "https://via.placeholder.com/150"
-        ),
-        BTSProduct(
-            id = "4", title = "School Compass", subtitle = "Tools",
-            price = "$4.50",
-            image = "https://via.placeholder.com/150"
-        )
-    )
+    val items = parseBTSProducts(component.props?.get("products"))
+    if (items.isEmpty()) return
+
 
     Column(
         modifier = Modifier
@@ -195,7 +176,7 @@ fun SchoolThreeGridView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        val rows = products.chunked(2)
+        val rows = items.chunked(2)
         rows.forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -82,4 +82,6 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:21.0.0")
 
+    // Security
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

@@ -27,19 +27,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage // Ensure Coil is available or use standard Image
 import com.ecommerceearn.app.data.manager.CartManager
-import com.ecommerceearn.app.data.model.CartItem
+import com.ecommerceearn.app.data.manager.CartItem
 import com.ecommerceearn.app.data.model.Product
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(onBackClick: () -> Unit) {
-    val cart by CartManager.cartState.collectAsState()
-    val cartItems = cart.items
+    val cartItems by CartManager.items.collectAsState()
+    val totalAmount = cartItems.sumOf { (it.product.price ?: 0.0) * it.quantity }
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF1F3F6))) {
         // --- Header ---
         SmallTopAppBar(
-            title = { Text("My Cart (${CartManager.getCount()})", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+            title = { Text("My Cart (${CartManager.cartCount})", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
             navigationIcon = {
                 IconButton(onClick = onBackClick) {
                     Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Back")
@@ -58,17 +58,17 @@ fun CartScreen(onBackClick: () -> Unit) {
                 items(cartItems) { item ->
                     CartItemView(item)
                 }
-                
+
                 item {
                     PriceDetailsView(cartItems)
                 }
-                
+
                 item {
                     SafePaymentBanner()
                 }
             }
-            
-            BottomCheckoutBar(totalAmount = cart.totalAmount)
+
+            BottomCheckoutBar(totalAmount = totalAmount)
         }
     }
 }
@@ -101,7 +101,7 @@ fun EmptyCartView() {
 
 @Composable
 fun CartItemView(item: CartItem) {
-    val product = item.productId
+    val product = item.product
     
     // Calculate Discount (Mock logic matching RN if MRP usually missing in model but present in UI logic)
     // Assuming Product model has MRP. If not, fallback same as Price
@@ -243,8 +243,8 @@ fun CartItemView(item: CartItem) {
 
 @Composable
 fun PriceDetailsView(cartItems: List<CartItem>) {
-    val totalOriginal = cartItems.sumOf { (it.productId.mrp ?: (it.productId.price * 1.2)) * it.quantity }
-    val totalPrice = cartItems.sumOf { it.productId.price * it.quantity }
+    val totalOriginal = cartItems.sumOf { (it.product.mrp ?: (it.product.price ?: 0.0) * 1.2) * it.quantity }
+    val totalPrice = cartItems.sumOf { (it.product.price ?: 0.0) * it.quantity }
     val discount = totalOriginal - totalPrice
     
     Column(

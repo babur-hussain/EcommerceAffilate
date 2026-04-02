@@ -170,35 +170,10 @@ fun LumiereHeaderView(
 fun LumiereSectionView(
     component: SDUIComponent
 ) {
-    val props = component.props ?: emptyMap()
-    val title = props["title"] as? String ?: "Featured Products"
-    val products = parseLumiereProducts(props["products"])
-    
-    // Demo data fallback
-    val items = products.ifEmpty {
-        listOf(
-            LumiereProduct(
-                id = "1", title = "Luxury Perfume", subtitle = "Premium",
-                price = "$49.99", original_price = "$99.99",
-                image_url = "https://via.placeholder.com/150", badge = "-50%"
-            ),
-            LumiereProduct(
-                id = "2", title = "Silk Scarf", subtitle = "Accessories",
-                price = "$29.99", original_price = "$59.99",
-                image_url = "https://via.placeholder.com/150", badge = "-50%"
-            ),
-            LumiereProduct(
-                id = "3", title = "Designer Watch", subtitle = "Timepieces",
-                price = "$199.99", original_price = "$399.99",
-                image_url = "https://via.placeholder.com/150", badge = "-50%"
-            ),
-            LumiereProduct(
-                id = "4", title = "Leather Bag", subtitle = "Bags",
-                price = "$89.99", original_price = "$179.99",
-                image_url = "https://via.placeholder.com/150", badge = "-50%"
-            )
-        )
-    }
+    val title = component.props?.get("title")?.asString ?: "Featured Products"
+    val items = parseLumiereProducts(component.props?.get("products"))
+    if (items.isEmpty()) return
+
 
     Column(
         modifier = Modifier
@@ -513,13 +488,12 @@ private fun LumiereNavItem(
 
 // ============= Helper Functions =============
 
-private fun parseLumiereProducts(data: Any?): List<LumiereProduct> {
-    if (data == null) return emptyList()
+private fun parseLumiereProducts(data: com.google.gson.JsonElement?): List<LumiereProduct> {
+    if (data == null || data.isJsonNull) return emptyList()
     return try {
         val gson = Gson()
-        val json = gson.toJson(data)
         val type = object : TypeToken<List<LumiereProduct>>() {}.type
-        gson.fromJson(json, type)
+        gson.fromJson(data, type)
     } catch (e: Exception) {
         emptyList()
     }

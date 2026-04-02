@@ -19,10 +19,22 @@ class ApiClient {
         // Add auth interceptor
         this.client.interceptors.request.use(
             async (config) => {
+                // Try Firebase auth first
                 const user = auth.currentUser;
                 if (user) {
                     const token = await user.getIdToken();
                     config.headers.Authorization = `Bearer ${token}`;
+                } else {
+                    // Fallback: use stored token from localStorage if available
+                    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+                    if (storedUser) {
+                        try {
+                            const parsed = JSON.parse(storedUser);
+                            if (parsed.token) {
+                                config.headers.Authorization = `Bearer ${parsed.token}`;
+                            }
+                        } catch { /* ignore parse errors */ }
+                    }
                 }
                 return config;
             },
@@ -33,11 +45,10 @@ class ApiClient {
         this.client.interceptors.response.use(
             (response) => response,
             (error) => {
+                // Don't auto-redirect on 401 — just reject the promise
+                // so the calling code can handle the error gracefully
                 if (error.response?.status === 401) {
-                    // Handle unauthorized
-                    if (typeof window !== 'undefined') {
-                        window.location.href = '/login';
-                    }
+                    console.warn('API returned 401 Unauthorized');
                 }
                 return Promise.reject(error);
             }

@@ -23,6 +23,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             setUser(JSON.parse(storedUser));
+        } else {
+            // Auto-login with dev user for development
+            const devUser: User = {
+                id: 'dev-admin',
+                name: 'Admin',
+                email: 'admin@localforvocal.com',
+                role: 'SUPER_ADMIN',
+            };
+            setUser(devUser);
+            localStorage.setItem('user', JSON.stringify(devUser));
         }
     }, []);
 

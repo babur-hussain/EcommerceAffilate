@@ -123,4 +123,47 @@ router.post('/upload/image', verifyFirebaseToken, upload.single('image'), async 
   }
 });
 
+// POST /api/upload/service-icon - Upload service icon (no auth, for dashboard)
+router.post('/upload/service-icon', upload.single('icon'), async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'No icon image provided' });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'service-icons',
+          resource_type: 'image',
+          transformation: [
+            { width: 256, height: 256, crop: 'fill' },
+            { quality: 'auto' },
+            { fetch_format: 'auto' },
+          ],
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+
+      const readableStream = new Readable();
+      readableStream.push(file.buffer);
+      readableStream.push(null);
+      readableStream.pipe(uploadStream);
+    });
+
+    console.log(`✅ Uploaded service icon`);
+
+    res.json({
+      success: true,
+      imageUrl: (result as any).secure_url
+    });
+  } catch (error: any) {
+    console.error('❌ Icon upload error:', error);
+    res.status(500).json({ error: 'Failed to upload icon', message: error.message });
+  }
+});
+
 export default router;

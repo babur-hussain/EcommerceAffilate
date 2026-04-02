@@ -48,7 +48,7 @@ fun SDUIRenderer(
     component: SDUIComponent,
     onProductClick: (Product) -> Unit = {}
 ) {
-    when (component.type) {
+    when (component.rawType) {
         "Container" -> RenderContainer(component, onProductClick)
         "Gradient" -> RenderGradient(component, onProductClick)
         "Text" -> RenderText(component)
@@ -73,7 +73,6 @@ fun SDUIRenderer(
         "sankranti_festival" -> RenderSankrantiFestival(component)
         "shoe_steal_fest" -> RenderShoeStealFest(component)
         "winter_clearance" -> RenderWinterClearance(component)
-        // Beauty Page Components
         "k_beauty", "beauty_k_beauty" -> RenderKBeauty(component)
         "trend_more", "beauty_trend_more" -> RenderTrendMore(component)
         "launch_party", "beauty_launch_party" -> RenderLaunchParty(component)
@@ -83,7 +82,6 @@ fun SDUIRenderer(
         "dermatologist_consultant", "free_dermatologist" -> RenderDermatologistConsultant(component)
         "globally_loved_alisters", "a_listers" -> RenderGloballyLovedAlisters(component)
         "internet_famed_brands" -> RenderInternetFamedBrands(component)
-        // Sports Page Components
         "sport_savings", "savings" -> RenderSportSavings(component)
         "sport_support_goals", "support_goals" -> RenderSportSupportGoals(component)
         "sport_gym_accessories", "gym_accessories" -> RenderSportGymAccessories(component)
@@ -91,7 +89,6 @@ fun SDUIRenderer(
         "sport_cricket_season", "cricket_season" -> RenderSportCricketSeason(component)
         "sport_winner_brands", "winner_brands" -> RenderSportWinnerBrands(component)
         "sport_wishlist", "wishlist" -> RenderSportWishlist(component)
-        // Books Page Components
         "books_bestsellers", "bestsellers" -> RenderBooksBestsellers(component)
         "books_genre", "shop_by_genre" -> RenderBooksGenre(component)
         "books_authors", "featured_authors" -> RenderBooksAuthors(component)
@@ -100,51 +97,44 @@ fun SDUIRenderer(
         "books_stationery", "stationery" -> RenderBooksStationery(component)
         "books_banner", "book_banner" -> RenderBooksBanner(component)
         "books_reading_lists", "reading_lists" -> RenderBooksReadingLists(component)
-        // Luminous Banner Page Components
         "luminous_header" -> LuminousHeaderView(component)
         "luminous_grid" -> LuminousGridView(component)
         "luminous_categories" -> LuminousCategoriesView(component)
         "luminous_sale" -> LuminousSaleView(component)
-        // BackToSchool1 Components
         "bts_header", "back_to_school_header" -> BackToSchoolHeaderView(component)
         "bts_grid", "back_to_school_grid" -> BackToSchoolGridView(component)
         "bts_banner", "back_to_school_banner" -> BackToSchoolBannerView(component)
         "bts_categories", "back_to_school_categories" -> BackToSchoolCategoriesView(component)
         "bts_footer", "back_to_school_footer" -> BackToSchoolFooterView()
-        // SchoolTwo Components
         "school_two_header" -> SchoolTwoHeaderView(component)
         "school_two_grid" -> SchoolTwoGridView(component)
         "school_two_banner" -> SchoolTwoBannerView(component)
         "school_two_categories" -> SchoolTwoCategoriesView(component)
         "school_two_deals" -> SchoolTwoDealsView(component)
         "school_two_footer" -> SchoolTwoFooterView()
-        // SchoolThree Components
         "school_three_header" -> SchoolThreeHeaderView(component)
         "school_three_grid" -> SchoolThreeGridView(component)
         "school_three_banner" -> SchoolThreeBannerView(component)
         "school_three_categories" -> SchoolThreeCategoriesView(component)
         "school_three_essentials" -> SchoolThreeEssentialsView(component)
         "school_three_footer" -> SchoolThreeFooterView()
-        // SchoolFour Components
         "school_four_header" -> SchoolFourHeaderView(component)
         "school_four_grid" -> SchoolFourGridView(component)
         "school_four_categories" -> SchoolFourCategoriesView(component)
         "school_four_footer" -> SchoolFourFooterView()
-        // SchoolFive Components
         "school_five_header" -> SchoolFiveHeaderView(component)
         "school_five_grid" -> SchoolFiveGridView(component)
         "school_five_categories" -> SchoolFiveCategoriesView(component)
         "school_five_footer" -> SchoolFiveFooterView()
-        // Lumiere/PercentOff Components
         "lumiere_header", "percent_off_header" -> LumiereHeaderView(component)
         "lumiere_section", "percent_off_section" -> LumiereSectionView(component)
         "lumiere_newsletter", "percent_off_newsletter" -> LumiereNewsletterView(component)
         "lumiere_bottom_nav", "percent_off_nav" -> LumiereBottomNavView()
         else -> {
             if (component.children?.isNotEmpty() == true) {
-                 RenderContainer(component, onProductClick)
+                RenderContainer(component, onProductClick)
             } else {
-                RenderNotAvailable(component.type, component)
+                RenderNotAvailable(component.rawType ?: component.type.name, component)
             }
         }
     }
@@ -183,10 +173,10 @@ fun RenderNotAvailable(type: String, component: SDUIComponent? = null) {
 @Composable
 fun RenderContainer(component: SDUIComponent, onProductClick: (Product) -> Unit = {}) {
     val style = component.style
-    val paddingHorizontal = (style?.get("paddingHorizontal") as? Number)?.toDouble() ?: 0.0
-    val paddingVertical = (style?.get("paddingVertical") as? Number)?.toDouble() ?: 0.0
-    val marginBottom = (style?.get("marginBottom") as? Number)?.toDouble() ?: 0.0
-    val backgroundColorHex = style?.get("backgroundColor") as? String
+    val paddingHorizontal = style.getDouble("paddingHorizontal") ?: 0.0
+    val paddingVertical = style.getDouble("paddingVertical") ?: 0.0
+    val marginBottom = style.getDouble("marginBottom") ?: 0.0
+    val backgroundColorHex = style.getString("backgroundColor")
     
     Box(
         modifier = Modifier
@@ -215,9 +205,9 @@ fun RenderContainer(component: SDUIComponent, onProductClick: (Product) -> Unit 
 fun RenderGradient(component: SDUIComponent, onProductClick: (Product) -> Unit = {}) {
     val props = component.props
     val style = component.style
-    val colors = (props?.get("colors") as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
-    val marginBottom = (style?.get("marginBottom") as? Number)?.toDouble() ?: 0.0
-    val paddingVertical = (style?.get("paddingVertical") as? Number)?.toDouble() ?: 0.0
+    val colors = props.getStringList("colors")
+    val marginBottom = style.getDouble("marginBottom") ?: 0.0
+    val paddingVertical = style.getDouble("paddingVertical") ?: 0.0
 
     val brush = if (colors.isNotEmpty()) {
         Brush.linearGradient(
@@ -246,21 +236,20 @@ fun RenderGradient(component: SDUIComponent, onProductClick: (Product) -> Unit =
 fun RenderImage(component: SDUIComponent) {
     val props = component.props
     val style = component.style
-    val source = props?.get("source") as? String ?: ""
-    
+    val source = props.getString("source") ?: ""
+
     // Style props
-    val width = (style?.get("width") as? Number)?.toDouble() ?: 100.0
-    val height = (style?.get("height") as? Number)?.toDouble() ?: 100.0
-    val position = style?.get("position") as? String
-    val top = (style?.get("top") as? Number)?.toDouble() ?: 0.0
-    val right = (style?.get("right") as? Number)?.toDouble() ?: 0.0
-    val opacity = (style?.get("opacity") as? Number)?.toDouble() ?: 1.0
-    val tintColor = style?.get("tintColor") as? String
-    
-    // Transforms
-    val transform = style?.get("transform") as? List<*>
-    val rotateMap = transform?.firstOrNull() as? Map<String, String>
-    val rotateDeg = rotateMap?.get("rotate")?.replace("deg", "")?.toFloatOrNull() ?: 0f
+    val width = style.getDouble("width") ?: 100.0
+    val height = style.getDouble("height") ?: 100.0
+    val position = style.getString("position")
+    val top = style.getDouble("top") ?: 0.0
+    val right = style.getDouble("right") ?: 0.0
+    val opacity = style.getDouble("opacity") ?: 1.0
+    val tintColor = style.getString("tintColor")
+
+    // Transforms – fallback to 0 rotation if no transform array
+    val rotateDeg = style.getObj("transform")?.getString("rotate")
+        ?.replace("deg", "")?.toFloatOrNull() ?: 0f
 
     val baseModifier = Modifier
         .width(width.dp)
@@ -298,17 +287,17 @@ fun RenderImage(component: SDUIComponent) {
 fun RenderText(component: SDUIComponent) {
     val props = component.props
     val style = component.style
-    val text = props?.get("text") as? String ?: ""
-    val fontSize = (style?.get("fontSize") as? Number)?.toDouble() ?: 14.0
-    val fontWeightString = style?.get("fontWeight") as? String
+    val text = props.getString("text") ?: ""
+    val fontSize = style.getDouble("fontSize") ?: 14.0
+    val fontWeightString = style.getString("fontWeight")
     val fontWeight = when(fontWeightString) {
         "bold", "800", "700", "600" -> FontWeight.Bold
         "500", "medium" -> FontWeight.Medium
         else -> FontWeight.Normal
     }
-    val color = style?.get("color") as? String ?: "#000000"
-    val marginBottom = (style?.get("marginBottom") as? Number)?.toDouble() ?: 0.0
-    val paddingHorizontal = (style?.get("paddingHorizontal") as? Number)?.toDouble() ?: 0.0
+    val color = style.getString("color") ?: "#000000"
+    val marginBottom = style.getDouble("marginBottom") ?: 0.0
+    val paddingHorizontal = style.getDouble("paddingHorizontal") ?: 0.0
 
     Text(
         text = text,
@@ -323,37 +312,53 @@ fun RenderText(component: SDUIComponent) {
 
 @Composable
 fun RenderHeroCarousel(component: SDUIComponent) {
-    // Prefer explicitly mapped content, fallback to props
-    val contentMap = component.content ?: component.props ?: emptyMap()
-    val bannersRaw = (contentMap["banners"] ?: contentMap["content"]) as? List<*>
-    val banners = bannersRaw?.mapNotNull { it as? Map<String, String> } ?: emptyList()
+    val content = component.props
+    val bannersArr = content?.getArray("banners") ?: content?.getArray("content")
+    val banners: List<Map<String, String>> = if (bannersArr != null) {
+        bannersArr.mapNotNull { el ->
+            if (el.isJsonObject) {
+                val obj = el.asJsonObject
+                val map = mutableMapOf<String, String>()
+                obj.keySet().forEach { k -> obj.getString(k)?.let { map[k] = it } }
+                map as Map<String, String>
+            } else null
+        }
+    } else emptyList()
 
     HeroBannerView(banners)
 }
 
 @Composable
 fun RenderCuratedCollections(component: SDUIComponent) {
-    val collectionsRaw = component.props?.get("collections") as? List<*>
-    val collections = collectionsRaw?.mapNotNull { it as? Map<String, Any> } ?: emptyList()
-
+    val collectionsArr = component.props?.getArray("collections")
+    val collections: List<Map<String, Any>> = if (collectionsArr != null) {
+        collectionsArr.mapNotNull { el ->
+            if (el.isJsonObject) {
+                val obj = el.asJsonObject
+                val map = mutableMapOf<String, Any>()
+                obj.keySet().forEach { k -> obj.get(k)?.takeIf { !it.isJsonNull }?.let { map[k] = it } }
+                map as Map<String, Any>
+            } else null
+        }
+    } else emptyList()
     CuratedCollectionsView(collections)
 }
 
 @Composable
 fun RenderLightningDeals(component: SDUIComponent, onProductClick: (Product) -> Unit = {}) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Lightning deals"
-    val subtitle = props["subtitle"] as? String ?: ""
-    val products = parseProducts(props["products"])
+    val title = props.getString("title") ?: "Lightning deals"
+    val subtitle = props.getString("subtitle") ?: ""
+    val products = parseProducts(props.getArray("products"))
 
     LightningDealsView(title, subtitle, products, onProductClick)
 }
 
 @Composable
 fun RenderProductGrid(component: SDUIComponent, onProductClick: (Product) -> Unit = {}) {
-    val props = component.props ?: emptyMap()
-    val cardStyle = props["cardStyle"] as? String ?: "vertical"
-    val products = parseProducts(props["products"])
+    val props = component.props
+    val cardStyle = props.getString("cardStyle") ?: "vertical"
+    val products = parseProducts(props?.getArray("products"))
 
     if (products.isEmpty()) return
 
@@ -403,13 +408,12 @@ fun RenderProductGrid(component: SDUIComponent, onProductClick: (Product) -> Uni
 }
 
 // Helpers
-fun parseProducts(data: Any?): List<Product> {
-    if (data == null) return emptyList()
+fun parseProducts(data: com.google.gson.JsonElement?): List<Product> {
+    if (data == null || data.isJsonNull) return emptyList()
     return try {
         val gson = Gson()
-        val json = gson.toJson(data)
         val type = object : TypeToken<List<Product>>() {}.type
-        gson.fromJson(json, type)
+        gson.fromJson(data, type)
     } catch (e: Exception) {
         emptyList()
     }
@@ -420,9 +424,9 @@ fun parseProducts(data: Any?): List<Product> {
 @Composable
 fun RenderFashionForecast(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "FASHION FORECAST"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<FashionForecastItem>(props["items"])
+    val title = props.getString("title") ?: "FASHION FORECAST"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<FashionForecastItem>(props.getArray("items"))
     
     FashionForecastView(title, headerActionUrl, items)
 }
@@ -430,9 +434,9 @@ fun RenderFashionForecast(component: SDUIComponent) {
 @Composable
 fun RenderWinterCollection(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Winter collection"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<WinterCollectionItem>(props["items"])
+    val title = props.getString("title") ?: "Winter collection"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<WinterCollectionItem>(props.getArray("items"))
     
     WinterCollectionView(title, headerActionUrl, items)
 }
@@ -440,8 +444,8 @@ fun RenderWinterCollection(component: SDUIComponent) {
 @Composable
 fun RenderPromoPoster(component: SDUIComponent) {
     val props = component.props ?: return
-    val image = props["image"] as? String ?: ""
-    val actionUrl = props["actionUrl"] as? String
+    val image = props.getString("image") ?: ""
+    val actionUrl = props.getString("actionUrl")
     
     PromoPosterView(image, actionUrl)
 }
@@ -449,10 +453,10 @@ fun RenderPromoPoster(component: SDUIComponent) {
 @Composable
 fun RenderDealsOfTheDay(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Deals of the Day"
-    val subtitle = props["subtitle"] as? String ?: "Clock is ticking!"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<DealItem>(props["items"])
+    val title = props.getString("title") ?: "Deals of the Day"
+    val subtitle = props.getString("subtitle") ?: "Clock is ticking!"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<DealItem>(props.getArray("items"))
 
     DealsOfTheDayView(title, subtitle, headerActionUrl, items)
 }
@@ -460,20 +464,19 @@ fun RenderDealsOfTheDay(component: SDUIComponent) {
 @Composable
 fun RenderBudgetBuys(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Budget Buys"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<BudgetItem>(props["items"])
+    val title = props.getString("title") ?: "Budget Buys"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<BudgetItem>(props.getArray("items"))
 
     BudgetBuysView(title, headerActionUrl, items)
 }
 
-inline fun <reified T> parseItems(data: Any?): List<T> {
-    if (data == null) return emptyList()
+inline fun <reified T> parseItems(data: com.google.gson.JsonElement?): List<T> {
+    if (data == null || data.isJsonNull) return emptyList()
     return try {
         val gson = Gson()
-        val json = gson.toJson(data)
         val type = object : TypeToken<List<T>>() {}.type
-        gson.fromJson(json, type)
+        gson.fromJson(data, type)
     } catch (e: Exception) {
         e.printStackTrace()
         emptyList()
@@ -485,52 +488,52 @@ inline fun <reified T> parseItems(data: Any?): List<T> {
 @Composable
 fun RenderSubCategorySlider(component: SDUIComponent) {
     val props = component.props ?: return
-    val parentCategoryId = props["parentCategoryId"] as? String ?: return
+    val parentCategoryId = props.getString("parentCategoryId") ?: return
     SubCategorySliderView(parentCategoryId = parentCategoryId)
 }
 
 @Composable
 fun RenderShoppingForOthersHub(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Shopping for others?"
-    val subtitle = props["subtitle"] as? String ?: "Choose a category to start exploring"
-    val items = parseItems<ShoppingForOthersCategoryItem>(props["items"])
+    val title = props.getString("title") ?: "Shopping for others?"
+    val subtitle = props.getString("subtitle") ?: "Choose a category to start exploring"
+    val items = parseItems<ShoppingForOthersCategoryItem>(props.getArray("items"))
     ShoppingForOthersHubView(title, subtitle, items)
 }
 
 @Composable
 fun RenderEarlyBirdDeals(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Early Bird Deals!"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<EarlyBirdDealItem>(props["items"])
+    val title = props.getString("title") ?: "Early Bird Deals!"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<EarlyBirdDealItem>(props.getArray("items"))
     EarlyBirdDealsView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderSankrantiFestival(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Shine bright this Sankranti"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<SankrantiFestiveItem>(props["items"])
+    val title = props.getString("title") ?: "Shine bright this Sankranti"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<SankrantiFestiveItem>(props.getArray("items"))
     SankrantiFestivalView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderShoeStealFest(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Shoe's Steal Fest"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<ShoeStealItem>(props["items"])
+    val title = props.getString("title") ?: "Shoe's Steal Fest"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<ShoeStealItem>(props.getArray("items"))
     ShoeStealFestView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderWinterClearance(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Winter Clearance Sale"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<WinterClearanceItem>(props["items"])
+    val title = props.getString("title") ?: "Winter Clearance Sale"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<WinterClearanceItem>(props.getArray("items"))
     WinterClearanceSaleView(title, headerActionUrl, items)
 }
 
@@ -539,81 +542,81 @@ fun RenderWinterClearance(component: SDUIComponent) {
 @Composable
 fun RenderKBeauty(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "K-Beauty"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<KBeautyItem>(props["items"])
+    val title = props.getString("title") ?: "K-Beauty"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<KBeautyItem>(props.getArray("items"))
     KBeautyView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderTrendMore(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Trend More"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<TrendMoreItem>(props["items"])
+    val title = props.getString("title") ?: "Trend More"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<TrendMoreItem>(props.getArray("items"))
     BeautyTrendMoreView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderLaunchParty(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "New Launches"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<LaunchPartyItem>(props["items"])
+    val title = props.getString("title") ?: "New Launches"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<LaunchPartyItem>(props.getArray("items"))
     BeautyLaunchPartyView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderInternetFamed(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Internet Famed"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<InternetFamedItem>(props["items"])
+    val title = props.getString("title") ?: "Internet Famed"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<InternetFamedItem>(props.getArray("items"))
     BeautyInternetFamedView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderGlamBudget(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Glam on a Budget"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<GlamBudgetItem>(props["items"])
+    val title = props.getString("title") ?: "Glam on a Budget"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<GlamBudgetItem>(props.getArray("items"))
     BeautyGlamBudgetView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderGlowForHarvest(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Glow for the harvest"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<HarvestItem>(props["items"])
+    val title = props.getString("title") ?: "Glow for the harvest"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<HarvestItem>(props.getArray("items"))
     GlowForHarvestView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderDermatologistConsultant(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Free dermatologist's consultant"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<ConsultantBannerItem>(props["items"])
+    val title = props.getString("title") ?: "Free dermatologist's consultant"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<ConsultantBannerItem>(props.getArray("items"))
     DermatologistConsultantView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderGloballyLovedAlisters(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Globally loved A-listers"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<AlisterItem>(props["items"])
+    val title = props.getString("title") ?: "Globally loved A-listers"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<AlisterItem>(props.getArray("items"))
     GloballyLovedAlistersView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderInternetFamedBrands(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Internet-famed brands"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<InternetBrandItem>(props["items"])
+    val title = props.getString("title") ?: "Internet-famed brands"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<InternetBrandItem>(props.getArray("items"))
     InternetFamedBrandsView(title, headerActionUrl, items)
 }
 
@@ -622,63 +625,63 @@ fun RenderInternetFamedBrands(component: SDUIComponent) {
 @Composable
 fun RenderSportSavings(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Sport Savings"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<SavingsItem>(props["items"])
+    val title = props.getString("title") ?: "Sport Savings"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<SavingsItem>(props.getArray("items"))
     SportSavingsView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderSportSupportGoals(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Support Your Goals"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<GoalItem>(props["items"])
+    val title = props.getString("title") ?: "Support Your Goals"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<GoalItem>(props.getArray("items"))
     SportSupportGoalsView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderSportGymAccessories(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Gym Accessories"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<AccessoryItem>(props["items"])
+    val title = props.getString("title") ?: "Gym Accessories"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<AccessoryItem>(props.getArray("items"))
     SportGymAccessoriesView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderSportCombos(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Value Combos"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<ComboItem>(props["items"])
+    val title = props.getString("title") ?: "Value Combos"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<ComboItem>(props.getArray("items"))
     SportCombosView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderSportCricketSeason(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Cricket Season"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<CricketItem>(props["items"])
+    val title = props.getString("title") ?: "Cricket Season"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<CricketItem>(props.getArray("items"))
     SportCricketSeasonView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderSportWinnerBrands(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Winner Brands"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<WinnerBrandItem>(props["items"])
+    val title = props.getString("title") ?: "Winner Brands"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<WinnerBrandItem>(props.getArray("items"))
     SportWinnerBrandsView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderSportWishlist(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Add to your wishlist"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<WishlistItem>(props["items"])
+    val title = props.getString("title") ?: "Add to your wishlist"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<WishlistItem>(props.getArray("items"))
     SportWishlistView(title, headerActionUrl, items)
 }
 
@@ -687,69 +690,69 @@ fun RenderSportWishlist(component: SDUIComponent) {
 @Composable
 fun RenderBooksBestsellers(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Bestsellers"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<BestsellerItem>(props["items"])
+    val title = props.getString("title") ?: "Bestsellers"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<BestsellerItem>(props.getArray("items"))
     BooksBestsellersView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderBooksGenre(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Shop by Genre"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<GenreItem>(props["items"])
+    val title = props.getString("title") ?: "Shop by Genre"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<GenreItem>(props.getArray("items"))
     BooksGenreView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderBooksAuthors(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Featured Authors"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<AuthorItem>(props["items"])
+    val title = props.getString("title") ?: "Featured Authors"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<AuthorItem>(props.getArray("items"))
     BooksAuthorsView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderBooksDeals(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Book Deals"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<BookDealItem>(props["items"])
+    val title = props.getString("title") ?: "Book Deals"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<BookDealItem>(props.getArray("items"))
     BooksDealsView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderBooksNewArrivals(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "New Arrivals"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<NewArrivalItem>(props["items"])
+    val title = props.getString("title") ?: "New Arrivals"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<NewArrivalItem>(props.getArray("items"))
     BooksNewArrivalsView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderBooksStationery(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Stationery & Supplies"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<StationeryItem>(props["items"])
+    val title = props.getString("title") ?: "Stationery & Supplies"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<StationeryItem>(props.getArray("items"))
     BooksStationeryView(title, headerActionUrl, items)
 }
 
 @Composable
 fun RenderBooksBanner(component: SDUIComponent) {
     val props = component.props ?: return
-    val items = parseItems<BookBannerItem>(props["items"])
+    val items = parseItems<BookBannerItem>(props.getArray("items"))
     BooksBannerView(items)
 }
 
 @Composable
 fun RenderBooksReadingLists(component: SDUIComponent) {
     val props = component.props ?: return
-    val title = props["title"] as? String ?: "Curated Reading Lists"
-    val headerActionUrl = props["headerActionUrl"] as? String
-    val items = parseItems<ReadingListItem>(props["items"])
+    val title = props.getString("title") ?: "Curated Reading Lists"
+    val headerActionUrl = props.getString("headerActionUrl")
+    val items = parseItems<ReadingListItem>(props.getArray("items"))
     BooksReadingListsView(title, headerActionUrl, items)
 }

@@ -193,28 +193,9 @@ fun SchoolTwoHeaderView(
 fun SchoolTwoGridView(
     component: SDUIComponent
 ) {
-    val products = listOf(
-        BTSProduct(
-            id = "1", title = "Premium Sketchbook Set", subtitle = "Art & Design",
-            price = "$12.99", badge = "BEST SELLER", badgeColor = "#FACC15",
-            image = "https://lh3.googleusercontent.com/aida-public/AB6AXuDMKjBvZ7lHkjDIHdFD_Oymj0ODzClyEHIIVCEtjZYwky5PRHJU43KfKpmxSOTEZvn74J2jplEhOR65Zr-roVA_EqCCW0zk31YTgr1A49Bb7Mfd7Qtw7p5OkcFO1tXwrNKUqMm6jUpAC2aK12EOPAdya9B5xf4iXZB9m2QCWjWwCM0QhdXzuRtUVTjWhioNdeNrCZQbScDN9dFGlG3b3m2L_fZn635T3_u6oEHA9L-xWdshi90_FgLCQ7djJxlyTfNTpwGflbXiwdOs"
-        ),
-        BTSProduct(
-            id = "2", title = "Fineliner Pen Pack", subtitle = "Writing Tools",
-            price = "$11.99", badge = "-20%", badgeColor = "#EF4444",
-            image = "https://lh3.googleusercontent.com/aida-public/AB6AXuAJcvAJiC6aMGAZ6-Z3rF0ipX2k9f-CUrcig3VnI6M8soGm9E1M4gYxgcF444jtlCqaaoeSej-kEiORfKyA_wUjSGahJ4AsMPOM1X34i5MIjRnBxp850CLR3o5PPILzzeJZl_8VMxJ-CA4aZ0Tnz3lWtboC0EDwGvBwakh7klA026drDqjoIGNwMfDGyJ5vHDj7KPlmU6z4iwukBSIlSpun0mPlI1vLB55Z4PktijMBD0RnjFIp96hEhRUr7k8j4higJfkcIgX1yPB_"
-        ),
-        BTSProduct(
-            id = "3", title = "Classic Canvas Bag", subtitle = "Accessories",
-            price = "$24.50",
-            image = "https://lh3.googleusercontent.com/aida-public/AB6AXuCOVksraPr3tJaRnP1uz6GLJjAg575bnfNLFm25WspTdhn2VCnAneWHAyvlZitf-VbCVC33aFyj5DbBYS8wK-i6AqQqO8-YfElctvhJ2xLkXWf7UoERin6aicIGT-s-2u7l3Ov_jErMWcqOSWkuUPaufv72X4J23325wVtpo3UA1gNWpMvIDj_0XvIv82OC-q4XagJwieobEpr5vlkuStogIpAYGwe4xXa4BqJmGrpLPyWxrEh4ssFcpIIERqMKRm9koxNDjVnUZSCN"
-        ),
-        BTSProduct(
-            id = "4", title = "Science Textbook", subtitle = "Education",
-            price = "$45.00",
-            image = "https://lh3.googleusercontent.com/aida-public/AB6AXuAlKGILC8YgeYkEwG4NJNnb-WOlsreGSkaKOKu0yQnmFL7PpZDQorUjkTEmSdfo8uFOzYEzszGMhpsjE6RUNWqzwNV2nNjmbXAl6FVDaATYfHF2mWDIouVYbBMekLTnY-xvKbfLJdzLmsJJUjA7f3R5S_1nRnBf4RZP88nrG2hOLzuVJ0yP6Jk07EGXFePaVMWrvkyDUzGek2Y_-TV7wjdqFs7k3h5TWxYRXAtS9naBq1XUL1GBGCyBd26nH9R3QJpRt_5cq6B0cu8u"
-        )
-    )
+    val items = parseBTSProducts(component.props?.get("products"))
+    if (items.isEmpty()) return
+
 
     Column(
         modifier = Modifier
@@ -244,7 +225,7 @@ fun SchoolTwoGridView(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Grid
-        val rows = products.chunked(2)
+        val rows = items.chunked(2)
         Column(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -502,8 +483,7 @@ fun SchoolTwoCategoriesView(
 fun SchoolTwoDealsView(
     component: SDUIComponent
 ) {
-    val props = component.props ?: emptyMap()
-    val title = props["title"] as? String ?: "Today's Deals"
+    val title = component.props?.get("title")?.asString ?: "Today's Deals"
 
     Column(
         modifier = Modifier

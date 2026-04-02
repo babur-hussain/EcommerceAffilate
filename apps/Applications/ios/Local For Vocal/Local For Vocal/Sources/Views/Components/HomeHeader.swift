@@ -99,37 +99,45 @@ struct SearchBarView: View {
     @State private var isSearching = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Main Search Input
-            Button(action: {
+        HStack(spacing: 0) {
+            // Main Search Area (tappable to open search)
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white)
+                Text("Search products...")
+                    .font(.system(size: 15))
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
                 isSearching = true
-            }) {
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white)
-                    Text("Search products...")
-                        .font(.system(size: 15))
-                        .foregroundColor(.white)
-                    Spacer()
+            }
 
-                    // Voice Search Separator & Icon
-                    Rectangle()
-                        .fill(Color.white.opacity(0.3))
-                        .frame(width: 1, height: 24)
+            // Voice Search Separator & Icon (separate button)
+            HStack(spacing: 10) {
+                Rectangle()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 1, height: 24)
 
+                Button(action: {
+                    // TODO: Voice search action
+                    isSearching = true
+                }) {
                     Image(systemName: "mic.fill")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white)
                 }
-                .padding(.horizontal, 14)
-                .frame(height: 46)
-                .background(
-                    RealAppleGlass(style: .systemChromeMaterial, cornerRadius: 23)
-                )
+                .buttonStyle(PlainButtonStyle())
             }
-            .buttonStyle(PlainButtonStyle())
         }
+        .padding(.horizontal, 14)
+        .frame(height: 46)
+        .background(
+            RealAppleGlass(style: .systemChromeMaterial, cornerRadius: 23)
+        )
+        .contentShape(Rectangle())
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .fullScreenCover(isPresented: $isSearching) {

@@ -1,0 +1,83 @@
+package com.ecommerceearn.app.data.services
+
+import com.ecommerceearn.app.data.model.Product
+import com.ecommerceearn.app.data.remote.NetworkClient
+import com.ecommerceearn.app.utils.AppLogger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+data class OrderItem(
+    val productId: String,
+    val quantity: Int,
+    val price: Double,
+    val name: String?,
+    val image: String?
+)
+
+data class LastChanceOfferPayload(
+    val id: String,
+    val name: String,
+    val price: Double
+)
+
+data class AddressPayload(
+    val name: String,
+    val phone: String,
+    val addressLine1: String,
+    val addressLine2: String?,
+    val city: String,
+    val state: String,
+    val pincode: String,
+    val country: String
+)
+
+data class OrderPayload(
+    val items: List<OrderItem>,
+    val address: AddressPayload?,
+    val addressId: String?,
+    val paymentMethod: String,
+    val donation: Double?,
+    val protectPromiseFee: Double?,
+    val shippingFee: Double?,
+    val lastChanceOffers: List<LastChanceOfferPayload>?
+)
+
+data class OrderResponse(
+    val _id: String,
+    val orderNumber: String?,
+    val status: String,
+    val totalAmount: Double
+)
+
+object OrderService {
+    suspend fun createOrder(
+        items: List<OrderItem>,
+        address: AddressPayload? = null,
+        addressId: String? = null,
+        paymentMethod: String,
+        authToken: String,
+        donation: Double? = null,
+        protectPromiseFee: Double? = null,
+        shippingFee: Double? = null,
+        lastChanceOffers: List<LastChanceOfferPayload>? = null
+    ): OrderResponse = withContext(Dispatchers.IO) {
+        val payload = OrderPayload(
+            items = items,
+            address = address,
+            addressId = addressId,
+            paymentMethod = paymentMethod,
+            donation = donation,
+            protectPromiseFee = protectPromiseFee,
+            shippingFee = shippingFee,
+            lastChanceOffers = lastChanceOffers
+        )
+        // Assume API implementation
+        // NetworkClient.apiService.createOrder(payload)
+        throw Exception("Stub implementation: Retrofit method not yet mapped")
+    }
+
+    suspend fun updateOrderStatus(orderId: String, status: String, authToken: String) = withContext(Dispatchers.IO) {
+        val body = mapOf("status" to status)
+        // NetworkClient.apiService.updateOrderStatus(orderId, body)
+    }
+}

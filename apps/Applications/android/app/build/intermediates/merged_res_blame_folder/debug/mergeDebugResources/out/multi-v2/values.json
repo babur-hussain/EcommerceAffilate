@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.ecommerceearn.app-mergeDebugResources-53:/values/values.xml",
+            "outputFile": "com.ecommerceearn.app-mergeDebugResources-54:/values/values.xml",
             "map": [
                 {
                     "source": "/Users/baburhussain/.gradle/caches/9.0-milestone-1/transforms/bc7d8159da5bf0ed6a429456fc858965/transformed/lifecycle-viewmodel-2.7.0/res/values/values.xml",

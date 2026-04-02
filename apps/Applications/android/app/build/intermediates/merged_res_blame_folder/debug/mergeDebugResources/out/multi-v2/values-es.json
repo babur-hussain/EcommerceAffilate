@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.ecommerceearn.app-mergeDebugResources-53:/values-es/values-es.xml",
+            "outputFile": "com.ecommerceearn.app-mergeDebugResources-54:/values-es/values-es.xml",
             "map": [
                 {
                     "source": "/Users/baburhussain/.gradle/caches/9.0-milestone-1/transforms/187fc466e84499fa810b87d5b2ee7fc5/transformed/jetified-foundation-release/res/values-es/values-es.xml",

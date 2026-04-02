@@ -40,7 +40,7 @@ fun SDUIPage(
             val response = NetworkClient.apiService.getLayoutBySlug(slug)
             Log.d(TAG, "Received layout: ${response.name}, components: ${response.components.size}")
             response.components.forEach { comp ->
-                Log.d(TAG, "  Component: type=${comp.type}, id=${comp.id}")
+                Log.d(TAG, "  Component: type=${comp.type}, id=${comp.originalId}")
             }
             layout = response
         } catch (e: Exception) {

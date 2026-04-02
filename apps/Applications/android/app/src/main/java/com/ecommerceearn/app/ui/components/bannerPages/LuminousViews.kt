@@ -41,12 +41,12 @@ import com.google.gson.reflect.TypeToken
 fun LuminousHeaderView(
     component: SDUIComponent
 ) {
-    val props = component.props ?: emptyMap()
-    val titleTop = props["title_top"] as? String ?: "BEAUTY"
-    val titleBottom = props["title_bottom"] as? String ?: "PERFUME"
-    val subtitle = props["subtitle"] as? String ?: "with new organic formula for your daily use"
-    val buttonText = props["button_text"] as? String ?: "SHOP NOW"
-    val imageUrl = props["image_url"] as? String ?: ""
+    val props = component.props
+    val titleTop = props?.get("title_top")?.asString ?: "BEAUTY"
+    val titleBottom = props?.get("title_bottom")?.asString ?: "PERFUME"
+    val subtitle = props?.get("subtitle")?.asString ?: "with new organic formula for your daily use"
+    val buttonText = props?.get("button_text")?.asString ?: "SHOP NOW"
+    val imageUrl = props?.get("image_url")?.asString ?: ""
 
     Box(
         modifier = Modifier
@@ -162,8 +162,7 @@ fun LuminousHeaderView(
 fun LuminousGridView(
     component: SDUIComponent
 ) {
-    val props = component.props ?: emptyMap()
-    val items = parseProductItems(props["products"])
+    val items = parseProductItems(component.props?.get("products"))
 
     Column(
         modifier = Modifier
@@ -317,8 +316,7 @@ fun BeautyProductCard(
 fun LuminousCategoriesView(
     component: SDUIComponent
 ) {
-    val props = component.props ?: emptyMap()
-    val items = parseCategoryItems(props["items"])
+    val items = parseCategoryItems(component.props?.get("items"))
     var selectedIndex by remember { mutableStateOf(0) }
 
     LazyRow(
@@ -380,11 +378,11 @@ fun LuminousCategoriesView(
 fun LuminousSaleView(
     component: SDUIComponent
 ) {
-    val props = component.props ?: emptyMap()
-    val tag = props["tag"] as? String ?: "Member Exclusive"
-    val title = props["title"] as? String ?: "Get 20% off on all"
-    val subtitle = props["subtitle"] as? String ?: "Betul's Organic line"
-    val linkText = props["link_text"] as? String ?: "Unlock Deal"
+    val props = component.props
+    val tag = props?.get("tag")?.asString ?: "Member Exclusive"
+    val title = props?.get("title")?.asString ?: "Get 20% off on all"
+    val subtitle = props?.get("subtitle")?.asString ?: "Betul's Organic line"
+    val linkText = props?.get("link_text")?.asString ?: "Unlock Deal"
 
     Box(
         modifier = Modifier
@@ -449,25 +447,23 @@ fun LuminousSaleView(
 
 // ============= Helper Functions =============
 
-private fun parseProductItems(data: Any?): List<LuminousProductItem> {
-    if (data == null) return emptyList()
+private fun parseProductItems(data: com.google.gson.JsonElement?): List<LuminousProductItem> {
+    if (data == null || data.isJsonNull) return emptyList()
     return try {
         val gson = Gson()
-        val json = gson.toJson(data)
         val type = object : TypeToken<List<LuminousProductItem>>() {}.type
-        gson.fromJson(json, type)
+        gson.fromJson(data, type)
     } catch (e: Exception) {
         emptyList()
     }
 }
 
-private fun parseCategoryItems(data: Any?): List<LuminousCategoryItem> {
-    if (data == null) return emptyList()
+private fun parseCategoryItems(data: com.google.gson.JsonElement?): List<LuminousCategoryItem> {
+    if (data == null || data.isJsonNull) return emptyList()
     return try {
         val gson = Gson()
-        val json = gson.toJson(data)
         val type = object : TypeToken<List<LuminousCategoryItem>>() {}.type
-        gson.fromJson(json, type)
+        gson.fromJson(data, type)
     } catch (e: Exception) {
         emptyList()
     }

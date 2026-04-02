@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.ecommerceearn.app-mergeDebugResources-53:/values-en-rXC/values-en-rXC.xml",
+            "outputFile": "com.ecommerceearn.app-mergeDebugResources-54:/values-en-rXC/values-en-rXC.xml",
             "map": [
                 {
                     "source": "/Users/baburhussain/.gradle/caches/9.0-milestone-1/transforms/8a72fded922ba1590e234f1460c4cb7f/transformed/jetified-ui-release/res/values-en-rXC/values-en-rXC.xml",

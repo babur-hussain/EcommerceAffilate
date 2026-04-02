@@ -182,7 +182,12 @@ struct CheckoutView: View {
                     },
                     onFailure: { error in
                         AppLogger.error("Razorpay failure: \(error)")
-                        viewModel.handleRazorpayFailure(error: "Payment Failed")
+                        switch error {
+                        case .cancelled:
+                            viewModel.handleRazorpayCancelled()
+                        default:
+                            viewModel.handleRazorpayFailure(error: "Payment Failed")
+                        }
                     }
                 )
                 .frame(width: 0, height: 0)
@@ -246,6 +251,22 @@ struct CheckoutView: View {
                 onCancel: {
                     viewModel.showPaymentFailed = false
                     presentationMode.wrappedValue.dismiss()
+                }
+            )
+        }
+        .fullScreenCover(isPresented: $viewModel.showPaymentCancelled) {
+            PaymentCancelledView(
+                orderId: viewModel.createdOrderId,
+                amount: viewModel.totalAmount,
+                onRetry: {
+                    viewModel.showPaymentCancelled = false
+                    // Re-trigger Razorpay directly
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        viewModel.showRazorpay = true
+                    }
+                },
+                onGoBack: {
+                    viewModel.showPaymentCancelled = false
                 }
             )
         }

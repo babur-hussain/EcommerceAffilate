@@ -203,9 +203,13 @@
             _ code: Int32, description str: String, andData response: [AnyHashable: Any]?
         ) {
             AppLogger.error("Razorpay Payment Error: \(code) - \(str)")
-            // Extract error details if needed from response
+            // Error code 2 = user manually closed/dismissed the Razorpay popup
             DispatchQueue.main.async {
-                self.completionHandler?(.failure(.failed(str)))
+                if code == 2 {
+                    self.completionHandler?(.failure(.cancelled))
+                } else {
+                    self.completionHandler?(.failure(.failed(str)))
+                }
             }
         }
 

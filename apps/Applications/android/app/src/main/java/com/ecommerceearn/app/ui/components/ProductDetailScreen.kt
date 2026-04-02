@@ -79,7 +79,7 @@ fun ProductDetailScreen(
                 onShareClick = { /* TODO */ },
                 onWishlistClick = { /* TODO */ },
                 onCartClick = onCartClick,
-                cartCount = CartManager.getCount()
+                cartCount = CartManager.cartCount
             )
         },
         bottomBar = {
@@ -536,7 +536,7 @@ private fun DeliveryInfoSection(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = badge.label,
+                            text = badge.name,
                             fontSize = 11.sp,
                             color = DarkText,
                             maxLines = 2,

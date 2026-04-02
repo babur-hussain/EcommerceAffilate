@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.ecommerceearn.app-mergeDebugResources-53:/values-watch-v20/values-watch-v20.xml",
+            "outputFile": "com.ecommerceearn.app-mergeDebugResources-54:/values-watch-v20/values-watch-v20.xml",
             "map": [
                 {
                     "source": "/Users/baburhussain/.gradle/caches/9.0-milestone-1/transforms/399e1e1b999b5f295e9344db76d58541/transformed/jetified-play-services-auth-21.0.0/res/values-watch-v20/values.xml",

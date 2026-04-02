@@ -41,6 +41,7 @@ class CheckoutViewModel: ObservableObject {
     @Published var isPaymentViewVisible = false
     @Published var showPaymentSuccess = false
     @Published var showPaymentFailed = false
+    @Published var showPaymentCancelled = false
     @Published var showMyOrders = false
     @Published var createdOrderId: String? = nil
     @Published var createdOrderNumber: String? = nil
@@ -358,6 +359,14 @@ class CheckoutViewModel: ObservableObject {
         // Small delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.showPaymentFailed = true
+        }
+    }
+
+    func handleRazorpayCancelled() {
+        self.showRazorpay = false
+        // Small delay to allow Razorpay sheet to dismiss
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.showPaymentCancelled = true
         }
     }
 }

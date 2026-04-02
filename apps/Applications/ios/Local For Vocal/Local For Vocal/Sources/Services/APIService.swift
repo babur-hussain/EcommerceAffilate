@@ -631,6 +631,51 @@ public class APIService {
     let result = try JSONDecoder().decode(StoryResponse.self, from: data)
     return result.data
   }
+
+  // MARK: - Service Marketplace APIs
+
+  func fetchServiceCategories() async throws -> [ServiceCategoryModel] {
+    let url = try makeURL("/service-categories", queryItems: [URLQueryItem(name: "isActive", value: "true")])
+    let (data, response) = try await session.data(for: URLRequest(url: url))
+    _ = try handleResponse(data, response)
+    return try JSONDecoder().decode([ServiceCategoryModel].self, from: data)
+  }
+
+  func fetchServiceSubCategories(categoryId: String) async throws -> [ServiceSubCategoryModel] {
+    let url = try makeURL("/service-subcategories/by-category/\(categoryId)")
+    let (data, response) = try await session.data(for: URLRequest(url: url))
+    _ = try handleResponse(data, response)
+    return try JSONDecoder().decode([ServiceSubCategoryModel].self, from: data)
+  }
+
+  func fetchServiceProviders(subCategoryId: String, page: Int = 1, limit: Int = 20) async throws -> [ServiceProviderModel] {
+    let queryItems = [
+      URLQueryItem(name: "serviceSubCategoryId", value: subCategoryId),
+      URLQueryItem(name: "status", value: "APPROVED"),
+      URLQueryItem(name: "page", value: "\(page)"),
+      URLQueryItem(name: "limit", value: "\(limit)"),
+    ]
+    let url = try makeURL("/service-providers", queryItems: queryItems)
+    let (data, response) = try await session.data(for: URLRequest(url: url))
+    _ = try handleResponse(data, response)
+    let result = try JSONDecoder().decode(ServiceProviderListResponse.self, from: data)
+    return result.data
+  }
+
+  func fetchServiceProviderDetail(id: String) async throws -> ServiceProviderModel {
+    let url = try makeURL("/service-providers/\(id)")
+    let (data, response) = try await session.data(for: URLRequest(url: url))
+    _ = try handleResponse(data, response)
+    return try JSONDecoder().decode(ServiceProviderModel.self, from: data)
+  }
+
+  func fetchServiceProviderReviews(providerId: String) async throws -> [ServiceReviewModel] {
+    let url = try makeURL("/service-reviews/by-provider/\(providerId)")
+    let (data, response) = try await session.data(for: URLRequest(url: url))
+    _ = try handleResponse(data, response)
+    let result = try JSONDecoder().decode(ServiceReviewListResponse.self, from: data)
+    return result.data
+  }
 }
 
 // MARK: - Search View Model

@@ -40,6 +40,11 @@ import serviceTypeRouter from "./routes/serviceType.route";
 import serviceRouter from "./routes/service.route";
 import availabilityRouter from "./routes/availability.route";
 import bookingRouter from "./routes/booking.route";
+import serviceCategoryRouter from "./routes/serviceCategory.route";
+import serviceSubCategoryRouter from "./routes/serviceSubCategory.route";
+import serviceProviderRouter from "./routes/serviceProvider.route";
+import serviceReviewRouter from "./routes/serviceReview.route";
+import serviceAnalyticsRouter from "./routes/serviceAnalytics.route";
 
 // ... existing code ...
 
@@ -79,6 +84,8 @@ const productionOrigins = envOrigins.length > 0
     'https://localforvocalstartup.com',
     'https://admin.localforvocalstartup.com',
     'https://api.lfvs.in',
+    'http://localhost:3000',
+    'http://localhost:3001',
   ];
 
 const developmentRegex = /^http:\/\/localhost:\d+$/; // Any localhost port
@@ -88,16 +95,18 @@ const corsOptions: cors.CorsOptions = {
     // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
 
+    // Always allow localhost in any environment (for dashboard dev)
+    if (developmentRegex.test(origin)) {
+      return callback(null, true);
+    }
+
     if (env.isProduction) {
-      // Production: strict whitelist only — no regex, no wildcards
+      // Production: strict whitelist + localhost
       if (productionOrigins.includes(origin)) {
         return callback(null, true);
       }
     } else {
-      // Development/Staging: allow localhost + any env-specified origins
-      if (developmentRegex.test(origin)) {
-        return callback(null, true);
-      }
+      // Development/Staging: allow env-specified origins
       if (envOrigins.length > 0 && envOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -247,6 +256,11 @@ app.use("/api/service-types", serviceTypeRouter);
 app.use("/api/services", serviceRouter);
 app.use("/api/availability", availabilityRouter);
 app.use("/api/bookings", bookingRouter);
+app.use("/api/service-categories", serviceCategoryRouter);
+app.use("/api/service-subcategories", serviceSubCategoryRouter);
+app.use("/api/service-providers", serviceProviderRouter);
+app.use("/api/service-reviews", serviceReviewRouter);
+app.use("/api/service-analytics", serviceAnalyticsRouter);
 app.use("/api", categoryRouter);
 app.use("/api", attributeRouter);
 app.use("/api", superAdminRouter);

@@ -242,34 +242,8 @@ fun BackToSchoolHeaderView(
 fun BackToSchoolGridView(
     component: SDUIComponent
 ) {
-    val props = component.props ?: emptyMap()
-    val products = parseBTSProducts(props["products"])
-    
-    // Demo data fallback
-    val items = products.ifEmpty {
-        listOf(
-            BTSProduct(
-                id = "1", title = "Dino Explorer Backpack", subtitle = "Ergonomic fit",
-                price = "$34.99", badge = "New", badgeColor = "#F4B060",
-                image = "https://lh3.googleusercontent.com/aida-public/AB6AXuB0qgZsOP70tmld6ZraMtCBaVLxR6dZxr8exrVcrnu2VlLAF1epw_2DBCombSYP8Ny5Q8NerXaaOsaH50MFgYBo3zIdQsqAweqCakaLhRvU369-cyYyZF_oS1CkqAjHTdwhnWY-xggEGvKMPBNTVHOo2HXk2vPboQ43QSSe9wPIHWh-MMJrv33bc77nfiydEXZDiSddkOS0u309A1T-i5VYfX7m6sunNVCAbEnXd-eoLdQSYFaHh1fbPZIx0miN7z24RsAYb_vaV1Xl"
-            ),
-            BTSProduct(
-                id = "2", title = "Artist Color Pencil Set", subtitle = "24 Vibrant Colors",
-                price = "$12.50",
-                image = "https://lh3.googleusercontent.com/aida-public/AB6AXuCcdvhXWvPY_GEjZhc9IoobM2aNEU1lp7iQkcfU3n82j_i6d0y00yKz6PX_WsRfpm1GR_JPpEq4M4nbhfEdGv_UopfMEESW2zq9Fch9gd8Lk7FngJA9pb1rz-XLvCRo6eYvHbcvTq_5QtfoLfhq9nOse1z3vkTHlRrcHgJXxOEXI4jxJYvuq8_0GVM3tvDFno77q7CxXsD8Z5paYzSMezi7hD7909VrRQ35Q8IFV0JwYYuBCZllVDfiwFvBYQG0LU-rT7F6bbbZlk7A"
-            ),
-            BTSProduct(
-                id = "3", title = "Hardcover Notebook", subtitle = "Ruled pages",
-                price = "$8.99", badge = "-15%", badgeColor = "#E66B6B",
-                image = "https://lh3.googleusercontent.com/aida-public/AB6AXuD2OayXsAosgmuFl6A_uKlKuvYffK7mO5VmGd_uGVd7vOftDM3UmgiJhpsd2ml_Y4yETCoXhiyezFnm229e8nDaS__HTUX0hbj_Qufs7anfkqIg1mSQTSVZPAFW-vgI47f09Djzpu3-j9BqNSJr4o18v6PfWrN6yLyB8Uvu8cPZYs2FgPxRzFw8c_elAE4xGxJTWkDFvGrNFuSOmr6TWtB384daydDe0aZuvMXZq7DOWzA3ZAg4CaYh6bJLWvWDwYdf3bTkvEhHSf7q"
-            ),
-            BTSProduct(
-                id = "4", title = "Scientific Calculator", subtitle = "Solar Powered",
-                price = "$15.99",
-                image = "https://lh3.googleusercontent.com/aida-public/AB6AXuCFxJ3QXPxvSONI21tIppEnXusRtXhs0IB5D_BqYLQdpO_qP3U0BkRFoKxPvRsxFPk1h-H6zg85kqfIwestz1I82gw_VEozvDmZwT7NvCN_7UwjJaTQWWDmzML1tZNpH_go0pnh3PMWQPDdh2zqE-o14iiXlaWZQU0NI29QIaD6XRQzNKPMiGYurpIyvujbWtDNKXSpC7UsxyidfoRY2rnb2gUakRpEoBd4Gi3Gg9VQdtOdrViYlfnUoBUnsxLEPD3MHanCOrGjNCcI"
-            )
-        )
-    }
+    val items = parseBTSProducts(component.props?.get("products"))
+    if (items.isEmpty()) return
 
     Column(
         modifier = Modifier
@@ -665,13 +639,12 @@ private fun BTSNavItem(
 
 // ============= Helper Functions =============
 
-private fun parseBTSProducts(data: Any?): List<BTSProduct> {
-    if (data == null) return emptyList()
+internal fun parseBTSProducts(data: com.google.gson.JsonElement?): List<BTSProduct> {
+    if (data == null || data.isJsonNull) return emptyList()
     return try {
         val gson = Gson()
-        val json = gson.toJson(data)
         val type = object : TypeToken<List<BTSProduct>>() {}.type
-        gson.fromJson(json, type)
+        gson.fromJson(data, type)
     } catch (e: Exception) {
         emptyList()
     }

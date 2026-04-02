@@ -1,61 +1,15 @@
 import { Request, Response } from 'express';
 import { Service } from '../models/service.model';
-import { ServiceType, IServiceType } from '../models/serviceType.model'; // Assuming export
+import { ServiceType } from '../models/serviceType.model';
 import { AuditLog } from '../models/auditLog.model';
 import { logger } from '../utils/logger';
 import slugify from 'slugify';
-
-// Helper to validate dynamic data against schema fields
-const validateDynamicData = (data: any, fields: any[]) => {
-    const errors: string[] = [];
-
-    fields.forEach((field) => {
-        const value = data[field.key];
-
-        // Required check
-        if (field.required && (value === undefined || value === null || value === '')) {
-            errors.push(`Field '${field.label}' (${field.key}) is required.`);
-        }
-
-        // Type validation (basic)
-        if (value !== undefined && value !== null) {
-            if (field.type === 'number' && typeof value !== 'number') {
-                errors.push(`Field '${field.label}' must be a number.`);
-            }
-            // Add more type checks as needed (date, boolean, etc.)
-
-            // Min/Max validation for numbers
-            if (field.type === 'number' && field.validation) {
-                if (field.validation.min !== undefined && value < field.validation.min) {
-                    errors.push(`Field '${field.label}' must be at least ${field.validation.min}.`);
-                }
-                if (field.validation.max !== undefined && value > field.validation.max) {
-                    errors.push(`Field '${field.label}' must be at most ${field.validation.max}.`);
-                }
-            }
-
-            // Regex validation
-            if (field.type === 'text' && field.validation?.regex) {
-                try {
-                    const regex = new RegExp(field.validation.regex);
-                    if (!regex.test(value)) {
-                        errors.push(`Field '${field.label}' format is invalid.`);
-                    }
-                } catch (e) {
-                    logger.warn(`Invalid regex for field ${field.key}`);
-                }
-            }
-        }
-    });
-
-    return errors;
-};
 
 export const createService = async (req: Request, res: Response) => {
     try {
         const {
             name,
-            serviceTypeCode,
+            serviceTypeId,
             price,
             description,
             images,
@@ -63,46 +17,34 @@ export const createService = async (req: Request, res: Response) => {
             location
         } = req.body;
 
-        const providerId = (req as any).user?.id; // Assumes provider is creating
+        const providerId = (req as any).user?.id;
 
-        // 1. Fetch Latest Published Schema
-        const serviceType = await ServiceType.findOne({
-            code: serviceTypeCode,
-            status: 'PUBLISHED'
-        }).sort({ version: -1 });
-
+        // Validate service type exists
+        const serviceType = await ServiceType.findById(serviceTypeId);
         if (!serviceType) {
-            return res.status(404).json({ error: 'Service Type schema not found or not published.' });
+            return res.status(404).json({ error: 'Service Type not found.' });
         }
 
-        // 2. Validate Dynamic Data
-        const validationErrors = validateDynamicData(data || {}, serviceType.fields);
-        if (validationErrors.length > 0) {
-            return res.status(400).json({ error: 'Validation failed', details: validationErrors });
-        }
-
-        // 3. Generate Slug
+        // Generate Slug
         let slug = slugify(name, { lower: true, strict: true });
-        // Simple uniqueness check (in real world, retry with suffix)
         const existingSlug = await Service.findOne({ slug });
         if (existingSlug) {
             slug = `${slug}-${Date.now()}`;
         }
 
-        // 4. Create Service
         const newService = await Service.create({
             name,
             slug,
             providerId,
             serviceTypeId: serviceType._id,
-            serviceTypeCode: serviceType.code,
-            serviceTypeVersion: serviceType.version, // Snapshot version
+            serviceTypeCode: serviceType.slug,
+            serviceTypeVersion: 1,
             data: data || {},
             price,
             images,
             description,
             location,
-            status: 'DRAFT' // Default to draft
+            status: 'DRAFT'
         });
 
         await AuditLog.create({
@@ -110,7 +52,7 @@ export const createService = async (req: Request, res: Response) => {
             action: 'SERVICE_CREATE',
             entityType: 'SERVICE',
             entityId: newService._id.toString(),
-            metadata: { serviceTypeCode, version: serviceType.version }
+            metadata: { serviceTypeId }
         });
 
         res.status(201).json(newService);
@@ -130,35 +72,11 @@ export const updateService = async (req: Request, res: Response) => {
         const service = await Service.findById(id);
         if (!service) return res.status(404).json({ error: 'Service not found' });
 
-        // Authorization check (Provider owns service OR Super Admin)
-        // For strictness, if providerId is stored as string/ObjectId, compare strings
         if (service.providerId.toString() !== userId && (req as any).user.role !== 'SUPER_ADMIN') {
             return res.status(403).json({ error: 'Not authorized to update this service' });
         }
 
-        // If updating 'data', we must re-validate against THE SAME version schema used on creation
-        // to ensure integrity, OR we separate "Migration" logic.
-        if (updates.data) {
-            const originalSchema = await ServiceType.findOne({
-                code: service.serviceTypeCode,
-                version: service.serviceTypeVersion
-            });
-
-            if (originalSchema) {
-                const validationErrors = validateDynamicData(updates.data, originalSchema.fields);
-                if (validationErrors.length > 0) {
-                    return res.status(400).json({ error: 'Validation failed', details: validationErrors });
-                }
-            } else {
-                logger.warn(`Schema version ${service.serviceTypeVersion} for ${service.serviceTypeCode} missing during update.`);
-                // Proceed with caution or block? Allowing for now but logging.
-            }
-        }
-
         Object.assign(service, updates);
-
-        // If name changed, update slug? Maybe not to keep URLs stable.
-
         await service.save();
 
         await AuditLog.create({
@@ -183,7 +101,7 @@ export const getServices = async (req: Request, res: Response) => {
             page = 1,
             limit = 10,
             status,
-            serviceTypeCode,
+            serviceTypeId,
             providerId,
             search
         } = req.query;
@@ -191,7 +109,7 @@ export const getServices = async (req: Request, res: Response) => {
         const query: any = {};
 
         if (status) query.status = status;
-        if (serviceTypeCode) query.serviceTypeCode = serviceTypeCode;
+        if (serviceTypeId) query.serviceTypeId = serviceTypeId;
         if (providerId) query.providerId = providerId;
 
         if (search) {
@@ -205,7 +123,7 @@ export const getServices = async (req: Request, res: Response) => {
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(Number(limit))
-                .populate('providerId', 'name email'), // Populate basic provider info
+                .populate('providerId', 'name email'),
             Service.countDocuments(query)
         ]);
 
@@ -251,13 +169,12 @@ export const deleteService = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Not authorized to delete this service' });
         }
 
-        // Soft delete
         service.status = 'ARCHIVED';
         await service.save();
 
         await AuditLog.create({
             userId,
-            action: 'SERVICE_DELETE', // Soft delete
+            action: 'SERVICE_DELETE',
             entityType: 'SERVICE',
             entityId: id
         });
