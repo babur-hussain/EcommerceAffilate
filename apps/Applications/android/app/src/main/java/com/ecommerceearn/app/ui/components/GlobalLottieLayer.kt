@@ -15,6 +15,7 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
+import androidx.compose.ui.graphics.graphicsLayer
 
 
 /**
@@ -67,9 +68,13 @@ fun BoxScope.GlobalLottieLayer(layer: LottieLayerConfig) {
                 composition = composition,
                 iterations = if (layer.loop) LottieConstants.IterateForever else 1,
                 speed = layer.speed.toFloat(),
-                contentScale = if (layer.contentMode == "fill") ContentScale.Crop else ContentScale.Fit,
+                clipToCompositionBounds = false,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .rotate(layer.rotation?.toFloat() ?: 0f)
+                    .graphicsLayer { 
+                        clip = false
+                    }
             )
         }
     ) { measurables, constraints ->
