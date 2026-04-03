@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.offset
@@ -410,6 +411,19 @@ fun HomeHeaderWithContent(
     val headerState by headerViewModel.state.collectAsState()
     
     val listState = rememberLazyListState()
+    var topHeaderHeight by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    var stickyHeaderHeight by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+
+    val backgroundOffsetY by remember {
+        derivedStateOf {
+            when (listState.firstVisibleItemIndex) {
+                0 -> -listState.firstVisibleItemScrollOffset
+                1 -> -(topHeaderHeight + listState.firstVisibleItemScrollOffset)
+                else -> -(topHeaderHeight + stickyHeaderHeight + listState.firstVisibleItemScrollOffset)
+            }
+        }
+    }
+
     val showIcons by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex == 0
@@ -461,45 +475,47 @@ fun HomeHeaderWithContent(
             .fillMaxSize()
             .background(pageBgColor)
     ) {
+        // --- 1. SCROLLING PARALLAX BACKGROUND & LOTTIE ---
+        // Exists safely outside LazyColumn, preventing any Compose scroll-culling drops!
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .requiredHeight(1000.dp)
+                .graphicsLayer { translationY = backgroundOffsetY.toFloat() }
+        ) {
+            Box(modifier = Modifier.fillMaxSize().background(lastGradientColor))
+            Box(modifier = Modifier.fillMaxWidth().height(250.dp).background(Brush.verticalGradient(colors = parsedGradient)))
+            
+            // Lottie layered natively behind the scrolling UI
+            if (lottieLayers.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .requiredHeight(450.dp)
+                        .offset(y = 220.dp)
+                        .graphicsLayer { clip = false }
+                ) {
+                    lottieLayers.forEach { layer ->
+                        GlobalLottieLayer(layer = layer)
+                    }
+                }
+            }
+        }
+
+        // --- 2. SCROLLABLE CONTENT ---
         androidx.compose.foundation.lazy.LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 100.dp) // iOS: .padding(.bottom, 100)
         ) {
-            // ── 1. Scrollable Top Header (Tabs + Location + Lottie) ──
+            // ── 1. Scrollable Top Header (Tabs + Location) ──
             item {
                 Box(modifier = Modifier.fillMaxWidth()) {
-                    // Gradient background
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .background(Brush.verticalGradient(colors = parsedGradient))
-                    )
-
-                    // Lottie animations — matchParentSize doesn't expand parent,
-                    // graphicsLayer(clip=false) allows overflow, requiredHeight forces 450dp
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .graphicsLayer { clip = false }
-                    ) {
-                        lottieLayers.forEach { layer ->
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .statusBarsPadding()
-                                    .requiredHeight(450.dp)
-                                    .align(Alignment.TopStart)
-                            ) {
-                                GlobalLottieLayer(layer = layer)
-                            }
-                        }
-                    }
-
                     // UI content
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .onGloballyPositioned { topHeaderHeight = it.size.height }
                             .statusBarsPadding()
                     ) {
                         TopCategoryBoxesView(
@@ -520,7 +536,8 @@ fun HomeHeaderWithContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(lastGradientColor)
+                        .onGloballyPositioned { stickyHeaderHeight = it.size.height }
+                        .background(if (showIcons) Color.Transparent else lastGradientColor)
                         .padding(top = stickyTopPadding)
                 ) {
                     SearchBarView()
@@ -537,7 +554,6 @@ fun HomeHeaderWithContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(lastGradientColor)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         val otherHeaderComponents = headerState.components.filter {
@@ -550,22 +566,34 @@ fun HomeHeaderWithContent(
                 }
             }
 
-            // ── 3. Fading gradient transition (header → page background) ──
+            // ── 4. Fading gradient transition (header → page background) ──
             item {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    lastGradientColor,
-                                    lastGradientColor.copy(alpha = 0.4f),
-                                    pageBgColor
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Block the giant blue background from item 1 with pageBgColor
+                    Box(modifier = Modifier.layout { measurable, constraints ->
+                        val p = measurable.measure(constraints)
+                        layout(p.width, 0) { p.place(0, 0) }
+                    }) {
+                        Box(modifier = Modifier.fillMaxWidth().requiredHeight(10000.dp).background(pageBgColor))
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        lastGradientColor,
+                                        lastGradientColor.copy(alpha = 0.4f),
+                                        pageBgColor
+                                    )
                                 )
                             )
-                        )
-                )
+                    )
+                }
             }
 
             // ── 5. Page content (iOS: SDUIPage(slug: pageSlug)) ──
