@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.animateDpAsState // Added
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -642,28 +643,38 @@ fun HomeHeaderWithContent(
                     }
                 } else {
                     item {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            // Layer 1 (BEHIND): pageBgColor fill + gradient fade at top
-                            Column(modifier = Modifier.fillMaxWidth().background(pageBgColor)) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(280.dp)
-                                        .background(
-                                            Brush.verticalGradient(
-                                                0.0f to lastGradientColor,
-                                                0.5f to lastGradientColor.copy(alpha = 0.4f),
-                                                0.75f to pageBgColor.copy(alpha = 0.7f),
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .drawBehind {
+                                    val fadeHeight = 280.dp.toPx()
+                                    // Top 280dp: transparent → pageBgColor (parallax gradient shows through)
+                                    drawRect(
+                                        brush = Brush.verticalGradient(
+                                            colorStops = arrayOf(
+                                                0.0f to Color.Transparent,
+                                                0.4f to Color.Transparent,
+                                                0.7f to pageBgColor.copy(alpha = 0.7f),
+                                                0.85f to pageBgColor.copy(alpha = 0.9f),
                                                 1.0f to pageBgColor
-                                            )
+                                            ),
+                                            startY = 0f,
+                                            endY = fadeHeight
+                                        ),
+                                        size = androidx.compose.ui.geometry.Size(size.width, fadeHeight)
+                                    )
+                                    // Below 280dp: solid pageBgColor
+                                    if (size.height > fadeHeight) {
+                                        drawRect(
+                                            color = pageBgColor,
+                                            topLeft = androidx.compose.ui.geometry.Offset(0f, fadeHeight),
+                                            size = androidx.compose.ui.geometry.Size(size.width, size.height - fadeHeight)
                                         )
-                                )
-                            }
-                            // Layer 2 (ON TOP): content with NO background so gradient peeks through
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                forYouState.components.forEach { component ->
-                                    SDUIRenderer(component, onProductClick = onProductClick)
+                                    }
                                 }
+                        ) {
+                            forYouState.components.forEach { component ->
+                                SDUIRenderer(component, onProductClick = onProductClick)
                             }
                         }
                     }
@@ -672,27 +683,37 @@ fun HomeHeaderWithContent(
                 // All other shopping categories — generic SDUIPage by slug (same as iOS)
                 val categorySlug = selectedCategory.lowercase().replace(" ", "-").replace("&", "and")
                 item {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        // Layer 1 (BEHIND): pageBgColor fill + gradient fade at top
-                        Column(modifier = Modifier.fillMaxWidth().background(pageBgColor)) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(280.dp)
-                                    .background(
-                                        Brush.verticalGradient(
-                                            0.0f to lastGradientColor,
-                                            0.5f to lastGradientColor.copy(alpha = 0.4f),
-                                            0.75f to pageBgColor.copy(alpha = 0.7f),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                val fadeHeight = 280.dp.toPx()
+                                // Top 280dp: transparent → pageBgColor (parallax gradient shows through)
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        colorStops = arrayOf(
+                                            0.0f to Color.Transparent,
+                                            0.4f to Color.Transparent,
+                                            0.7f to pageBgColor.copy(alpha = 0.7f),
+                                            0.85f to pageBgColor.copy(alpha = 0.9f),
                                             1.0f to pageBgColor
-                                        )
+                                        ),
+                                        startY = 0f,
+                                        endY = fadeHeight
+                                    ),
+                                    size = androidx.compose.ui.geometry.Size(size.width, fadeHeight)
+                                )
+                                // Below 280dp: solid pageBgColor
+                                if (size.height > fadeHeight) {
+                                    drawRect(
+                                        color = pageBgColor,
+                                        topLeft = androidx.compose.ui.geometry.Offset(0f, fadeHeight),
+                                        size = androidx.compose.ui.geometry.Size(size.width, size.height - fadeHeight)
                                     )
-                            )
-                        }
-                        // Layer 2 (ON TOP): content with NO background so gradient peeks through
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            SDUIPage(slug = categorySlug, onProductClick = onProductClick)
-                        }
+                                }
+                            }
+                    ) {
+                        SDUIPage(slug = categorySlug, onProductClick = onProductClick)
                     }
                 }
             } else {
