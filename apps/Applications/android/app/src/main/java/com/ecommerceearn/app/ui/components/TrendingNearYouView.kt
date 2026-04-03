@@ -46,7 +46,7 @@ fun TrendingNearYouView(
     LaunchedEffect(Unit) {
         try {
             // Replicating simplified fetch logic
-            val fetched = NetworkClient.apiService.getProducts(limit)
+            val fetched = NetworkClient.apiService.getProductsRaw(limit).products
             products = fetched
         } catch (e: Exception) {
             e.printStackTrace()

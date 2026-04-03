@@ -40,7 +40,7 @@ fun FiftyPercentOffZoneView(
 
     LaunchedEffect(Unit) {
         try {
-            val fetched = NetworkClient.apiService.getProducts(10)
+            val fetched = NetworkClient.apiService.getProductsRaw(10).products
             products = fetched
         } catch (e: Exception) {
             e.printStackTrace()

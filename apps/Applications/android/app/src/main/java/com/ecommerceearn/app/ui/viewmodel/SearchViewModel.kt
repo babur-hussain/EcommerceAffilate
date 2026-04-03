@@ -3,6 +3,7 @@ package com.ecommerceearn.app.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ecommerceearn.app.data.model.GlobalSearchResponse
+import com.ecommerceearn.app.data.remote.NetworkClient
 import com.ecommerceearn.app.utils.AppLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.FlowPreview
@@ -64,8 +65,8 @@ class SearchViewModel(private val categoryId: String? = null) : ViewModel() {
 
     private suspend fun fetchTrending() {
         try {
-            // val terms = NetworkClient.apiService.fetchTrendingTerms()
-            // _trendingTerms.value = terms
+            val terms = NetworkClient.apiService.fetchTrendingTerms()
+            _trendingTerms.value = terms
         } catch (e: Exception) {
             AppLogger.debug("Failed to fetch trending: ${e.message}")
         }
@@ -82,18 +83,18 @@ class SearchViewModel(private val categoryId: String? = null) : ViewModel() {
         _searchState.value = SearchState.Loading
         try {
             if (categoryId == "grocery") {
-                // val results = NetworkClient.apiService.fetchGrocerySearch(q)
-                // _globalResults.value = results
+                val results = NetworkClient.apiService.fetchGrocerySearch(q)
+                _globalResults.value = results
                 _groceryResults.value = null
             } else if (isUnifiedSearch) {
-                // Unified: Launch both (simulation logic)
-                // val pRes = NetworkClient.apiService.fetchGlobalSearch(q)
-                // val gRes = NetworkClient.apiService.fetchGrocerySearch(q)
-                // _globalResults.value = pRes
-                // _groceryResults.value = gRes
+                // Unified: Launch both
+                val pRes = NetworkClient.apiService.fetchGlobalSearch(q)
+                val gRes = NetworkClient.apiService.fetchGrocerySearch(q)
+                _globalResults.value = pRes
+                _groceryResults.value = gRes
             } else {
-                // val results = NetworkClient.apiService.fetchGlobalSearch(q)
-                // _globalResults.value = results
+                val results = NetworkClient.apiService.fetchGlobalSearch(q)
+                _globalResults.value = results
                 _groceryResults.value = null
             }
             _searchState.value = SearchState.Results

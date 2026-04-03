@@ -60,14 +60,14 @@ abstract class BasePageManager {
             if (categoryId != null) {
                 // Fetch for specific category (in real implementation, update APIService properly)
                 // We're stubbing to the basic getProducts for now since subCategory queries were added locally
-                _products.value = NetworkClient.apiService.getProducts(50)
+                _products.value = NetworkClient.apiService.getProductsRaw(50).products
             } else {
                 if (_subCategories.value.isEmpty()) {
-                    _products.value = NetworkClient.apiService.getProducts(50)
+                    _products.value = NetworkClient.apiService.getProductsRaw(50).products
                 } else {
                     val defs = _subCategories.value.map { category ->
                         scope.async {
-                            NetworkClient.apiService.getProducts(20) // Stub
+                            NetworkClient.apiService.getProductsRaw(20).products // Stub
                         }
                     }
                     val allProducts = defs.awaitAll().flatten()

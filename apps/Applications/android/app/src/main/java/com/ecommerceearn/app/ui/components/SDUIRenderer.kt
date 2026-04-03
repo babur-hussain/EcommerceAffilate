@@ -68,6 +68,12 @@ fun SDUIRenderer(
         "ProductGrid", "product_grid" -> RenderProductGrid(component, onProductClick)
         "recent_history" -> RecentHistoryView()
         "grocery_row" -> GroceryRowView()
+        "smart_basket" -> SmartBasketComponent(component)
+        "grocery_top_picks" -> GroceryTopPicksSection(component, onProductClick)
+        "grocery_promo_cards" -> GroceryPromoCardsComponent(component)
+        "grocery_shop_by_category" -> GroceryShopByCategoryComponent(component)
+        "grocery_special_picks" -> GrocerySpecialPicksComponent(component)
+        "grocery_wholesale_text" -> GroceryWholesaleTextComponent(component)
         "product_list_horizontal", "trending_near_you" -> TrendingNearYouView(onProductClick = onProductClick)
         "grand_kitchen" -> GrandKitchenSaleView()
         "fifty_percent_off" -> FiftyPercentOffZoneView()
@@ -139,6 +145,8 @@ fun SDUIRenderer(
         "lumiere_section", "percent_off_section" -> LumiereSectionView(component)
         "lumiere_newsletter", "percent_off_newsletter" -> LumiereNewsletterView(component)
         "lumiere_bottom_nav", "percent_off_nav" -> LumiereBottomNavView()
+        "powered_by_row" -> com.ecommerceearn.app.ui.components.PoweredByRowSDUI(component)
+        "spoil_yourself_title" -> com.ecommerceearn.app.ui.components.SpoilYourselfTitleSDUI(component)
         else -> {
             if (component.children?.isNotEmpty() == true) {
                 RenderContainer(component, onProductClick)
@@ -770,5 +778,5 @@ fun RenderBooksReadingLists(component: SDUIComponent) {
 
 @Composable
 fun RenderForYouBentoGrid(component: SDUIComponent) {
-    com.ecommerceearn.app.ui.pages.ForYouBentoGridSDUI()
+    com.ecommerceearn.app.ui.pages.ForYouBentoGridSDUI(component)
 }

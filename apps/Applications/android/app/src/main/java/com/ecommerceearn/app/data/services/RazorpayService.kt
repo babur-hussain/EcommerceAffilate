@@ -3,6 +3,13 @@ package com.ecommerceearn.app.data.services
 import android.app.Activity
 import com.ecommerceearn.app.utils.AppLogger
 import org.json.JSONObject
+import com.razorpay.Checkout
+import com.razorpay.PaymentData
+
+interface RazorpayResultListener {
+    fun onPaymentSuccess(razorpayPaymentID: String?, paymentData: PaymentData?)
+    fun onPaymentError(code: Int, response: String?, paymentData: PaymentData?)
+}
 
 data class PaymentSuccess(
     val razorpayPaymentId: String,
@@ -44,13 +51,15 @@ data class RazorpayOrderResponse(
  */
 object RazorpayService {
     private const val LIVE_KEY = "rzp_live_SIs9DUNl6RGng7"
+    var activeListener: RazorpayResultListener? = null
 
     fun init(activity: Activity) {
-        // Checkout.preload(activity.applicationContext) -- uncomment when SDK added
-        AppLogger.debug("RazorpayService initialized (SDK stub)")
+        Checkout.preload(activity.applicationContext)
+        AppLogger.debug("RazorpayService initialized (SDK stub removed)")
     }
 
     suspend fun createRazorpayOrder(orderId: String): RazorpayOrderResponse {
+        // Stub implementation, as backend order creation works in CheckoutViewModel via OrderService
         throw UnsupportedOperationException("Razorpay order creation not yet wired to API")
     }
 
@@ -75,12 +84,32 @@ object RazorpayService {
         prefillName: String?,
         themeColor: String = "#2563EB"
     ) {
-        // Requires Razorpay SDK. Stub logs until dependency is added.
         AppLogger.info("RazorpayService.openCheckout called for orderId=$orderId amount=$amount")
-        // val checkout = Checkout()
-        // checkout.setKeyID(LIVE_KEY)
-        // val options = JSONObject()
-        // ...
-        // checkout.open(activity, options)
+        val checkout = Checkout()
+        checkout.setKeyID(LIVE_KEY)
+        
+        try {
+            val options = JSONObject()
+            options.put("name", name ?: "Local For Vocal")
+            options.put("description", description ?: "Order Payment")
+            options.put("image", "https://api.lfvs.in/static/logo.png")
+            // amount in paise (already converted to * 100 in ViewModel normally or here)
+            options.put("amount", (amount * 100).toString()) 
+            options.put("order_id", orderId)
+            
+            val theme = JSONObject()
+            theme.put("color", themeColor)
+            options.put("theme", theme)
+            
+            val prefill = JSONObject()
+            prefill.put("email", prefillEmail ?: "support@lfvs.in")
+            prefill.put("contact", prefillPhone ?: "8888888888")
+            options.put("prefill", prefill)
+
+            checkout.open(activity, options)
+        } catch (e: Exception) {
+            AppLogger.error("Error in starting Razorpay Checkout: ${e.message}")
+            activeListener?.onPaymentError(Checkout.PAYMENT_CANCELED, "Error starting payment", null)
+        }
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets // Added
 import androidx.compose.foundation.layout.asPaddingValues // Added
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -125,22 +126,30 @@ fun TopCategoryBoxesView(
         TabType.values().forEach { tab ->
             val isActive = activeTab == tab
             
+            val isLightBackground = activeTab == TabType.Grocery
+            
             // Background Animation
             val backgroundColor by animateColorAsState(
-                targetValue = if (isActive) iOSActiveBg else Color.White.copy(alpha = 0.2f),
+                targetValue = if (isActive) iOSActiveBg else if (isLightBackground) Color.White else Color.White.copy(alpha = 0.2f),
                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
                 label = "bgColorAnim"
             )
 
             // Text Color
-            val textColor = if (isActive) Color(0xFF111827) else Color.White
+            val textColor = if (isActive) {
+                Color(0xFF111827)
+            } else if (isLightBackground) {
+                Color(0xFF4B5563) // readable gray on white background
+            } else {
+                Color.White
+            }
 
             Box(
                 modifier = Modifier
                     .weight(5f)
                     .height(50.dp)
                     .shadow(
-                        elevation = if (isActive) 4.dp else 0.dp,
+                        elevation = if (isActive || isLightBackground) 4.dp else 0.dp,
                         shape = RoundedCornerShape(10.dp),
                         spotColor = Color.Black.copy(alpha = 0.1f)
                     )
@@ -272,7 +281,7 @@ fun LocationBarView(
 
 // MARK: - SearchBarView
 @Composable
-fun SearchBarView() {
+fun SearchBarView(onSearchClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -285,6 +294,7 @@ fun SearchBarView() {
                 .weight(1f)
                 .height(46.dp)
                 .background(Color.White, RoundedCornerShape(10.dp))
+                .clickable { onSearchClick() }
                 .padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -406,6 +416,11 @@ fun HomeHeaderWithContent(
 ) {
     var activeTab by remember { mutableStateOf(TabType.Shopping) }
     var selectedCategory by remember { mutableStateOf("For You") }
+    var showGlobalSearch by remember { mutableStateOf(false) }
+
+    androidx.compose.runtime.LaunchedEffect(activeTab) {
+        com.ecommerceearn.app.data.manager.NavigationManager.setGroceryTabActive(activeTab == TabType.Grocery)
+    }
     val locationState by locationViewModel.locationState.collectAsState()
     val forYouState by forYouViewModel.state.collectAsState()
     val headerState by headerViewModel.state.collectAsState()
@@ -470,6 +485,11 @@ fun HomeHeaderWithContent(
     val lastGradientColor = parsedGradient.lastOrNull() ?: Color(0xFF2874F0)
     val pageBgColor = Color(0xFFF9FAFB)
 
+    if (activeTab == TabType.Grocery) {
+        com.ecommerceearn.app.ui.pages.GroceryContainerView(onOuterTabSelected = { activeTab = it })
+        return
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -483,8 +503,18 @@ fun HomeHeaderWithContent(
                 .requiredHeight(1000.dp)
                 .graphicsLayer { translationY = backgroundOffsetY.toFloat() }
         ) {
-            Box(modifier = Modifier.fillMaxSize().background(lastGradientColor))
-            Box(modifier = Modifier.fillMaxWidth().height(250.dp).background(Brush.verticalGradient(colors = parsedGradient)))
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0.0f to (parsedGradient.firstOrNull() ?: lastGradientColor),
+                            0.30f to lastGradientColor,
+                            0.85f to lastGradientColor, // Extends solid color completely past all UI components and Lottie
+                            1.0f to pageBgColor
+                        )
+                    )
+            )
             
             // Lottie layered natively behind the scrolling UI
             if (lottieLayers.isNotEmpty()) {
@@ -496,7 +526,9 @@ fun HomeHeaderWithContent(
                         .graphicsLayer { clip = false }
                 ) {
                     lottieLayers.forEach { layer ->
-                        GlobalLottieLayer(layer = layer)
+                        androidx.compose.runtime.key(layer.animationName) {
+                            GlobalLottieLayer(layer = layer)
+                        }
                     }
                 }
             }
@@ -540,7 +572,7 @@ fun HomeHeaderWithContent(
                         .background(if (showIcons) Color.Transparent else lastGradientColor)
                         .padding(top = stickyTopPadding)
                 ) {
-                    SearchBarView()
+                    SearchBarView(onSearchClick = { showGlobalSearch = true })
                     CategoriesSliderView(
                         selectedCategory = selectedCategory,
                         showIcons = showIcons,
@@ -566,42 +598,14 @@ fun HomeHeaderWithContent(
                 }
             }
 
-            // ── 4. Fading gradient transition (header → page background) ──
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Block the giant blue background from item 1 with pageBgColor
-                    Box(modifier = Modifier.layout { measurable, constraints ->
-                        val p = measurable.measure(constraints)
-                        layout(p.width, 0) { p.place(0, 0) }
-                    }) {
-                        Box(modifier = Modifier.fillMaxWidth().requiredHeight(10000.dp).background(pageBgColor))
-                    }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp)
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        lastGradientColor,
-                                        lastGradientColor.copy(alpha = 0.4f),
-                                        pageBgColor
-                                    )
-                                )
-                            )
-                    )
-                }
-            }
 
             // ── 5. Page content (iOS: SDUIPage(slug: pageSlug)) ──
             if (activeTab == TabType.Shopping && selectedCategory == "For You") {
                 // For You uses the dedicated ForYouViewModel (pre-loaded)
                 if (forYouState.isLoading) {
                     item {
-                        Box(modifier = Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxWidth().height(300.dp).background(pageBgColor), contentAlignment = Alignment.Center) {
                             androidx.compose.material3.CircularProgressIndicator(
                                 color = lastGradientColor
                             )
@@ -610,7 +614,7 @@ fun HomeHeaderWithContent(
                 } else if (forYouState.error != null) {
                     item {
                         Column(
-                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            modifier = Modifier.fillMaxWidth().background(pageBgColor).padding(32.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text("Could not load content", fontWeight = FontWeight.Medium, fontSize = 16.sp)
@@ -620,20 +624,24 @@ fun HomeHeaderWithContent(
                     }
                 } else {
                     items(forYouState.components) { component ->
-                        SDUIRenderer(component, onProductClick = onProductClick)
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            SDUIRenderer(component, onProductClick = onProductClick)
+                        }
                     }
                 }
             } else if (activeTab == TabType.Shopping) {
                 // All other shopping categories — generic SDUIPage by slug (same as iOS)
                 val categorySlug = selectedCategory.lowercase().replace(" ", "-").replace("&", "and")
                 item {
-                    SDUIPage(slug = categorySlug, onProductClick = onProductClick)
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        SDUIPage(slug = categorySlug, onProductClick = onProductClick)
+                    }
                 }
             } else {
                 // Non-shopping tabs (Services, Grocery, Influencers)
                 item {
                     Box(
-                        modifier = Modifier.fillMaxWidth().height(400.dp),
+                        modifier = Modifier.fillMaxWidth().height(400.dp).background(pageBgColor),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -645,6 +653,10 @@ fun HomeHeaderWithContent(
                 }
             }
         }
+    }
+
+    if (showGlobalSearch) {
+        com.ecommerceearn.app.ui.pages.GlobalSearchView(onDismiss = { showGlobalSearch = false })
     }
 }
 

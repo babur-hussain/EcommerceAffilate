@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.ecommerceearn.app.data.model.Product
 import com.ecommerceearn.app.data.remote.NetworkClient
+import com.ecommerceearn.app.data.manager.NavigationManager
 
 @Composable
 fun GroceryRowView() {
@@ -34,7 +35,7 @@ fun GroceryRowView() {
 
     LaunchedEffect(Unit) {
         try {
-            val fetched = NetworkClient.apiService.getProducts(6)
+            val fetched = NetworkClient.apiService.getProductsRaw(6).products
             products = fetched
         } catch (e: Exception) {
             e.printStackTrace()
@@ -101,7 +102,11 @@ fun GroceryRowView() {
                         for (j in 0 until columns) {
                             val index = i * columns + j
                             if (index < products.size) {
-                                GroceryProductCard(products[index], Modifier.weight(1f))
+                                Box(modifier = Modifier.weight(1f)) {
+                                    GroceryProductCard(products[index], onClick = {
+                                        NavigationManager.openGroceryProduct(products[index].id)
+                                    })
+                                }
                             } else {
                                 Spacer(modifier = Modifier.weight(1f))
                             }
@@ -137,62 +142,3 @@ fun GroceryRowView() {
     }
 }
 
-@Composable
-fun GroceryProductCard(product: Product, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .shadow(2.dp, RoundedCornerShape(8.dp))
-            .background(Color.White, RoundedCornerShape(8.dp))
-            .padding(6.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp),
-            contentAlignment = Alignment.Center
-        ) {
-             AsyncImage(
-                model = product.images.firstOrNull(),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit
-            )
-        }
-
-        Text(
-            text = product.displayName,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = safeParseColor("#374151"),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            lineHeight = 14.sp,
-            modifier = Modifier.height(30.dp)
-        )
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 4.dp)
-        ) {
-            Text(
-                text = "₹${product.price.toInt()}",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Box(
-                modifier = Modifier
-                    .background(safeParseColor("#10B981"), RoundedCornerShape(4.dp))
-                    .padding(4.dp)
-                    .clickable { }
-            ) {
-                 Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(12.dp)
-                )
-            }
-        }
-    }
-}

@@ -34,18 +34,40 @@ enum class OverlayDestination(val id: String) {
     CATEGORY_PAGE("categoryPage")
 }
 
+enum class MainTab {
+    HOME, CATEGORIES, CART, ACCOUNT
+}
+
 object NavigationManager {
     private val _selectedCategory = MutableStateFlow("For You")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
-    private val _activeTab = MutableStateFlow(TabType.SHOPPING)
-    val activeTab: StateFlow<TabType> = _activeTab.asStateFlow()
+    private val _activeTab = MutableStateFlow(MainTab.HOME)
+    val activeTab: StateFlow<MainTab> = _activeTab.asStateFlow()
 
     private val _activeOverlay = MutableStateFlow<OverlayDestination?>(null)
     val activeOverlay: StateFlow<OverlayDestination?> = _activeOverlay.asStateFlow()
 
     private val _categoryNavigation = MutableStateFlow<CategoryNavigationParams?>(null)
     val categoryNavigation: StateFlow<CategoryNavigationParams?> = _categoryNavigation.asStateFlow()
+
+    private val _groceryProductId = MutableStateFlow<String?>(null)
+    val groceryProductId: StateFlow<String?> = _groceryProductId.asStateFlow()
+
+    private val _isGroceryTabActive = MutableStateFlow(false)
+    val isGroceryTabActive: StateFlow<Boolean> = _isGroceryTabActive.asStateFlow()
+
+    fun setGroceryTabActive(active: Boolean) {
+        _isGroceryTabActive.value = active
+    }
+
+    fun openGroceryProduct(id: String) {
+        _groceryProductId.value = id
+    }
+
+    fun dismissGroceryProduct() {
+        _groceryProductId.value = null
+    }
 
     // Helper visibility states based on overlay
     val showBeautyPage: Boolean get() = _activeOverlay.value == OverlayDestination.BEAUTY
@@ -79,15 +101,18 @@ object NavigationManager {
         }
 
         when (url) {
-            "shopping" -> {
-                if (_activeTab.value == TabType.SHOPPING) {
-                    _selectedCategory.value = "For You"
-                }
-                _activeTab.value = TabType.SHOPPING
+            "shopping", "home" -> {
+                _activeTab.value = MainTab.HOME
             }
-            "services" -> _activeTab.value = TabType.SERVICES
-            "grocery" -> _activeTab.value = TabType.GROCERY
-            "influencers" -> _activeTab.value = TabType.INFLUENCERS
+            "categories" -> _activeTab.value = MainTab.CATEGORIES
+            "cart" -> _activeTab.value = MainTab.CART
+            "account" -> _activeTab.value = MainTab.ACCOUNT
+            
+            // Legacy internal routings
+            "services" -> AppLogger.debug("Services requested from within Home Tab")
+            "grocery" -> AppLogger.debug("Grocery requested from within Home Tab")
+            "influencers" -> AppLogger.debug("Influencers requested from within Home Tab")
+            
             "beauty-product" -> setOverlay(OverlayDestination.BEAUTY)
             "special-deal-new-style" -> setOverlay(OverlayDestination.SPECIAL_DEAL)
             "brand-new-arrival" -> setOverlay(OverlayDestination.BRAND_NEW_ARRIVAL)

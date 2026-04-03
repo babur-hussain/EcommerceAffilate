@@ -113,27 +113,74 @@ fun GlobalSearchView(
             }
             is SearchState.Results -> {
                 val products = globalResults?.products ?: emptyList()
-                if (products.isEmpty()) {
+                val suggestions = globalResults?.suggestions ?: emptyList()
+                
+                if (products.isEmpty() && suggestions.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("No results found for \"$query\"", color = Color.Gray)
                     }
                 } else {
                     LazyColumn {
-                        items(products) { product ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(modifier = Modifier.size(48.dp).background(Color(0xFFF3F4F6)))
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(product.name ?: "Unknown", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                                    Text("₹${product.price}", color = AppTheme.Colors.primary, fontWeight = FontWeight.Bold)
+                        // Live Suggestions first
+                        if (suggestions.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Recommendations",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF878787),
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                                )
+                            }
+                            items(suggestions) { suggestion ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { viewModel.setQuery(suggestion) }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(suggestion, fontSize = 14.sp, color = Color(0xFF212121))
                                 }
                             }
-                            Divider(color = Color(0xFFF0F0F0))
+                            item {
+                                Divider(color = Color(0xFFE0E0E0), modifier = Modifier.padding(horizontal = 16.dp))
+                            }
+                        }
+
+                        // Products
+                        if (products.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Products",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF878787),
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                                )
+                            }
+                            items(products) { product ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { 
+                                            // Optional: Handle product click
+                                            // NavigationManager.openGroceryProduct(product.id)
+                                        }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(modifier = Modifier.size(48.dp).background(Color(0xFFF3F4F6)))
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(product.name ?: "Unknown", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                                        Text("₹${product.price}", color = AppTheme.Colors.primary, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                Divider(color = Color(0xFFF0F0F0))
+                            }
                         }
                     }
                 }

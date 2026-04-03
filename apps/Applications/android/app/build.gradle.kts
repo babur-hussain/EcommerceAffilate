@@ -87,4 +87,7 @@ dependencies {
 
     // Lottie Animations
     implementation("com.airbnb.android:lottie-compose:6.4.0")
+
+    // Razorpay Integration
+    implementation("com.razorpay:checkout:1.6.33")
 }

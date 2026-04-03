@@ -7,11 +7,14 @@ import com.ecommerceearn.app.data.manager.AuthManager
 import com.ecommerceearn.app.data.model.Product
 import com.ecommerceearn.app.data.model.UserAddress
 import com.ecommerceearn.app.data.services.OrderService
+import com.ecommerceearn.app.data.services.RazorpayOrderResponse
 import com.ecommerceearn.app.data.services.RazorpayService
+import com.ecommerceearn.app.data.services.RazorpayResultListener
 import com.ecommerceearn.app.data.services.AddressPayload
 import com.ecommerceearn.app.data.services.OrderItem
 import com.ecommerceearn.app.data.services.LastChanceOfferPayload
 import com.ecommerceearn.app.utils.AppLogger
+import com.razorpay.PaymentData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +31,7 @@ data class CheckoutItem(
 
 class CheckoutViewModel(
     val items: List<CheckoutItem>
-) : ViewModel() {
+) : ViewModel(), RazorpayResultListener {
 
     // Properties converted to StateFlows for Jetpack Compose
     
@@ -105,6 +108,8 @@ class CheckoutViewModel(
 
     init {
         _selectedUpsells.value = items.flatMap { it.selectedOfferIds }.toSet()
+        RazorpayService.activeListener = this
+        fetchAddresses()
     }
 
     val currentUserAddress: UserAddress?
@@ -169,6 +174,10 @@ class CheckoutViewModel(
     fun setDonation(don: Int?) { _selectedDonation.value = don }
     fun setIsPriceDetailsVisible(vis: Boolean) { _isPriceDetailsVisible.value = vis }
     fun setIsPaymentViewVisible(vis: Boolean) { _isPaymentViewVisible.value = vis }
+    fun setPaymentSuccess(vis: Boolean) { _showPaymentSuccess.value = vis }
+    fun setPaymentFailed(vis: Boolean) { _showPaymentFailed.value = vis }
+    fun setPaymentCancelled(vis: Boolean) { _showPaymentCancelled.value = vis }
+    fun setShowRazorpay(vis: Boolean) { _showRazorpay.value = vis }
 
     fun fetchAddresses() {
         viewModelScope.launch {
@@ -339,6 +348,20 @@ class CheckoutViewModel(
         viewModelScope.launch {
             delay(500)
             _showPaymentCancelled.value = true
+        }
+    }
+
+    override fun onPaymentSuccess(razorpayPaymentID: String?, paymentData: PaymentData?) {
+        val orderId = paymentData?.orderId ?: _createdOrderId.value ?: ""
+        val signature = paymentData?.signature ?: ""
+        handleRazorpaySuccess(razorpayPaymentID ?: "", orderId, signature)
+    }
+
+    override fun onPaymentError(code: Int, response: String?, paymentData: PaymentData?) {
+        if (code == com.razorpay.Checkout.PAYMENT_CANCELED) {
+            handleRazorpayCancelled()
+        } else {
+            handleRazorpayFailure(response ?: "Payment Error")
         }
     }
 }

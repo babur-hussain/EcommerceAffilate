@@ -69,7 +69,8 @@ fun BoxScope.GlobalLottieLayer(layer: LottieLayerConfig) {
                 iterations = if (layer.loop) LottieConstants.IterateForever else 1,
                 speed = layer.speed.toFloat(),
                 clipToCompositionBounds = false,
-                contentScale = ContentScale.Fit,
+                renderMode = com.airbnb.lottie.RenderMode.SOFTWARE,
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
                 modifier = Modifier
                     .rotate(layer.rotation?.toFloat() ?: 0f)
                     .graphicsLayer { 

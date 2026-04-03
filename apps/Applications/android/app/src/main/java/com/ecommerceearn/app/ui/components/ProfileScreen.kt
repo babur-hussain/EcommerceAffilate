@@ -4,14 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,64 +19,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.ecommerceearn.app.data.manager.AuthManager
-import com.ecommerceearn.app.data.model.AccountLayout
-import com.ecommerceearn.app.data.model.LayoutItem
-import com.ecommerceearn.app.data.model.LayoutSection
-import com.ecommerceearn.app.data.remote.NetworkClient
-import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen() {
     val user by AuthManager.userState.collectAsState()
-    val scope = rememberCoroutineScope()
-    var accountLayout by remember { mutableStateOf<AccountLayout?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
     var showLogin by remember { mutableStateOf(false) }
-    var showOrders by remember { mutableStateOf(false) }
-    
-    // Log on recomposition
-    android.util.Log.d("ProfileScreen", "Recomposing. user: ${user?.email}, showLogin: $showLogin")
 
-    // Fetch dynamic layout when user is logged in
-    LaunchedEffect(user) {
-        if (user != null) {
-            isLoading = true
-            try {
-               accountLayout = NetworkClient.apiService.getAccountLayout()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
-    if (showOrders) {
-        MyOrdersScreen(onBackClick = { showOrders = false })
-    } else if (showLogin) {
+    if (showLogin) {
         LoginScreen(onDismiss = { showLogin = false })
     } else {
         if (user == null) {
-            GuestProfileView(onLoginClick = { showLogin = true })
+            LoggedOutView(onLoginClick = { showLogin = true })
         } else {
-            UserProfileView(
-                user = user!!,
-                layout = accountLayout,
-                onLogout = { AuthManager.logout() },
-                onOrdersClick = { showOrders = true }
-            )
+            LoggedInView(user = user!!, onLogout = { AuthManager.logout() })
         }
     }
 }
 
 @Composable
-fun GuestProfileView(onLoginClick: () -> Unit) {
+fun LoggedOutView(onLoginClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -88,59 +53,53 @@ fun GuestProfileView(onLoginClick: () -> Unit) {
         Icon(
             imageVector = Icons.Default.AccountCircle,
             contentDescription = null,
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier.size(64.dp),
             tint = Color(0xFFD1D5DB)
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "You are not signed in",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1F2937)
+            text = "You're not signed in",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF111827)
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = onLoginClick,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2874F0)),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            contentPadding = PaddingValues(horizontal = 32.dp, vertical = 12.dp)
         ) {
-            Text("Sign In / Sign Up", color = Color.White)
+            Text("Sign In", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
 
 @Composable
-fun UserProfileView(
-    user: com.ecommerceearn.app.data.model.User,
-    layout: AccountLayout?,
-    onLogout: () -> Unit,
-    onOrdersClick: () -> Unit
-) {
+fun LoggedInView(user: com.ecommerceearn.app.data.model.User, onLogout: () -> Unit) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF3F4F6))
     ) {
-        // Header
         item {
-            ProfileHeader(user)
+            HeaderSection(user)
         }
-
-        // Quick Links Grid
         item {
-            QuickLinksGrid(onOrdersClick = onOrdersClick)
+            QuickLinksGrid()
+            Spacer(modifier = Modifier.height(8.dp))
         }
-
-        // Dynamic Sections
-        if (layout != null) {
-            items(layout.sections) { section ->
-                LayoutSectionView(section)
-            }
-        }
-
-        // Logout Button
         item {
-            Box(modifier = Modifier.padding(16.dp)) {
+            AccountSettingsSection()
+        }
+        item {
+            SettingsSection()
+        }
+        item {
+            SupportSection()
+        }
+        item {
+            Box(modifier = Modifier.padding(horizontal = 16.dp).padding(top = 20.dp, bottom = 40.dp)) {
                 Button(
                     onClick = onLogout,
                     modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -148,31 +107,52 @@ fun UserProfileView(
                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Log Out", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                    Text("Log Out", color = Color(0xFFEF4444), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
 
 @Composable
-fun ProfileHeader(user: com.ecommerceearn.app.data.model.User) {
-    Column(
+fun HeaderSection(user: com.ecommerceearn.app.data.model.User) {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(Color(0xFFF0F5FF))
             .padding(16.dp)
-            .padding(top = 24.dp) // Status bar padding
+            .padding(top = 24.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!user.profileImage.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = user.profileImage,
+                        contentDescription = null,
+                        modifier = Modifier.size(56.dp).clip(CircleShape)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = user.email, // Or Name
+                    text = user.name.ifEmpty { "User" },
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF111827)
@@ -181,16 +161,20 @@ fun ProfileHeader(user: com.ecommerceearn.app.data.model.User) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Explore ", fontSize = 14.sp, color = Color(0xFF4B5563))
                     Text(
-                        text = user.membershipStatus ?: "Plus",
+                        text = "Plus",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.ExtraBold,
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                         color = Color(0xFF4B5563)
                     )
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF6B7280))
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp),
+                        tint = Color(0xFF6B7280)
+                    )
                 }
             }
-
             Surface(
                 shape = RoundedCornerShape(20.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB)),
@@ -200,7 +184,7 @@ fun ProfileHeader(user: com.ecommerceearn.app.data.model.User) {
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Outlined.Bolt, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color(0xFFF59E0B)) // Flash/Coin icon
+                    Icon(Icons.Outlined.Bolt, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color(0xFFF59E0B))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "${user.coins}",
@@ -215,113 +199,116 @@ fun ProfileHeader(user: com.ecommerceearn.app.data.model.User) {
 }
 
 @Composable
-fun QuickLinksGrid(onOrdersClick: () -> Unit) {
-    Row(
+fun QuickLinksGrid() {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        QuickLinkItem(
-            icon = Icons.Outlined.Inventory2, // Cube/Orders
-            label = "Orders",
-            modifier = Modifier.weight(1f).clickable { onOrdersClick() }
-        )
-        QuickLinkItem(
-            icon = Icons.Outlined.FavoriteBorder, // Heart/Wishlist
-            label = "Wishlist",
-            modifier = Modifier.weight(1f)
-        )
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        QuickLinkItem(
-            icon = Icons.Outlined.AccountBalanceWallet, // Wallet
-            label = "Wallet",
-            modifier = Modifier.weight(1f)
-        )
-        QuickLinkItem(
-            icon = Icons.Outlined.HeadsetMic, // Help
-            label = "Help Center",
-            modifier = Modifier.weight(1f)
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            QuickLinkButton("Orders", Icons.Outlined.Inventory2, Color(0xFF2874F0), Modifier.weight(1f)) {}
+            QuickLinkButton("Wishlist", Icons.Outlined.FavoriteBorder, Color(0xFF2874F0), Modifier.weight(1f)) {}
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            QuickLinkButton("Wallet", Icons.Outlined.AccountBalanceWallet, Color(0xFF2874F0), Modifier.weight(1f)) {}
+            QuickLinkButton("Returns", Icons.Outlined.AssignmentReturn, Color(0xFF2874F0), Modifier.weight(1f)) {}
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            QuickLinkButton("Smart Basket", Icons.Outlined.ShoppingBasket, Color(0xFFF97316), Modifier.weight(1f)) {}
+            Spacer(modifier = Modifier.weight(1f))
+        }
     }
 }
 
 @Composable
-fun QuickLinkItem(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
+fun QuickLinkButton(title: String, icon: ImageVector, iconTint: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Surface(
-        modifier = modifier.height(60.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB)),
         color = Color.White
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
-            Icon(icon, contentDescription = null, tint = Color(0xFF2874F0), modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(label, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1F2937))
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1F2937))
         }
     }
 }
 
 @Composable
-fun LayoutSectionView(section: LayoutSection) {
-    Column(
-        modifier = Modifier
-            .padding(top = 8.dp)
-            .background(Color.White)
-            .fillMaxWidth()
-    ) {
+fun AccountSettingsSection() {
+    Column(modifier = Modifier.padding(top = 8.dp).fillMaxWidth().background(Color.White)) {
+        SectionTitle("Account Settings")
+        SettingsRow("Edit Profile", "Update your personal information", Icons.Outlined.Person) {}
+        SettingsRow("Saved Addresses", "Manage delivery addresses", Icons.Outlined.LocationOn) {}
+        SettingsRow("Payment Methods", "Cards, UPI, Wallets", Icons.Outlined.CreditCard) {}
+        SettingsRow("Notifications", "Manage notification preferences", Icons.Outlined.Notifications, isLast = true) {}
+    }
+}
+
+@Composable
+fun SettingsSection() {
+    Column(modifier = Modifier.padding(top = 8.dp).fillMaxWidth().background(Color.White)) {
+        SectionTitle("Settings")
+        SettingsRow("Language", "English", Icons.Outlined.Language) {}
+        SettingsRow("Dark Mode", "Coming soon", Icons.Outlined.DarkMode) {}
+        SettingsRow("Sell on Platform", "Become a seller", Icons.Outlined.Storefront) {}
+        SettingsRow("Privacy Center", "Manage your data", Icons.Outlined.Shield, isLast = true) {}
+    }
+}
+
+@Composable
+fun SupportSection() {
+    Column(modifier = Modifier.padding(top = 8.dp).fillMaxWidth().background(Color.White)) {
+        SectionTitle("Support")
+        SettingsRow("Help Center", "FAQs and support", Icons.Outlined.HelpOutline) {}
+        SettingsRow("Terms & Conditions", null, Icons.Outlined.Description) {}
+        SettingsRow("Privacy Policy", null, Icons.Outlined.PanTool, isLast = true) {}
+    }
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = section.title,
+            text = title,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF111827),
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
-        Divider(color = Color(0xFFF3F4F6))
-        
-        section.items.forEachIndexed { index, item ->
-            LayoutItemView(item, isLast = index == section.items.lastIndex)
-        }
+        HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
     }
 }
 
 @Composable
-fun LayoutItemView(item: LayoutItem, isLast: Boolean) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* Handle DeepLink */ }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Icon (Using a generic icon for now, ideally map item.icon string to vector)
-        Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF2874F0), modifier = Modifier.size(24.dp))
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
-        Column(modifier = Modifier.weight(1f)) {
-            Text(item.title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF111827))
-             if (!item.subtitle.isNullOrBlank()) {
-                 Text(item.subtitle, fontSize = 12.sp, color = Color(0xFF6B7280))
-             }
+fun SettingsRow(title: String, subtitle: String?, icon: ImageVector, isLast: Boolean = false, onClick: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().clickable { onClick() }.background(Color.White)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = null, tint = Color(0xFF2874F0), modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF111827))
+                if (subtitle != null) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(subtitle, fontSize = 12.sp, color = Color(0xFF6B7280))
+                }
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF9CA3AF), modifier = Modifier.size(16.dp))
         }
-        
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF9CA3AF), modifier = Modifier.size(20.dp))
-    }
-    
-    if (!isLast) {
-        Divider(color = Color(0xFFF3F4F6), modifier = Modifier.padding(start = 16.dp))
+        if (!isLast) {
+            HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp, modifier = Modifier.padding(start = 52.dp))
+        }
     }
 }

@@ -39,7 +39,7 @@ interface ApiService {
     suspend fun getProductById(@Path("id") id: String): Product
 
     @GET("products")
-    suspend fun getProducts(@Query("limit") limit: Int): List<Product>
+    suspend fun getProductsRaw(@Query("limit") limit: Int): ProductListResponse
 
     // Order Endpoints
     @GET("orders/mine")
@@ -60,4 +60,31 @@ interface ApiService {
 
     @POST("cart/clear")
     suspend fun clearCart(): Cart
+
+    // Grocery Specific
+    @GET("products/public/grocery")
+    suspend fun getGroceryProductsRaw(@Query("limit") limit: Int): ProductListResponse
+
+    @GET("products/public/grocery")
+    suspend fun getProductsBySubCategoryIdsRaw(
+        @Query("subCategory") subCategoryIds: String,
+        @Query("limit") limit: Int
+    ): ProductListResponse
+
+    // Search Endpoints
+    @GET("search/global")
+    suspend fun fetchGlobalSearch(@Query("q") query: String): com.ecommerceearn.app.data.model.GlobalSearchResponse
+
+    @GET("search/grocery")
+    suspend fun fetchGrocerySearch(@Query("q") query: String): com.ecommerceearn.app.data.model.GlobalSearchResponse
+
+    @GET("search/trending")
+    suspend fun fetchTrendingTerms(): List<String>
 }
+
+data class ProductListResponse(val products: List<Product>)
+
+suspend fun ApiService.getProducts(limit: Int): List<Product> = getProductsRaw(limit).products
+suspend fun ApiService.getGroceryProducts(limit: Int): List<Product> = getGroceryProductsRaw(limit).products
+suspend fun ApiService.getProductsBySubCategoryIds(ids: List<String>, limit: Int): List<Product> = 
+    getProductsBySubCategoryIdsRaw(ids.joinToString(","), limit).products

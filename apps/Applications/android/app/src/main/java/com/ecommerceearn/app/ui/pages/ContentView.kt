@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.ecommerceearn.app.data.manager.NavigationManager
 import com.ecommerceearn.app.data.manager.OverlayDestination
-import com.ecommerceearn.app.data.manager.TabType
+import com.ecommerceearn.app.data.manager.MainTab
 import com.ecommerceearn.app.utils.AppTheme
 import com.ecommerceearn.app.ui.home.HomeHeaderWithContent
 
@@ -21,66 +21,67 @@ import com.ecommerceearn.app.ui.home.HomeHeaderWithContent
 fun ContentView() {
     val currentTab by NavigationManager.activeTab.collectAsState()
     val activeOverlay by NavigationManager.activeOverlay.collectAsState()
+    val isGroceryTabActive by NavigationManager.isGroceryTabActive.collectAsState()
 
     Scaffold(
         bottomBar = {
-            if (currentTab != TabType.GROCERY) {
+            if (!(currentTab == MainTab.HOME && isGroceryTabActive)) {
                 NavigationBar(
-                    containerColor = Color.White.copy(alpha = 0.9f),
-                    contentColor = AppTheme.Colors.primary
-                ) {
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                        label = { Text("Home") },
-                        selected = currentTab == TabType.SHOPPING,
-                        onClick = { NavigationManager.navigate("shopping") },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AppTheme.Colors.primary,
-                            unselectedIconColor = Color.Gray,
-                            selectedTextColor = AppTheme.Colors.primary,
-                            unselectedTextColor = Color.Gray,
-                            indicatorColor = Color.Transparent
-                        )
+                containerColor = Color.White.copy(alpha = 0.9f),
+                contentColor = AppTheme.Colors.primary
+            ) {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                    label = { Text("Home") },
+                    selected = currentTab == MainTab.HOME,
+                    onClick = { NavigationManager.navigate("home") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = AppTheme.Colors.primary,
+                        unselectedIconColor = Color.Gray,
+                        selectedTextColor = AppTheme.Colors.primary,
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
                     )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Window, contentDescription = "Services") },
-                        label = { Text("Services") },
-                        selected = currentTab == TabType.SERVICES,
-                        onClick = { NavigationManager.navigate("services") },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AppTheme.Colors.primary,
-                            unselectedIconColor = Color.Gray,
-                            selectedTextColor = AppTheme.Colors.primary,
-                            unselectedTextColor = Color.Gray,
-                            indicatorColor = Color.Transparent
-                        )
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Window, contentDescription = "Categories") },
+                    label = { Text("Categories") },
+                    selected = currentTab == MainTab.CATEGORIES,
+                    onClick = { NavigationManager.navigate("categories") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = AppTheme.Colors.primary,
+                        unselectedIconColor = Color.Gray,
+                        selectedTextColor = AppTheme.Colors.primary,
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
                     )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.ShoppingCart, contentDescription = "Cart") },
-                        label = { Text("Cart") },
-                        selected = false,
-                        onClick = { },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AppTheme.Colors.primary,
-                            unselectedIconColor = Color.Gray,
-                            selectedTextColor = AppTheme.Colors.primary,
-                            unselectedTextColor = Color.Gray,
-                            indicatorColor = Color.Transparent
-                        )
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.ShoppingCart, contentDescription = "Cart") },
+                    label = { Text("Cart") },
+                    selected = currentTab == MainTab.CART,
+                    onClick = { NavigationManager.navigate("cart") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = AppTheme.Colors.primary,
+                        unselectedIconColor = Color.Gray,
+                        selectedTextColor = AppTheme.Colors.primary,
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
                     )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Person, contentDescription = "Account") },
-                        label = { Text("Account") },
-                        selected = false,
-                        onClick = { },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AppTheme.Colors.primary,
-                            unselectedIconColor = Color.Gray,
-                            selectedTextColor = AppTheme.Colors.primary,
-                            unselectedTextColor = Color.Gray,
-                            indicatorColor = Color.Transparent
-                        )
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Person, contentDescription = "Account") },
+                    label = { Text("Account") },
+                    selected = currentTab == MainTab.ACCOUNT,
+                    onClick = { NavigationManager.navigate("account") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = AppTheme.Colors.primary,
+                        unselectedIconColor = Color.Gray,
+                        selectedTextColor = AppTheme.Colors.primary,
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
                     )
+                )
                 }
             }
         }
@@ -92,10 +93,10 @@ fun ContentView() {
                 .background(Color(0xFFF3F4F6))
         ) {
             when (currentTab) {
-                TabType.SHOPPING -> HomeTabContent()
-                TabType.SERVICES -> Text("Services Page")
-                TabType.GROCERY -> Text("Grocery Page")
-                TabType.INFLUENCERS -> Text("Influencers Page")
+                MainTab.HOME -> HomeTabContent()
+                MainTab.CATEGORIES -> CategoriesPageView()
+                MainTab.CART -> CartPageView()
+                MainTab.ACCOUNT -> AccountView()
             }
         }
 
