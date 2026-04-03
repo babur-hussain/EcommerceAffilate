@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.animateDpAsState // Added
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -429,13 +431,19 @@ fun HomeHeaderWithContent(
     var topHeaderHeight by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     var stickyHeaderHeight by remember { androidx.compose.runtime.mutableIntStateOf(0) }
 
+    val density = LocalDensity.current
+    val maxParallaxOffsetPx = with(density) { 1000.dp.toPx().toInt() }
+
     val backgroundOffsetY by remember {
         derivedStateOf {
-            when (listState.firstVisibleItemIndex) {
+            val raw = when (listState.firstVisibleItemIndex) {
                 0 -> -listState.firstVisibleItemScrollOffset
                 1 -> -(topHeaderHeight + listState.firstVisibleItemScrollOffset)
                 else -> -(topHeaderHeight + stickyHeaderHeight + listState.firstVisibleItemScrollOffset)
             }
+            // Clamp: never let the background scroll further than its own height
+            // so it disappears fully and never re-appears behind content below
+            raw.coerceAtLeast(-maxParallaxOffsetPx)
         }
     }
 
@@ -508,10 +516,22 @@ fun HomeHeaderWithContent(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            0.0f to (parsedGradient.firstOrNull() ?: lastGradientColor),
-                            0.30f to lastGradientColor,
-                            0.85f to lastGradientColor, // Extends solid color completely past all UI components and Lottie
-                            1.0f to pageBgColor
+                            colorStops = buildList {
+                                // Spread ALL JSON gradient colors across the visible header (0% to 55%)
+                                val headerFraction = 0.55f
+                                if (parsedGradient.size == 1) {
+                                    add(0f to parsedGradient[0])
+                                    add(headerFraction to parsedGradient[0])
+                                } else {
+                                    parsedGradient.forEachIndexed { i, color ->
+                                        val stop = (i.toFloat() / (parsedGradient.size - 1)) * headerFraction
+                                        add(stop to color)
+                                    }
+                                }
+                                // Then fade to page background
+                                add(0.85f to lastGradientColor)
+                                add(1.0f to pageBgColor)
+                            }.toTypedArray()
                         )
                     )
             )
@@ -598,8 +618,6 @@ fun HomeHeaderWithContent(
                 }
             }
 
-
-
             // ── 5. Page content (iOS: SDUIPage(slug: pageSlug)) ──
             if (activeTab == TabType.Shopping && selectedCategory == "For You") {
                 // For You uses the dedicated ForYouViewModel (pre-loaded)
@@ -623,9 +641,30 @@ fun HomeHeaderWithContent(
                         }
                     }
                 } else {
-                    items(forYouState.components) { component ->
+                    item {
                         Box(modifier = Modifier.fillMaxWidth()) {
-                            SDUIRenderer(component, onProductClick = onProductClick)
+                            // Layer 1 (BEHIND): pageBgColor fill + gradient fade at top
+                            Column(modifier = Modifier.fillMaxWidth().background(pageBgColor)) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(280.dp)
+                                        .background(
+                                            Brush.verticalGradient(
+                                                0.0f to lastGradientColor,
+                                                0.5f to lastGradientColor.copy(alpha = 0.4f),
+                                                0.75f to pageBgColor.copy(alpha = 0.7f),
+                                                1.0f to pageBgColor
+                                            )
+                                        )
+                                )
+                            }
+                            // Layer 2 (ON TOP): content with NO background so gradient peeks through
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                forYouState.components.forEach { component ->
+                                    SDUIRenderer(component, onProductClick = onProductClick)
+                                }
+                            }
                         }
                     }
                 }
@@ -634,7 +673,26 @@ fun HomeHeaderWithContent(
                 val categorySlug = selectedCategory.lowercase().replace(" ", "-").replace("&", "and")
                 item {
                     Box(modifier = Modifier.fillMaxWidth()) {
-                        SDUIPage(slug = categorySlug, onProductClick = onProductClick)
+                        // Layer 1 (BEHIND): pageBgColor fill + gradient fade at top
+                        Column(modifier = Modifier.fillMaxWidth().background(pageBgColor)) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(280.dp)
+                                    .background(
+                                        Brush.verticalGradient(
+                                            0.0f to lastGradientColor,
+                                            0.5f to lastGradientColor.copy(alpha = 0.4f),
+                                            0.75f to pageBgColor.copy(alpha = 0.7f),
+                                            1.0f to pageBgColor
+                                        )
+                                    )
+                            )
+                        }
+                        // Layer 2 (ON TOP): content with NO background so gradient peeks through
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            SDUIPage(slug = categorySlug, onProductClick = onProductClick)
+                        }
                     }
                 }
             } else {
