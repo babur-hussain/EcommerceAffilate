@@ -147,6 +147,24 @@ fun SDUIRenderer(
         "lumiere_bottom_nav", "percent_off_nav" -> LumiereBottomNavView()
         "powered_by_row" -> com.ecommerceearn.app.ui.components.PoweredByRowSDUI(component)
         "spoil_yourself_title" -> com.ecommerceearn.app.ui.components.SpoilYourselfTitleSDUI(component)
+        "beautiful_image_slider" -> RenderBeautifulImageSlider(component)
+        "eid_celebration_deals" -> RenderEidCelebrationDeals(component)
+        "consultation_banner" -> RenderConsultationBanner(component)
+        "furniture_deal_of_day" -> RenderFurnitureDealOfDay(component)
+        "furniture_top_brands" -> RenderFurnitureTopBrands(component)
+        "furniture_sponsorship_banner" -> RenderFurnitureSponsorshipBanner(component)
+        "furniture_grab_or_gone" -> RenderFurnitureGrabOrGone(component)
+        "furniture_shop_by_room" -> RenderFurnitureShopByRoom(component)
+        "furniture_samarth_store" -> RenderFurnitureSamarthStore(component)
+        "furniture_emi_offers" -> RenderFurnitureEmiOffers(component)
+        "furniture_top_furniture_brands" -> RenderFurnitureTopFurnitureBrands(component)
+        "furniture_shop_by_material" -> RenderFurnitureShopByMaterial(component)
+        "furniture_trending_now" -> RenderFurnitureTrendingNow(component)
+        "furniture_wishlist" -> RenderFurnitureWishlist(component)
+        "furniture_customer_reviews" -> RenderFurnitureCustomerReviews(component)
+        "furniture_everybody_list" -> RenderFurnitureEverybodyList(component)
+        "furniture_rare_finds" -> RenderFurnitureRareFinds(component)
+        "furniture_statement_pieces" -> RenderFurnitureStatementPieces(component)
         else -> {
             if (component.children?.isNotEmpty() == true) {
                 RenderContainer(component, onProductClick)
@@ -779,4 +797,179 @@ fun RenderBooksReadingLists(component: SDUIComponent) {
 @Composable
 fun RenderForYouBentoGrid(component: SDUIComponent) {
     com.ecommerceearn.app.ui.pages.ForYouBentoGridSDUI(component)
+}
+
+// ============= Festive & Seasonal =============
+
+@Composable
+fun RenderBeautifulImageSlider(component: SDUIComponent) {
+    val props = component.props ?: return
+    val title = props.getString("title")
+    // Support either "items" or "banners" based on iOS logic
+    val bannersArray = props.getArray("items") ?: props.getArray("banners")
+    val banners = parseItems<BeautifulBannerData>(bannersArray)
+    BeautifulImageSliderView(title, banners)
+}
+
+@Composable
+fun RenderEidCelebrationDeals(component: SDUIComponent) {
+    val props = component.props ?: return
+    val title = props.getString("title")
+    val backgroundImage = props.getString("backgroundImage")
+    val lanternsImage = props.getString("lanternsImage")
+    val items = parseItems<EidDealItem>(props.getArray("items"))
+    EidCelebrationDealsView(title, backgroundImage, lanternsImage, items)
+}
+
+@Composable
+fun RenderConsultationBanner(component: SDUIComponent) {
+    val props = component.props ?: return
+    val actionUrl = props.getString("actionUrl")
+    val title = props.getString("title") ?: ""
+    val callText = props.getString("callText") ?: ""
+    val phoneNumber = props.getString("phoneNumber") ?: ""
+    val poweredByText = props.getString("poweredByText") ?: ""
+    val providerName = props.getString("providerName") ?: ""
+    val doctorImage = props.getString("doctorImage") ?: ""
+
+    ConsultationBannerView(
+        actionUrl = actionUrl,
+        title = title,
+        callText = callText,
+        phoneNumber = phoneNumber,
+        poweredByText = poweredByText,
+        providerName = providerName,
+        doctorImage = doctorImage
+    )
+}
+
+@Composable
+fun RenderFurnitureDealOfDay(component: SDUIComponent) {
+    FurnitureDealOfDayView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureDealItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureTopBrands(component: SDUIComponent) {
+    FurnitureTopBrandsView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FBrandItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureSponsorshipBanner(component: SDUIComponent) {
+    FurnitureSponsorshipBannerView(
+        items = component.decodeItems("items", FurnitureBannerItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureGrabOrGone(component: SDUIComponent) {
+    FurnitureGrabOrGoneView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureGrabItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureShopByRoom(component: SDUIComponent) {
+    FurnitureShopByRoomView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureRoomItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureSamarthStore(component: SDUIComponent) {
+    FurnitureSamarthStoreView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureBannerItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureEmiOffers(component: SDUIComponent) {
+    FurnitureEmiOffersView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureEmiItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureTopFurnitureBrands(component: SDUIComponent) {
+    FurnitureTopFurnitureBrandsView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FBrandGridItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureShopByMaterial(component: SDUIComponent) {
+    FurnitureShopByMaterialView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureMaterialItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureTrendingNow(component: SDUIComponent) {
+    FurnitureTrendingNowView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureTrendingItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureWishlist(component: SDUIComponent) {
+    FurnitureWishlistView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        items = component.decodeItems("items", FurnitureWishlistItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureCustomerReviews(component: SDUIComponent) {
+    FurnitureCustomerReviewsView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureReviewItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureEverybodyList(component: SDUIComponent) {
+    FurnitureEverybodyListView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        items = component.decodeItems("items", FurnitureEverybodyItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureRareFinds(component: SDUIComponent) {
+    FurnitureRareFindsView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureRareFindItem::class.java)
+    )
+}
+
+@Composable
+fun RenderFurnitureStatementPieces(component: SDUIComponent) {
+    FurnitureStatementPiecesView(
+        title = component.props?.get("title")?.let { if (!it.isJsonNull) it.asString else "" } ?: "",
+        headerActionUrl = component.props?.get("headerActionUrl")?.let { if (!it.isJsonNull) it.asString else null },
+        items = component.decodeItems("items", FurnitureStatementPieceItem::class.java)
+    )
 }

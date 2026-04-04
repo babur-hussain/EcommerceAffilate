@@ -7,5 +7,6 @@ data class User(
     val phoneNumber: String? = null,
     val profileImage: String? = null,
     val membershipStatus: String? = "Basic",
-    val coins: Int = 0
+    val coins: Int = 0,
+    val role: String? = null
 )

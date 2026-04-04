@@ -15,6 +15,12 @@ import com.ecommerceearn.app.data.model.AuthResponse
 import com.ecommerceearn.app.data.model.UpdateCartRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
+import com.ecommerceearn.app.data.model.ServiceCategoryModel
+import com.ecommerceearn.app.data.model.ServiceSubCategoryModel
+import com.ecommerceearn.app.data.model.ServiceProviderListResponse
+import com.ecommerceearn.app.data.model.ServiceProviderModel
+import com.ecommerceearn.app.data.model.ServiceReviewListResponse
+import com.ecommerceearn.app.data.model.ServiceReviewModel
 
 interface ApiService {
     @GET("advanced-layout/{slug}")
@@ -80,6 +86,35 @@ interface ApiService {
 
     @GET("search/trending")
     suspend fun fetchTrendingTerms(): List<String>
+
+    // Service Marketplace APIs
+    @GET("service-categories")
+    suspend fun getServiceCategories(
+        @Query("isActive") isActive: Boolean = true
+    ): List<ServiceCategoryModel>
+
+    @GET("service-subcategories/by-category/{categoryId}")
+    suspend fun getServiceSubCategories(
+        @Path("categoryId") categoryId: String
+    ): List<ServiceSubCategoryModel>
+
+    @GET("service-providers")
+    suspend fun getServiceProviders(
+        @Query("serviceSubCategoryId") subCategoryId: String,
+        @Query("status") status: String = "APPROVED",
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): ServiceProviderListResponse
+
+    @GET("service-providers/{id}")
+    suspend fun getServiceProviderDetail(
+        @Path("id") id: String
+    ): ServiceProviderModel
+
+    @GET("service-reviews/by-provider/{providerId}")
+    suspend fun getServiceReviews(
+        @Path("providerId") providerId: String
+    ): ServiceReviewListResponse
 }
 
 data class ProductListResponse(val products: List<Product>)

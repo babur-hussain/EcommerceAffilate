@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.ecommerceearn.app.data.manager.NavigationManager
 import com.ecommerceearn.app.data.manager.OverlayDestination
 import com.ecommerceearn.app.data.manager.MainTab
@@ -22,15 +23,19 @@ fun ContentView() {
     val currentTab by NavigationManager.activeTab.collectAsState()
     val activeOverlay by NavigationManager.activeOverlay.collectAsState()
     val isGroceryTabActive by NavigationManager.isGroceryTabActive.collectAsState()
+    val isServicesTabActive by NavigationManager.isServicesTabActive.collectAsState()
+    val isInfluencersTabActive by NavigationManager.isInfluencersTabActive.collectAsState()
 
     Scaffold(
         bottomBar = {
-            if (!(currentTab == MainTab.HOME && isGroceryTabActive)) {
+            if (!(currentTab == MainTab.HOME && (isGroceryTabActive || isServicesTabActive || isInfluencersTabActive))) {
                 NavigationBar(
-                containerColor = Color.White.copy(alpha = 0.9f),
-                contentColor = AppTheme.Colors.primary
-            ) {
-                NavigationBarItem(
+                    modifier = Modifier.height(65.dp),
+                    windowInsets = WindowInsets(0, 0, 0, 0),
+                    containerColor = Color.White.copy(alpha = 0.9f),
+                    contentColor = AppTheme.Colors.primary
+                ) {
+                    NavigationBarItem(
                     icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                     label = { Text("Home") },
                     selected = currentTab == MainTab.HOME,

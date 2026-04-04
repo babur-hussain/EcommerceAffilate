@@ -129,11 +129,11 @@ fun TopCategoryBoxesView(
         TabType.values().forEach { tab ->
             val isActive = activeTab == tab
             
-            val isLightBackground = activeTab == TabType.Grocery
+            val isLightBackground = activeTab == TabType.Grocery || activeTab == TabType.Services
             
             // Background Animation
             val backgroundColor by animateColorAsState(
-                targetValue = if (isActive) iOSActiveBg else if (isLightBackground) Color.White else Color.White.copy(alpha = 0.2f),
+                targetValue = if (isActive) iOSActiveBg else if (isLightBackground) Color(0xFFF3F4F6) else Color.White.copy(alpha = 0.2f),
                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
                 label = "bgColorAnim"
             )
@@ -165,7 +165,6 @@ fun TopCategoryBoxesView(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    // Compose doesn't have SF Symbols, using basic placeholder logic or Material Icons mapping
                     val iconVector = when (tab) {
                         TabType.Shopping -> Icons.Default.ShoppingCart
                         TabType.Services -> Icons.Default.Build
@@ -176,7 +175,7 @@ fun TopCategoryBoxesView(
                     Icon(
                         imageVector = iconVector,
                         contentDescription = tab.id,
-                        tint = if (isActive) Color.Black else tab.color,
+                        tint = if (isActive) Color.Black else if (isLightBackground) tab.color else tab.color,
                         modifier = Modifier.size(25.dp)
                     )
 
@@ -198,13 +197,18 @@ fun TopCategoryBoxesView(
 @Composable
 fun LocationBarView(
     locationState: LocationState,
+    isLightMode: Boolean = false,
     onRequestLocation: () -> Unit
 ) {
+    val primaryTextColor = if (isLightMode) Color(0xFF1F2937) else Color.White
+    val secondaryTextColor = if (isLightMode) Color(0xFF6B7280) else Color.White
+    val bgColor = if (isLightMode) Color.Black.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.2f)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .background(Color.Black.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+            .background(bgColor, RoundedCornerShape(10.dp))
             .clickable { onRequestLocation() }
             .padding(horizontal = 12.dp, vertical = 6.dp), // Reduced vertical padding
         verticalAlignment = Alignment.CenterVertically
@@ -213,7 +217,7 @@ fun LocationBarView(
         Icon(
             imageVector = Icons.Default.Send,
             contentDescription = "Location",
-            tint = Color.White,
+            tint = primaryTextColor,
             modifier = Modifier
                 .size(16.dp)
                 .rotate(-45f) // Rotate to point up-right like navigation arrow
@@ -226,24 +230,24 @@ fun LocationBarView(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            // AREA NAME (Yellow)
+            // AREA NAME (Yellow or Blue)
             Text(
                 text = locationState.areaName,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Black, // Heavy bold
-                color = iOSActiveBg, // Gold
+                color = if (isLightMode) Color(0xFF2563EB) else iOSActiveBg,
                 letterSpacing = 0.5.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             
-            // Full Address (White) + Arrow
+            // Full Address + Arrow
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = locationState.fullAddress,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = primaryTextColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
@@ -252,7 +256,7 @@ fun LocationBarView(
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = primaryTextColor,
                     modifier = Modifier.size(14.dp)
                 )
             }
@@ -261,7 +265,7 @@ fun LocationBarView(
         // Points Badge
         Row(
             modifier = Modifier
-                .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
+                .background(if (isLightMode) Color.Black.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -269,14 +273,14 @@ fun LocationBarView(
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
-                tint = Color.White,
+                tint = if (isLightMode) Color(0xFFF59E0B) else Color.White,
                 modifier = Modifier.size(14.dp)
             )
             Text(
                 text = "0",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+                color = primaryTextColor
             )
         }
     }
@@ -423,6 +427,8 @@ fun HomeHeaderWithContent(
 
     androidx.compose.runtime.LaunchedEffect(activeTab) {
         com.ecommerceearn.app.data.manager.NavigationManager.setGroceryTabActive(activeTab == TabType.Grocery)
+        com.ecommerceearn.app.data.manager.NavigationManager.setServicesTabActive(activeTab == TabType.Services)
+        com.ecommerceearn.app.data.manager.NavigationManager.setInfluencersTabActive(activeTab == TabType.Influencers)
     }
     val locationState by locationViewModel.locationState.collectAsState()
     val forYouState by forYouViewModel.state.collectAsState()
@@ -496,6 +502,16 @@ fun HomeHeaderWithContent(
 
     if (activeTab == TabType.Grocery) {
         com.ecommerceearn.app.ui.pages.GroceryContainerView(onOuterTabSelected = { activeTab = it })
+        return
+    }
+
+    if (activeTab == TabType.Services) {
+        com.ecommerceearn.app.ui.pages.ServicesPageView(onOuterTabSelected = { activeTab = it })
+        return
+    }
+
+    if (activeTab == TabType.Influencers) {
+        com.ecommerceearn.app.ui.pages.InfluencersPageView(onOuterTabSelected = { activeTab = it })
         return
     }
 

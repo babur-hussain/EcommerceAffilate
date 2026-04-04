@@ -3,16 +3,17 @@ package com.ecommerceearn.app.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ecommerceearn.app.data.model.ServiceCategoryModel
-import com.ecommerceearn.app.data.model.ServiceSubCategoryModel
 import com.ecommerceearn.app.data.model.ServiceProviderModel
 import com.ecommerceearn.app.data.model.ServiceReviewModel
-import com.ecommerceearn.app.utils.AppLogger
+import com.ecommerceearn.app.data.model.ServiceSubCategoryModel
+import com.ecommerceearn.app.data.remote.NetworkClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ServicesViewModel : ViewModel() {
+    private val api = NetworkClient.apiService
 
     private val _categories = MutableStateFlow<List<ServiceCategoryModel>>(emptyList())
     val categories: StateFlow<List<ServiceCategoryModel>> = _categories.asStateFlow()
@@ -46,11 +47,10 @@ class ServicesViewModel : ViewModel() {
             _categoriesLoading.value = true
             _errorMessage.value = null
             try {
-                // val result = NetworkClient.apiService.fetchServiceCategories()
-                // _categories.value = result
+                _categories.value = api.getServiceCategories()
             } catch (e: Exception) {
                 _errorMessage.value = e.localizedMessage
-                AppLogger.error("Failed to fetch service categories: ${e.message}")
+                e.printStackTrace()
             } finally {
                 _categoriesLoading.value = false
             }
@@ -62,11 +62,10 @@ class ServicesViewModel : ViewModel() {
             _subCategoriesLoading.value = true
             _errorMessage.value = null
             try {
-                // val result = NetworkClient.apiService.fetchServiceSubCategories(categoryId)
-                // _subCategories.value = result
+                _subCategories.value = api.getServiceSubCategories(categoryId)
             } catch (e: Exception) {
                 _errorMessage.value = e.localizedMessage
-                AppLogger.error("Failed to fetch sub-categories: ${e.message}")
+                e.printStackTrace()
             } finally {
                 _subCategoriesLoading.value = false
             }
@@ -78,11 +77,11 @@ class ServicesViewModel : ViewModel() {
             _providersLoading.value = true
             _errorMessage.value = null
             try {
-                // val result = NetworkClient.apiService.fetchServiceProviders(subCategoryId)
-                // _providers.value = result
+                val response = api.getServiceProviders(subCategoryId = subCategoryId)
+                _providers.value = response.data
             } catch (e: Exception) {
                 _errorMessage.value = e.localizedMessage
-                AppLogger.error("Failed to fetch providers: ${e.message}")
+                e.printStackTrace()
             } finally {
                 _providersLoading.value = false
             }
@@ -92,9 +91,9 @@ class ServicesViewModel : ViewModel() {
     fun fetchProviderDetail(id: String) {
         viewModelScope.launch {
             try {
-                // _selectedProvider.value = NetworkClient.apiService.fetchServiceProviderDetail(id)
+                _selectedProvider.value = api.getServiceProviderDetail(id)
             } catch (e: Exception) {
-                AppLogger.error("Failed to fetch provider detail: ${e.message}")
+                e.printStackTrace()
             }
         }
     }
@@ -102,9 +101,10 @@ class ServicesViewModel : ViewModel() {
     fun fetchProviderReviews(providerId: String) {
         viewModelScope.launch {
             try {
-                // _providerReviews.value = NetworkClient.apiService.fetchServiceProviderReviews(providerId)
+                val response = api.getServiceReviews(providerId)
+                _providerReviews.value = response.data
             } catch (e: Exception) {
-                AppLogger.error("Failed to fetch provider reviews: ${e.message}")
+                e.printStackTrace()
             }
         }
     }

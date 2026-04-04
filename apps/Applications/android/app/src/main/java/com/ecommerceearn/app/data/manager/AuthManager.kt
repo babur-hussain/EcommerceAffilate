@@ -160,4 +160,25 @@ object AuthManager {
     fun isLoggedIn(): Boolean {
         return _userState.value != null
     }
+
+    suspend fun registerInfluencer(
+        name: String,
+        email: String,
+        phone: String,
+        platform: String,
+        handle: String,
+        niche: String,
+        bio: String
+    ): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Mocking backend network delay
+                kotlinx.coroutines.delay(1500)
+                Log.d("AuthManager", "Successfully mocked registering influencer: $email on $platform")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
 }

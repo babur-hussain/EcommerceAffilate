@@ -57,8 +57,22 @@ object NavigationManager {
     private val _isGroceryTabActive = MutableStateFlow(false)
     val isGroceryTabActive: StateFlow<Boolean> = _isGroceryTabActive.asStateFlow()
 
+    private val _isServicesTabActive = MutableStateFlow(false)
+    val isServicesTabActive: StateFlow<Boolean> = _isServicesTabActive.asStateFlow()
+
+    private val _isInfluencersTabActive = MutableStateFlow(false)
+    val isInfluencersTabActive: StateFlow<Boolean> = _isInfluencersTabActive.asStateFlow()
+
     fun setGroceryTabActive(active: Boolean) {
         _isGroceryTabActive.value = active
+    }
+
+    fun setServicesTabActive(active: Boolean) {
+        _isServicesTabActive.value = active
+    }
+
+    fun setInfluencersTabActive(active: Boolean) {
+        _isInfluencersTabActive.value = active
     }
 
     fun openGroceryProduct(id: String) {
