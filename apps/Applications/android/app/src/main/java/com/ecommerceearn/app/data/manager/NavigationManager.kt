@@ -31,7 +31,8 @@ enum class OverlayDestination(val id: String) {
     GRAND_MOBILES("grandMobiles"),
     SHOES_SALES("shoesSales"),
     CYBER_SALE("cyberSale"),
-    CATEGORY_PAGE("categoryPage")
+    CATEGORY_PAGE("categoryPage"),
+    LOCATION_PICKER("locationPicker")
 }
 
 enum class MainTab {
@@ -134,6 +135,7 @@ object NavigationManager {
             "grand-mobiles-sale" -> setOverlay(OverlayDestination.GRAND_MOBILES)
             "footwear-collection", "footwear-sale-collection" -> setOverlay(OverlayDestination.SHOES_SALES)
             "cyber-sale" -> setOverlay(OverlayDestination.CYBER_SALE)
+            "locationPicker" -> setOverlay(OverlayDestination.LOCATION_PICKER)
             else -> {
                 if (url.startsWith("/collection/")) {
                     AppLogger.debug("Navigate to collection: $url")
@@ -197,5 +199,13 @@ object NavigationManager {
             setOverlay(null)
         }
         _categoryNavigation.value = null
+    }
+
+    fun goBack() {
+        if (_activeOverlay.value != null) {
+            setOverlay(null)
+        } else {
+            _activeTab.value = MainTab.HOME
+        }
     }
 }

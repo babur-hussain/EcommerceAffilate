@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Visibility
@@ -115,54 +116,71 @@ fun LoginScreen(onDismiss: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .background(Color.White, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
                 "Log in for the best experience",
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 "Enter your details to continue",
                 fontSize = 14.sp,
-                color = Color.Gray,
+                color = Color(0xFF888888),
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
             // Email Field
-            Text("Email Address", color = Color(0xFF2874F0), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("Email Address", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                placeholder = { Text("Enter your email") },
+                    .padding(bottom = 20.dp),
+                placeholder = { Text("Enter your email", color = Color(0xFF6B7280)) },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFFD1D5DB),
+                    focusedBorderColor = Color(0xFF2874F0),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                ),
+                shape = RoundedCornerShape(6.dp)
             )
 
             // Password Field
-            Text("Password", color = Color(0xFF2874F0), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("Password", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp),
-                placeholder = { Text("Enter password") },
+                placeholder = { Text("Enter password", color = Color(0xFF6B7280)) },
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(image, contentDescription = null)
+                        Icon(image, contentDescription = "Toggle password visibility", tint = Color(0xFF4B5563))
                     }
                 },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFFD1D5DB),
+                    focusedBorderColor = Color(0xFF2874F0),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                ),
+                shape = RoundedCornerShape(6.dp)
             )
 
             if (errorMessage != null) {
@@ -194,27 +212,28 @@ fun LoginScreen(onDismiss: () -> Unit) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFB641B)),
-                shape = RoundedCornerShape(4.dp),
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF26422)), // Adjusting to the iOS solid orange
+                shape = RoundedCornerShape(6.dp),
                 enabled = !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Continue", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Continue", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             
             Text(
                 "Or", 
                 modifier = Modifier.align(Alignment.CenterHorizontally), 
-                color = Color.Gray
+                color = Color(0xFF888888),
+                fontSize = 14.sp
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Google Sign In Button
             Button(
@@ -226,12 +245,36 @@ fun LoginScreen(onDismiss: () -> Unit) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Gray),
-                shape = RoundedCornerShape(4.dp)
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD1D5DB)),
+                shape = RoundedCornerShape(6.dp)
             ) {
-                Text("Sign in with Google", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text("Sign in with Google", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Sign Up Link
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Don't have an account? ",
+                    fontSize = 14.sp,
+                    color = Color(0xFF888888)
+                )
+                Text(
+                    text = "Sign up",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2874F0),
+                    modifier = Modifier.clickable {
+                        // TODO: Implement SignUp routing
+                    }
+                )
             }
         }
     }

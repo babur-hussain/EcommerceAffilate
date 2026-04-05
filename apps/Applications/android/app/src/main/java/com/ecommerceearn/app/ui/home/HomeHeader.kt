@@ -593,7 +593,7 @@ fun HomeHeaderWithContent(
                         )
                         LocationBarView(
                             locationState = locationState,
-                            onRequestLocation = { locationViewModel.fetchCurrentLocation() }
+                            onRequestLocation = { com.ecommerceearn.app.data.manager.NavigationManager.navigate("locationPicker") }
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }

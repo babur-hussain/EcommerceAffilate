@@ -128,6 +128,7 @@ fun OverlayRouterView(destination: OverlayDestination) {
             OverlayDestination.SPECIAL_DEAL -> Text("Special Deal Overlay")
             OverlayDestination.SHOES_SALES -> Text("Shoes Sales Overlay")
             OverlayDestination.CATEGORY_PAGE -> Text("Category Route Overlay")
+            OverlayDestination.LOCATION_PICKER -> LocationPickerView()
             else -> Text("Other Routing Overlay")
         }
     }

@@ -1,15 +1,9 @@
 package com.ecommerceearn.app.ui.pages
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import com.ecommerceearn.app.ui.components.LoginScreen
 
 @Composable
-fun LoginView() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("LoginView UI Stub mapped successfully")
-    }
+fun LoginView(onDismiss: () -> Unit = {}) {
+    LoginScreen(onDismiss = onDismiss)
 }

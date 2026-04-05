@@ -53,7 +53,7 @@ fun HeroBannerView(banners: List<Map<String, String>>) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
+                    .aspectRatio(16f / 9f),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)

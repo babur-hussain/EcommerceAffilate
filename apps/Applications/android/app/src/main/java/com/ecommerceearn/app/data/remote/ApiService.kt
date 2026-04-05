@@ -45,7 +45,11 @@ interface ApiService {
     suspend fun getProductById(@Path("id") id: String): Product
 
     @GET("products")
-    suspend fun getProductsRaw(@Query("limit") limit: Int): ProductListResponse
+    suspend fun getProductsRaw(
+        @Query("limit") limit: Int,
+        @Query("category") categoryId: String? = null,
+        @Query("subCategory") subCategoryId: String? = null
+    ): ProductListResponse
 
     // Order Endpoints
     @GET("orders/mine")
@@ -115,11 +119,25 @@ interface ApiService {
     suspend fun getServiceReviews(
         @Path("providerId") providerId: String
     ): ServiceReviewListResponse
+
+    // Stories Endpoints
+    @GET("stories/mine")
+    suspend fun fetchMyStories(): List<com.ecommerceearn.app.data.model.Story>
+
+    @GET("stories/upload-url")
+    suspend fun getPresignedUrl(
+        @Query("fileName") fileName: String,
+        @Query("contentType") contentType: String
+    ): com.ecommerceearn.app.data.model.PresignedUrlAPIResponse
+
+    @POST("stories")
+    suspend fun createStoryRecord(@Body request: com.ecommerceearn.app.data.model.CreateStoryRequest): retrofit2.Response<Unit>
 }
 
 data class ProductListResponse(val products: List<Product>)
 
-suspend fun ApiService.getProducts(limit: Int): List<Product> = getProductsRaw(limit).products
+suspend fun ApiService.getProducts(limit: Int, categoryId: String? = null, subCategoryId: String? = null): List<Product> = 
+    getProductsRaw(limit, categoryId, subCategoryId).products
 suspend fun ApiService.getGroceryProducts(limit: Int): List<Product> = getGroceryProductsRaw(limit).products
 suspend fun ApiService.getProductsBySubCategoryIds(ids: List<String>, limit: Int): List<Product> = 
     getProductsBySubCategoryIdsRaw(ids.joinToString(","), limit).products

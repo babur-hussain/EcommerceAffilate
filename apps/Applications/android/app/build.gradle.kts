@@ -90,4 +90,8 @@ dependencies {
 
     // Razorpay Integration
     implementation("com.razorpay:checkout:1.6.33")
+
+    // Media3 (ExoPlayer)
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
 }

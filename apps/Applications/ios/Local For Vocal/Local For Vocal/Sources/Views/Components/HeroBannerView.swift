@@ -75,7 +75,7 @@ struct HeroBannerView: View {
             if isLoading {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.gray.opacity(0.1))
-                    .frame(height: 200)
+                    .aspectRatio(16/9, contentMode: .fit)
                     .overlay(ProgressView())
             } else if !banners.isEmpty {
                 VStack(spacing: 8) {
@@ -88,7 +88,7 @@ struct HeroBannerView: View {
                             pauseUntil = Date().addingTimeInterval(5)
                         }
                     )
-                    .frame(height: 200)
+                    .aspectRatio(16/9, contentMode: .fit)
 
                     // 2. Simple dot indicators
                     if banners.count > 1 {

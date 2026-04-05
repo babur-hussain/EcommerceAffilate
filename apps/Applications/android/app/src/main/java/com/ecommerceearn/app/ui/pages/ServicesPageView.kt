@@ -57,7 +57,7 @@ fun ServicesPageView(
             LocationBarView(
                 locationState = locationState,
                 isLightMode = true,
-                onRequestLocation = { locationViewModel.fetchCurrentLocation() }
+                onRequestLocation = { com.ecommerceearn.app.data.manager.NavigationManager.navigate("locationPicker") }
             )
         }
     }

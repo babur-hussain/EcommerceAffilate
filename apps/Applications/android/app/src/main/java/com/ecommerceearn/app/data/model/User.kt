@@ -8,5 +8,7 @@ data class User(
     val profileImage: String? = null,
     val membershipStatus: String? = "Basic",
     val coins: Int = 0,
-    val role: String? = null
+    val role: String? = null,
+    val referralCode: String? = null,
+    val affiliateLinks: List<AffiliateLink>? = null
 )

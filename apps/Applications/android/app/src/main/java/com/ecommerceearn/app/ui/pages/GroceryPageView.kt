@@ -165,7 +165,7 @@ fun GroceryStaticHeader(
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { locationViewModel.fetchCurrentLocation() },
+                    .clickable { NavigationManager.navigate("locationPicker") },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Default.Home, contentDescription = null, tint = Color(0xFF8B6914), modifier = Modifier.size(16.dp))
