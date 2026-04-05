@@ -374,6 +374,12 @@ struct SDUIComponentView: View {
             renderBeautifulImageSlider()
         case .eidCelebrationDeals:
             renderEidCelebrationDeals()
+        case .topDeals:
+            renderTopDeals()
+        case .upcomingLaunches:
+            renderUpcomingLaunches()
+        case .shopByPrice:
+            renderShopByPrice()
         case .earlyBirdDeals:
             renderEarlyBirdDeals()
         case .sankrantiFestival:

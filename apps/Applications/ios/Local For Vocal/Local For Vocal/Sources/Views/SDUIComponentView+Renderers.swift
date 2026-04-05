@@ -1475,4 +1475,55 @@ extension SDUIComponentView {
     func renderGroceryWholesaleText() -> some View {
         GroceryWholesaleTextComponent(component: component)
     }
+
+    @ViewBuilder
+    func renderTopDeals() -> some View {
+        let title = component.prop(for: "title") ?? "Top Deals"
+        let headerActionUrl = component.prop(for: "headerActionUrl") as String?
+        let items: [TopDealsView.DealItem] = {
+            if let itemsValue = component.props?["items"]?.value,
+                let data = try? JSONSerialization.data(withJSONObject: itemsValue),
+                let decoded = try? JSONDecoder().decode(
+                    [TopDealsView.DealItem].self, from: data)
+            {
+                return decoded
+            }
+            return []
+        }()
+        TopDealsView(title: title, headerActionUrl: headerActionUrl, items: items)
+    }
+
+    @ViewBuilder
+    func renderUpcomingLaunches() -> some View {
+        let title = component.prop(for: "title") ?? "Upcoming Launches"
+        let headerActionUrl = component.prop(for: "headerActionUrl") as String?
+        let items: [UpcomingLaunchesView.LaunchBanner] = {
+            if let itemsValue = component.props?["items"]?.value,
+                let data = try? JSONSerialization.data(withJSONObject: itemsValue),
+                let decoded = try? JSONDecoder().decode(
+                    [UpcomingLaunchesView.LaunchBanner].self, from: data)
+            {
+                return decoded
+            }
+            return []
+        }()
+        UpcomingLaunchesView(title: title, headerActionUrl: headerActionUrl, items: items)
+    }
+
+    @ViewBuilder
+    func renderShopByPrice() -> some View {
+        let title = component.prop(for: "title") ?? "Shop by Price"
+        let headerActionUrl = component.prop(for: "headerActionUrl") as String?
+        let items: [ShopByPriceView.PriceBanner] = {
+            if let itemsValue = component.props?["items"]?.value,
+                let data = try? JSONSerialization.data(withJSONObject: itemsValue),
+                let decoded = try? JSONDecoder().decode(
+                    [ShopByPriceView.PriceBanner].self, from: data)
+            {
+                return decoded
+            }
+            return []
+        }()
+        ShopByPriceView(title: title, headerActionUrl: headerActionUrl, items: items)
+    }
 }

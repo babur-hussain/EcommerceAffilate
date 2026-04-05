@@ -269,9 +269,9 @@ public struct CategoryThemePage: View {
                             color: (resolvedGradientColors.last ?? defaultGradientColors.last
                                 ?? .blue)
                                 .opacity(0.5), location: 0.35),
-                        .init(color: Color(hex: "#F9FAFB").opacity(0.3), location: 0.6),
-                        .init(color: Color(hex: "#F9FAFB").opacity(0.7), location: 0.8),
-                        .init(color: Color(hex: "#F9FAFB"), location: 1.0),
+                        .init(color: Color.white.opacity(0.3), location: 0.6),
+                        .init(color: Color.white.opacity(0.7), location: 0.8),
+                        .init(color: Color.white, location: 1.0),
                     ]),
                     startPoint: .top,
                     endPoint: .bottom
@@ -284,7 +284,7 @@ public struct CategoryThemePage: View {
             }
         }
         .padding(.bottom, 100)
-        .background(Color(hex: "#F9FAFB"))
+        .background(Color.white)
         .task(id: headerSlug) {
             // Background refresh header from network (non-blocking)
             await loadComponents()

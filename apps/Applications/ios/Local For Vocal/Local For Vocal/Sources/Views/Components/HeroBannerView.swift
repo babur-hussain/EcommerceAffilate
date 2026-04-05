@@ -3,7 +3,6 @@ import SwiftUI
 
 struct HeroBannerView: View {
     // Model matching the API response structure
-    // Model matching the API response structure
     struct BannerData: Decodable, Identifiable {
         let id: String
         let image: String
@@ -65,11 +64,11 @@ struct HeroBannerView: View {
 
     @EnvironmentObject var navigationManager: NavigationManager
 
-    // Auto-advance timer — fires once every 4s (NOT 0.1s) to prevent CPU overload
+    // Auto-advance timer — fires every 4s
     let timer = Timer.publish(every: 4, on: .main, in: .common).autoconnect()
 
-    // Track if user is interacting to pause auto-scroll
-    @State private var isInteracting: Bool = false
+    // Timestamp-based pause: auto-scroll resumes only after this date
+    @State private var pauseUntil: Date = .distantPast
 
     var body: some View {
         VStack {
@@ -79,18 +78,19 @@ struct HeroBannerView: View {
                     .frame(height: 200)
                     .overlay(ProgressView())
             } else if !banners.isEmpty {
-                VStack(spacing: 1) {
+                VStack(spacing: 8) {
                     // 1. Slider Content (Images)
                     HeroSliderContentView(
                         banners: banners,
                         selection: $selection,
-                        onInteraction: { interacting in
-                            self.isInteracting = interacting
+                        onManualSwipe: {
+                            // Pause auto-scroll for 5 seconds after manual touch
+                            pauseUntil = Date().addingTimeInterval(5)
                         }
                     )
                     .frame(height: 200)
 
-                    // 2. Simple dot indicators (no 0.1s progress animation)
+                    // 2. Simple dot indicators
                     if banners.count > 1 {
                         HeroSliderIndicators(
                             count: banners.count,
@@ -99,7 +99,8 @@ struct HeroBannerView: View {
                     }
                 }
                 .onReceive(timer) { _ in
-                    guard !isInteracting, banners.count > 1 else { return }
+                    // Skip auto-advance if paused or only 1 banner
+                    guard Date() > pauseUntil, banners.count > 1 else { return }
                     withAnimation(.easeInOut(duration: 0.5)) {
                         selection = (selection + 1) % banners.count
                     }
@@ -120,12 +121,11 @@ struct HeroBannerView: View {
 
 // MARK: - Subviews for Performance Optimization
 
-/// content view that holds the heavy TabView and Images
-/// Isolated so it doesn't re-evaluate when 'progress' changes in parent
+/// Content view that holds the TabView carousel
 struct HeroSliderContentView: View {
     let banners: [HeroBannerView.BannerData]
     @Binding var selection: Int
-    let onInteraction: (Bool) -> Void
+    let onManualSwipe: () -> Void
 
     @EnvironmentObject var navigationManager: NavigationManager
 
@@ -134,7 +134,6 @@ struct HeroSliderContentView: View {
             ForEach(0..<banners.count, id: \.self) { index in
                 let banner = banners[index]
                 HeroBannerCard(banner: banner)
-                    .padding(.vertical, 8)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         if let action = banner.actionUrl {
@@ -145,11 +144,15 @@ struct HeroSliderContentView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .clipped()
+        // Corner radius on the whole TabView — not individual cards
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .onChange(of: selection) { _, _ in
+            onManualSwipe()
+        }
     }
 }
 
-/// Lightweight indicator view that handles the progress animation
+/// Lightweight indicator view
 struct HeroSliderIndicators: View {
     let count: Int
     let selection: Int
@@ -163,7 +166,6 @@ struct HeroSliderIndicators: View {
                     .animation(.easeInOut(duration: 0.3), value: selection)
             }
         }
-        .padding(.top, 0)
     }
 }
 
@@ -171,16 +173,21 @@ struct HeroBannerCard: View {
     let banner: HeroBannerView.BannerData
 
     var body: some View {
-        if let url = URL(string: banner.image) {
-            AsyncImage(url: url) { image in
-                image.resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.1))
+        GeometryReader { geo in
+            if let url = URL(string: banner.image) {
+                CachedAsyncImage(url: url) { image in
+                    image.resizable()
+                        .scaledToFill()
+                        // Extend 20pt wider on each side to cover TabView page spacing
+                        .frame(width: geo.size.width + 40, height: geo.size.height)
+                        .clipped()
+                } placeholder: {
+                    Color.gray.opacity(0.1)
+                }
+                // Center the oversized image within the page
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }
 }

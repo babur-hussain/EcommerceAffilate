@@ -306,7 +306,7 @@ struct HomeTabContent: View {
                                     ) {
                                         pageContent(for: currentSlug)
                                             .id(currentSlug)
-                                            .background(Color(hex: "#F9FAFB"))
+                                            .background(Color.white)
                                     }
                                 }
                             }
@@ -442,7 +442,7 @@ struct HomeTabContent: View {
         default:
             Text("Content for \(slug)")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(hex: "#F9FAFB"))
+                .background(Color.white)
         }
     }
 }

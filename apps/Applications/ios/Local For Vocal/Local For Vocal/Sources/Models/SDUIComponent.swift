@@ -147,6 +147,9 @@ public enum ComponentType: String, Codable {
     case shoppingForOthersHub = "shopping_for_others_hub"
     case beautifulImageSlider = "beautiful_image_slider"
     case eidCelebrationDeals = "eid_celebration_deals"
+    case topDeals = "top_deals"
+    case upcomingLaunches = "upcoming_launches"
+    case shopByPrice = "shop_by_price"
 
     // --- For You Custom Sections ---
     case forYouBentoGrid = "for_you_bento_grid"
