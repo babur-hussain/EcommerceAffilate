@@ -36,10 +36,37 @@ import com.ecommerceearn.app.ui.viewmodel.CheckoutViewModel
 
 @Composable
 fun CheckoutView(viewModel: CheckoutViewModel, onBack: () -> Unit) {
+    val context = LocalContext.current
     val currentStep by viewModel.currentStep.collectAsState()
     val isUserAddressSelectorVisible by viewModel.isUserAddressSelectorVisible.collectAsState()
     val isPriceDetailsVisible by viewModel.isPriceDetailsVisible.collectAsState()
     val isPaymentViewVisible by viewModel.isPaymentViewVisible.collectAsState()
+    val isProcessingPayment by viewModel.isProcessingPayment.collectAsState()
+    val showRazorpay by viewModel.showRazorpay.collectAsState()
+    val user by AuthManager.userState.collectAsState()
+
+    // CRITICAL: This must be OUTSIDE the isPaymentViewVisible block.
+    // processPayment() dismisses the payment view BEFORE setting showRazorpay=true,
+    // so if this effect is inside that block it gets cancelled before it fires.
+    LaunchedEffect(showRazorpay) {
+        if (showRazorpay) {
+            val activity = context as? Activity
+            if (activity != null) {
+                val orderId = viewModel.createdOrderId.value ?: ""
+                val amountPaise = (viewModel.totalAmount * 100).toInt()
+                RazorpayService.openRazorpayCheckout(
+                    activity = activity,
+                    orderId = orderId,
+                    amount = amountPaise,
+                    name = "Local For Vocal",
+                    description = "Order Payment",
+                    prefillEmail = user?.email,
+                    prefillPhone = user?.phone,
+                    _prefillName = user?.name
+                )
+            }
+        }
+    }
 
     // Assuming we have PaymentView and Modals defined elsewhere or inside this file.
     // We will build the Order Summary exactly resembling iOS.
@@ -167,32 +194,6 @@ fun CheckoutView(viewModel: CheckoutViewModel, onBack: () -> Unit) {
             )
         }
         if (isPaymentViewVisible) {
-            val context = LocalContext.current
-            val isProcessingPayment by viewModel.isProcessingPayment.collectAsState()
-            val showRazorpay by viewModel.showRazorpay.collectAsState()
-            val user by AuthManager.userState.collectAsState()
-
-            // When showRazorpay toggles to true, open Razorpay SDK checkout
-            LaunchedEffect(showRazorpay) {
-                if (showRazorpay) {
-                    val activity = context as? Activity
-                    if (activity != null) {
-                        val orderId = viewModel.createdOrderId.value ?: ""
-                        val amountPaise = (viewModel.totalAmount * 100).toInt()
-                        RazorpayService.openRazorpayCheckout(
-                            activity = activity,
-                            orderId = orderId,
-                            amount = amountPaise,
-                            name = "Local For Vocal",
-                            description = "Order Payment",
-                            prefillEmail = user?.email,
-                            prefillPhone = user?.phone,
-                            _prefillName = user?.name
-                        )
-                    }
-                }
-            }
-
             Box(modifier = Modifier.fillMaxSize().zIndex(100f)) {
                 PaymentView(
                     totalAmount = viewModel.totalAmount,

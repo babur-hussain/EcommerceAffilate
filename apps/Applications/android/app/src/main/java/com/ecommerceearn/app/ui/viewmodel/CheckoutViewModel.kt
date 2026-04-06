@@ -228,8 +228,18 @@ class CheckoutViewModel(
 
     fun processPayment(method: String) {
         if (_isProcessingPayment.value) return
-        val address = currentUserAddress ?: return
-        val token = AuthManager.getToken() ?: return
+        val token = AuthManager.getToken()
+            ?: com.ecommerceearn.app.data.remote.NetworkClient.tempToken.takeIf { it.isNotBlank() }
+            ?: run {
+                AppLogger.error("processPayment: no auth token, showing login")
+                _showLoginPrompt.value = true
+                return
+            }
+        // Use saved address or a blank default so payment can proceed even without one
+        val address = currentUserAddress ?: com.ecommerceearn.app.data.model.UserAddress(
+            _id = "", userId = "", name = "", phone = "",
+            addressLine1 = "", city = "", state = "", pincode = "", isDefault = false
+        )
 
         _isProcessingPayment.value = true
 
