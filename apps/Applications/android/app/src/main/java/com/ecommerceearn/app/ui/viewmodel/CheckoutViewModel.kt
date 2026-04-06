@@ -229,7 +229,7 @@ class CheckoutViewModel(
     fun processPayment(method: String) {
         if (_isProcessingPayment.value) return
         val token = AuthManager.getToken()
-            ?: com.ecommerceearn.app.data.remote.NetworkClient.tempToken.takeIf { it.isNotBlank() }
+            ?: com.ecommerceearn.app.data.remote.NetworkClient.tempToken?.takeIf { it.isNotBlank() }
             ?: run {
                 AppLogger.error("processPayment: no auth token, showing login")
                 _showLoginPrompt.value = true
