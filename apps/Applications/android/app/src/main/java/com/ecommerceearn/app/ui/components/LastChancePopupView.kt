@@ -237,7 +237,7 @@ fun OfferCard(
             }
             
             if (isSelected) {
-                Divider(modifier = Modifier.padding(top = 8.dp), color = Color(0xFFE5E7EB))
+                HorizontalDivider(modifier = Modifier.padding(top = 8.dp), color = Color(0xFFE5E7EB))
                 Text(
                     text = "Remove",
                     fontSize = 12.sp,

@@ -1,7 +1,10 @@
 package com.ecommerceearn.app.data.model
 
+import com.google.gson.annotations.SerializedName
+
 data class User(
-    val _id: String,
+    @SerializedName(value = "_id", alternate = ["id"])
+    val _id: String? = "",
     val name: String,
     val email: String,
     val phoneNumber: String? = null,

@@ -20,7 +20,7 @@ import com.ecommerceearn.app.ui.components.ProductCardView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WishlistView() {
+fun WishlistView(onDismiss: (() -> Unit)? = null) {
     val wishlistItems by WishlistManager.wishlistItems.collectAsState()
     val isLoading by WishlistManager.isLoading.collectAsState()
     val error by WishlistManager.error.collectAsState()
@@ -34,7 +34,9 @@ fun WishlistView() {
             SmallTopAppBar(
                 title = { Text("My Wishlist", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { NavigationManager.navigate("account") }) {
+                    IconButton(onClick = { 
+                        if (onDismiss != null) onDismiss() else NavigationManager.navigate("account") 
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },

@@ -150,6 +150,7 @@ fun SDUIRenderer(
         "lumiere_bottom_nav", "percent_off_nav" -> LumiereBottomNavView()
         "powered_by_row" -> com.ecommerceearn.app.ui.components.PoweredByRowSDUI(component)
         "spoil_yourself_title" -> com.ecommerceearn.app.ui.components.SpoilYourselfTitleSDUI(component)
+        "globally-loved-alisters" -> RenderGloballyLovedAlisters(component)
         "beautiful_image_slider" -> RenderBeautifulImageSlider(component)
         "eid_celebration_deals" -> RenderEidCelebrationDeals(component)
         "consultation_banner" -> RenderConsultationBanner(component)
@@ -180,8 +181,8 @@ fun SDUIRenderer(
 
 @Composable
 fun RenderNotAvailable(type: String, component: SDUIComponent? = null) {
-    val title = component?.props?.get("title") as? String
-    val name = component?.props?.get("name") as? String
+    val title = component?.props?.getString("title")
+    val name = component?.props?.getString("name")
     val displayName = title ?: name ?: type
     
     Box(
@@ -358,7 +359,7 @@ fun RenderHeroCarousel(component: SDUIComponent) {
                 val obj = el.asJsonObject
                 val map = mutableMapOf<String, String>()
                 obj.keySet().forEach { k -> obj.getString(k)?.let { map[k] = it } }
-                map as Map<String, String>
+                map
             } else null
         }
     } else emptyList()
@@ -375,7 +376,7 @@ fun RenderCuratedCollections(component: SDUIComponent) {
                 val obj = el.asJsonObject
                 val map = mutableMapOf<String, Any>()
                 obj.keySet().forEach { k -> obj.get(k)?.takeIf { !it.isJsonNull }?.let { map[k] = it } }
-                map as Map<String, Any>
+                map
             } else null
         }
     } else emptyList()

@@ -141,13 +141,16 @@ fun LoggedInView(user: com.ecommerceearn.app.data.model.User, onLogout: () -> Un
         }
     }
 
-    // Modal Sheet Definitions
-    if (showMyOrders) { FullScreenOverlay { MyOrdersView() }; showMyOrders = false } // Stubs will be ported so overlay isn't fully needed yet, but keeping parity structure
-    // Since MyOrdersView handles back natively, we just trigger it and let it own the screen.
-    // Wait, MyOrdersView is a normal composable not a Dialog.
-    // Actually, in compose we embed Dialog to mirror .fullScreenCover
-    if (showMyOrders) { Dialog(onDismissRequest = { showMyOrders = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { MyOrdersView() } }
-    if (showWishlist) { Dialog(onDismissRequest = { showWishlist = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { WishlistView() } }
+    if (showMyOrders) {
+        Dialog(onDismissRequest = { showMyOrders = false }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            com.ecommerceearn.app.ui.components.MyOrdersScreen(onBackClick = { showMyOrders = false })
+        }
+    }
+    if (showWishlist) {
+        Dialog(onDismissRequest = { showWishlist = false }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            WishlistView(onDismiss = { showWishlist = false })
+        }
+    }
     if (showWallet) { Dialog(onDismissRequest = { showWallet = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { WalletView() } }
     if (showReturns) { Dialog(onDismissRequest = { showReturns = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { ReturnsView(onDismiss = { showReturns = false }) } }
     if (showSmartBasket) { Dialog(onDismissRequest = { showSmartBasket = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { SmartBasketPageView() } }

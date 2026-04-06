@@ -72,7 +72,7 @@ fun LoginScreen(onDismiss: () -> Unit) {
                             onDismiss() // Close Login Screen on Success
                         } catch (e: Exception) {
                             isLoading = false
-                            errorMessage = "Firebase Auth Failed: ${e.message}"
+                            errorMessage = getBeautifulErrorMessage(e, "Google Sign-In Failed")
                         }
                     }
                 } else {
@@ -215,7 +215,7 @@ fun LoginScreen(onDismiss: () -> Unit) {
                                      onDismiss()
                                  } catch (e: Exception) {
                                      isLoading = false
-                                     errorMessage = e.message ?: "Login Failed"
+                                     errorMessage = getBeautifulErrorMessage(e, "Login Failed")
                                  }
                              }
                         }
@@ -460,7 +460,7 @@ fun SignupScreen(onDismiss: () -> Unit, onRegistrationSuccess: () -> Unit) {
                                 onRegistrationSuccess()
                             } catch (e: Exception) {
                                 isLoading = false
-                                errorMessage = e.message ?: "Registration Failed"
+                                errorMessage = getBeautifulErrorMessage(e, "Registration Failed")
                             }
                         }
                     },
@@ -536,4 +536,18 @@ private fun initiateGoogleLogin(
 
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
     launcher.launch(googleSignInClient.signInIntent)
+}
+
+private fun getBeautifulErrorMessage(e: Exception, defaultMessage: String): String {
+    val rawMessage = e.message ?: return defaultMessage
+    return when {
+        rawMessage.contains("email address is already in use") -> "This email is already registered. Please log in."
+        rawMessage.contains("INVALID_LOGIN_CREDENTIALS") || rawMessage.contains("invalid password") || rawMessage.contains("invalid-credential") || rawMessage.contains("InvalidCredentials") -> "Incorrect email or password."
+        rawMessage.contains("weak password") || rawMessage.contains("WeakPassword") -> "Password is too weak. Please use a stronger password."
+        rawMessage.contains("no user record") || rawMessage.contains("InvalidUser") -> "No account found with this email."
+        rawMessage.contains("network") || rawMessage.contains("resolve host") || rawMessage.contains("timeout") -> "Please check your internet connection."
+        rawMessage.contains("HTTP") || rawMessage.contains("HttpException") -> "Server Error. Please try again."
+        rawMessage.contains("com.google.") || rawMessage.contains("java.") || rawMessage.contains("Exception") -> defaultMessage
+        else -> rawMessage
+    }
 }

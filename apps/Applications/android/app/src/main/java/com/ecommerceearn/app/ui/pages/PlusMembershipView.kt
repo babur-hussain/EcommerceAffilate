@@ -34,7 +34,7 @@ fun PlusMembershipView(onNavigateBack: () -> Unit = {}) {
             Spacer(modifier = Modifier.width(24.dp))
         }
 
-        Divider(color = Color(0xFFE5E7EB))
+        HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
 
         Column(
             modifier = Modifier.fillMaxSize(),

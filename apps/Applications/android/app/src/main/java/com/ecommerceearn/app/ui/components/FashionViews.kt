@@ -65,7 +65,6 @@ fun FashionForecastView(
     headerActionUrl: String?,
     items: List<FashionForecastItem>
 ) {
-    val context = LocalContext.current
     
     Column(
         modifier = Modifier
@@ -100,7 +99,6 @@ fun FashionForecastView(
 
 @Composable
 fun FashionForecastCard(item: FashionForecastItem) {
-    val context = LocalContext.current
     
     Box(
         modifier = Modifier
@@ -122,11 +120,6 @@ fun FashionForecastCard(item: FashionForecastItem) {
         )
 
         // Overlay Content
-        val align = when (item.align) {
-            "left" -> Alignment.CenterStart
-            "right" -> Alignment.CenterEnd
-            else -> Alignment.BottomStart
-        }
         
         val textAlign = when (item.align) {
             "left" -> TextAlign.Start

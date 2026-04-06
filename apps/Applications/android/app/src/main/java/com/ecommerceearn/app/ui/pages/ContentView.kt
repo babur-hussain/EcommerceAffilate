@@ -147,14 +147,14 @@ fun OverlayRouterView(destination: OverlayDestination) {
             OverlayDestination.PAYMENT -> PaymentView(
                 totalAmount = 999.0,
                 discount = 100.0,
-                itemCount = 2,
+                _itemCount = 2,
                 onBack = { NavigationManager.goBack() },
                 onPaymentSelect = { NavigationManager.goBack() },
                 isLoading = false
             )
             OverlayDestination.PROFILE_EDIT -> ProfileEditScreen(onNavigateBack = { NavigationManager.goBack() })
             OverlayDestination.INFLUENCER_REGISTRATION -> InfluencerRegistrationSheet(onDismiss = { NavigationManager.goBack() })
-            else -> Text("Other Routing Overlay")
+
         }
     }
 }

@@ -318,7 +318,7 @@ class CheckoutViewModel(
         viewModelScope.launch {
             try {
                 val isValid = RazorpayService.verifyPayment(
-                    orderId = _createdOrderId.value ?: "",
+                    _orderId = _createdOrderId.value ?: "",
                     razorpayOrderId = orderId,
                     razorpayPaymentId = paymentId,
                     razorpaySignature = signature

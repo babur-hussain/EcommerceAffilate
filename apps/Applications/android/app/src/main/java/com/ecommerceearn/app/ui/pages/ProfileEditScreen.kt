@@ -95,7 +95,7 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit) {
                 )
             }
         }
-        Divider(color = Color(0xFFF3F4F6))
+        HorizontalDivider(color = Color(0xFFF3F4F6))
 
         Column(
             modifier = Modifier

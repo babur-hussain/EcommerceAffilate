@@ -85,8 +85,9 @@ object AuthManager {
             NetworkClient.tempToken = token // Hack to pass token? Or update NetworkClient
             
             val authResponse = NetworkClient.apiService.getMe()
-            saveUserSession(authResponse.user, token)
-            authResponse.user
+            val user = authResponse.user ?: throw Exception(authResponse.message ?: "Failed to fetch user profile")
+            saveUserSession(user, token)
+            user
         }
     }
 
@@ -109,12 +110,14 @@ object AuthManager {
                 email = email,
                 name = name,
                 firebaseUid = firebaseUser.uid,
+                phone = phone,
                 password = password 
             )
             val authResponse = NetworkClient.apiService.registerUser(request)
+            val user = authResponse.user ?: throw Exception(authResponse.message ?: "Registration failed on server")
             
-            saveUserSession(authResponse.user, token)
-            authResponse.user
+            saveUserSession(user, token)
+            user
         }
     }
 
@@ -129,6 +132,7 @@ object AuthManager {
                 email = firebaseUser.email ?: "",
                 name = firebaseUser.displayName ?: "User",
                 firebaseUid = firebaseUser.uid,
+                phone = null,
                 password = "google_login_${firebaseUser.uid}" 
             )
             
@@ -144,9 +148,10 @@ object AuthManager {
                 }
             }
             
-            Log.d("AuthManager", "Backend sync successful, saving user: ${response.user.email}")
-            saveUserSession(response.user, token)
-            return response.user
+            val user = response.user ?: throw Exception(response.message ?: "Failed to sync user with backend")
+            Log.d("AuthManager", "Backend sync successful, saving user: ${user.email}")
+            saveUserSession(user, token)
+            return user
             
         } catch (e: Exception) {
             Log.e("AuthManager", "Backend sync failed", e)
@@ -189,6 +194,7 @@ object AuthManager {
         return _userState.value != null
     }
 
+    @Suppress("UNUSED_PARAMETER")
     suspend fun registerInfluencer(
         name: String,
         email: String,

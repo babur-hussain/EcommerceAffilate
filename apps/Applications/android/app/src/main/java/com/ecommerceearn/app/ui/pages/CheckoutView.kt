@@ -167,7 +167,7 @@ fun CheckoutView(viewModel: CheckoutViewModel, onBack: () -> Unit) {
                 PaymentView(
                     totalAmount = viewModel.totalAmount,
                     discount = viewModel.discount,
-                    itemCount = viewModel.totalQuantity,
+                    _itemCount = viewModel.totalQuantity,
                     onPaymentSelect = { method ->
                         // Stub for payment initiation via CheckoutViewModel
                     },

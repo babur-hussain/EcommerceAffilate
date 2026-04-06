@@ -27,7 +27,7 @@ import java.util.*
 fun PaymentView(
     totalAmount: Double,
     discount: Double,
-    itemCount: Int,
+    _itemCount: Int,
     onBack: () -> Unit,
     onPaymentSelect: (String) -> Unit,
     isLoading: Boolean
@@ -68,7 +68,7 @@ fun PaymentView(
                 Text("100% Secure", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF4B5563))
             }
         }
-        Divider(color = Color(0xFFE5E7EB))
+        HorizontalDivider(color = Color(0xFFE5E7EB))
 
         Column(
             modifier = Modifier
@@ -98,7 +98,7 @@ fun PaymentView(
 
                 AnimatedVisibility(visible = isTotalExpanded, enter = expandVertically(), exit = shrinkVertically()) {
                     Column(modifier = Modifier.padding(top = 12.dp)) {
-                        Divider(color = Color(0xFFBFDBFE))
+                        HorizontalDivider(color = Color(0xFFBFDBFE))
                         Row(modifier = Modifier.padding(top = 8.dp)) {
                             Text("Price", fontSize = 14.sp, color = Color(0xFF4B5563))
                             Spacer(modifier = Modifier.weight(1f))

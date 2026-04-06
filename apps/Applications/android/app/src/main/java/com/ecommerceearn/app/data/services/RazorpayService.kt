@@ -79,7 +79,7 @@ object RazorpayService {
     }
 
     suspend fun verifyPayment(
-        orderId: String,
+        _orderId: String,
         razorpayOrderId: String,
         razorpayPaymentId: String,
         razorpaySignature: String
@@ -107,7 +107,7 @@ object RazorpayService {
         description: String?,
         prefillEmail: String?,
         prefillPhone: String?,
-        prefillName: String?,
+        _prefillName: String?,
         themeColor: String = "#2563EB"
     ) {
         AppLogger.info("RazorpayService.openCheckout called for orderId=$orderId amount=$amount")

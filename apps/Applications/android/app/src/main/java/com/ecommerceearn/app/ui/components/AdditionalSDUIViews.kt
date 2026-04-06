@@ -45,7 +45,7 @@ data class WinterClearanceItem(
 @Composable
 fun WinterClearanceSaleView(
     title: String = "Winter Clearance Sale",
-    headerActionUrl: String?,
+    _headerActionUrl: String?,
     items: List<WinterClearanceItem>
 ) {
     Column(

@@ -97,7 +97,7 @@ fun PaymentSuccessView(
                         Text("₹${String.format("%.2f", amount)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF22C55E))
                     }
 
-                    Divider(color = Color(0xFFE5E7EB))
+                    HorizontalDivider(color = Color(0xFFE5E7EB))
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.LocalShipping, contentDescription = null, tint = Color(0xFF3B82F6), modifier = Modifier.size(16.dp))
@@ -188,7 +188,7 @@ fun PaymentFailedView(
                         Text("₹${String.format("%.2f", amount)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
                     }
 
-                    Divider(color = Color(0xFFFECACA))
+                    HorizontalDivider(color = Color(0xFFFECACA))
                     Text("If money was debited, it will be refunded within 5-7 business days", fontSize = 12.sp, color = Color(0xFF6B7280))
                 }
             }
@@ -274,7 +274,7 @@ fun PaymentCancelledView(
                         Text("₹${String.format("%.2f", amount)}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFB45309))
                     }
 
-                    Divider(color = Color(0xFFFDE68A))
+                    HorizontalDivider(color = Color(0xFFFDE68A))
                     Text("Your order is saved. Complete payment to confirm it.", fontSize = 12.sp, color = Color(0xFF6B7280))
                 }
             }
