@@ -71,9 +71,7 @@ object OrderService {
             shippingFee = shippingFee,
             lastChanceOffers = lastChanceOffers
         )
-        // Assume API implementation
-        // NetworkClient.apiService.createOrder(payload)
-        throw Exception("Stub implementation: Retrofit method not yet mapped")
+        NetworkClient.apiService.createOrder(payload)
     }
 
     suspend fun updateOrderStatus(orderId: String, status: String, authToken: String) = withContext(Dispatchers.IO) {

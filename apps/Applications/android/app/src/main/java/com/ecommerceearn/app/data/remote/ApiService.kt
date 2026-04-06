@@ -78,6 +78,9 @@ interface ApiService {
     @GET("orders/mine")
     suspend fun getOrders(): List<com.ecommerceearn.app.data.model.Order>
 
+    @POST("orders")
+    suspend fun createOrder(@Body body: com.ecommerceearn.app.data.services.OrderPayload): com.ecommerceearn.app.data.services.OrderResponse
+
     // Payment Endpoints
     @POST("payments/create-order")
     suspend fun createPaymentOrder(@Body request: CreatePaymentOrderRequest): NetworkRazorpayOrderResponse
@@ -86,8 +89,11 @@ interface ApiService {
     suspend fun verifyPayment(@Body request: VerifyPaymentRequest): VerifyPaymentResponse
 
     // Address Endpoints
-    @GET("addresses/mine")
+    @GET("addresses")
     suspend fun getAddresses(): List<com.ecommerceearn.app.data.model.Address>
+
+    @POST("addresses")
+    suspend fun saveAddress(@Body body: com.ecommerceearn.app.data.model.Address): com.ecommerceearn.app.data.model.Address
 
     // Cart Endpoints
     @GET("cart")

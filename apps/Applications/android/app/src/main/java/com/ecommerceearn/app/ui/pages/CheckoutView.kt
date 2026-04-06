@@ -6,8 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -206,6 +208,40 @@ fun CheckoutView(viewModel: CheckoutViewModel, onBack: () -> Unit) {
                     onBack = { viewModel.setIsPaymentViewVisible(false) }
                 )
             }
+        }
+
+        if (isUserAddressSelectorVisible) {
+            val savedAddresses by viewModel.savedUserAddresses.collectAsState()
+            val selectedAddressId by viewModel.selectedUserAddressId.collectAsState()
+
+            AddressSelectorBottomSheet(
+                savedAddresses = savedAddresses,
+                selectedAddressId = selectedAddressId,
+                onDismiss = { viewModel.setIsUserAddressSelectorVisible(false) },
+                onSelectAddress = { addr ->
+                    viewModel.handleAddressSelection(addr)
+                    viewModel.setIsUserAddressSelectorVisible(false)
+                },
+                onUseCurrentLocation = {
+                    viewModel.setUseCurrentLocation(true)
+                    viewModel.setIsUserAddressSelectorVisible(false)
+                },
+                onSaveNewAddress = { name, phone, line1, city, state, pincode ->
+                    val newAddress = com.ecommerceearn.app.data.model.UserAddress(
+                        _id = java.util.UUID.randomUUID().toString(),
+                        userId = "",
+                        name = name,
+                        phone = phone,
+                        addressLine1 = line1,
+                        city = city,
+                        state = state,
+                        pincode = pincode,
+                        isDefault = true
+                    )
+                    viewModel.handleAddressSelection(newAddress)
+                    viewModel.setIsUserAddressSelectorVisible(false)
+                }
+            )
         }
     }
 }
@@ -562,3 +598,277 @@ fun PriceDetailRow(label: String, value: String, valueColor: Color) {
         Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = valueColor)
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddressSelectorBottomSheet(
+    savedAddresses: List<com.ecommerceearn.app.data.model.UserAddress>,
+    selectedAddressId: String?,
+    onDismiss: () -> Unit,
+    onSelectAddress: (com.ecommerceearn.app.data.model.UserAddress) -> Unit,
+    onUseCurrentLocation: () -> Unit,
+    onSaveNewAddress: (name: String, phone: String, line1: String, city: String, state: String, pincode: String) -> Unit
+) {
+    var showAddForm by remember { mutableStateOf(savedAddresses.isEmpty()) }
+    var searchText by remember { mutableStateOf("") }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.85f)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    if (showAddForm) "Add Delivery Address" else "Select delivery address",
+                    fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF111827),
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color(0xFF1F2937))
+                }
+            }
+
+            if (!showAddForm) {
+                // Search Bar
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF9CA3AF)) },
+                    placeholder = { Text("Search by area, street name, pin code", fontSize = 14.sp) },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF2563EB),
+                        unfocusedBorderColor = Color(0xFFE5E7EB)
+                    )
+                )
+
+                // Use Current Location
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onUseCurrentLocation() }
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.MyLocation, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(22.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Use my current location", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = Color(0xFF2563EB))
+                }
+
+                HorizontalDivider(color = Color(0xFFE5E7EB))
+
+                // Saved Addresses Header
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Saved addresses", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF374151), modifier = Modifier.weight(1f))
+                    Text("+ Add New", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = Color(0xFF2563EB),
+                        modifier = Modifier.clickable { showAddForm = true })
+                }
+
+                // Address List
+                if (savedAddresses.isEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.LocationOff, contentDescription = null, tint = Color(0xFF9CA3AF), modifier = Modifier.size(48.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("No saved addresses found.", fontSize = 14.sp, color = Color(0xFF9CA3AF))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { showAddForm = true },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                        ) {
+                            Text("Add New Address", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                } else {
+                    LazyColumn {
+                        items(savedAddresses.filter { addr ->
+                            searchText.isBlank() ||
+                            addr.name.contains(searchText, ignoreCase = true) ||
+                            addr.addressLine1.contains(searchText, ignoreCase = true) ||
+                            addr.city.contains(searchText, ignoreCase = true) ||
+                            addr.pincode.contains(searchText, ignoreCase = true)
+                        }) { address ->
+                            SavedAddressRow(
+                                address = address,
+                                isSelected = selectedAddressId == address.id,
+                                onSelect = { onSelectAddress(address) }
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Add New Address Form
+                AddNewAddressForm(
+                    onBack = { showAddForm = false },
+                    onSave = onSaveNewAddress
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SavedAddressRow(
+    address: com.ecommerceearn.app.data.model.UserAddress,
+    isSelected: Boolean,
+    onSelect: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect() }
+            .background(if (isSelected) Color(0xFFF9FAFB) else Color.White)
+            .padding(16.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        // Radio indicator
+        Icon(
+            imageVector = if (isSelected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
+            contentDescription = null,
+            tint = if (isSelected) Color(0xFF2563EB) else Color(0xFFD1D5DB),
+            modifier = Modifier.size(22.dp).padding(top = 2.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(address.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF111827))
+                if (address.isDefault) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("DEFAULT", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB),
+                        modifier = Modifier.background(Color(0xFFEFF6FF), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
+                }
+            }
+            Text(address.addressLine1, fontSize = 14.sp, color = Color(0xFF4B5563))
+            Text("${address.city}, ${address.state} - ${address.pincode}", fontSize = 14.sp, color = Color(0xFF4B5563))
+            Text("Phone: ${address.phone}", fontWeight = FontWeight.Medium, fontSize = 13.sp, color = Color(0xFF6B7280),
+                modifier = Modifier.padding(top = 4.dp))
+        }
+    }
+    HorizontalDivider(color = Color(0xFFF3F4F6))
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddNewAddressForm(
+    onBack: () -> Unit,
+    onSave: (name: String, phone: String, line1: String, city: String, state: String, pincode: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var line1 by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var state by remember { mutableStateOf("") }
+    var pincode by remember { mutableStateOf("") }
+
+    val locationAddress by com.ecommerceearn.app.data.manager.LocationManager.address.collectAsState()
+    val locationCity by com.ecommerceearn.app.data.manager.LocationManager.city.collectAsState()
+    var locationFetched by remember { mutableStateOf(false) }
+
+    val isValid = name.isNotBlank() && phone.isNotBlank() && line1.isNotBlank() &&
+            city.isNotBlank() && state.isNotBlank() && pincode.isNotBlank()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 32.dp)
+    ) {
+        // Back to saved addresses
+        Row(
+            modifier = Modifier.clickable { onBack() }.padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("Back to saved addresses", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF2563EB))
+        }
+
+        // Use current location to auto-fill
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFEFF6FF), RoundedCornerShape(8.dp))
+                .clickable {
+                    locationFetched = true
+                    if (locationAddress != "Locating..." && locationAddress != "Location Denied" && locationAddress != "Address not found") {
+                        line1 = locationAddress
+                        city = locationCity.lowercase()
+                            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                    }
+                }
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.MyLocation, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text("Use current location to auto-fill", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = Color(0xFF2563EB))
+                if (locationFetched && locationAddress != "Locating...") {
+                    Text(locationAddress, fontSize = 12.sp, color = Color(0xFF4B5563))
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        AddressFormField("Full Name *", "e.g. Rahul Sharma", name) { name = it }
+        AddressFormField("Phone Number *", "10-digit mobile number", phone) { phone = it }
+        AddressFormField("Address (House No, Street, Area) *", "House no., Street, Area", line1) { line1 = it }
+        AddressFormField("City *", "City", city) { city = it }
+        AddressFormField("State *", "State", state) { state = it }
+        AddressFormField("Pincode *", "6-digit pincode", pincode) { pincode = it }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        Button(
+            onClick = { if (isValid) onSave(name, phone, line1, city, state, pincode) },
+            enabled = isValid,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF2563EB),
+                disabledContainerColor = Color(0xFF93C5FD)
+            )
+        ) {
+            Text("Save Address", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddressFormField(label: String, placeholder: String, value: String, onChange: (String) -> Unit) {
+    Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF374151),
+        modifier = Modifier.padding(bottom = 4.dp))
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        placeholder = { Text(placeholder, color = Color(0xFF9CA3AF), fontSize = 14.sp) },
+        modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+        singleLine = true,
+        shape = RoundedCornerShape(8.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color(0xFF2563EB),
+            unfocusedBorderColor = Color(0xFFD1D5DB)
+        )
+    )
+}
+
+

@@ -119,8 +119,8 @@ object RazorpayService {
             options.put("name", name ?: "Local For Vocal")
             options.put("description", description ?: "Order Payment")
             options.put("image", "https://api.lfvs.in/static/logo.png")
-            // amount in paise (already converted to * 100 in ViewModel normally or here)
-            options.put("amount", (amount * 100).toString()) 
+            // amount is already in paise (converted by caller: totalAmount * 100)
+            options.put("amount", amount.toString()) 
             options.put("order_id", orderId)
             
             val theme = JSONObject()
