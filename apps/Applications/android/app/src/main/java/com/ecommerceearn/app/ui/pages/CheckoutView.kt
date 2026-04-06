@@ -23,10 +23,14 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import com.ecommerceearn.app.data.manager.AuthManager
 import com.ecommerceearn.app.data.model.LastChanceOffer
 import com.ecommerceearn.app.data.model.Product
 import com.ecommerceearn.app.data.model.UserAddress
+import com.ecommerceearn.app.data.services.RazorpayService
 import com.ecommerceearn.app.ui.viewmodel.CheckoutItem
 import com.ecommerceearn.app.ui.viewmodel.CheckoutViewModel
 
@@ -163,15 +167,41 @@ fun CheckoutView(viewModel: CheckoutViewModel, onBack: () -> Unit) {
             )
         }
         if (isPaymentViewVisible) {
+            val context = LocalContext.current
+            val isProcessingPayment by viewModel.isProcessingPayment.collectAsState()
+            val showRazorpay by viewModel.showRazorpay.collectAsState()
+            val user by AuthManager.userState.collectAsState()
+
+            // When showRazorpay toggles to true, open Razorpay SDK checkout
+            LaunchedEffect(showRazorpay) {
+                if (showRazorpay) {
+                    val activity = context as? Activity
+                    if (activity != null) {
+                        val orderId = viewModel.createdOrderId.value ?: ""
+                        val amountPaise = (viewModel.totalAmount * 100).toInt()
+                        RazorpayService.openRazorpayCheckout(
+                            activity = activity,
+                            orderId = orderId,
+                            amount = amountPaise,
+                            name = "Local For Vocal",
+                            description = "Order Payment",
+                            prefillEmail = user?.email,
+                            prefillPhone = user?.phone,
+                            _prefillName = user?.name
+                        )
+                    }
+                }
+            }
+
             Box(modifier = Modifier.fillMaxSize().zIndex(100f)) {
                 PaymentView(
                     totalAmount = viewModel.totalAmount,
                     discount = viewModel.discount,
                     _itemCount = viewModel.totalQuantity,
                     onPaymentSelect = { method ->
-                        // Stub for payment initiation via CheckoutViewModel
+                        viewModel.processPayment(method)
                     },
-                    isLoading = false,
+                    isLoading = isProcessingPayment,
                     onBack = { viewModel.setIsPaymentViewVisible(false) }
                 )
             }
