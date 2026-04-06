@@ -90,6 +90,34 @@ object AuthManager {
         }
     }
 
+    suspend fun register(name: String, email: String, phone: String, password: String): User {
+        return withContext(Dispatchers.IO) {
+            val result = com.google.android.gms.tasks.Tasks.await(auth.createUserWithEmailAndPassword(email, password))
+            val firebaseUser = result.user ?: throw Exception("Firebase User is null")
+            
+            // Set display name in Firebase (optional but good practice)
+            val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .build()
+            com.google.android.gms.tasks.Tasks.await(firebaseUser.updateProfile(profileUpdates))
+            
+            val token = com.google.android.gms.tasks.Tasks.await(firebaseUser.getIdToken(true)).token ?: ""
+            NetworkClient.tempToken = token
+            
+            // Create the user in backend
+            val request = RegisterRequest(
+                email = email,
+                name = name,
+                firebaseUid = firebaseUser.uid,
+                password = password 
+            )
+            val authResponse = NetworkClient.apiService.registerUser(request)
+            
+            saveUserSession(authResponse.user, token)
+            authResponse.user
+        }
+    }
+
     private suspend fun syncUserWithBackend(firebaseUser: com.google.firebase.auth.FirebaseUser): User {
         Log.d("AuthManager", "syncUserWithBackend started for: ${firebaseUser.email}")
         val token = com.google.android.gms.tasks.Tasks.await(firebaseUser.getIdToken(true)).token ?: ""

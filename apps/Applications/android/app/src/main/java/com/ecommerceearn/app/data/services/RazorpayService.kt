@@ -5,6 +5,9 @@ import com.ecommerceearn.app.utils.AppLogger
 import org.json.JSONObject
 import com.razorpay.Checkout
 import com.razorpay.PaymentData
+import com.ecommerceearn.app.data.remote.NetworkClient
+import com.ecommerceearn.app.data.remote.CreatePaymentOrderRequest
+import com.ecommerceearn.app.data.remote.VerifyPaymentRequest
 
 interface RazorpayResultListener {
     fun onPaymentSuccess(razorpayPaymentID: String?, paymentData: PaymentData?)
@@ -59,8 +62,20 @@ object RazorpayService {
     }
 
     suspend fun createRazorpayOrder(orderId: String): RazorpayOrderResponse {
-        // Stub implementation, as backend order creation works in CheckoutViewModel via OrderService
-        throw UnsupportedOperationException("Razorpay order creation not yet wired to API")
+        return try {
+            val networkResp = NetworkClient.apiService.createPaymentOrder(CreatePaymentOrderRequest(orderId = orderId))
+            RazorpayOrderResponse(
+                paymentOrderId = networkResp.id,
+                key_id = LIVE_KEY,
+                amount = networkResp.amount,
+                name = null,
+                description = "Payment for $orderId",
+                prefill = null
+            )
+        } catch (e: Exception) {
+            AppLogger.error("Error creating Razorpay order: ${e.message}")
+            throw PaymentError.OrderCreationFailed
+        }
     }
 
     suspend fun verifyPayment(
@@ -69,8 +84,19 @@ object RazorpayService {
         razorpayPaymentId: String,
         razorpaySignature: String
     ): Boolean {
-        // Stub — wire to NetworkClient.apiService.verifyPayment(...)
-        return false
+        return try {
+            val response = NetworkClient.apiService.verifyPayment(
+                VerifyPaymentRequest(
+                    razorpay_order_id = razorpayOrderId,
+                    razorpay_payment_id = razorpayPaymentId,
+                    razorpay_signature = razorpaySignature
+                )
+            )
+            response.success
+        } catch (e: Exception) {
+            AppLogger.error("Verification failed: ${e.message}")
+            false
+        }
     }
 
     fun openRazorpayCheckout(

@@ -1,13 +1,15 @@
 package com.ecommerceearn.app.ui.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -22,17 +24,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import com.ecommerceearn.app.data.manager.AuthManager
 import com.ecommerceearn.app.data.manager.CartManager
+import com.ecommerceearn.app.data.manager.ReviewManager
+import com.ecommerceearn.app.data.manager.NavigationManager
+import com.ecommerceearn.app.data.model.Address
 import com.ecommerceearn.app.data.model.Product
 import com.ecommerceearn.app.data.model.ProductOffer
 import com.ecommerceearn.app.data.model.TrustBadge
 import com.ecommerceearn.app.data.remote.NetworkClient
+import com.ecommerceearn.app.ui.pages.AddReviewView
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // Colors
@@ -52,10 +63,21 @@ fun ProductDetailScreen(
     onBackClick: () -> Unit,
     onCartClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var product by remember { mutableStateOf(initialProduct) }
     var isLoading by remember { mutableStateOf(initialProduct == null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // UI States
+    var showLastChancePopup by remember { mutableStateOf(false) }
+    var showAddressSelector by remember { mutableStateOf(false) }
+    var showAddReviewSheet by remember { mutableStateOf(false) }
+    
+    // Address State
+    var savedAddresses by remember { mutableStateOf<List<Address>>(emptyList()) }
+    var selectedUserAddressId by remember { mutableStateOf<String?>(null) }
+    val currentUserAddress = savedAddresses.firstOrNull { it.id == selectedUserAddressId } ?: savedAddresses.firstOrNull()
 
     // Fetch product details
     LaunchedEffect(productId) {
@@ -65,9 +87,25 @@ fun ProductDetailScreen(
                 product = NetworkClient.apiService.getProductById(productId)
             } catch (e: Exception) {
                 errorMessage = "Failed to load product"
-                android.util.Log.e("ProductDetail", "Error", e)
             } finally {
                 isLoading = false
+            }
+        }
+        
+        // Fetch reviews
+        ReviewManager.fetchReviews(productId)
+        
+        // Fetch Addresses if logged in
+        if (AuthManager.isLoggedIn()) {
+            try {
+                val fetchedAddresses = NetworkClient.apiService.getAddresses()
+                savedAddresses = fetchedAddresses
+                if (selectedUserAddressId == null && savedAddresses.isNotEmpty()) {
+                    val defaultAddr = savedAddresses.firstOrNull { it.isDefault }
+                    selectedUserAddressId = defaultAddr?.id ?: savedAddresses.first().id
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ProductDetail", "Failed to fetch addresses: ${e.message}")
             }
         }
     }
@@ -76,27 +114,35 @@ fun ProductDetailScreen(
         topBar = {
             ProductDetailHeader(
                 onBackClick = onBackClick,
-                onShareClick = { /* TODO */ },
-                onWishlistClick = { /* TODO */ },
+                onShareClick = {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, "Check out this amazing product: ${product?.name ?: ""} on Local For Vocal!")
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share Product"))
+                },
+                onWishlistClick = { /* TODO Support Wishlist Manager */ },
                 onCartClick = onCartClick,
                 cartCount = CartManager.cartCount
             )
         },
         bottomBar = {
             product?.let {
-                BottomActionBar(
+                BottomActionBarView(
                     price = it.price,
                     onAddToCart = {
-                        scope.launch {
-                            CartManager.addToCart(it, 1)
-                        }
+                        scope.launch { CartManager.addToCart(it, 1) }
                     },
                     onBuyNow = {
-                        scope.launch {
-                            CartManager.addToCart(it, 1)
-                            onCartClick()
+                        val offers = it.lastChanceOffers ?: emptyList()
+                        if (offers.isNotEmpty()) {
+                            showLastChancePopup = true
+                        } else {
+                            // Redirect to checkout
+                            NavigationManager.navigate("cart")
                         }
-                    }
+                    },
+                    onOpenCart = onCartClick
                 )
             }
         },
@@ -122,9 +168,44 @@ fun ProductDetailScreen(
                     }
                 }
                 product != null -> {
-                    ProductDetailContent(product = product!!)
+                    ProductDetailContent(
+                        product = product!!,
+                        currentUserAddress = currentUserAddress,
+                        onChangeAddressClick = { showAddressSelector = true },
+                        onRateProductClick = { showAddReviewSheet = true }
+                    )
                 }
             }
+        }
+    }
+    
+    // Modal Sheets
+    UserAddressSelectorView(
+        isVisible = showAddressSelector,
+        savedUserAddresses = savedAddresses,
+        selectedUserAddressId = selectedUserAddressId,
+        onSelectUserAddress = { selectedUserAddressId = it.id; showAddressSelector = false },
+        onUseCurrentLocation = { showAddressSelector = false },
+        onAddNewUserAddress = { showAddressSelector = false },
+        onDismiss = { showAddressSelector = false }
+    )
+    
+    if (showLastChancePopup) {
+        LastChancePopupView(
+            isVisible = showLastChancePopup,
+            onDismiss = { 
+                showLastChancePopup = false
+                NavigationManager.navigate("cart") 
+            }
+        )
+    }
+    
+    if (showAddReviewSheet) {
+        Dialog(
+            onDismissRequest = { showAddReviewSheet = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            AddReviewView(productId = productId)
         }
     }
 }
@@ -176,10 +257,15 @@ private fun ProductDetailHeader(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ProductDetailContent(product: Product) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
+private fun ProductDetailContent(
+    product: Product,
+    currentUserAddress: Address?,
+    onChangeAddressClick: () -> Unit,
+    onRateProductClick: () -> Unit
+) {
+    val reviews by ReviewManager.reviews.collectAsState()
+    
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
         // Image Carousel
         item {
             ProductImageCarousel(images = product.images)
@@ -189,6 +275,9 @@ private fun ProductDetailContent(product: Product) {
         item {
             PriceAndTitleSection(product = product)
         }
+        
+        // Affiliate Section
+        item { AffiliateSection(product = product) }
 
         // Highlights
         if (!product.highlights.isNullOrEmpty()) {
@@ -198,13 +287,10 @@ private fun ProductDetailContent(product: Product) {
             }
         }
 
-        // Seller & Delivery Info
+        // UserAddress Bar
         item {
             Spacer(modifier = Modifier.height(8.dp).background(LightGray))
-            DeliveryInfoSection(
-                sellerName = product.sellerName,
-                trustBadges = product.trustBadges
-            )
+            UserAddressBarView(currentUserAddress = currentUserAddress, onTap = onChangeAddressClick)
         }
 
         // Bank Offers
@@ -214,12 +300,53 @@ private fun ProductDetailContent(product: Product) {
                 BankOffersSection(offers = product.offers!!)
             }
         }
+        
+        // Seller & Delivery Info
+        item {
+            Spacer(modifier = Modifier.height(8.dp).background(LightGray))
+            DeliveryInfoSection(
+                sellerName = product.sellerName,
+                trustBadges = product.trustBadges
+            )
+        }
 
         // Description
         if (!product.description.isNullOrBlank()) {
             item {
                 Spacer(modifier = Modifier.height(8.dp).background(LightGray))
                 DescriptionSection(description = product.description!!)
+            }
+        }
+        
+        // Reviews Section
+        item {
+            Spacer(modifier = Modifier.height(8.dp).background(LightGray))
+            Column(modifier = Modifier.fillMaxWidth().background(Color.White).padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text("Ratings & Reviews", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.weight(1f))
+                    // Only display rate product if logged in (parity)
+                    if (AuthManager.isLoggedIn()) {
+                        Text(
+                            text = "Rate Product", 
+                            fontSize = 14.sp, 
+                            fontWeight = FontWeight.Medium, 
+                            color = PrimaryBlue,
+                            modifier = Modifier.clickable { onRateProductClick() }
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                if (reviews.isEmpty()) {
+                    Text("No reviews yet. Be the first to review!", fontSize = 14.sp, color = GrayText, modifier = Modifier.padding(vertical = 8.dp))
+                } else {
+                    reviews.forEach { r ->
+                        ReviewRowView(review = r)
+                        HorizontalDivider()
+                    }
+                }
             }
         }
 
@@ -441,6 +568,94 @@ private fun PriceAndTitleSection(product: Product) {
 }
 
 @Composable
+fun AffiliateSection(product: Product) {
+    val user by AuthManager.userState.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    // Condition mapping iOS (user role INFLUENCER)
+    if (user != null && user?.role == "INFLUENCER" && user?.referralCode != null) {
+        var isGeneratingLink by remember { mutableStateOf(false) }
+        var generatedLink by remember { mutableStateOf("") }
+        var linkCopied by remember { mutableStateOf(false) }
+        
+        Column(modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Text("Affiliate Link", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = GrayText)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            if (generatedLink.isEmpty()) {
+                Button(
+                    onClick = {
+                        isGeneratingLink = true
+                        scope.launch {
+                            delay(1000) // Mock API Generation delay
+                            generatedLink = "https://localforvocal.com/product/${product.id}?ref=${user?.referralCode}"
+                            isGeneratingLink = false
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    if (isGeneratingLink) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                    } else {
+                        Icon(Icons.Default.Link, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Generate Affiliate Link", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            } else {
+                Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFEFF6FF), RoundedCornerShape(10.dp)).padding(12.dp)) {
+                    Text(generatedLink, color = PrimaryBlue, fontSize = 12.sp, maxLines = 2)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("Affiliate Link", generatedLink))
+                                linkCopied = true
+                                scope.launch { delay(2000); linkCopied = false }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (linkCopied) GreenSuccess else PrimaryBlue),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(if (linkCopied) Icons.Default.Check else Icons.Outlined.FileCopy, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (linkCopied) "Copied!" else "Copy")
+                        }
+                        
+                        Button(
+                            onClick = {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "Check out this amazing product: ${product.name}\n$generatedLink")
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share Affiliate Link"))
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Share")
+                        }
+                    }
+                }
+            }
+            
+            val commPercent = product.influencerCommission ?: 0.0
+            if (commPercent > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Earn ₹${String.format("%.2f", (product.price * commPercent) / 100)} commission on this product", color = GreenSuccess, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
+@Composable
 private fun HighlightsSection(highlights: List<String>) {
     Column(
         modifier = Modifier
@@ -628,7 +843,7 @@ private fun BankOffersSection(offers: List<ProductOffer>) {
                     }
                 }
             }
-            Divider(color = BorderGray)
+            HorizontalDivider(color = BorderGray)
         }
     }
 }
@@ -656,61 +871,5 @@ private fun DescriptionSection(description: String) {
             color = DarkText,
             lineHeight = 22.sp
         )
-    }
-}
-
-@Composable
-private fun BottomActionBar(
-    price: Double,
-    onAddToCart: () -> Unit,
-    onBuyNow: () -> Unit
-) {
-    Surface(
-        color = Color.White,
-        shadowElevation = 8.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Price
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "₹${price.toInt()}",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
-            }
-
-            // Add to Cart
-            OutlinedButton(
-                onClick = onAddToCart,
-                modifier = Modifier.height(48.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = PrimaryBlue
-                ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add to Cart", fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Buy Now
-            Button(
-                onClick = onBuyNow,
-                modifier = Modifier.height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("Buy Now", fontWeight = FontWeight.Bold, color = Color.White)
-            }
-        }
     }
 }

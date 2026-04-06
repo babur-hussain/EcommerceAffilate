@@ -165,7 +165,13 @@ fun CheckoutView(viewModel: CheckoutViewModel, onBack: () -> Unit) {
         if (isPaymentViewVisible) {
             Box(modifier = Modifier.fillMaxSize().zIndex(100f)) {
                 PaymentView(
-                    viewModel = viewModel,
+                    totalAmount = viewModel.totalAmount,
+                    discount = viewModel.discount,
+                    itemCount = viewModel.totalQuantity,
+                    onPaymentSelect = { method ->
+                        // Stub for payment initiation via CheckoutViewModel
+                    },
+                    isLoading = false,
                     onBack = { viewModel.setIsPaymentViewVisible(false) }
                 )
             }

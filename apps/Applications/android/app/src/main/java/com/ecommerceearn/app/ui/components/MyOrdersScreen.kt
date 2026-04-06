@@ -32,6 +32,9 @@ import java.util.*
 import retrofit2.HttpException
 import java.net.UnknownHostException
 import java.net.SocketTimeoutException
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.ecommerceearn.app.ui.pages.ReturnsView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +43,7 @@ fun MyOrdersScreen(onBackClick: () -> Unit) {
     var orders by remember { mutableStateOf<List<Order>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showReturns by remember { mutableStateOf(false) }
 
     // Helper function to get user-friendly error message
     fun getErrorMessage(e: Exception): String {
@@ -112,6 +116,15 @@ fun MyOrdersScreen(onBackClick: () -> Unit) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
+                actions = {
+                    TextButton(onClick = { showReturns = true }) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Returns", modifier = Modifier.size(14.dp), tint = Color(0xFF2563EB))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Returns", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF2563EB))
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.smallTopAppBarColors(
                     containerColor = Color.White,
                     titleContentColor = Color.Black,
@@ -159,6 +172,15 @@ fun MyOrdersScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
+        }
+    }
+
+    if (showReturns) {
+        Dialog(
+            onDismissRequest = { showReturns = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            ReturnsView(onDismiss = { showReturns = false })
         }
     }
 }

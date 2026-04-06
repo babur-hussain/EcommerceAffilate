@@ -17,6 +17,16 @@ import com.ecommerceearn.app.data.manager.OverlayDestination
 import com.ecommerceearn.app.data.manager.MainTab
 import com.ecommerceearn.app.utils.AppTheme
 import com.ecommerceearn.app.ui.home.HomeHeaderWithContent
+import com.ecommerceearn.app.ui.pages.BrandNewArrivalView
+import com.ecommerceearn.app.ui.pages.CyberSaleView
+import com.ecommerceearn.app.ui.pages.SpecialDealNewStyleView
+import com.ecommerceearn.app.ui.pages.MenFashionView
+import com.ecommerceearn.app.ui.pages.GrandMobilesView
+import com.ecommerceearn.app.ui.pages.PlusMembershipView
+import com.ecommerceearn.app.ui.pages.PaymentView
+import com.ecommerceearn.app.ui.pages.ProfileEditScreen
+import com.ecommerceearn.app.ui.pages.InfluencerRegistrationSheet
+import com.ecommerceearn.app.ui.components.SDUIPage
 
 @Composable
 fun ContentView() {
@@ -124,11 +134,26 @@ fun OverlayRouterView(destination: OverlayDestination) {
             .background(Color.White)
     ) {
         when (destination) {
-            OverlayDestination.BEAUTY -> Text("Beauty Overlay")
-            OverlayDestination.SPECIAL_DEAL -> Text("Special Deal Overlay")
-            OverlayDestination.SHOES_SALES -> Text("Shoes Sales Overlay")
+            OverlayDestination.BEAUTY -> SDUIPage(slug = "beauty-page", onProductClick = { NavigationManager.navigate("product/${it.id}") })
+            OverlayDestination.SPECIAL_DEAL -> SpecialDealNewStyleView()
+            OverlayDestination.BRAND_NEW_ARRIVAL -> BrandNewArrivalView()
+            OverlayDestination.MEN_FASHION -> MenFashionView()
+            OverlayDestination.GRAND_MOBILES -> GrandMobilesView()
+            OverlayDestination.CYBER_SALE -> CyberSaleView()
+            OverlayDestination.SHOES_SALES -> SDUIPage(slug = "footwear-collection", onProductClick = { NavigationManager.navigate("product/${it.id}") })
             OverlayDestination.CATEGORY_PAGE -> Text("Category Route Overlay")
             OverlayDestination.LOCATION_PICKER -> LocationPickerView()
+            OverlayDestination.PLUS_MEMBERSHIP -> PlusMembershipView(onNavigateBack = { NavigationManager.goBack() })
+            OverlayDestination.PAYMENT -> PaymentView(
+                totalAmount = 999.0,
+                discount = 100.0,
+                itemCount = 2,
+                onBack = { NavigationManager.goBack() },
+                onPaymentSelect = { NavigationManager.goBack() },
+                isLoading = false
+            )
+            OverlayDestination.PROFILE_EDIT -> ProfileEditScreen(onNavigateBack = { NavigationManager.goBack() })
+            OverlayDestination.INFLUENCER_REGISTRATION -> InfluencerRegistrationSheet(onDismiss = { NavigationManager.goBack() })
             else -> Text("Other Routing Overlay")
         }
     }

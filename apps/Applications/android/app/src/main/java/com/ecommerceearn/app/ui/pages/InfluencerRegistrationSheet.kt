@@ -1,26 +1,23 @@
 package com.ecommerceearn.app.ui.pages
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ecommerceearn.app.data.manager.AuthManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,209 +31,180 @@ fun InfluencerRegistrationSheet(onDismiss: () -> Unit) {
     var audienceSize by remember { mutableStateOf("") }
     var niche by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
-
-    var isLoading by remember { mutableStateOf(false) }
-    var showSuccessAlert by remember { mutableStateOf(false) }
     
+    var isLoading by remember { mutableStateOf(false) }
+    var showSuccess by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    
+    var platformExpanded by remember { mutableStateOf(false) }
+    var audienceExpanded by remember { mutableStateOf(false) }
+
     val platforms = listOf("Instagram", "YouTube", "TikTok", "Facebook", "Twitter", "Blog")
     val audienceSizes = listOf("1k - 10k", "10k - 50k", "50k - 500k", "500k+")
 
-    val coroutineScope = rememberCoroutineScope()
-
-    if (showSuccessAlert) {
+    if (showSuccess) {
         AlertDialog(
-            onDismissRequest = { 
-                showSuccessAlert = false
-                onDismiss()
-            },
+            onDismissRequest = { showSuccess = false },
             title = { Text("Success") },
             text = { Text("Your application has been submitted successfully!") },
             confirmButton = {
-                TextButton(onClick = { 
-                    showSuccessAlert = false
-                    onDismiss()
-                }) {
-                    Text("OK")
-                }
+                TextButton(onClick = { showSuccess = false; onDismiss() }) { Text("OK") }
             }
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Apply", fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    TextButton(onClick = onDismiss) {
-                        Text("Close", color = Color.Black)
-                    }
+    if (errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { errorMessage = null },
+            title = { Text("Error") },
+            text = { Text(errorMessage!!) },
+            confirmButton = { TextButton(onClick = { errorMessage = null }) { Text("OK") } }
+        )
+    }
+
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF3F4F6))) {
+        // Appbar
+        TopAppBar(
+            title = { Text("Apply", fontWeight = FontWeight.Medium) },
+            navigationIcon = {
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "Close")
                 }
-            )
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFF2F2F7)),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header Section
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color(0xFFE94057),
-                        modifier = Modifier.size(40.dp)
-                    )
-                    Text("Join Creator's Squad", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        "Partner with us, share products you love, and earn commissions.",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center
-                    )
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF3F4F6))
+        )
+
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            // Header
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Default.Stars, contentDescription = null, tint = Color(0xFFE94057), modifier = Modifier.size(40.dp))
+                Text("Join Creator's Squad", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Partner with us, share products you love, and earn commissions.", fontSize = 12.sp, color = Color.Gray, textAlign = TextAlign.Center)
+            }
+
+            // Cards section
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Personal Details", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(value = fullName, onValueChange = { fullName = it }, label = { Text("Full Name") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email Address") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone Number") }, modifier = Modifier.fillMaxWidth())
                 }
             }
 
-            // Personal Info
-            item {
-                Text("Personal Details", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp, start = 8.dp), color = Color.DarkGray)
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp)) {
-                    Column {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Social Profile", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    
+                    ExposedDropdownMenuBox(expanded = platformExpanded, onExpandedChange = { platformExpanded = it }) {
                         OutlinedTextField(
-                            value = fullName, onValueChange = { fullName = it },
-                            placeholder = { Text("Full Name") },
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                            colors = TextFieldDefaults.outlinedTextFieldColors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent)
+                            value = socialPlatform,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Primary Platform") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = platformExpanded) },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
-                        HorizontalDivider()
-                        OutlinedTextField(
-                            value = email, onValueChange = { email = it },
-                            placeholder = { Text("Email Address") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                            colors = TextFieldDefaults.outlinedTextFieldColors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent)
-                        )
-                        HorizontalDivider()
-                        OutlinedTextField(
-                            value = phone, onValueChange = { phone = it },
-                            placeholder = { Text("Phone Number") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                            colors = TextFieldDefaults.outlinedTextFieldColors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent)
-                        )
-                    }
-                }
-            }
-
-            // Social Info
-            item {
-                Text("Social Profile", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp, start = 8.dp), color = Color.DarkGray)
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp)) {
-                    Column {
-                        var platformExpanded by remember { mutableStateOf(false) }
-                        Box(modifier = Modifier.fillMaxWidth().clickable { platformExpanded = true }.padding(16.dp)) {
-                            Text("Primary Platform: $socialPlatform", color = if (socialPlatform.isEmpty()) Color.Gray else Color.Black)
-                            DropdownMenu(expanded = platformExpanded, onDismissRequest = { platformExpanded = false }) {
-                                platforms.forEach { plat ->
-                                    DropdownMenuItem(text = { Text(plat) }, onClick = { socialPlatform = plat; platformExpanded = false })
-                                }
+                        ExposedDropdownMenu(expanded = platformExpanded, onDismissRequest = { platformExpanded = false }) {
+                            platforms.forEach { selectionOption ->
+                                DropdownMenuItem(
+                                    text = { Text(selectionOption) },
+                                    onClick = { socialPlatform = selectionOption; platformExpanded = false }
+                                )
                             }
                         }
-                        HorizontalDivider()
+                    }
+
+                    OutlinedTextField(value = socialHandle, onValueChange = { socialHandle = it }, label = { Text("Social Handle (@username)") }, modifier = Modifier.fillMaxWidth())
+
+                    ExposedDropdownMenuBox(expanded = audienceExpanded, onExpandedChange = { audienceExpanded = it }) {
                         OutlinedTextField(
-                            value = socialHandle, onValueChange = { socialHandle = it },
-                            placeholder = { Text("Social Handle (@username)") },
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                            colors = TextFieldDefaults.outlinedTextFieldColors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent)
+                            value = audienceSize,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Audience Size") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = audienceExpanded) },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
-                        HorizontalDivider()
-                        
-                        var sizeExpanded by remember { mutableStateOf(false) }
-                        Box(modifier = Modifier.fillMaxWidth().clickable { sizeExpanded = true }.padding(16.dp)) {
-                            Text("Audience Size: ${if(audienceSize.isEmpty()) "Select Range" else audienceSize}", color = if (audienceSize.isEmpty()) Color.Gray else Color.Black)
-                            DropdownMenu(expanded = sizeExpanded, onDismissRequest = { sizeExpanded = false }) {
-                                audienceSizes.forEach { size ->
-                                    DropdownMenuItem(text = { Text(size) }, onClick = { audienceSize = size; sizeExpanded = false })
-                                }
+                        ExposedDropdownMenu(expanded = audienceExpanded, onDismissRequest = { audienceExpanded = false }) {
+                            audienceSizes.forEach { selectionOption ->
+                                DropdownMenuItem(
+                                    text = { Text(selectionOption) },
+                                    onClick = { audienceSize = selectionOption; audienceExpanded = false }
+                                )
                             }
                         }
-                        HorizontalDivider()
-                        OutlinedTextField(
-                            value = niche, onValueChange = { niche = it },
-                            placeholder = { Text("Niche / Category") },
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                            colors = TextFieldDefaults.outlinedTextFieldColors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent)
-                        )
                     }
+
+                    OutlinedTextField(value = niche, onValueChange = { niche = it }, label = { Text("Niche / Category") }, modifier = Modifier.fillMaxWidth())
                 }
             }
 
-            // Bio
-            item {
-                Text("About You", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp, start = 8.dp), color = Color.DarkGray)
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp)) {
-                    OutlinedTextField(
-                        value = bio, onValueChange = { bio = it },
-                        placeholder = { Text("Tell us a bit about yourself...") },
-                        modifier = Modifier.fillMaxWidth().height(100.dp).padding(horizontal = 16.dp, vertical = 8.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent)
-                    )
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("About You", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(value = bio, onValueChange = { bio = it }, modifier = Modifier.fillMaxWidth().height(100.dp))
                 }
             }
 
-            // Submit Button
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
+            Box(modifier = Modifier.padding(16.dp).fillMaxWidth().padding(bottom = 32.dp)) {
                 Button(
                     onClick = {
-                        isLoading = true
-                        coroutineScope.launch {
-                            val result = AuthManager.registerInfluencer(
-                                name = fullName,
-                                email = email,
-                                phone = phone,
-                                platform = socialPlatform,
-                                handle = socialHandle,
-                                niche = niche,
-                                bio = bio
-                            )
-                            isLoading = false
-                            if (result.isSuccess) {
-                                showSuccessAlert = true
-                            } else {
-                                // optional error handling
+                        scope.launch {
+                            try {
+                                isLoading = true
+                                com.ecommerceearn.app.data.remote.NetworkClient.apiService.applyCreator(
+                                    com.ecommerceearn.app.data.remote.CreatorApplicationRequest(
+                                        fullName = fullName,
+                                        email = email,
+                                        phone = phone,
+                                        socialPlatform = socialPlatform,
+                                        socialHandle = socialHandle,
+                                        audienceSize = audienceSize,
+                                        niche = niche,
+                                        bio = bio
+                                    )
+                                )
+                                isLoading = false
+                                showSuccess = true
+                            } catch (e: Exception) {
+                                isLoading = false
+                                errorMessage = "Failed to submit application: ${e.message}"
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     enabled = !isLoading && fullName.isNotEmpty() && email.isNotEmpty(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, disabledContainerColor = Color.LightGray),
-                    contentPadding = PaddingValues(0.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                if (!isLoading && fullName.isNotEmpty() && email.isNotEmpty()) {
-                                    Brush.horizontalGradient(listOf(Color(0xFF8A2387), Color(0xFFE94057)))
-                                } else {
-                                    Brush.horizontalGradient(listOf(Color.LightGray, Color.LightGray))
-                                }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize().background(
+                        Brush.horizontalGradient(listOf(Color(0xFF8A2387), Color(0xFFE94057))),
+                        RoundedCornerShape(25.dp)
+                    ), contentAlignment = Alignment.Center) {
                         if (isLoading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else {
-                            Text("Submit Application", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text("Submit Application", color = Color.White, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

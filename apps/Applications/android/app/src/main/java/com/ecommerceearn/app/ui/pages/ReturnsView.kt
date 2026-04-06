@@ -20,7 +20,7 @@ import com.ecommerceearn.app.data.manager.NavigationManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReturnsView() {
+fun ReturnsView(onDismiss: () -> Unit) {
     var selectedReason by remember { mutableStateOf("Select a reason") }
     var comments by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -33,7 +33,7 @@ fun ReturnsView() {
             SmallTopAppBar(
                 title = { Text("Request Return", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { NavigationManager.navigate("account") }) {
+                    IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -56,7 +56,7 @@ fun ReturnsView() {
                 Text("We have received your return request. Our courier partner will pick up the item within 2-3 business days.", textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = Color.Gray)
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
-                    onClick = { NavigationManager.navigate("account") },
+                    onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2874F0)),
                     shape = RoundedCornerShape(8.dp)
                 ) {

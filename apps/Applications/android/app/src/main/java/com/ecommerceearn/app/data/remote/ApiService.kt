@@ -15,12 +15,29 @@ import com.ecommerceearn.app.data.model.AuthResponse
 import com.ecommerceearn.app.data.model.UpdateCartRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import com.ecommerceearn.app.data.model.ServiceCategoryModel
 import com.ecommerceearn.app.data.model.ServiceSubCategoryModel
 import com.ecommerceearn.app.data.model.ServiceProviderListResponse
 import com.ecommerceearn.app.data.model.ServiceProviderModel
 import com.ecommerceearn.app.data.model.ServiceReviewListResponse
 import com.ecommerceearn.app.data.model.ServiceReviewModel
+
+data class CreatePaymentOrderRequest(val orderId: String)
+data class NetworkRazorpayOrderResponse(val id: String, val amount: Int, val currency: String)
+data class VerifyPaymentRequest(val razorpay_order_id: String, val razorpay_payment_id: String, val razorpay_signature: String)
+data class VerifyPaymentResponse(val success: Boolean, val message: String?)
+data class UpdateProfileRequest(val name: String, val phone: String?, val bio: String?)
+data class CreatorApplicationRequest(
+    val fullName: String,
+    val email: String,
+    val phone: String,
+    val socialPlatform: String,
+    val socialHandle: String,
+    val audienceSize: String,
+    val niche: String,
+    val bio: String
+)
 
 interface ApiService {
     @GET("advanced-layout/{slug}")
@@ -34,6 +51,12 @@ interface ApiService {
 
     @GET("me")
     suspend fun getMe(): AuthResponse
+
+    @PUT("me/profile")
+    suspend fun updateProfile(@Body body: UpdateProfileRequest)
+
+    @POST("creators/apply")
+    suspend fun applyCreator(@Body body: CreatorApplicationRequest)
 
     @GET("categories")
     suspend fun getCategories(): List<Category>
@@ -54,6 +77,17 @@ interface ApiService {
     // Order Endpoints
     @GET("orders/mine")
     suspend fun getOrders(): List<com.ecommerceearn.app.data.model.Order>
+
+    // Payment Endpoints
+    @POST("payments/create-order")
+    suspend fun createPaymentOrder(@Body request: CreatePaymentOrderRequest): NetworkRazorpayOrderResponse
+
+    @POST("payments/verify")
+    suspend fun verifyPayment(@Body request: VerifyPaymentRequest): VerifyPaymentResponse
+
+    // Address Endpoints
+    @GET("addresses/mine")
+    suspend fun getAddresses(): List<com.ecommerceearn.app.data.model.Address>
 
     // Cart Endpoints
     @GET("cart")

@@ -32,7 +32,11 @@ enum class OverlayDestination(val id: String) {
     SHOES_SALES("shoesSales"),
     CYBER_SALE("cyberSale"),
     CATEGORY_PAGE("categoryPage"),
-    LOCATION_PICKER("locationPicker")
+    LOCATION_PICKER("locationPicker"),
+    PLUS_MEMBERSHIP("plusMembership"),
+    PAYMENT("payment"),
+    PROFILE_EDIT("profileEdit"),
+    INFLUENCER_REGISTRATION("influencerRegistration")
 }
 
 enum class MainTab {
@@ -136,6 +140,10 @@ object NavigationManager {
             "footwear-collection", "footwear-sale-collection" -> setOverlay(OverlayDestination.SHOES_SALES)
             "cyber-sale" -> setOverlay(OverlayDestination.CYBER_SALE)
             "locationPicker" -> setOverlay(OverlayDestination.LOCATION_PICKER)
+            "plus-membership" -> setOverlay(OverlayDestination.PLUS_MEMBERSHIP)
+            "payment" -> setOverlay(OverlayDestination.PAYMENT)
+            "profile-edit" -> setOverlay(OverlayDestination.PROFILE_EDIT)
+            "influencer-registration" -> setOverlay(OverlayDestination.INFLUENCER_REGISTRATION)
             else -> {
                 if (url.startsWith("/collection/")) {
                     AppLogger.debug("Navigate to collection: $url")

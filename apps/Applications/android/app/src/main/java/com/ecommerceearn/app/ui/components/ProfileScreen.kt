@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -22,8 +21,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.ecommerceearn.app.data.manager.AuthManager
+import com.ecommerceearn.app.ui.pages.*
 
 @Composable
 fun ProfileScreen() {
@@ -77,6 +79,19 @@ fun LoggedOutView(onLoginClick: () -> Unit) {
 
 @Composable
 fun LoggedInView(user: com.ecommerceearn.app.data.model.User, onLogout: () -> Unit) {
+    // Ported iOS Parity Layout States
+    var showMyOrders by remember { mutableStateOf(false) }
+    var showWishlist by remember { mutableStateOf(false) }
+    var showWallet by remember { mutableStateOf(false) }
+    var showReturns by remember { mutableStateOf(false) }
+    var showSmartBasket by remember { mutableStateOf(false) }
+    
+    var showProfileEdit by remember { mutableStateOf(false) }
+    var showNotifications by remember { mutableStateOf(false) }
+    var showLanguage by remember { mutableStateOf(false) }
+    var showSellOnPlatform by remember { mutableStateOf(false) }
+    var showPrivacy by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -86,14 +101,27 @@ fun LoggedInView(user: com.ecommerceearn.app.data.model.User, onLogout: () -> Un
             HeaderSection(user)
         }
         item {
-            QuickLinksGrid()
+            QuickLinksGrid(
+                onOrdersClick = { showMyOrders = true },
+                onWishlistClick = { showWishlist = true },
+                onWalletClick = { showWallet = true },
+                onReturnsClick = { showReturns = true },
+                onSmartBasketClick = { showSmartBasket = true }
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
         item {
-            AccountSettingsSection()
+            AccountSettingsSection(
+                onEditProfileClick = { showProfileEdit = true },
+                onNotificationsClick = { showNotifications = true }
+            )
         }
         item {
-            SettingsSection()
+            SettingsSection(
+                onLanguageClick = { showLanguage = true },
+                onSellOnPlatformClick = { showSellOnPlatform = true },
+                onPrivacyClick = { showPrivacy = true }
+            )
         }
         item {
             SupportSection()
@@ -112,6 +140,26 @@ fun LoggedInView(user: com.ecommerceearn.app.data.model.User, onLogout: () -> Un
             }
         }
     }
+
+    // Modal Sheet Definitions
+    if (showMyOrders) { FullScreenOverlay { MyOrdersView() }; showMyOrders = false } // Stubs will be ported so overlay isn't fully needed yet, but keeping parity structure
+    // Since MyOrdersView handles back natively, we just trigger it and let it own the screen.
+    // Wait, MyOrdersView is a normal composable not a Dialog.
+    // Actually, in compose we embed Dialog to mirror .fullScreenCover
+    if (showMyOrders) { Dialog(onDismissRequest = { showMyOrders = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { MyOrdersView() } }
+    if (showWishlist) { Dialog(onDismissRequest = { showWishlist = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { WishlistView() } }
+    if (showWallet) { Dialog(onDismissRequest = { showWallet = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { WalletView() } }
+    if (showReturns) { Dialog(onDismissRequest = { showReturns = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { ReturnsView(onDismiss = { showReturns = false }) } }
+    if (showSmartBasket) { Dialog(onDismissRequest = { showSmartBasket = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { SmartBasketPageView() } }
+    
+    // Add dummy dismissed handling for now as views get ported
+}
+
+@Composable
+fun FullScreenOverlay(content: @Composable () -> Unit) {
+    Dialog(onDismissRequest = { /* let internal handle */ }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        content()
+    }
 }
 
 @Composable
@@ -121,7 +169,7 @@ fun HeaderSection(user: com.ecommerceearn.app.data.model.User) {
             .fillMaxWidth()
             .background(Color(0xFFF0F5FF))
             .padding(16.dp)
-            .padding(top = 24.dp)
+            // .padding(top = 24.dp) // Removed extra top padding for better flow
     ) {
         Row(
             verticalAlignment = Alignment.Top,
@@ -199,7 +247,13 @@ fun HeaderSection(user: com.ecommerceearn.app.data.model.User) {
 }
 
 @Composable
-fun QuickLinksGrid() {
+fun QuickLinksGrid(
+    onOrdersClick: () -> Unit,
+    onWishlistClick: () -> Unit,
+    onWalletClick: () -> Unit,
+    onReturnsClick: () -> Unit,
+    onSmartBasketClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -207,15 +261,15 @@ fun QuickLinksGrid() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickLinkButton("Orders", Icons.Outlined.Inventory2, Color(0xFF2874F0), Modifier.weight(1f)) {}
-            QuickLinkButton("Wishlist", Icons.Outlined.FavoriteBorder, Color(0xFF2874F0), Modifier.weight(1f)) {}
+            QuickLinkButton("Orders", Icons.Outlined.Inventory2, Color(0xFF2874F0), Modifier.weight(1f)) { onOrdersClick() }
+            QuickLinkButton("Wishlist", Icons.Outlined.FavoriteBorder, Color(0xFF2874F0), Modifier.weight(1f)) { onWishlistClick() }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickLinkButton("Wallet", Icons.Outlined.AccountBalanceWallet, Color(0xFF2874F0), Modifier.weight(1f)) {}
-            QuickLinkButton("Returns", Icons.Outlined.AssignmentReturn, Color(0xFF2874F0), Modifier.weight(1f)) {}
+            QuickLinkButton("Wallet", Icons.Outlined.AccountBalanceWallet, Color(0xFF2874F0), Modifier.weight(1f)) { onWalletClick() }
+            QuickLinkButton("Returns", Icons.Outlined.AssignmentReturn, Color(0xFF2874F0), Modifier.weight(1f)) { onReturnsClick() }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickLinkButton("Smart Basket", Icons.Outlined.ShoppingBasket, Color(0xFFF97316), Modifier.weight(1f)) {}
+            QuickLinkButton("Smart Basket", Icons.Outlined.ShoppingBasket, Color(0xFFF97316), Modifier.weight(1f)) { onSmartBasketClick() }
             Spacer(modifier = Modifier.weight(1f))
         }
     }
@@ -244,24 +298,24 @@ fun QuickLinkButton(title: String, icon: ImageVector, iconTint: Color, modifier:
 }
 
 @Composable
-fun AccountSettingsSection() {
+fun AccountSettingsSection(onEditProfileClick: () -> Unit, onNotificationsClick: () -> Unit) {
     Column(modifier = Modifier.padding(top = 8.dp).fillMaxWidth().background(Color.White)) {
         SectionTitle("Account Settings")
-        SettingsRow("Edit Profile", "Update your personal information", Icons.Outlined.Person) {}
+        SettingsRow("Edit Profile", "Update your personal information", Icons.Outlined.Person) { onEditProfileClick() }
         SettingsRow("Saved Addresses", "Manage delivery addresses", Icons.Outlined.LocationOn) {}
         SettingsRow("Payment Methods", "Cards, UPI, Wallets", Icons.Outlined.CreditCard) {}
-        SettingsRow("Notifications", "Manage notification preferences", Icons.Outlined.Notifications, isLast = true) {}
+        SettingsRow("Notifications", "Manage notification preferences", Icons.Outlined.Notifications, isLast = true) { onNotificationsClick() }
     }
 }
 
 @Composable
-fun SettingsSection() {
+fun SettingsSection(onLanguageClick: () -> Unit, onSellOnPlatformClick: () -> Unit, onPrivacyClick: () -> Unit) {
     Column(modifier = Modifier.padding(top = 8.dp).fillMaxWidth().background(Color.White)) {
         SectionTitle("Settings")
-        SettingsRow("Language", "English", Icons.Outlined.Language) {}
+        SettingsRow("Language", "English", Icons.Outlined.Language) { onLanguageClick() }
         SettingsRow("Dark Mode", "Coming soon", Icons.Outlined.DarkMode) {}
-        SettingsRow("Sell on Platform", "Become a seller", Icons.Outlined.Storefront) {}
-        SettingsRow("Privacy Center", "Manage your data", Icons.Outlined.Shield, isLast = true) {}
+        SettingsRow("Sell on Platform", "Become a seller", Icons.Outlined.Storefront) { onSellOnPlatformClick() }
+        SettingsRow("Privacy Center", "Manage your data", Icons.Outlined.Shield, isLast = true) { onPrivacyClick() }
     }
 }
 

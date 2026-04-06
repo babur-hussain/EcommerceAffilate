@@ -5,81 +5,81 @@ import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.ecommerceearn.app.data.manager.AuthManager
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun LoginScreen(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
     
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showSignup by remember { mutableStateOf(false) }
 
     // Google Sign In Launcher
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        android.util.Log.d("LoginScreen", "Google Sign In Result: ${result.resultCode}")
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)
                 val idToken = account.idToken
-                android.util.Log.d("LoginScreen", "Got account: ${account.email}, idToken null: ${idToken == null}")
                 if (idToken != null) {
                     isLoading = true
                     errorMessage = null
                     scope.launch {
                         try {
-                            val user = AuthManager.firebaseAuthWithGoogle(idToken)
-                            android.util.Log.d("LoginScreen", "Login successful! User: ${user.email}, userState now: ${AuthManager.userState.value?.email}")
+                            AuthManager.firebaseAuthWithGoogle(idToken)
                             isLoading = false
                             onDismiss() // Close Login Screen on Success
                         } catch (e: Exception) {
                             isLoading = false
                             errorMessage = "Firebase Auth Failed: ${e.message}"
-                            android.util.Log.e("LoginScreen", "Firebase Auth Error", e)
                         }
                     }
                 } else {
-                    // idToken is null - this is the problem!
-                    errorMessage = "Error: ID Token is null. Check Web Client ID in Firebase Console."
-                    android.util.Log.e("LoginScreen", "idToken is null for account: ${account.email}")
+                    errorMessage = "Error: ID Token is null."
                 }
             } catch (e: ApiException) {
                 errorMessage = "Google Sign In Error: Code ${e.statusCode}"
-                android.util.Log.e("LoginScreen", "ApiException: ${e.statusCode}", e)
             }
         } else if (result.resultCode == Activity.RESULT_CANCELED) {
             errorMessage = "Sign in was cancelled"
@@ -88,196 +88,441 @@ fun LoginScreen(onDismiss: () -> Unit) {
         }
     }
 
-    Column(
+    // Wrap the entire screen content in a box to capture clicks outside text fields (to dismiss keyboard)
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF2874F0)) // Blue Header Background
+            .background(Color(0xFF2874F0))
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null
+            ) {
+                keyboardController?.hide()
+            }
     ) {
-        // Header
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)) {
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier.align(Alignment.TopStart)
-            ) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
-            }
-            Text(
-                "Local For Vocal",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-
-        // Content
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState())
+            modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                "Log in for the best experience",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Enter your details to continue",
-                fontSize = 14.sp,
-                color = Color(0xFF888888),
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-
-            // Email Field
-            Text("Email Address", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(6.dp))
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 20.dp),
-                placeholder = { Text("Enter your email", color = Color(0xFF6B7280)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color(0xFFD1D5DB),
-                    focusedBorderColor = Color(0xFF2874F0),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                ),
-                shape = RoundedCornerShape(6.dp)
-            )
-
-            // Password Field
-            Text("Password", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(6.dp))
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                placeholder = { Text("Enter password", color = Color(0xFF6B7280)) },
-                singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(image, contentDescription = "Toggle password visibility", tint = Color(0xFF4B5563))
-                    }
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color(0xFFD1D5DB),
-                    focusedBorderColor = Color(0xFF2874F0),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                ),
-                shape = RoundedCornerShape(6.dp)
-            )
-
-            if (errorMessage != null) {
-                Text(
-                    text = errorMessage!!,
-                    color = Color.Red,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            }
-
-            // Continue Button
-            Button(
-                onClick = {
-                    if (email.isNotBlank() && password.isNotBlank()) {
-                         isLoading = true
-                         errorMessage = null
-                         scope.launch {
-                             try {
-                                 AuthManager.signInWithEmail(email, password)
-                                 isLoading = false
-                                 onDismiss()
-                             } catch (e: Exception) {
-                                 isLoading = false
-                                 errorMessage = e.message ?: "Login Failed"
-                             }
-                         }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF26422)), // Adjusting to the iOS solid orange
-                shape = RoundedCornerShape(6.dp),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text("Continue", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            // Header
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.TopStart)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
                 }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            Text(
-                "Or", 
-                modifier = Modifier.align(Alignment.CenterHorizontally), 
-                color = Color(0xFF888888),
-                fontSize = 14.sp
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Google Sign In Button
-            Button(
-                onClick = {
-                    if (!isLoading) {
-                        errorMessage = null
-                        initiateGoogleLogin(context, googleSignInLauncher)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD1D5DB)),
-                shape = RoundedCornerShape(6.dp)
-            ) {
-                Text("Sign in with Google", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Sign Up Link
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
                 Text(
-                    text = "Don't have an account? ",
-                    fontSize = 14.sp,
-                    color = Color(0xFF888888)
-                )
-                Text(
-                    text = "Sign up",
-                    fontSize = 14.sp,
+                    "Local For Vocal",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2874F0),
-                    modifier = Modifier.clickable {
-                        // TODO: Implement SignUp routing
-                    }
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Center)
                 )
+            }
+
+            // Content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    "Log in for the best experience",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Enter your details to continue",
+                    fontSize = 14.sp,
+                    color = Color(0xFF888888),
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // Email Field
+                Text("Email Address", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp),
+                    placeholder = { Text("Enter your email", color = Color(0xFF6B7280)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFD1D5DB),
+                        focusedBorderColor = Color(0xFF2874F0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(6.dp)
+                )
+
+                // Password Field
+                Text("Password", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    placeholder = { Text("Enter password", color = Color(0xFF6B7280)) },
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(image, contentDescription = "Toggle password visibility", tint = Color(0xFF4B5563))
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFD1D5DB),
+                        focusedBorderColor = Color(0xFF2874F0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(6.dp)
+                )
+
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage!!,
+                        color = Color.Red,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+
+                // Continue Button
+                Button(
+                    onClick = {
+                        if (email.isNotBlank() && password.isNotBlank()) {
+                             isLoading = true
+                             errorMessage = null
+                             scope.launch {
+                                 try {
+                                     AuthManager.signInWithEmail(email, password)
+                                     isLoading = false
+                                     onDismiss()
+                                 } catch (e: Exception) {
+                                     isLoading = false
+                                     errorMessage = e.message ?: "Login Failed"
+                                 }
+                             }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF26422)), 
+                    shape = RoundedCornerShape(6.dp),
+                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("Continue", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Divider(modifier = Modifier.weight(1f), color = Color.Gray.copy(alpha = 0.3f))
+                    Text(" Or continue with ", color = Color.Gray, fontSize = 12.sp)
+                    Divider(modifier = Modifier.weight(1f), color = Color.Gray.copy(alpha = 0.3f))
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Google Sign In Button
+                Button(
+                    onClick = {
+                        if (!isLoading) {
+                            errorMessage = null
+                            initiateGoogleLogin(context, googleSignInLauncher)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD1D5DB)),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text("Sign in with Google", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Sign Up Link
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "New here? ",
+                        fontSize = 14.sp,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = "Sign up",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2874F0),
+                        modifier = Modifier.clickable {
+                            showSignup = true
+                        }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }
+
+    if (showSignup) {
+        Dialog(
+            onDismissRequest = { showSignup = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        ) {
+            SignupScreen(onDismiss = { showSignup = false }, onRegistrationSuccess = onDismiss)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@Composable
+fun SignupScreen(onDismiss: () -> Unit, onRegistrationSuccess: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    
+    var showPassword by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val isFormValid = name.isNotBlank() && email.isNotBlank() && phone.isNotBlank() && 
+                      password.isNotBlank() && password == confirmPassword && password.length >= 6
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF2874F0))
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null
+            ) {
+                keyboardController?.hide()
+            }
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Header
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.TopStart)
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
+                Text(
+                    "Local For Vocal",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            // Content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    "Create your account",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Fill in your details to get started",
+                    fontSize = 14.sp,
+                    color = Color(0xFF888888),
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                FormField("Full Name", "Enter your name", name, { name = it }, KeyboardType.Text)
+                FormField("Email Address", "Enter your email", email, { email = it }, KeyboardType.Email)
+                FormField("Phone Number", "Enter phone", phone, { phone = it }, KeyboardType.Phone)
+
+                // Password
+                Text("Password", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    placeholder = { Text("Enter password", color = Color(0xFF6B7280)) },
+                    singleLine = true,
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (showPassword) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(image, contentDescription = "Toggle hidden", tint = Color(0xFF4B5563))
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFD1D5DB),
+                        focusedBorderColor = Color(0xFF2874F0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(6.dp)
+                )
+
+                // Confirm Password
+                Text("Confirm Password", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    placeholder = { Text("Confirm password", color = Color(0xFF6B7280)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = if (password == confirmPassword || confirmPassword.isEmpty()) Color(0xFFD1D5DB) else Color.Red,
+                        focusedBorderColor = if (password == confirmPassword || confirmPassword.isEmpty()) Color(0xFF2874F0) else Color.Red,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(6.dp)
+                )
+
+                Text(
+                    "By signing up, you agree to our Terms of Use and Privacy Policy.",
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+
+                if (errorMessage != null) {
+                    Text(
+                        errorMessage!!,
+                        color = Color.Red,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+
+                // Sign Up Button
+                Button(
+                    onClick = {
+                        isLoading = true
+                        errorMessage = null
+                        scope.launch {
+                            try {
+                                AuthManager.register(name, email, phone, password)
+                                isLoading = false
+                                onRegistrationSuccess()
+                            } catch (e: Exception) {
+                                isLoading = false
+                                errorMessage = e.message ?: "Registration Failed"
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF26422)),
+                    shape = RoundedCornerShape(6.dp),
+                    enabled = !isLoading && isFormValid
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("Sign Up", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Already have an account? ", fontSize = 14.sp, color = Color.Gray)
+                    Text(
+                        "Log In",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2874F0),
+                        modifier = Modifier.clickable { onDismiss() }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(100.dp))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FormField(label: String, placeholder: String, value: String, onValueChange: (String) -> Unit, keyboardType: KeyboardType) {
+    Text(label, color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(6.dp))
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
+        placeholder = { Text(placeholder, color = Color(0xFF6B7280)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = Color(0xFFD1D5DB),
+            focusedBorderColor = Color(0xFF2874F0),
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
+        ),
+        shape = RoundedCornerShape(6.dp)
+    )
 }
 
 private fun initiateGoogleLogin(

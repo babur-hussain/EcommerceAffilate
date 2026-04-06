@@ -494,7 +494,7 @@ fun RenderDealsOfTheDay(component: SDUIComponent) {
     val title = props.getString("title") ?: "Deals of the Day"
     val subtitle = props.getString("subtitle") ?: "Clock is ticking!"
     val headerActionUrl = props.getString("headerActionUrl")
-    val items = parseItems<DealItem>(props.getArray("items"))
+    val items = parseItems<DealOfTheDayItem>(props.getArray("items"))
 
     DealsOfTheDayView(title, subtitle, headerActionUrl, items)
 }
@@ -535,7 +535,7 @@ fun RenderShoppingForOthersHub(component: SDUIComponent) {
     val props = component.props ?: return
     val title = props.getString("title") ?: "Shopping for others?"
     val subtitle = props.getString("subtitle") ?: "Choose a category to start exploring"
-    val items = parseItems<ShoppingForOthersCategoryItem>(props.getArray("items"))
+    val items = parseItems<ShoppingCategoryItem>(props.getArray("items"))
     ShoppingForOthersHubView(title, subtitle, items)
 }
 
@@ -553,7 +553,7 @@ fun RenderSankrantiFestival(component: SDUIComponent) {
     val props = component.props ?: return
     val title = props.getString("title") ?: "Shine bright this Sankranti"
     val headerActionUrl = props.getString("headerActionUrl")
-    val items = parseItems<SankrantiFestiveItem>(props.getArray("items"))
+    val items = parseItems<FestiveItem>(props.getArray("items"))
     SankrantiFestivalView(title, headerActionUrl, items)
 }
 
@@ -562,7 +562,7 @@ fun RenderShoeStealFest(component: SDUIComponent) {
     val props = component.props ?: return
     val title = props.getString("title") ?: "Shoe's Steal Fest"
     val headerActionUrl = props.getString("headerActionUrl")
-    val items = parseItems<ShoeStealItem>(props.getArray("items"))
+    val items = parseItems<ShoeItem>(props.getArray("items"))
     ShoeStealFestView(title, headerActionUrl, items)
 }
 
