@@ -69,7 +69,7 @@ fun ProfileEditView() {
                                 val authRes = NetworkClient.apiService.updateProfile(
                                     UpdateProfileRequest(name, phoneNumber, user?.bio, profileImage = urlResponse.data.fileUrl)
                                 )
-                                AuthManager.updateUserSession(authRes.user)
+                                authRes.user?.let { AuthManager.updateUserSession(it) }
                             }
                         }
                     } catch (e: Exception) {
@@ -210,7 +210,7 @@ fun ProfileEditView() {
                             val authRes = NetworkClient.apiService.updateProfile(
                                 UpdateProfileRequest(name, phoneNumber, user?.bio)
                             )
-                            AuthManager.updateUserSession(authRes.user)
+                            authRes.user?.let { AuthManager.updateUserSession(it) }
                             NavigationManager.goBack()
                         } catch (e: Exception) {
                             e.printStackTrace()
