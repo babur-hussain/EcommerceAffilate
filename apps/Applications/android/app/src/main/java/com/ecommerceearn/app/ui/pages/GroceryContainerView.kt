@@ -28,6 +28,7 @@ enum class InnerGroceryTab {
     BASKET
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun GroceryContainerView(onOuterTabSelected: (TabType) -> Unit) {
     var selectedTab by remember { mutableStateOf(InnerGroceryTab.HOME) }

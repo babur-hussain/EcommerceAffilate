@@ -24,6 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ecommerceearn.app.utils.AppTheme
 import kotlinx.coroutines.delay
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 
 @Composable
 fun SplashScreenView(onSplashComplete: () -> Unit = {}) {
@@ -48,10 +52,11 @@ fun SplashScreenView(onSplashComplete: () -> Unit = {}) {
         ) {
             Spacer(modifier = Modifier.weight(1f))
 
-            // Replace with actual Lottie if com.airbnb.android:lottie-compose is added
-            CircularProgressIndicator(
-                modifier = Modifier.size(60.dp),
-                color = AppTheme.Colors.primary
+            val composition by rememberLottieComposition(LottieCompositionSpec.Asset("fast delivery.lottie"))
+            LottieAnimation(
+                composition = composition,
+                iterations = LottieConstants.IterateForever,
+                modifier = Modifier.size(220.dp)
             )
 
             Spacer(modifier = Modifier.size(24.dp))
