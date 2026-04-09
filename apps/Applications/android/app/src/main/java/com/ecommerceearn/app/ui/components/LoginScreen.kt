@@ -52,6 +52,7 @@ fun LoginScreen(onDismiss: () -> Unit) {
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showSignup by remember { mutableStateOf(false) }
+    var loginInfoMessage by remember { mutableStateOf<String?>(null) }
 
     // Google Sign In Launcher
     val googleSignInLauncher = rememberLauncherForActivityResult(
@@ -141,8 +142,28 @@ fun LoginScreen(onDismiss: () -> Unit) {
                     "Enter your details to continue",
                     fontSize = 14.sp,
                     color = Color(0xFF888888),
-                    modifier = Modifier.padding(bottom = 32.dp)
+                    modifier = Modifier.padding(bottom = if (loginInfoMessage != null) 16.dp else 32.dp)
                 )
+
+                // Account exists info banner
+                if (loginInfoMessage != null) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 20.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFFFF3E0),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF9800))
+                    ) {
+                        Text(
+                            text = loginInfoMessage!!,
+                            fontSize = 13.sp,
+                            color = Color(0xFFE65100),
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
 
                 // Email Field
                 Text("Email Address", color = Color(0xFF2874F0), fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -299,14 +320,22 @@ fun LoginScreen(onDismiss: () -> Unit) {
             onDismissRequest = { showSignup = false },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
         ) {
-            SignupScreen(onDismiss = { showSignup = false }, onRegistrationSuccess = onDismiss)
+            SignupScreen(
+                onDismiss = { showSignup = false },
+                onRegistrationSuccess = onDismiss,
+                onAccountExists = { existingEmail ->
+                    showSignup = false
+                    email = existingEmail
+                    loginInfoMessage = "Account already exists with this email. Please login."
+                }
+            )
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun SignupScreen(onDismiss: () -> Unit, onRegistrationSuccess: () -> Unit) {
+fun SignupScreen(onDismiss: () -> Unit, onRegistrationSuccess: () -> Unit, onAccountExists: (email: String) -> Unit = {}) {
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -460,7 +489,12 @@ fun SignupScreen(onDismiss: () -> Unit, onRegistrationSuccess: () -> Unit) {
                                 onRegistrationSuccess()
                             } catch (e: Exception) {
                                 isLoading = false
-                                errorMessage = getBeautifulErrorMessage(e, "Registration Failed")
+                                val msg = getBeautifulErrorMessage(e, "Registration Failed")
+                                if (msg.contains("already exists", ignoreCase = true) || msg.contains("already registered", ignoreCase = true)) {
+                                    onAccountExists(email)
+                                } else {
+                                    errorMessage = msg
+                                }
                             }
                         }
                     },
@@ -539,13 +573,28 @@ private fun initiateGoogleLogin(
 }
 
 private fun getBeautifulErrorMessage(e: Exception, defaultMessage: String): String {
+    // First: try to extract error from Retrofit HttpException body
+    if (e is retrofit2.HttpException) {
+        try {
+            val errorBody = e.response()?.errorBody()?.string()
+            if (errorBody != null) {
+                val json = org.json.JSONObject(errorBody)
+                val serverError = json.optString("error", "")
+                if (serverError.isNotBlank()) return serverError
+                val serverMessage = json.optString("message", "")
+                if (serverMessage.isNotBlank()) return serverMessage
+            }
+        } catch (_: Exception) { /* ignore parse errors */ }
+    }
+
     val rawMessage = e.message ?: return defaultMessage
     return when {
-        rawMessage.contains("email address is already in use") -> "This email is already registered. Please log in."
+        rawMessage.contains("email address is already in use") -> "Account already exists with this email. Please login instead."
         rawMessage.contains("INVALID_LOGIN_CREDENTIALS") || rawMessage.contains("invalid password") || rawMessage.contains("invalid-credential") || rawMessage.contains("InvalidCredentials") -> "Incorrect email or password."
         rawMessage.contains("weak password") || rawMessage.contains("WeakPassword") -> "Password is too weak. Please use a stronger password."
         rawMessage.contains("no user record") || rawMessage.contains("InvalidUser") -> "No account found with this email."
         rawMessage.contains("network") || rawMessage.contains("resolve host") || rawMessage.contains("timeout") -> "Please check your internet connection."
+        rawMessage.contains("Registration failed on server") -> "Account already exists with this email. Please login instead."
         rawMessage.contains("HTTP") || rawMessage.contains("HttpException") -> "Server Error. Please try again."
         rawMessage.contains("com.google.") || rawMessage.contains("java.") || rawMessage.contains("Exception") -> defaultMessage
         else -> rawMessage

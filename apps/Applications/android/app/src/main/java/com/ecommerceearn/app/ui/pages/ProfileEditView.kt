@@ -22,7 +22,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ecommerceearn.app.data.manager.AuthManager
 import com.ecommerceearn.app.data.manager.NavigationManager
+import com.ecommerceearn.app.data.remote.NetworkClient
+import com.ecommerceearn.app.data.remote.UpdateProfileRequest
 import coil.compose.AsyncImage
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import android.net.Uri
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Request
+import okhttp3.OkHttpClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +44,43 @@ fun ProfileEditView() {
     var email by remember { mutableStateOf(user?.email ?: "") }
     var phoneNumber by remember { mutableStateOf(user?.phoneNumber ?: "") }
     var isSaving by remember { mutableStateOf(false) }
+    
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var isUploadingImage by remember { mutableStateOf(false) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> 
+            if (uri != null) {
+                scope.launch {
+                    isUploadingImage = true
+                    try {
+                        val fileName = "profile_${System.currentTimeMillis()}.jpg"
+                        val urlResponse = NetworkClient.apiService.getPresignedUrl(fileName, "image/jpeg")
+                        val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
+                        if (bytes != null) {
+                            val okClient = OkHttpClient()
+                            val body = bytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                            val request = Request.Builder().url(urlResponse.data.uploadUrl).put(body).build()
+                            val res = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { okClient.newCall(request).execute() }
+                            
+                            if (res.isSuccessful) {
+                                val authRes = NetworkClient.apiService.updateProfile(
+                                    UpdateProfileRequest(name, phoneNumber, user?.bio, profileImage = urlResponse.data.fileUrl)
+                                )
+                                AuthManager.updateUserSession(authRes.user)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        isUploadingImage = false
+                    }
+                }
+            }
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -62,14 +110,21 @@ fun ProfileEditView() {
                     .size(100.dp)
                     .clip(CircleShape)
                     .background(Color(0xFFE5E7EB))
-                    .clickable { /* TODO: Implement Image Picker */ },
+                    .clickable { 
+                        photoPickerLauncher.launch(
+                            androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                 contentAlignment = Alignment.Center
             ) {
-                if (!user?.profileImage.isNullOrEmpty()) {
+                if (isUploadingImage) {
+                    CircularProgressIndicator(color = Color(0xFF2874F0), modifier = Modifier.size(24.dp))
+                } else if (!user?.profileImage.isNullOrEmpty()) {
                     AsyncImage(
                         model = user?.profileImage,
                         contentDescription = "Profile Image",
-                        modifier = Modifier.fillMaxSize().clip(CircleShape)
+                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
                     )
                 } else {
                     Icon(
@@ -149,8 +204,20 @@ fun ProfileEditView() {
             // Save Button
             Button(
                 onClick = {
-                    isSaving = true
-                    // In a real app we'd call AuthManager.updateProfile(name, phoneNumber)
+                    scope.launch {
+                        isSaving = true
+                        try {
+                            val authRes = NetworkClient.apiService.updateProfile(
+                                UpdateProfileRequest(name, phoneNumber, user?.bio)
+                            )
+                            AuthManager.updateUserSession(authRes.user)
+                            NavigationManager.goBack()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        } finally {
+                            isSaving = false
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

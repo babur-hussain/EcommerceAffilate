@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.ecommerceearn.app.data.model.Product
 import com.ecommerceearn.app.data.model.SDUIComponent
+import com.ecommerceearn.app.data.manager.NavigationManager
 import com.ecommerceearn.app.data.remote.NetworkClient
 import com.ecommerceearn.app.data.remote.getProducts
 import com.google.gson.JsonObject
@@ -84,7 +85,7 @@ fun RenderCarousel(component: SDUIComponent) {
                     .aspectRatio(21f / 9f)
                     .clickable {
                         actionUrl?.let {
-                            // TODO: Navigation
+                            NavigationManager.navigate(it)
                         }
                     }
             ) {
@@ -132,10 +133,13 @@ fun RenderCategoryCircles(component: SDUIComponent) {
         items(items) { item ->
             val name = item.get("name")?.asString ?: ""
             val imageUrl = item.get("imageUrl")?.asString ?: item.get("image")?.asString ?: item.get("icon")?.asString
+            val actionUrl = item.get("actionUrl")?.asString
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(72.dp)
+                modifier = Modifier
+                    .width(72.dp)
+                    .clickable { actionUrl?.let { NavigationManager.navigate(it) } }
             ) {
                 AsyncImage(
                     model = imageUrl,
@@ -167,6 +171,7 @@ fun RenderCategoryCircles(component: SDUIComponent) {
 fun RenderBanner(component: SDUIComponent) {
     val height = component.props?.get("height")?.asFloat ?: 150f
     val imageUrl = component.props?.get("imageUrl")?.asString ?: component.props?.get("image")?.asString
+    val actionUrl = component.props?.get("actionUrl")?.asString
 
     AsyncImage(
         model = imageUrl,
@@ -175,7 +180,8 @@ fun RenderBanner(component: SDUIComponent) {
             .fillMaxWidth()
             .height(height.dp)
             .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { actionUrl?.let { NavigationManager.navigate(it) } },
         contentScale = ContentScale.Crop
     )
 }
@@ -210,11 +216,13 @@ fun RenderGrid(component: SDUIComponent) {
                 row.forEach { item ->
                     val imageUrl = item.get("imageUrl")?.asString ?: item.get("image")?.asString
                     val label = item.get("title")?.asString ?: item.get("name")?.asString ?: ""
+                    val actionUrl = item.get("actionUrl")?.asString
 
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 4.dp)
+                            .clickable { actionUrl?.let { NavigationManager.navigate(it) } },
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         AsyncImage(
@@ -274,9 +282,10 @@ fun RenderHorizontalList(component: SDUIComponent) {
             items(items) { item ->
                 val imageUrl = item.get("imageUrl")?.asString ?: item.get("image")?.asString
                 val label = item.get("title")?.asString ?: item.get("name")?.asString ?: ""
+                val actionUrl = item.get("actionUrl")?.asString
 
                 Column(
-                    modifier = Modifier.width(140.dp),
+                    modifier = Modifier.width(140.dp).clickable { actionUrl?.let { NavigationManager.navigate(it) } },
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     AsyncImage(
@@ -451,8 +460,12 @@ fun RenderGenericSection(component: SDUIComponent) {
                 items(items) { item ->
                     val itemImage = item.get("imageUrl")?.asString ?: item.get("image")?.asString
                     val itemLabel = item.get("title")?.asString ?: item.get("name")?.asString ?: ""
+                    val itemActionUrl = item.get("actionUrl")?.asString
 
-                    Column(modifier = Modifier.width(130.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        modifier = Modifier.width(130.dp).clickable { itemActionUrl?.let { NavigationManager.navigate(it) } }, 
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         AsyncImage(
                             model = itemImage,
                             contentDescription = itemLabel,

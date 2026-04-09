@@ -22,6 +22,7 @@ struct LoginView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showSignup = false
+    @State private var loginInfoMessage: String? = nil
 
     var body: some View {
         // Fix #8: Removed unused GeometryReader
@@ -48,7 +49,11 @@ struct LoginView: View {
             Text(errorMessage)
         }
         .sheet(isPresented: $showSignup) {
-            SignupView()
+            SignupView(onAccountExists: { existingEmail in
+                showSignup = false
+                email = existingEmail
+                loginInfoMessage = "Account already exists with this email. Please login."
+            })
         }
     }
 
@@ -91,7 +96,28 @@ struct LoginView: View {
                         .font(.system(size: 14))
                         .foregroundColor(.gray)
                 }
-                .padding(.bottom, 12)
+                .padding(.bottom, loginInfoMessage != nil ? 12 : 12)
+
+                // Account exists info banner
+                if let infoMsg = loginInfoMessage {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .foregroundColor(Color(red: 230/255, green: 81/255, blue: 0))
+                            .font(.system(size: 16))
+                        Text(infoMsg)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(Color(red: 230/255, green: 81/255, blue: 0))
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(red: 255/255, green: 243/255, blue: 224/255))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(red: 255/255, green: 152/255, blue: 0), lineWidth: 1)
+                    )
+                    .padding(.bottom, 8)
+                }
 
                 // Email Field
                 VStack(alignment: .leading, spacing: 6) {
@@ -260,6 +286,7 @@ struct LoginView: View {
 // MARK: - Signup View
 struct SignupView: View {
     @Environment(\.dismiss) private var dismiss
+    var onAccountExists: ((String) -> Void)? = nil
     @State private var name = ""
     @State private var email = ""
     @State private var phone = ""
@@ -453,8 +480,14 @@ struct SignupView: View {
             } catch {
                 await MainActor.run {
                     isLoading = false
-                    errorMessage = "Registration failed"
-                    showError = true
+                    let msg = error.localizedDescription
+                    if msg.localizedCaseInsensitiveContains("already exists") || msg.localizedCaseInsensitiveContains("already registered") {
+                        onAccountExists?(email)
+                        dismiss()
+                    } else {
+                        errorMessage = msg
+                        showError = true
+                    }
                 }
             }
         }

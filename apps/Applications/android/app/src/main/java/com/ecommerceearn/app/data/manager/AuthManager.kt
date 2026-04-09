@@ -180,6 +180,11 @@ object AuthManager {
         Log.d("AuthManager", "userState updated. Current value: ${_userState.value?.email}")
     }
 
+    fun updateUserSession(user: User) {
+        prefs.edit().putString(KEY_USER, gson.toJson(user)).apply()
+        _userState.value = user
+    }
+
     fun logout() {
         auth.signOut()
         prefs.edit().clear().apply()

@@ -2,6 +2,7 @@ package com.ecommerceearn.app.data.manager
 
 import com.ecommerceearn.app.data.model.Product
 import com.ecommerceearn.app.data.remote.NetworkClient
+import com.ecommerceearn.app.data.remote.WishlistToggleRequest
 import com.ecommerceearn.app.utils.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,10 +38,9 @@ object WishlistManager {
             _error.value = null
             
             try {
-                // Requires ApiService to have getWishlist
-                // val wrapper = NetworkClient.apiService.getWishlist()
-                // _wishlistItems.value = wrapper.wishlist
-                // _wishlistIds.value = wrapper.wishlist.map { it.id }.toSet()
+                val response = NetworkClient.apiService.getWishlist()
+                _wishlistItems.value = response.productIds
+                _wishlistIds.value = response.productIds.mapNotNull { it.id }.toSet()
             } catch (e: Exception) {
                 AppLogger.debug("Wishlist fetch error: ${e.message}")
                 _error.value = e.localizedMessage
@@ -54,7 +54,7 @@ object WishlistManager {
         if (!AuthManager.isLoggedIn()) return false
         
         return try {
-            // NetworkClient.apiService.addToWishlist(productId)
+            NetworkClient.apiService.addToWishlist(WishlistToggleRequest(productId))
             val updatedSet = _wishlistIds.value.toMutableSet().apply { add(productId) }
             _wishlistIds.value = updatedSet
             fetchWishlist()
@@ -69,7 +69,7 @@ object WishlistManager {
         if (!AuthManager.isLoggedIn()) return false
 
         return try {
-            // NetworkClient.apiService.removeFromWishlist(productId)
+            NetworkClient.apiService.removeFromWishlist(WishlistToggleRequest(productId))
             val updatedSet = _wishlistIds.value.toMutableSet().apply { remove(productId) }
             _wishlistIds.value = updatedSet
             

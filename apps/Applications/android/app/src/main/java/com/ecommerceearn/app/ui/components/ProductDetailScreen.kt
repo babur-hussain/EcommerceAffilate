@@ -42,6 +42,8 @@ import com.ecommerceearn.app.data.model.Product
 import com.ecommerceearn.app.data.model.ProductOffer
 import com.ecommerceearn.app.data.model.TrustBadge
 import com.ecommerceearn.app.data.remote.NetworkClient
+import com.ecommerceearn.app.data.remote.AffiliateLinkRequest
+import com.ecommerceearn.app.data.manager.WishlistManager
 import com.ecommerceearn.app.ui.pages.AddReviewView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,6 +67,7 @@ fun ProductDetailScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val wishlistIds by WishlistManager.wishlistIds.collectAsState()
     var product by remember { mutableStateOf(initialProduct) }
     var isLoading by remember { mutableStateOf(initialProduct == null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -121,7 +124,12 @@ fun ProductDetailScreen(
                     }
                     context.startActivity(Intent.createChooser(shareIntent, "Share Product"))
                 },
-                onWishlistClick = { /* TODO Support Wishlist Manager */ },
+                isWishlisted = product?.id?.let { wishlistIds.contains(it) } == true,
+                onWishlistClick = {
+                    product?.id?.let { pid ->
+                        scope.launch { WishlistManager.toggleWishlist(pid) }
+                    }
+                },
                 onCartClick = onCartClick,
                 cartCount = CartManager.cartCount
             )
@@ -214,6 +222,7 @@ fun ProductDetailScreen(
 private fun ProductDetailHeader(
     onBackClick: () -> Unit,
     onShareClick: () -> Unit,
+    isWishlisted: Boolean,
     onWishlistClick: () -> Unit,
     onCartClick: () -> Unit,
     cartCount: Int
@@ -236,7 +245,11 @@ private fun ProductDetailHeader(
         }
         
         IconButton(onClick = onWishlistClick) {
-            Icon(Icons.Outlined.FavoriteBorder, contentDescription = "Wishlist", tint = DarkText)
+            if (isWishlisted) {
+                Icon(Icons.Default.Favorite, contentDescription = "Wishlist", tint = Color.Red)
+            } else {
+                Icon(Icons.Outlined.FavoriteBorder, contentDescription = "Wishlist", tint = DarkText)
+            }
         }
         
         Box {
@@ -588,9 +601,16 @@ fun AffiliateSection(product: Product) {
                     onClick = {
                         isGeneratingLink = true
                         scope.launch {
-                            delay(1000) // Mock API Generation delay
-                            generatedLink = "https://localforvocal.com/product/${product.id}?ref=${user?.referralCode}"
-                            isGeneratingLink = false
+                            try {
+                                val request = AffiliateLinkRequest(product.id ?: "", product.name ?: "")
+                                val response = NetworkClient.apiService.generateAffiliateLink(request)
+                                generatedLink = response.link
+                            } catch (e: Exception) {
+                                android.util.Log.e("Affiliate", "Failed to generate link", e)
+                                // Fallback or handle error here if needed
+                            } finally {
+                                isGeneratingLink = false
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

@@ -224,6 +224,11 @@ public class AuthManager: ObservableObject {
         guard let httpResponse = response as? HTTPURLResponse,
             (200...299).contains(httpResponse.statusCode)
         else {
+            // Try to extract error message from backend response body
+            if let errorBody = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let serverError = errorBody["error"] as? String {
+                throw AuthError.custom(message: serverError)
+            }
             throw AuthError.registrationFailed
         }
 
@@ -444,6 +449,7 @@ public class AuthManager: ObservableObject {
         case registrationFailed
         case notAuthenticated
         case googleLoginFailed
+        case custom(message: String)
 
         public var errorDescription: String? {
             switch self {
@@ -455,6 +461,8 @@ public class AuthManager: ObservableObject {
                 return "Please log in to continue."
             case .googleLoginFailed:
                 return "Google Sign-In failed."
+            case .custom(let message):
+                return message
             }
         }
     }

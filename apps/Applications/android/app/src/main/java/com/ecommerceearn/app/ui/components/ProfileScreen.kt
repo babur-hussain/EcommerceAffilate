@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -91,6 +92,9 @@ fun LoggedInView(user: com.ecommerceearn.app.data.model.User, onLogout: () -> Un
     var showLanguage by remember { mutableStateOf(false) }
     var showSellOnPlatform by remember { mutableStateOf(false) }
     var showPrivacy by remember { mutableStateOf(false) }
+    
+    var showInfluencerShop by remember { mutableStateOf(false) }
+    var showStoryUpload by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier
@@ -98,15 +102,18 @@ fun LoggedInView(user: com.ecommerceearn.app.data.model.User, onLogout: () -> Un
             .background(Color(0xFFF3F4F6))
     ) {
         item {
-            HeaderSection(user)
+            HeaderSection(user, onStoryUploadClick = { showStoryUpload = true })
         }
         item {
+            val isInfluencer = user.role == "INFLUENCER" && user.isActive
             QuickLinksGrid(
                 onOrdersClick = { showMyOrders = true },
                 onWishlistClick = { showWishlist = true },
                 onWalletClick = { showWallet = true },
                 onReturnsClick = { showReturns = true },
-                onSmartBasketClick = { showSmartBasket = true }
+                onSmartBasketClick = { showSmartBasket = true },
+                onInfluencerShopClick = { showInfluencerShop = true },
+                showInfluencerShopQuickLink = isInfluencer
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -155,6 +162,9 @@ fun LoggedInView(user: com.ecommerceearn.app.data.model.User, onLogout: () -> Un
     if (showReturns) { Dialog(onDismissRequest = { showReturns = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { ReturnsView(onDismiss = { showReturns = false }) } }
     if (showSmartBasket) { Dialog(onDismissRequest = { showSmartBasket = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) { SmartBasketPageView() } }
     
+    if (showInfluencerShop) { Dialog(onDismissRequest = { showInfluencerShop = false }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) { InfluencerShopView() } }
+    if (showStoryUpload) { Dialog(onDismissRequest = { showStoryUpload = false }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) { StoryUploadView() } }
+
     // Add dummy dismissed handling for now as views get ported
 }
 
@@ -166,11 +176,21 @@ fun FullScreenOverlay(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun HeaderSection(user: com.ecommerceearn.app.data.model.User) {
+fun HeaderSection(user: com.ecommerceearn.app.data.model.User, onStoryUploadClick: () -> Unit = {}) {
+    val isInfluencer = user.role == "INFLUENCER" && user.isActive
+    
+    val backgroundModifier = if (isInfluencer) {
+        Modifier.background(androidx.compose.ui.graphics.Brush.verticalGradient(
+            colors = listOf(Color(0xFFFFC0CB), Color.White)
+        ))
+    } else {
+        Modifier.background(Color(0xFFF0F5FF))
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF0F5FF))
+            .then(backgroundModifier)
             .padding(16.dp)
             // .padding(top = 24.dp) // Removed extra top padding for better flow
     ) {
@@ -182,7 +202,8 @@ fun HeaderSection(user: com.ecommerceearn.app.data.model.User) {
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(Color.White)
+                    .clickable { if (isInfluencer) onStoryUploadClick() },
                 contentAlignment = Alignment.Center
             ) {
                 if (!user.profileImage.isNullOrEmpty()) {
@@ -199,15 +220,52 @@ fun HeaderSection(user: com.ecommerceearn.app.data.model.User) {
                         modifier = Modifier.size(24.dp)
                     )
                 }
+                if (isInfluencer) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(16.dp)
+                            .clip(CircleShape)
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AddCircle,
+                            contentDescription = "Add Story",
+                            tint = Color(0xFF833AB4),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = user.name.ifEmpty { "User" },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF111827)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = user.name.ifEmpty { "User" },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF111827)
+                    )
+                    if (isInfluencer) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                    colors = listOf(Color(0xFFFF69B4), Color(0xFF9370DB))
+                                ))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Influencer",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Explore ", fontSize = 14.sp, color = Color(0xFF4B5563))
@@ -255,7 +313,9 @@ fun QuickLinksGrid(
     onWishlistClick: () -> Unit,
     onWalletClick: () -> Unit,
     onReturnsClick: () -> Unit,
-    onSmartBasketClick: () -> Unit
+    onSmartBasketClick: () -> Unit,
+    onInfluencerShopClick: () -> Unit = {},
+    showInfluencerShopQuickLink: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -273,7 +333,11 @@ fun QuickLinksGrid(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickLinkButton("Smart Basket", Icons.Outlined.ShoppingBasket, Color(0xFFF97316), Modifier.weight(1f)) { onSmartBasketClick() }
-            Spacer(modifier = Modifier.weight(1f))
+            if (showInfluencerShopQuickLink) {
+                QuickLinkButton("My Shop", Icons.Outlined.Storefront, Color(0xFFBD0F58), Modifier.weight(1f)) { onInfluencerShopClick() }
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
     }
 }

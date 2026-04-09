@@ -30,7 +30,7 @@ router.post('/auth/register', async (req: Request, res: Response) => {
 
     const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
-      return res.status(409).json({ error: 'Email already registered' });
+      return res.status(409).json({ error: 'Account already exists with this email. Please login instead.' });
     }
 
     const passwordHash = await hashPassword(password);
@@ -49,7 +49,22 @@ router.post('/auth/register', async (req: Request, res: Response) => {
     });
 
     const token = generateJWT(user);
-    res.status(201).json({ token, role: user.role });
+    res.status(201).json({ 
+      token, 
+      role: user.role,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phoneNumber,
+        role: user.role,
+        profileImage: user.profileImage,
+        referralCode: user.referralCode,
+        businessId: user.businessId,
+        isActive: user.isActive,
+        affiliateLinks: user.affiliateLinks
+      }
+    });
 
     // Kafka: user.registered event
     void kafkaProducer.sendEvent(KAFKA_TOPICS.USER_EVENTS, 'user.registered', {

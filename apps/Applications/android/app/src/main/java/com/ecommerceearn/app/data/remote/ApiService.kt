@@ -27,7 +27,7 @@ data class CreatePaymentOrderRequest(val orderId: String)
 data class NetworkRazorpayOrderResponse(val id: String, val amount: Int, val currency: String)
 data class VerifyPaymentRequest(val razorpay_order_id: String, val razorpay_payment_id: String, val razorpay_signature: String)
 data class VerifyPaymentResponse(val success: Boolean, val message: String?)
-data class UpdateProfileRequest(val name: String, val phone: String?, val bio: String?)
+data class UpdateProfileRequest(val name: String, val phone: String?, val bio: String?, val profileImage: String? = null)
 data class CreatorApplicationRequest(
     val fullName: String,
     val email: String,
@@ -38,6 +38,21 @@ data class CreatorApplicationRequest(
     val niche: String,
     val bio: String
 )
+
+data class AffiliateLinkRequest(val productId: String, val productName: String)
+data class AffiliateLinkResponse(
+    val success: Boolean,
+    val link: String,
+    val message: String?,
+    val isNew: Boolean?
+)
+
+data class WishlistResponse(
+    val _id: String,
+    val userId: String,
+    val productIds: List<Product>
+)
+data class WishlistToggleRequest(val productId: String)
 
 interface ApiService {
     @GET("advanced-layout/{slug}")
@@ -52,8 +67,8 @@ interface ApiService {
     @GET("me")
     suspend fun getMe(): AuthResponse
 
-    @PUT("me/profile")
-    suspend fun updateProfile(@Body body: UpdateProfileRequest)
+    @PUT("me")
+    suspend fun updateProfile(@Body body: UpdateProfileRequest): AuthResponse
 
     @POST("creators/apply")
     suspend fun applyCreator(@Body body: CreatorApplicationRequest)
@@ -172,6 +187,20 @@ interface ApiService {
 
     @POST("stories")
     suspend fun createStoryRecord(@Body request: com.ecommerceearn.app.data.model.CreateStoryRequest): retrofit2.Response<Unit>
+
+    // Influencer / Affiliate
+    @POST("influencer/affiliate-link")
+    suspend fun generateAffiliateLink(@Body request: AffiliateLinkRequest): AffiliateLinkResponse
+
+    // Wishlist
+    @GET("wishlist")
+    suspend fun getWishlist(): WishlistResponse
+
+    @POST("wishlist/add")
+    suspend fun addToWishlist(@Body body: WishlistToggleRequest): WishlistResponse
+
+    @POST("wishlist/remove")
+    suspend fun removeFromWishlist(@Body body: WishlistToggleRequest): WishlistResponse
 }
 
 data class ProductListResponse(val products: List<Product>)
