@@ -575,8 +575,12 @@ export default function Footer() {
                 © 2026 <span className="text-white font-semibold">Local For Vocal Startup</span>. All rights reserved.
               </p>
               <div className="flex items-center justify-center md:justify-end gap-4 mt-2">
-                <Link href="#" className="text-slate-500 hover:text-primary text-xs transition-colors">
+                <Link href="/privacy-policy" className="text-slate-500 hover:text-primary text-xs transition-colors">
                   Privacy Policy
+                </Link>
+                <span className="text-slate-700">•</span>
+                <Link href="/account-deletion" className="text-slate-500 hover:text-primary text-xs transition-colors">
+                  Account Deletion
                 </Link>
                 <span className="text-slate-700">•</span>
                 <Link href="#" className="text-slate-500 hover:text-primary text-xs transition-colors">
