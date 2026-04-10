@@ -122,7 +122,7 @@ private fun EarlyBirdCard(item: EarlyBirdDealItem, onClick: () -> Unit) {
             color = Color(0xFF334155),
             textAlign = TextAlign.Center,
             maxLines = 1,
-            modifier = Modifier.padding(top = (-4).dp)
+            modifier = Modifier.offset(y = (-4).dp)
         )
     }
 }

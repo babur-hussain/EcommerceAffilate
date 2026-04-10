@@ -35,10 +35,13 @@ fun ContentView() {
     val isGroceryTabActive by NavigationManager.isGroceryTabActive.collectAsState()
     val isServicesTabActive by NavigationManager.isServicesTabActive.collectAsState()
     val isInfluencersTabActive by NavigationManager.isInfluencersTabActive.collectAsState()
+    val productId by NavigationManager.productId.collectAsState()
+    val groceryProductId by NavigationManager.groceryProductId.collectAsState()
 
     Scaffold(
         bottomBar = {
-            if (!(currentTab == MainTab.HOME && (isGroceryTabActive || isServicesTabActive || isInfluencersTabActive))) {
+            if (activeOverlay == null && productId == null && groceryProductId == null && 
+                !(currentTab == MainTab.HOME && (isGroceryTabActive || isServicesTabActive || isInfluencersTabActive))) {
                 NavigationBar(
                     modifier = Modifier.height(65.dp),
                     windowInsets = WindowInsets(0, 0, 0, 0),
@@ -117,6 +120,20 @@ fun ContentView() {
 
         if (activeOverlay != null) {
             OverlayRouterView(destination = activeOverlay!!)
+        }
+        
+        productId?.let { id ->
+            ProductDetailView(
+                productId = id,
+                onBackClick = { NavigationManager.dismissProduct() }
+            )
+        }
+
+        groceryProductId?.let { id ->
+            com.ecommerceearn.app.ui.pages.GroceryProductDetailView(
+                productId = id,
+                onBack = { NavigationManager.dismissGroceryProduct() }
+            )
         }
     }
 }

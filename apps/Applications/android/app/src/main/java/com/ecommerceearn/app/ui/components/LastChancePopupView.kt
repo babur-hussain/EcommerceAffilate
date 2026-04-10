@@ -25,32 +25,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-data class LastChanceOffer(
-    val id: String,
-    val title: String,
-    val description: String?,
-    val image: String?,
-    val originalPrice: Double,
-    val offerPrice: Double,
-    val discountPercentage: Int?,
-    val tag: String?,
-    val features: List<String>?
-)
+import com.ecommerceearn.app.data.model.LastChanceOffer
 
 @Composable
 fun LastChancePopupView(
     isVisible: Boolean,
+    offers: List<LastChanceOffer>,
     onDismiss: () -> Unit
 ) {
-    if (!isVisible) return
-
-    val dummyOffers = listOf(
-        LastChanceOffer("1", "Extended Warranty", "1 year damage protection", null, 499.0, 199.0, 60, "Must Have", listOf("Accidental damage", "Liquid damage")),
-        LastChanceOffer("2", "Premium Case", "Shockproof protection", null, 999.0, 299.0, 70, "Hot Deal", listOf("Military grade", "Lightweight"))
-    )
+    if (!isVisible || offers.isEmpty()) return
 
     var selectedOfferIds by remember { mutableStateOf(setOf<String>()) }
-    val savings = dummyOffers.filter { selectedOfferIds.contains(it.id) }.sumOf { (it.originalPrice - it.offerPrice) }
+    val savings = offers.filter { it.id?.let { id -> selectedOfferIds.contains(id) } == true }
+        .sumOf { ((it.originalPrice ?: 0.0) - (it.offerPrice ?: 0.0)) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -97,18 +84,19 @@ fun LastChancePopupView(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        itemsIndexed(dummyOffers) { _, offer ->
+                        itemsIndexed(offers) { _, offer ->
+                            val offerId = offer.id ?: offer._id ?: ""
                             OfferCard(
                                 offer = offer,
-                                isSelected = selectedOfferIds.contains(offer.id),
+                                isSelected = selectedOfferIds.contains(offerId),
                                 onTap = {
                                     val newSet = selectedOfferIds.toMutableSet()
-                                    if (!newSet.add(offer.id)) newSet.remove(offer.id)
+                                    if (!newSet.add(offerId)) newSet.remove(offerId)
                                     selectedOfferIds = newSet
                                 },
                                 onRemove = {
                                     val newSet = selectedOfferIds.toMutableSet()
-                                    newSet.remove(offer.id)
+                                    newSet.remove(offerId)
                                     selectedOfferIds = newSet
                                 }
                             )
@@ -178,17 +166,7 @@ fun OfferCard(
             .padding(12.dp)
     ) {
         Column {
-            offer.tag?.let {
-                Text(
-                    text = it,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF065F46),
-                    modifier = Modifier
-                        .background(Color(0xFFD1FAE5), RoundedCornerShape(topStart = 8.dp, bottomEnd = 8.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
+
             
             Box(
                 modifier = Modifier
@@ -215,26 +193,25 @@ fun OfferCard(
                 }
             }
             
-            Text(text = offer.title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1F2937), maxLines = 2, modifier = Modifier.padding(bottom = 4.dp))
+            Text(text = offer.title ?: "", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1F2937), maxLines = 2, modifier = Modifier.padding(bottom = 4.dp))
             
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 4.dp)) {
-                offer.discountPercentage?.let {
-                    Text("↓ $it%", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A))
+                offer.discount?.let {
+                    Text("↓ ${it.toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A))
                 }
-                Text("₹${offer.originalPrice.toInt()}", fontSize = 12.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough)
-                Text("₹${offer.offerPrice.toInt()}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1F2937))
+                offer.originalPrice?.let {
+                    Text("₹${it.toInt()}", fontSize = 12.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough)
+                }
+                offer.offerPrice?.let {
+                    Text("₹${it.toInt()}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1F2937))
+                }
             }
             
             offer.description?.let {
                 Text(text = it, fontSize = 11.sp, color = Color(0xFF6B7280), maxLines = 2, modifier = Modifier.padding(bottom = 8.dp))
             }
             
-            offer.features?.take(3)?.forEach { f ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color(0xFF4B5563), modifier = Modifier.size(12.dp))
-                    Text(text = f, fontSize = 11.sp, color = Color(0xFF4B5563), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            }
+
             
             if (isSelected) {
                 HorizontalDivider(modifier = Modifier.padding(top = 8.dp), color = Color(0xFFE5E7EB))

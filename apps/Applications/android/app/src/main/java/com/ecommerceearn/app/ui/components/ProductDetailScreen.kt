@@ -89,6 +89,7 @@ fun ProductDetailScreen(
                 isLoading = true
                 product = NetworkClient.apiService.getProductById(productId)
             } catch (e: Exception) {
+                android.util.Log.e("ProductDetail", "Exception fetching product: ${e.message}", e)
                 errorMessage = "Failed to load product"
             } finally {
                 isLoading = false
@@ -201,6 +202,7 @@ fun ProductDetailScreen(
     if (showLastChancePopup) {
         LastChancePopupView(
             isVisible = showLastChancePopup,
+            offers = product?.lastChanceOffers ?: emptyList(),
             onDismiss = { 
                 showLastChancePopup = false
                 NavigationManager.navigate("cart") 

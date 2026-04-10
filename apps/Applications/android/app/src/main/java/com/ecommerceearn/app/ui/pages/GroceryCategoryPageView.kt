@@ -43,7 +43,7 @@ fun GroceryCategoryPageView() {
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             try {
-                val allCategories = NetworkClient.apiService.getCategories()
+                val allCategories = com.ecommerceearn.app.data.repository.CategoryRepository.getCategories()
                 
                 // 1. Find the parent Grocery category to get the group order
                 val parentCategory = allCategories.find { it._id == GROCERY_PARENT_ID }
@@ -108,34 +108,26 @@ fun GroceryCategoryPageView() {
                 }
             }
         } else {
-            LazyColumn(
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 20.dp, bottom = 120.dp)
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 120.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                items(categoryGroups) { group ->
-                    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+                categoryGroups.forEach { group ->
+                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                         Text(
                             text = group.name,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF111827),
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
                         )
+                    }
 
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(4),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 2000.dp) // required for nested lazy vertical grid layout bounding
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(20.dp),
-                            userScrollEnabled = false
-                        ) {
-                            items(group.categories) { category ->
-                                CategoryGridItem(category = category)
-                            }
-                        }
+                    items(group.categories) { category ->
+                        CategoryGridItem(category = category)
                     }
                 }
             }

@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.CancellationException
 
 sealed class SearchState {
     object Idle : SearchState()
@@ -87,17 +90,21 @@ class SearchViewModel(private val categoryId: String? = null) : ViewModel() {
                 _globalResults.value = results
                 _groceryResults.value = null
             } else if (isUnifiedSearch) {
-                // Unified: Launch both
-                val pRes = NetworkClient.apiService.fetchGlobalSearch(q)
-                val gRes = NetworkClient.apiService.fetchGrocerySearch(q)
-                _globalResults.value = pRes
-                _groceryResults.value = gRes
+                // Unified: Launch both concurrently
+                coroutineScope {
+                    val pRes = async { NetworkClient.apiService.fetchGlobalSearch(q) }
+                    val gRes = async { NetworkClient.apiService.fetchGrocerySearch(q) }
+                    _globalResults.value = pRes.await()
+                    _groceryResults.value = gRes.await()
+                }
             } else {
                 val results = NetworkClient.apiService.fetchGlobalSearch(q)
                 _globalResults.value = results
                 _groceryResults.value = null
             }
             _searchState.value = SearchState.Results
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             _searchState.value = SearchState.Error(e.localizedMessage ?: "Error searching")
         }

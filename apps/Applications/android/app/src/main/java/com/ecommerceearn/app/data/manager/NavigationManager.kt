@@ -88,6 +88,17 @@ object NavigationManager {
         _groceryProductId.value = null
     }
 
+    private val _productId = MutableStateFlow<String?>(null)
+    val productId: StateFlow<String?> = _productId.asStateFlow()
+
+    fun openProduct(id: String) {
+        _productId.value = id
+    }
+
+    fun dismissProduct() {
+        _productId.value = null
+    }
+
     // Helper visibility states based on overlay
     val showBeautyPage: Boolean get() = _activeOverlay.value == OverlayDestination.BEAUTY
     val showSpecialDealPage: Boolean get() = _activeOverlay.value == OverlayDestination.SPECIAL_DEAL
@@ -103,6 +114,11 @@ object NavigationManager {
     }
 
     fun navigate(url: String) {
+        if (url.startsWith("product/")) {
+            openProduct(url.removePrefix("product/"))
+            return
+        }
+
         if (url.startsWith("/grocery/category/")) {
             val ids = url.replace("/grocery/category/", "")
             _categoryNavigation.value = CategoryNavigationParams(

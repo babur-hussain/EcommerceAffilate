@@ -24,7 +24,8 @@ fun BottomActionBarView(
 ) {
     Surface(
         color = Color.White,
-        shadowElevation = 8.dp
+        shadowElevation = 8.dp,
+        modifier = Modifier.navigationBarsPadding()
     ) {
         Row(
             modifier = Modifier

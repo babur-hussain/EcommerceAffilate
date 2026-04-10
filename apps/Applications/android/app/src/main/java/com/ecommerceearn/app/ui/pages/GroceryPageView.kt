@@ -87,7 +87,7 @@ fun GroceryPageView(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 100.dp)
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
                 GroceryStaticHeader(onTabSelected = onTabSelected)

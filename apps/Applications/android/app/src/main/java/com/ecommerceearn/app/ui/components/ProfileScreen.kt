@@ -388,11 +388,18 @@ fun SettingsSection(onLanguageClick: () -> Unit, onSellOnPlatformClick: () -> Un
 
 @Composable
 fun SupportSection() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Column(modifier = Modifier.padding(top = 8.dp).fillMaxWidth().background(Color.White)) {
         SectionTitle("Support")
         SettingsRow("Help Center", "FAQs and support", Icons.Outlined.HelpOutline) {}
         SettingsRow("Terms & Conditions", null, Icons.Outlined.Description) {}
-        SettingsRow("Privacy Policy", null, Icons.Outlined.PanTool, isLast = true) {}
+        SettingsRow("Privacy Policy", null, Icons.Outlined.PanTool, isLast = true) {
+            val intent = android.content.Intent(
+                android.content.Intent.ACTION_VIEW, 
+                android.net.Uri.parse("https://www.localforvocalstartup.com/privacy-policy")
+            )
+            context.startActivity(intent)
+        }
     }
 }
 

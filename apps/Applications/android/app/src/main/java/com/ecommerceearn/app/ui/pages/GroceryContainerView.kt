@@ -48,7 +48,7 @@ fun GroceryContainerView(onOuterTabSelected: (TabType) -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
             when (selectedTab) {
                 InnerGroceryTab.HOME -> {
@@ -78,7 +78,6 @@ fun GroceryBottomNavigationBar(currentTab: InnerGroceryTab, onTabSelected: (Inne
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding() // Ensures safe inset mapping at bottom
                 .height(60.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically

@@ -13,6 +13,8 @@ import com.razorpay.PaymentData
 import com.razorpay.PaymentResultWithDataListener
 import com.ecommerceearn.app.data.services.RazorpayService
 import com.ecommerceearn.app.utils.AppLogger
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,6 +28,10 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
             } else {
                 ContentView()
             }
+        }
+
+        lifecycleScope.launch {
+            com.ecommerceearn.app.data.repository.CategoryRepository.preload()
         }
         
         RazorpayService.init(this)

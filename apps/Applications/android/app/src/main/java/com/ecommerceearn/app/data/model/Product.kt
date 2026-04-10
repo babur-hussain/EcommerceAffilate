@@ -3,12 +3,15 @@ package com.ecommerceearn.app.data.model
 import com.google.gson.annotations.SerializedName
 
 data class Product(
-    @SerializedName("_id") val id: String,
+    @SerializedName(value = "_id", alternate = ["id"]) val id: String,
     val name: String? = null,
     val title: String? = null,
     val price: Double,
-    val images: List<String>,
-    val category: String,
+    @SerializedName("images")
+    val rawImages: List<String>? = emptyList(),
+    val image: String? = null,
+    val primaryImage: String? = null,
+    val category: String? = "General",
     val rating: Double? = null,
     val reviewCount: Int? = null,
     val stock: Int? = null,
@@ -29,6 +32,9 @@ data class Product(
 ) {
     val displayName: String
         get() = name ?: title ?: "Unknown Product"
+
+    val images: List<String>
+        get() = rawImages ?: listOfNotNull(image, primaryImage)
 }
 
 data class LastChanceOffer(

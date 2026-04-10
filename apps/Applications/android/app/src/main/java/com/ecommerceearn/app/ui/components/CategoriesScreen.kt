@@ -55,7 +55,7 @@ fun CategoriesScreen(
     // Fetch Data
     LaunchedEffect(Unit) {
         try {
-            categories = NetworkClient.apiService.getCategories()
+            categories = com.ecommerceearn.app.data.repository.CategoryRepository.getCategories()
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
