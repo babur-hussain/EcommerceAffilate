@@ -6,6 +6,7 @@
     "apps/web",
     "apps/dashboard",
     "apps/influencer-dashboard",
+    "apps/Services-Dashboard",
     "apps/backend",
     "apps/super-admin",
     "packages/*"
