@@ -83,6 +83,8 @@ const productionOrigins = envOrigins.length > 0
   : [
     'https://localforvocalstartup.com',
     'https://admin.localforvocalstartup.com',
+    'https://seller.localforvocalstartup.com',
+    'https://www.seller.localforvocalstartup.com',
     'https://api.lfvs.in',
     'http://localhost:3000',
     'http://localhost:3001',
