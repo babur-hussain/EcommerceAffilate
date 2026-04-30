@@ -23,9 +23,14 @@ console.log(`  ✓ Network: http://${localIP}:${port}`);
 console.log('\n');
 
 // Start Next.js dev server
+// NOTE: NODE_TLS_REJECT_UNAUTHORIZED=0 is a DEV-ONLY workaround for the expired
+// SSL certificate on api.lfvs.in. Remove this once the certificate is renewed.
 const next = spawn('npx', ['next', 'dev', '-H', '0.0.0.0', '-p', port.toString()], {
     stdio: 'inherit',
-    shell: true
+    env: {
+        ...process.env,
+        NODE_TLS_REJECT_UNAUTHORIZED: '0',
+    },
 });
 
 next.on('close', (code) => {

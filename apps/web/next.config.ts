@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    domains: ["localhost", "res.cloudinary.com", "images.unsplash.com", "plus.unsplash.com", "lh3.googleusercontent.com"],
     remotePatterns: [
       {
         protocol: "https",
@@ -30,7 +31,6 @@ const nextConfig: NextConfig = {
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   async rewrites() {
     const backendUrl = process.env.BACKEND_URL || "https://api.lfvs.in";

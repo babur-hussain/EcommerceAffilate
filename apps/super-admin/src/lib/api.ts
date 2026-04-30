@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Use API proxy route to bypass CORS (requests go through Next.js server to live API)
-const API_BASE = "/api-proxy";
+// Use live server directly
+const API_BASE = "https://api.lfvs.in";
 
 // Create instance with proxy base URL
 const api = axios.create({
