@@ -80,6 +80,7 @@ const envOrigins = env.cors.origins; // from CORS_ALLOWED_ORIGINS
 
 const defaultOrigins = [
     'https://localforvocalstartup.com',
+    'https://www.localforvocalstartup.com',
     'https://admin.localforvocalstartup.com',
     'https://seller.localforvocalstartup.com',
     'https://www.seller.localforvocalstartup.com',
