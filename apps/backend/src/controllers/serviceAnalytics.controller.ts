@@ -106,3 +106,47 @@ export const getTopCategories = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to fetch top categories' });
     }
 };
+
+export const getRevenueOverTime = async (req: Request, res: Response) => {
+    try {
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+        sixMonthsAgo.setDate(1);
+        sixMonthsAgo.setHours(0, 0, 0, 0);
+
+        const revenueData = await Booking.aggregate([
+            {
+                $match: {
+                    status: 'COMPLETED',
+                    'payment.status': 'PAID',
+                    createdAt: { $gte: sixMonthsAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        month: { $month: '$createdAt' },
+                        year: { $year: '$createdAt' }
+                    },
+                    total: { $sum: '$payment.amount' }
+                }
+            },
+            {
+                $sort: { '_id.year': 1, '_id.month': 1 }
+            }
+        ]);
+
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        // Format to match frontend: [ { name: 'Jan', total: 1200 }, ... ]
+        const formattedData = revenueData.map(item => ({
+            name: monthNames[item._id.month - 1],
+            total: item.total
+        }));
+
+        res.json(formattedData);
+    } catch (error: any) {
+        logger.error({ err: error }, 'Error fetching revenue over time');
+        res.status(500).json({ error: 'Failed to fetch revenue over time' });
+    }
+};
