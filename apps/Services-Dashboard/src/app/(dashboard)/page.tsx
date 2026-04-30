@@ -66,10 +66,10 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-                <div className="flex gap-2">
-                    <span className="text-sm text-muted-foreground self-center mr-4">Welcome, {user?.name || 'Admin'}</span>
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <span className="text-sm text-muted-foreground self-center mr-auto md:mr-4 truncate max-w-[150px] md:max-w-none">Welcome, {user?.name || 'Admin'}</span>
                     <Button>Download Report</Button>
                 </div>
             </div>
@@ -110,11 +110,11 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4 p-6">
+                <Card className="col-span-1 md:col-span-2 lg:col-span-4 p-6">
                     <div className="mb-4">
                         <h3 className="text-lg font-medium">Overview</h3>
                     </div>
-                    <div className="h-[300px]">
+                    <div className="h-[300px] w-full min-w-0">
                         {chartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={chartData}>
@@ -144,7 +144,7 @@ export default function DashboardPage() {
                         )}
                     </div>
                 </Card>
-                <Card className="col-span-3 p-6">
+                <Card className="col-span-1 md:col-span-2 lg:col-span-3 p-6">
                     <div className="mb-4">
                         <h3 className="text-lg font-medium">Recent Sales</h3>
                         <p className="text-sm text-muted-foreground">Latest completed bookings</p>
