@@ -82,6 +82,7 @@ const defaultOrigins = [
     'https://localforvocalstartup.com',
     'https://www.localforvocalstartup.com',
     'https://admin.localforvocalstartup.com',
+    'https://super-admin-rust.vercel.app',
     'https://seller.localforvocalstartup.com',
     'https://www.seller.localforvocalstartup.com',
     'https://influencers.localforvocalstartup.com',
