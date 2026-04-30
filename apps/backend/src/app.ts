@@ -78,9 +78,7 @@ app.set('trust proxy', 1);
 // Mobile apps (no origin header) are always allowed through
 const envOrigins = env.cors.origins; // from CORS_ALLOWED_ORIGINS
 
-const productionOrigins = envOrigins.length > 0
-  ? envOrigins
-  : [
+const defaultOrigins = [
     'https://localforvocalstartup.com',
     'https://admin.localforvocalstartup.com',
     'https://seller.localforvocalstartup.com',
@@ -91,6 +89,10 @@ const productionOrigins = envOrigins.length > 0
     'http://localhost:3000',
     'http://localhost:3001',
   ];
+
+const productionOrigins = envOrigins.length > 0
+  ? Array.from(new Set([...envOrigins, ...defaultOrigins]))
+  : defaultOrigins;
 
 const developmentRegex = /^http:\/\/localhost:\d+$/; // Any localhost port
 
