@@ -1,54 +1,46 @@
 {
-    "project_info": {
-        "project_number": "295518104458",
-        "project_id": "affilate-ecommerce-56ccc",
-        "storage_bucket": "affilate-ecommerce-56ccc.firebasestorage.app"
-    },
-    "client": [
-        {
-            "client_info": {
-                "mobilesdk_app_id": "1:295518104458:android:af4108862b62dac62db673",
-                "android_client_info": {
-                    "package_name": "com.ecommerceearn.app"
-                }
-            },
-            "oauth_client": [
-                {
-                    "client_id": "295518104458-su4dochjbav90c0g11l1cgkn3efek0vm.apps.googleusercontent.com",
-                    "client_type": 1,
-                    "android_info": {
-                        "package_name": "com.ecommerceearn.app",
-                        "certificate_hash": "8b001899eb15c5b60d5f6637a8c859afd5434169"
-                    }
-                },
-                {
-                    "client_id": "295518104458-86keht46qa5n1pa37ffvoe0trn55mfu4.apps.googleusercontent.com",
-                    "client_type": 3
-                }
-            ],
-            "api_key": [
-                {
-                    "current_key": "AIzaSyBR3Q6HsSdPgAoWlDbqxjFsU8bIK5gqhLc"
-                }
-            ],
-            "services": {
-                "appinvite_service": {
-                    "other_platform_oauth_client": [
-                        {
-                            "client_id": "295518104458-86keht46qa5n1pa37ffvoe0trn55mfu4.apps.googleusercontent.com",
-                            "client_type": 3
-                        },
-                        {
-                            "client_id": "295518104458-0ghbp0jo9034601k7ih49cufvo0mf493.apps.googleusercontent.com",
-                            "client_type": 2,
-                            "ios_info": {
-                                "bundle_id": "com.ecommerceearn.deliverypartner"
-                            }
-                        }
-                    ]
-                }
-            }
+  "project_info": {
+    "project_number": "295518104458",
+    "project_id": "affilate-ecommerce-56ccc",
+    "storage_bucket": "affilate-ecommerce-56ccc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:295518104458:android:863b061f9d7232952db673",
+        "android_client_info": {
+          "package_name": "com.localforvocalstartup.app"
         }
-    ],
-    "configuration_version": "1"
+      },
+      "oauth_client": [
+        {
+          "client_id": "295518104458-86keht46qa5n1pa37ffvoe0trn55mfu4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBR3Q6HsSdPgAoWlDbqxjFsU8bIK5gqhLc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "295518104458-86keht46qa5n1pa37ffvoe0trn55mfu4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "295518104458-0ghbp0jo9034601k7ih49cufvo0mf493.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ecommerceearn.deliverypartner"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
 }

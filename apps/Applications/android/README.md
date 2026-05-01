@@ -8,7 +8,7 @@ This directory is reserved for the native Kotlin Android application.
 2.  Select **New Project**.
 3.  Choose **Phone and Tablet** -> **Empty Views Activity** (or **Empty Activity** for Jetpack Compose).
 4.  **Name**: `EcommerceEarn`
-5.  **Package Name**: `com.ecommerceearn.app`
+5.  **Package Name**: `com.localforvocalstartup.app`
 6.  **Save Location**: Browse to this directory (`apps/Applications/android`).
 7.  **Language**: Kotlin
 8.  **Build Configuration Language**: Kotlin DSL (recommended)

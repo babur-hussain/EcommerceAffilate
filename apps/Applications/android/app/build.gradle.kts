@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    namespace = "com.ecommerceearn.app"
+    namespace = "com.localforvocalstartup.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.ecommerceearn.app"
+        applicationId = "com.localforvocalstartup.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
