@@ -16,9 +16,12 @@ import com.localforvocalstartup.app.utils.AppLogger
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
+import androidx.activity.enableEdgeToEdge
+
 class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             // Very simple root mounting mimicking ContentView/Splash lifecycle
             var showSplash by remember { mutableStateOf(true) }

@@ -40,6 +40,7 @@ fun ContentView() {
     val groceryProductId by NavigationManager.groceryProductId.collectAsState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
             if (activeOverlay == null && productId == null && groceryProductId == null && 
                 !(currentTab == MainTab.HOME && (isGroceryTabActive || isServicesTabActive || isInfluencersTabActive))) {
@@ -105,46 +106,66 @@ fun ContentView() {
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFF3F4F6))
-        ) {
-            when (currentTab) {
-                MainTab.HOME -> HomeTabContent(
-                    onProductClick = { product: Product ->
-                        val safeId = if (product.id.isNullOrBlank()) "not_found" else product.id
-                        NavigationManager.navigate("product/$safeId")
-                    }
-                )
-                MainTab.CATEGORIES -> CategoriesPageView(
-                    onProductClick = { product: Product ->
-                        val safeId = if (product.id.isNullOrBlank()) "not_found" else product.id
-                        NavigationManager.navigate("product/$safeId")
-                    }
-                )
-                MainTab.CART -> CartPageView()
-                MainTab.ACCOUNT -> AccountView()
-            }
-        }
-
-        if (activeOverlay != null) {
-            OverlayRouterView(destination = activeOverlay!!)
-        }
+        val isShoppingTab = currentTab == MainTab.HOME && 
+            !isGroceryTabActive && 
+            !isServicesTabActive && 
+            !isInfluencersTabActive
+            
+        val shouldDrawBehindStatusBar = isShoppingTab && activeOverlay == null && productId == null && groceryProductId == null
         
-        productId?.let { id ->
-            ProductDetailView(
-                productId = id,
-                onBackClick = { NavigationManager.dismissProduct() }
-            )
+        val baseModifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = paddingValues.calculateBottomPadding())
+
+        val containerModifier = if (shouldDrawBehindStatusBar) {
+            baseModifier
+        } else {
+            baseModifier.statusBarsPadding()
         }
 
-        groceryProductId?.let { id ->
-            com.localforvocalstartup.app.ui.pages.GroceryProductDetailView(
-                productId = id,
-                onBack = { NavigationManager.dismissGroceryProduct() }
-            )
+        Box(
+            modifier = containerModifier
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF3F4F6))
+            ) {
+                when (currentTab) {
+                    MainTab.HOME -> HomeTabContent(
+                        onProductClick = { product: Product ->
+                            val safeId = if (product.id.isNullOrBlank()) "not_found" else product.id
+                            NavigationManager.navigate("product/$safeId")
+                        }
+                    )
+                    MainTab.CATEGORIES -> CategoriesPageView(
+                        onProductClick = { product: Product ->
+                            val safeId = if (product.id.isNullOrBlank()) "not_found" else product.id
+                            NavigationManager.navigate("product/$safeId")
+                        }
+                    )
+                    MainTab.CART -> CartPageView()
+                    MainTab.ACCOUNT -> AccountView()
+                }
+            }
+
+            if (activeOverlay != null) {
+                OverlayRouterView(destination = activeOverlay!!)
+            }
+            
+            productId?.let { id ->
+                ProductDetailView(
+                    productId = id,
+                    onBackClick = { NavigationManager.dismissProduct() }
+                )
+            }
+
+            groceryProductId?.let { id ->
+                com.localforvocalstartup.app.ui.pages.GroceryProductDetailView(
+                    productId = id,
+                    onBack = { NavigationManager.dismissGroceryProduct() }
+                )
+            }
         }
     }
 }
