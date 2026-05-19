@@ -1,19 +1,46 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { StatusBar } from 'expo-status-bar';
+import { useAuth } from '../../services/auth';
+import api from '../../services/api';
 
 export default function LoginScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { login } = useAuth();
+    
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = () => {
-        // Basic validation / auth simulation
-        router.replace('/(tabs)');
+    const handleLogin = async () => {
+        if (!email || !password) {
+            Alert.alert('Error', 'Please enter both email and password');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const response = await api.post('/auth/login', { email, password });
+            
+            if (response.data.role !== 'DELIVERY_PARTNER') {
+                Alert.alert('Access Denied', 'This app is only for delivery partners.');
+                setIsLoading(false);
+                return;
+            }
+
+            await login(response.data.token, response.data.user);
+            router.replace('/(tabs)');
+        } catch (error: any) {
+            console.error('Login error:', error);
+            const message = error.response?.data?.error || 'Failed to login. Please try again.';
+            Alert.alert('Login Failed', message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

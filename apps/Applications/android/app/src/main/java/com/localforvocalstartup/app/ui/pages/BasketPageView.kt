@@ -148,17 +148,10 @@ fun BasketPageView(onDismiss: () -> Unit) {
         }
         
         if (showCheckoutFlow) {
-            val checkoutItems = basketItems.map { item ->
-                CheckoutItem(
-                    product = item.product,
-                    quantity = item.quantity,
-                    selectedOfferIds = emptyList() // Fetch if needed or leave default empty
-                )
-            }
-            val checkoutViewModel = remember { CheckoutViewModel(checkoutItems) }
+            val checkoutViewModel = remember { com.localforvocalstartup.app.ui.viewmodel.GroceryCheckoutViewModel(basketItems) }
             
             Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
-                com.localforvocalstartup.app.ui.pages.CheckoutView(
+                com.localforvocalstartup.app.ui.pages.GroceryCheckoutView(
                     viewModel = checkoutViewModel,
                     onBack = { showCheckoutFlow = false }
                 )

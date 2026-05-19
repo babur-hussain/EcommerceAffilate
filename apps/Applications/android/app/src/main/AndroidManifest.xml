@@ -6,6 +6,24 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <queries>
+        <!-- List of UPI apps to support for Intent pay (per Razorpay docs) -->
+        <package android:name="com.google.android.apps.nbu.paisa.user" />
+        <package android:name="com.phonepe.app" />
+        <package android:name="net.one97.paytm" />
+        <package android:name="in.org.npci.upiapp" />
+        <package android:name="com.whatsapp" />
+        <!-- Specific intents for UPI -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+        </intent>
+    </queries>
 
     <application
         android:name=".MyApplication"
@@ -21,8 +39,7 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         
-        <!-- Razorpay API Key -->
-        <meta-data android:name="com.razorpay.ApiKey" android:value="rzp_live_SIs9DUNl6RGng7" />
+        <!-- Razorpay API Key is set via checkout.setKeyID() in code per Razorpay docs -->
 
         <activity
             android:name=".MainActivity"

@@ -63,6 +63,10 @@ fun GlobalSearchView(
         focusRequester.requestFocus()
     }
 
+    androidx.activity.compose.BackHandler {
+        onDismiss()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -109,7 +113,7 @@ fun GlobalSearchView(
                     modifier = Modifier
                         .weight(1f)
                         .focusRequester(focusRequester),
-                    placeholder = { Text("Search products & groceries...", color = SearchTheme.SearchTextGrey, fontSize = 16.sp) },
+                    placeholder = { Text("Search products & groceries...", color = Color.Black, fontSize = 16.sp) },
                     colors = TextFieldDefaults.textFieldColors(
                         containerColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent,

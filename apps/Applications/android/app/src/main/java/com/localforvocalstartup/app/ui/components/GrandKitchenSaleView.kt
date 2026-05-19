@@ -20,26 +20,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.localforvocalstartup.app.ui.components.handleActionUrl
 
 data class PromoItem(
     val id: String,
     val title: String,
     val image: String,
     val offer: String,
-    val isIllustration: Bool = false
+    val isIllustration: Bool = false,
+    val actionUrl: String? = null
 )
 
 typealias Bool = Boolean
 
 @Composable
-fun GrandKitchenSaleView() {
+fun GrandKitchenSaleView(onProductClick: (com.localforvocalstartup.app.data.model.Product) -> Unit = {}) {
     val promoItems = listOf(
-        PromoItem("dining", "Dining &\nDrinkware", "https://images.unsplash.com/photo-1577934214051-94285f25e5b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Up to 80% off"),
-        PromoItem("cookware", "Cookware\n& Tools", "https://images.unsplash.com/photo-1584990347449-a0c92335e953?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Up to 70% off"),
-        PromoItem("storage", "Kitchen\nStorage", "https://images.unsplash.com/photo-1517056463774-4b830d1de725?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Up to 80% off"),
-        PromoItem("deals", "Limited time\nDeals", "https://cdn-icons-png.flaticon.com/512/2972/2972531.png", "Starting from ₹45", true),
-        PromoItem("pressure-cooker", "Pressure\nCooker", "https://images.unsplash.com/photo-1593922712952-b8f36c56c257?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Up to 60% off"),
-        PromoItem("winter", "Winter\nEssentials", "https://images.unsplash.com/photo-1544026230-01d2f838bc35?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Starting @ ₹99")
+        PromoItem("dining", "Dining &\nDrinkware", "https://images.unsplash.com/photo-1577934214051-94285f25e5b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Up to 80% off", actionUrl = "category://Dining"),
+        PromoItem("cookware", "Cookware\n& Tools", "https://images.unsplash.com/photo-1584990347449-a0c92335e953?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Up to 70% off", actionUrl = "category://Cookware"),
+        PromoItem("storage", "Kitchen\nStorage", "https://images.unsplash.com/photo-1517056463774-4b830d1de725?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Up to 80% off", actionUrl = "category://Kitchen Storage"),
+        PromoItem("deals", "Limited time\nDeals", "https://cdn-icons-png.flaticon.com/512/2972/2972531.png", "Starting from ₹45", true, actionUrl = "category://Kitchen"),
+        PromoItem("pressure-cooker", "Pressure\nCooker", "https://images.unsplash.com/photo-1593922712952-b8f36c56c257?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Up to 60% off", actionUrl = "category://Pressure Cookers"),
+        PromoItem("winter", "Winter\nEssentials", "https://images.unsplash.com/photo-1544026230-01d2f838bc35?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", "Starting @ ₹99", actionUrl = "category://Kitchen Essentials")
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -128,7 +130,11 @@ fun GrandKitchenSaleView() {
                     for (j in 0 until columns) {
                         val index = i * columns + j
                         if (index < promoItems.size) {
-                            PromoCard(promoItems[index], Modifier.weight(1f))
+                            PromoCard(
+                                promoItems[index],
+                                Modifier.weight(1f),
+                                onClick = { handleActionUrl(promoItems[index].actionUrl) }
+                            )
                         } else {
                             Spacer(modifier = Modifier.weight(1f))
                         }
@@ -143,13 +149,13 @@ fun GrandKitchenSaleView() {
 }
 
 @Composable
-fun PromoCard(item: PromoItem, modifier: Modifier = Modifier) {
+fun PromoCard(item: PromoItem, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Box(
         modifier = modifier
             .shadow(2.dp, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
             .background(Color.White)
-            .clickable { }
+            .clickable { onClick() }
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),

@@ -408,7 +408,7 @@ fun LumiereNewsletterView(
                     )
                 },
                 shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
+                textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color(0xFFF3F4F6),
                     focusedBorderColor = primaryPurple,
                     unfocusedContainerColor = Color(0xFFF3F4F6),

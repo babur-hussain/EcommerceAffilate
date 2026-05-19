@@ -38,11 +38,40 @@ object LocationManager {
     }
 
     fun startUpdating(context: Context) {
-        try {
-            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
-                .setMinUpdateDistanceMeters(10f)
-                .build()
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+            .setMinUpdateDistanceMeters(10f)
+            .build()
+            
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+        val client = LocationServices.getSettingsClient(context)
+        val task = client.checkLocationSettings(builder.build())
 
+        task.addOnSuccessListener {
+            requestLocationUpdatesDirectly(context, locationRequest)
+        }
+
+        task.addOnFailureListener { exception ->
+            if (exception is com.google.android.gms.common.api.ResolvableApiException) {
+                try {
+                    val activity = getActivity(context)
+                    if (activity != null) {
+                        exception.startResolutionForResult(activity, 1001)
+                    } else {
+                        _errorMessage.value = "Please enable Location Services in Settings."
+                        _address.value = "Location Denied"
+                    }
+                } catch (sendEx: android.content.IntentSender.SendIntentException) {
+                    _errorMessage.value = "Unable to start location resolution."
+                }
+            } else {
+                _errorMessage.value = "Location access denied. Please enable it in Settings."
+                _address.value = "Location Denied"
+            }
+        }
+    }
+
+    private fun requestLocationUpdatesDirectly(context: Context, locationRequest: LocationRequest) {
+        try {
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
@@ -52,6 +81,17 @@ object LocationManager {
             _errorMessage.value = "Location access denied. Please enable it in Settings."
             _address.value = "Location Denied"
         }
+    }
+
+    private fun getActivity(context: Context): android.app.Activity? {
+        var currentContext = context
+        while (currentContext is android.content.ContextWrapper) {
+            if (currentContext is android.app.Activity) {
+                return currentContext
+            }
+            currentContext = currentContext.baseContext
+        }
+        return null
     }
 
     private val locationCallback = object : LocationCallback() {
@@ -98,6 +138,91 @@ object LocationManager {
                     _address.value = "Address not found"
                 }
             }
+        }
+    }
+
+    data class AddressData(
+        val city: String,
+        val street: String,
+        val pincode: String,
+        val state: String
+    )
+
+    fun fetchOneTimeLocation(context: Context, onResult: (AddressData?) -> Unit) {
+        // Step 1: try last known location first (instant)
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
+                if (lastLocation != null) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        geocodeLocation(lastLocation, onResult)
+                    }
+                } else {
+                    // Step 2: no cached location — request a fresh one
+                    requestFreshOneTimeLocation(onResult)
+                }
+            }.addOnFailureListener {
+                requestFreshOneTimeLocation(onResult)
+            }
+        } catch (e: SecurityException) {
+            onResult(null)
+        }
+    }
+
+    private fun requestFreshOneTimeLocation(onResult: (AddressData?) -> Unit) {
+        try {
+            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
+                .setMaxUpdates(1)
+                .setWaitForAccurateLocation(false)
+                .build()
+
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                object : LocationCallback() {
+                    override fun onLocationResult(locationResult: LocationResult) {
+                        val location = locationResult.locations.firstOrNull()
+                        fusedLocationClient.removeLocationUpdates(this)
+                        if (location != null) {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                geocodeLocation(location, onResult)
+                            }
+                        } else {
+                            onResult(null)
+                        }
+                    }
+
+                    override fun onLocationAvailability(availability: LocationAvailability) {
+                        if (!availability.isLocationAvailable) {
+                            fusedLocationClient.removeLocationUpdates(this)
+                            onResult(null)
+                        }
+                    }
+                },
+                Looper.getMainLooper()
+            )
+        } catch (e: SecurityException) {
+            onResult(null)
+        }
+    }
+
+    private suspend fun geocodeLocation(location: android.location.Location, onResult: (AddressData?) -> Unit) {
+        try {
+            @Suppress("DEPRECATION")
+            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+            withContext(Dispatchers.Main) {
+                if (!addresses.isNullOrEmpty()) {
+                    val placemark = addresses[0]
+                    onResult(AddressData(
+                        city = placemark.locality ?: placemark.subLocality ?: "",
+                        street = placemark.thoroughfare ?: placemark.subLocality ?: "",
+                        pincode = placemark.postalCode ?: "",
+                        state = placemark.adminArea ?: ""
+                    ))
+                } else {
+                    onResult(null)
+                }
+            }
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) { onResult(null) }
         }
     }
 }

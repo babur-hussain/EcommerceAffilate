@@ -34,17 +34,20 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.localforvocalstartup.app.data.manager.AuthManager
+import com.localforvocalstartup.app.data.manager.BasketManager
 import com.localforvocalstartup.app.data.manager.CartManager
 import com.localforvocalstartup.app.data.manager.ReviewManager
 import com.localforvocalstartup.app.data.manager.NavigationManager
+import com.localforvocalstartup.app.data.manager.NotifyMeManager
+import com.localforvocalstartup.app.data.manager.WishlistManager
 import com.localforvocalstartup.app.data.model.Address
 import com.localforvocalstartup.app.data.model.Product
 import com.localforvocalstartup.app.data.model.ProductOffer
 import com.localforvocalstartup.app.data.model.TrustBadge
 import com.localforvocalstartup.app.data.remote.NetworkClient
 import com.localforvocalstartup.app.data.remote.AffiliateLinkRequest
-import com.localforvocalstartup.app.data.manager.WishlistManager
 import com.localforvocalstartup.app.ui.pages.AddReviewView
+import com.localforvocalstartup.app.ui.components.LoginScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -68,6 +71,8 @@ fun ProductDetailScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val wishlistIds by WishlistManager.wishlistIds.collectAsState()
+    val notifyMeIds by NotifyMeManager.notifyMeIds.collectAsState()
+    val cartItems by CartManager.items.collectAsState()
     var product by remember { mutableStateOf(initialProduct) }
     var isLoading by remember { mutableStateOf(initialProduct == null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -76,11 +81,17 @@ fun ProductDetailScreen(
     var showLastChancePopup by remember { mutableStateOf(false) }
     var showAddressSelector by remember { mutableStateOf(false) }
     var showAddReviewSheet by remember { mutableStateOf(false) }
+    var showLogin by remember { mutableStateOf(false) }
     
     // Address State
     var savedAddresses by remember { mutableStateOf<List<Address>>(emptyList()) }
     var selectedUserAddressId by remember { mutableStateOf<String?>(null) }
     val currentUserAddress = savedAddresses.firstOrNull { it.id == selectedUserAddressId } ?: savedAddresses.firstOrNull()
+
+    // Fetch wishlist state on load
+    LaunchedEffect(Unit) {
+        WishlistManager.fetchWishlist()
+    }
 
     // Fetch product details
     LaunchedEffect(productId) {
@@ -134,31 +145,89 @@ fun ProductDetailScreen(
                 isWishlisted = product?.id?.let { wishlistIds.contains(it) } == true,
                 onWishlistClick = {
                     product?.id?.let { pid ->
-                        scope.launch { WishlistManager.toggleWishlist(pid) }
+                        if (AuthManager.isLoggedIn()) {
+                            scope.launch { 
+                                WishlistManager.toggleWishlist(pid)
+                            }
+                        } else {
+                            showLogin = true
+                        }
                     }
                 },
-                onCartClick = onCartClick,
-                cartCount = CartManager.cartCount
+                onCartClick = {
+                    if (AuthManager.isLoggedIn()) {
+                        onCartClick()
+                    } else {
+                        showLogin = true
+                    }
+                },
+                cartCount = cartItems.sumOf { it.quantity }
             )
         },
         bottomBar = {
-            product?.let {
-                BottomActionBarView(
-                    price = it.price,
-                    onAddToCart = {
-                        scope.launch { CartManager.addToCart(it, 1) }
-                    },
-                    onBuyNow = {
-                        val offers = it.lastChanceOffers ?: emptyList()
-                        if (offers.isNotEmpty()) {
-                            showLastChancePopup = true
-                        } else {
-                            // Redirect to checkout
-                            NavigationManager.navigate("cart")
+            product?.let { p ->
+                if (p.isOutOfStock) {
+                    OutOfStockBottomBar(
+                        product = p,
+                        isNotified = notifyMeIds.contains(p.id),
+                        isWishlisted = wishlistIds.contains(p.id),
+                        onNotifyMe = {
+                            NotifyMeManager.register(context, p.id, p.displayName)
+                        },
+                        onWishlist = {
+                            scope.launch { WishlistManager.toggleWishlist(p.id) }
                         }
-                    },
-                    onOpenCart = onCartClick
-                )
+                    )
+                } else {
+                    // Detect if this is a grocery product
+                    val isGrocery = p.category?.lowercase()?.let { cat ->
+                        cat.contains("grocery") || cat.contains("milk") || cat.contains("dairy") ||
+                        cat.contains("vegetable") || cat.contains("fruit")
+                    } == true
+                    
+                    BottomActionBarView(
+                        price = p.price,
+                        onAddToCart = {
+                            if (AuthManager.isLoggedIn()) {
+                                if (isGrocery) {
+                                    BasketManager.addToBasket(p, 1)
+                                    android.widget.Toast.makeText(context, "Added to Basket", android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    scope.launch { CartManager.addToCart(p, 1) }
+                                    android.widget.Toast.makeText(context, "Added to Cart", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                showLogin = true
+                            }
+                        },
+                        onBuyNow = {
+                            if (AuthManager.isLoggedIn()) {
+                                // Add the main product to cart/basket first
+                                if (isGrocery) {
+                                    BasketManager.addToBasket(p, 1)
+                                } else {
+                                    scope.launch { CartManager.addToCart(p, 1) }
+                                }
+                                
+                                val offers = p.lastChanceOffers ?: emptyList()
+                                if (offers.isNotEmpty()) {
+                                    showLastChancePopup = true
+                                } else {
+                                    NavigationManager.navigate("cart")
+                                }
+                            } else {
+                                showLogin = true
+                            }
+                        },
+                        onOpenCart = {
+                            if (AuthManager.isLoggedIn()) {
+                                onCartClick()
+                            } else {
+                                showLogin = true
+                            }
+                        }
+                    )
+                }
             }
         },
         containerColor = LightGray
@@ -206,12 +275,70 @@ fun ProductDetailScreen(
     )
     
     if (showLastChancePopup) {
+        val popupProduct = product
+        // Grocery category ID constant for detection
+        val groceryCategoryId = "696686d02c5aacc146652e03"
+        val isGroceryProduct = popupProduct?.category?.lowercase()?.contains("grocery") == true ||
+            popupProduct?.category?.lowercase()?.contains("milk") == true ||
+            popupProduct?.category?.lowercase()?.contains("dairy") == true ||
+            popupProduct?.category?.lowercase()?.contains("vegetable") == true ||
+            popupProduct?.category?.lowercase()?.contains("fruit") == true
+        
         LastChancePopupView(
             isVisible = showLastChancePopup,
-            offers = product?.lastChanceOffers ?: emptyList(),
+            offers = popupProduct?.lastChanceOffers ?: emptyList(),
             onDismiss = { 
                 showLastChancePopup = false
-                NavigationManager.navigate("cart") 
+            },
+            onGoToCheckout = { selectedIds ->
+                // Add selected last-chance offers to the correct cart/basket
+                if (popupProduct != null && selectedIds.isNotEmpty()) {
+                    val allOffers = popupProduct.lastChanceOffers ?: emptyList()
+                    allOffers.forEachIndexed { index, offer ->
+                        val offerId = offer.id ?: offer._id ?: offer.tempId(index)
+                        if (selectedIds.contains(offerId)) {
+                            val offerProduct = Product(
+                                id = offerId,
+                                name = offer.title ?: "Offer Item",
+                                price = offer.offerPrice,
+                                mrp = offer.originalPrice,
+                                rawImages = listOfNotNull(offer.image)
+                            )
+                            if (isGroceryProduct) {
+                                BasketManager.addToBasket(offerProduct, 1)
+                            } else {
+                                scope.launch { CartManager.addToCart(offerProduct, 1) }
+                            }
+                        }
+                    }
+                }
+                showLastChancePopup = false
+                // Navigate to the appropriate checkout
+                NavigationManager.navigate("cart")
+            },
+            onContinueShopping = { selectedIds ->
+                // Add selected last-chance offers, then dismiss to continue browsing
+                if (popupProduct != null && selectedIds.isNotEmpty()) {
+                    val allOffers = popupProduct.lastChanceOffers ?: emptyList()
+                    allOffers.forEachIndexed { index, offer ->
+                        val offerId = offer.id ?: offer._id ?: offer.tempId(index)
+                        if (selectedIds.contains(offerId)) {
+                            val offerProduct = Product(
+                                id = offerId,
+                                name = offer.title ?: "Offer Item",
+                                price = offer.offerPrice,
+                                mrp = offer.originalPrice,
+                                rawImages = listOfNotNull(offer.image)
+                            )
+                            if (isGroceryProduct) {
+                                BasketManager.addToBasket(offerProduct, 1)
+                            } else {
+                                scope.launch { CartManager.addToCart(offerProduct, 1) }
+                            }
+                        }
+                    }
+                }
+                showLastChancePopup = false
             }
         )
     }
@@ -223,6 +350,10 @@ fun ProductDetailScreen(
         ) {
             AddReviewView(productId = productId)
         }
+    }
+    
+    if (showLogin) {
+        LoginScreen(onDismiss = { showLogin = false })
     }
 }
 
@@ -239,6 +370,7 @@ private fun ProductDetailHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
+            .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -290,6 +422,13 @@ private fun ProductDetailContent(
         // Image Carousel
         item {
             ProductImageCarousel(images = product.images)
+        }
+
+        // Out of Stock Banner (shown right below the images when OOS)
+        if (product.isOutOfStock) {
+            item {
+                OutOfStockBanner(productName = product.displayName)
+            }
         }
 
         // Price & Title Section
@@ -395,8 +534,10 @@ private fun ProductImageCarousel(images: List<String>) {
                     .fillMaxWidth()
                     .aspectRatio(1f)
             ) { page ->
+                val rawUrl = images[page]
+                val fullUrl = if (rawUrl.startsWith("http")) rawUrl else if (rawUrl.startsWith("/")) "https://api.lfvs.in$rawUrl" else "https://api.lfvs.in/$rawUrl"
                 AsyncImage(
-                    model = images[page],
+                    model = fullUrl,
                     contentDescription = "Product image ${page + 1}",
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize().padding(16.dp)
@@ -899,5 +1040,158 @@ private fun DescriptionSection(description: String) {
             color = DarkText,
             lineHeight = 22.sp
         )
+    }
+}
+
+// ============= Out of Stock Components =============
+
+@Composable
+fun OutOfStockBanner(productName: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                    colors = listOf(Color(0xFFFF6B6B), Color(0xFFFF8E53))
+                )
+            )
+            .padding(vertical = 20.dp, horizontal = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Emoji icon
+            Text("😔", fontSize = 36.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Currently Out of Stock",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "This item is temporarily unavailable.\nWe'll notify you the moment it's back!",
+                fontSize = 13.sp,
+                color = Color.White.copy(alpha = 0.9f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                lineHeight = 20.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun OutOfStockBottomBar(
+    product: Product,
+    isNotified: Boolean,
+    isWishlisted: Boolean,
+    onNotifyMe: () -> Unit,
+    onWishlist: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shadowElevation = 12.dp,
+        color = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Status pill
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFFFEDED), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFF3B30))
+                        )
+                        Text(
+                            text = "Out of Stock",
+                            color = Color(0xFFFF3B30),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
+            // Action buttons row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Add to Wishlist button
+                OutlinedButton(
+                    onClick = onWishlist,
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.5.dp,
+                        if (isWishlisted) Color(0xFFFF3B30) else Color(0xFFE5E7EB)
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = if (isWishlisted) Color(0xFFFF3B30) else DarkText
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isWishlisted) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = if (isWishlisted) Color(0xFFFF3B30) else DarkText
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isWishlisted) "Wishlisted" else "Wishlist",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                // Notify Me button
+                Button(
+                    onClick = { if (!isNotified) onNotifyMe() },
+                    modifier = Modifier.weight(1.6f).height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isNotified) Color(0xFF10B981) else Color(0xFF2563EB),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isNotified) Icons.Default.Notifications else Icons.Outlined.NotificationsNone,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isNotified) "Notified ✓" else "Notify Me",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            if (!isNotified) {
+                Text(
+                    text = "📬 Get an instant notification the moment this is back in stock",
+                    fontSize = 11.sp,
+                    color = GrayText,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }

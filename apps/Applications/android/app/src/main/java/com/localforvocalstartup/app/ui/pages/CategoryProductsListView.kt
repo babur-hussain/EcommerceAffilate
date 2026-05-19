@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,7 +45,9 @@ fun CategoryProductsListView(
     minimumDiscount: Int = 0
 ) {
     var products by remember { mutableStateOf<List<Product>>(emptyList()) }
+    var relatedProducts by remember { mutableStateOf<List<Product>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(Unit) {
         try {
@@ -59,6 +62,8 @@ fun CategoryProductsListView(
                 fetched = NetworkClient.apiService.getProducts(50, subCategoryId = subCategoryIds.firstOrNull())
             } else if (!categoryId.isNullOrEmpty()) {
                 fetched = NetworkClient.apiService.getProducts(50, categoryId = categoryId)
+            } else if (title.isNotEmpty() && title != "Products") {
+                fetched = NetworkClient.apiService.getProducts(50, categoryId = title)
             } else {
                 fetched = NetworkClient.apiService.getProducts(50)
             }
@@ -71,7 +76,23 @@ fun CategoryProductsListView(
                 discount >= minimumDiscount
             }
 
-            products = if (discounted.isEmpty()) fetched else discounted
+            if (minimumDiscount > 0) {
+                if (discounted.isNotEmpty()) {
+                    products = discounted
+                    relatedProducts = emptyList()
+                } else {
+                    products = emptyList()
+                    relatedProducts = fetched.ifEmpty { NetworkClient.apiService.getProducts(20) }
+                }
+            } else {
+                if (fetched.isNotEmpty()) {
+                    products = fetched
+                    relatedProducts = emptyList()
+                } else {
+                    products = emptyList()
+                    relatedProducts = NetworkClient.apiService.getProducts(20)
+                }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
@@ -85,6 +106,7 @@ fun CategoryProductsListView(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)
+                .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -120,8 +142,77 @@ fun CategoryProductsListView(
                 CircularProgressIndicator()
             }
         } else if (products.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No deals found", fontSize = 16.sp, color = Color.Gray)
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Spacer(modifier = Modifier.height(40.dp))
+                        // No Deals Icon/Text
+                        Icon(Icons.Default.Info, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(48.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = if (minimumDiscount > 0) "No deals available" else "Out of stock",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1F2937)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "We couldn't find exactly what you're looking for.",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = {
+                                android.widget.Toast.makeText(context, "You will be notified when deals are available!", android.widget.Toast.LENGTH_SHORT).show()
+                                com.localforvocalstartup.app.data.manager.NotifyMeManager.register(context, categoryId ?: title, title)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2874F0)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Notify Me", color = Color.White)
+                        }
+                        
+                        Spacer(modifier = Modifier.height(40.dp))
+
+                        if (relatedProducts.isNotEmpty()) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                                Text(
+                                    text = "Related Products",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF111827)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (relatedProducts.isNotEmpty()) {
+                    items(relatedProducts) { product ->
+                        CategoryProductCard(
+                            product = product,
+                            onClick = {
+                                val safeId = if (product.id.isNullOrBlank()) "not_found" else product.id
+                                if (isGrocery) {
+                                    NavigationManager.openGroceryProduct(safeId)
+                                } else {
+                                    NavigationManager.navigate("product/$safeId")
+                                }
+                            }
+                        )
+                    }
+                }
             }
         } else {
             LazyVerticalGrid(

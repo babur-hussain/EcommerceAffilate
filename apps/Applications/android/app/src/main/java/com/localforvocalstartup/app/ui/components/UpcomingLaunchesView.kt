@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.localforvocalstartup.app.data.model.SDUIComponent
+import com.localforvocalstartup.app.ui.components.handleActionUrl
 import com.google.gson.JsonObject
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -43,11 +44,7 @@ fun UpcomingLaunchesView(component: SDUIComponent) {
             color = Color.Black,
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .clickable {
-                    headerActionUrl?.let {
-                        // Navigate
-                    }
-                }
+                .clickable { handleActionUrl(headerActionUrl) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -74,10 +71,7 @@ fun UpcomingLaunchesView(component: SDUIComponent) {
                             .fillMaxSize()
                             .padding(horizontal = 16.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .clickable {
-                                actionUrl?.let {
-                                }
-                            }
+                            .clickable { handleActionUrl(actionUrl) }
                     ) {
                         AsyncImage(
                             model = image,

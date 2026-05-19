@@ -50,7 +50,7 @@ data class RazorpayOrderResponse(
  * and add to AndroidManifest:
  *   <meta-data android:name="com.razorpay.ApiKey" android:value="rzp_live_SIs9DUNl6RGng7"/>
  *
- * For now this is stubbed to compile without the SDK dependency.
+ * This handles the full Razorpay checkout flow.
  */
 object RazorpayService {
     private const val LIVE_KEY = "rzp_live_SIs9DUNl6RGng7"
@@ -63,9 +63,9 @@ object RazorpayService {
 
     suspend fun createRazorpayOrder(orderId: String): RazorpayOrderResponse {
         return try {
-            val networkResp = NetworkClient.apiService.createPaymentOrder(CreatePaymentOrderRequest(orderId = orderId))
+            val networkResp = NetworkClient.apiService.createPaymentOrder(orderId, CreatePaymentOrderRequest())
             RazorpayOrderResponse(
-                paymentOrderId = networkResp.id,
+                paymentOrderId = networkResp.paymentOrderId,
                 key_id = LIVE_KEY,
                 amount = networkResp.amount,
                 name = null,
@@ -86,13 +86,14 @@ object RazorpayService {
     ): Boolean {
         return try {
             val response = NetworkClient.apiService.verifyPayment(
+                _orderId,
                 VerifyPaymentRequest(
                     razorpay_order_id = razorpayOrderId,
                     razorpay_payment_id = razorpayPaymentId,
                     razorpay_signature = razorpaySignature
                 )
             )
-            response.success
+            response.status == "SUCCESS"
         } catch (e: Exception) {
             AppLogger.error("Verification failed: ${e.message}")
             false
@@ -119,19 +120,28 @@ object RazorpayService {
             options.put("name", name ?: "Local For Vocal")
             options.put("description", description ?: "Order Payment")
             options.put("image", "https://api.lfvs.in/static/logo.png")
-            // amount is already in paise (converted by caller: totalAmount * 100)
-            options.put("amount", amount.toString()) 
             options.put("order_id", orderId)
+            options.put("theme.color", themeColor)
+            options.put("currency", "INR")
+            options.put("amount", amount.toString())
             
-            val theme = JSONObject()
-            theme.put("color", themeColor)
-            options.put("theme", theme)
-            
-            val prefill = JSONObject()
-            prefill.put("email", prefillEmail ?: "support@lfvs.in")
-            prefill.put("contact", prefillPhone ?: "8888888888")
-            options.put("prefill", prefill)
+            // Format phone number — remove spaces (critical for UPI resolution)
+            val formattedPhone = (prefillPhone ?: "8888888888").replace(" ", "")
+            options.put("prefill.email", prefillEmail ?: "support@lfvs.in")
+            options.put("prefill.contact", formattedPhone)
 
+            val retryObj = JSONObject()
+            retryObj.put("enabled", true)
+            retryObj.put("max_count", 4)
+            options.put("retry", retryObj)
+
+            // Enable UPI Intent inside WebView — required because Razorpay SDK
+            // renders checkout in a WebView and UPI Intent is disabled by default
+            options.put("webview_intent", true)
+
+            // Log the full payload for debugging
+            AppLogger.info("Razorpay checkout options: ${options.toString(2)}")
+            
             checkout.open(activity, options)
         } catch (e: Exception) {
             AppLogger.error("Error in starting Razorpay Checkout: ${e.message}")

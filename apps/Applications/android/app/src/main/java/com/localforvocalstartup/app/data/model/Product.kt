@@ -35,6 +35,9 @@ data class Product(
 
     val images: List<String>
         get() = rawImages ?: listOfNotNull(image, primaryImage)
+
+    val isOutOfStock: Boolean
+        get() = stock != null && stock <= 0
 }
 
 data class LastChanceOffer(

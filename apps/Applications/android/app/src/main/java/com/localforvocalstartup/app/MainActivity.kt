@@ -15,29 +15,46 @@ import com.localforvocalstartup.app.data.services.RazorpayService
 import com.localforvocalstartup.app.utils.AppLogger
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import com.localforvocalstartup.app.ui.theme.EcommerceEarnTheme
 
 import androidx.activity.enableEdgeToEdge
 
 class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = androidx.activity.SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         setContent {
             // Very simple root mounting mimicking ContentView/Splash lifecycle
             var showSplash by remember { mutableStateOf(true) }
             
-            if (showSplash) {
-                SplashScreenView(onSplashComplete = { showSplash = false })
-            } else {
-                ContentView()
+            EcommerceEarnTheme {
+                if (showSplash) {
+                    SplashScreenView(onSplashComplete = { showSplash = false })
+                } else {
+                    ContentView()
+                }
             }
         }
 
         lifecycleScope.launch {
             com.localforvocalstartup.app.data.repository.CategoryRepository.preload()
         }
-        
         RazorpayService.init(this)
+        com.localforvocalstartup.app.data.manager.LocationManager.init(this)
+        com.localforvocalstartup.app.data.manager.NotifyMeManager.createNotificationChannel(this)
+
+        // Request POST_NOTIFICATIONS permission on Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+            }
+        }
     }
 
     override fun onPaymentSuccess(s: String?, paymentData: PaymentData?) {

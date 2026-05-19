@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.localforvocalstartup.app.data.model.Address
 
 @Composable
@@ -93,6 +95,16 @@ fun UserAddressSelectorView(
     onDismiss: () -> Unit,
     title: String = "Select delivery address"
 ) {
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false) ||
+            permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false)
+        ) {
+            onUseCurrentLocation()
+        }
+    }
+
     if (isVisible) {
         ModalBottomSheet(
             onDismissRequest = onDismiss,
@@ -121,7 +133,7 @@ fun UserAddressSelectorView(
                     value = searchText,
                     onValueChange = { searchText = it },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF9CA3AF)) },
-                    placeholder = { Text("Search by area, street name, pin code", fontSize = 14.sp) },
+                    placeholder = { Text("Search by area, street name, pin code", color = Color.Black, fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -133,7 +145,14 @@ fun UserAddressSelectorView(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onUseCurrentLocation() }
+                        .clickable {
+                            permissionLauncher.launch(
+                                arrayOf(
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
+                        }
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {

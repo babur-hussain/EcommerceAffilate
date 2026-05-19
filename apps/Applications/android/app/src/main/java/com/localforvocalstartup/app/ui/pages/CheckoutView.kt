@@ -47,14 +47,71 @@ fun CheckoutView(viewModel: CheckoutViewModel, onBack: () -> Unit) {
     val showRazorpay by viewModel.showRazorpay.collectAsState()
     val user by AuthManager.userState.collectAsState()
 
+    val showPaymentSuccess by viewModel.showPaymentSuccess.collectAsState()
+    val showPaymentFailed by viewModel.showPaymentFailed.collectAsState()
+    val showPaymentCancelled by viewModel.showPaymentCancelled.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    if (errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text("Checkout Error", fontWeight = FontWeight.Bold) },
+            text = { Text(errorMessage ?: "") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("OK", color = Color(0xFF2563EB))
+                }
+            },
+            containerColor = Color.White
+        )
+    }
+
+    if (showPaymentSuccess) {
+        val orderNumber by viewModel.createdOrderNumber.collectAsState()
+        PaymentSuccessView(
+            orderNumber = orderNumber,
+            amount = viewModel.totalAmount,
+            onContinueShopping = onBack,
+            onViewOrder = onBack
+        )
+        return
+    }
+
+    if (showPaymentFailed) {
+        val orderNumber by viewModel.createdOrderNumber.collectAsState()
+        PaymentFailedView(
+            orderId = orderNumber,
+            amount = viewModel.totalAmount,
+            onRetry = { viewModel.setPaymentFailed(false) },
+            onCancel = onBack
+        )
+        return
+    }
+
+    if (showPaymentCancelled) {
+        val orderNumber by viewModel.createdOrderNumber.collectAsState()
+        PaymentCancelledView(
+            orderId = orderNumber,
+            amount = viewModel.totalAmount,
+            onRetry = { viewModel.setPaymentCancelled(false) },
+            onGoBack = onBack
+        )
+        return
+    }
+
     // CRITICAL: This must be OUTSIDE the isPaymentViewVisible block.
     // processPayment() dismisses the payment view BEFORE setting showRazorpay=true,
     // so if this effect is inside that block it gets cancelled before it fires.
     LaunchedEffect(showRazorpay) {
         if (showRazorpay) {
-            val activity = context as? Activity
+            var currentContext = context
+            while (currentContext is android.content.ContextWrapper) {
+                if (currentContext is Activity) break
+                currentContext = currentContext.baseContext
+            }
+            val activity = currentContext as? Activity
             if (activity != null) {
-                val orderId = viewModel.createdOrderId.value ?: ""
+                val orderId = viewModel.razorpayOrderId.value ?: ""
                 val amountPaise = (viewModel.totalAmount * 100).toInt()
                 RazorpayService.openRazorpayCheckout(
                     activity = activity,
@@ -643,11 +700,11 @@ fun AddressSelectorBottomSheet(
                     value = searchText,
                     onValueChange = { searchText = it },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF9CA3AF)) },
-                    placeholder = { Text("Search by area, street name, pin code", fontSize = 14.sp) },
+                    placeholder = { Text("Search by area, street name, pin code", color = Color.Black, fontSize = 14.sp) },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
+                    textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2563EB),
                         unfocusedBorderColor = Color(0xFFE5E7EB)
                     )
@@ -770,6 +827,7 @@ private fun AddNewAddressForm(
     onBack: () -> Unit,
     onSave: (name: String, phone: String, line1: String, city: String, state: String, pincode: String) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var line1 by remember { mutableStateOf("") }
@@ -802,26 +860,56 @@ private fun AddNewAddressForm(
         }
 
         // Use current location to auto-fill
+        var isFetchingLocation by remember { mutableStateOf(false) }
+
+        val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            if (permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false) ||
+                permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false)
+            ) {
+                com.localforvocalstartup.app.data.manager.LocationManager.fetchOneTimeLocation(context) { data ->
+                    isFetchingLocation = false
+                    if (data != null) {
+                        line1 = data.street
+                        city = data.city
+                        state = data.state
+                        pincode = data.pincode
+                    }
+                }
+            } else {
+                isFetchingLocation = false
+            }
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFFEFF6FF), RoundedCornerShape(8.dp))
                 .clickable {
+                    if (isFetchingLocation) return@clickable
+                    isFetchingLocation = true
                     locationFetched = true
-                    if (locationAddress != "Locating..." && locationAddress != "Location Denied" && locationAddress != "Address not found") {
-                        line1 = locationAddress
-                        city = locationCity.lowercase()
-                            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-                    }
+                    
+                    permissionLauncher.launch(
+                        arrayOf(
+                            android.Manifest.permission.ACCESS_FINE_LOCATION,
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                    )
                 }
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.MyLocation, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+            if (isFetchingLocation) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color(0xFF2563EB), strokeWidth = 2.dp)
+            } else {
+                Icon(Icons.Default.MyLocation, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+            }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
-                Text("Use current location to auto-fill", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = Color(0xFF2563EB))
-                if (locationFetched && locationAddress != "Locating...") {
+                Text(if (isFetchingLocation) "Fetching location..." else "Use current location to auto-fill", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = Color(0xFF2563EB))
+                if (locationFetched && locationAddress != "Locating..." && !isFetchingLocation) {
                     Text(locationAddress, fontSize = 12.sp, color = Color(0xFF4B5563))
                 }
             }
@@ -860,11 +948,11 @@ private fun AddressFormField(label: String, placeholder: String, value: String, 
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        placeholder = { Text(placeholder, color = Color(0xFF9CA3AF), fontSize = 14.sp) },
+        placeholder = { Text(placeholder, color = Color.Black, fontSize = 14.sp) },
         modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
         singleLine = true,
         shape = RoundedCornerShape(8.dp),
-        colors = OutlinedTextFieldDefaults.colors(
+        textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color(0xFF2563EB),
             unfocusedBorderColor = Color(0xFFD1D5DB)
         )

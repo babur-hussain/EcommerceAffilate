@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.animateDpAsState // Added
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -196,6 +197,7 @@ fun TopCategoryBoxesView(
 // MARK: - LocationBarView
 @Composable
 fun LocationBarView(
+    selectedAddress: com.localforvocalstartup.app.data.model.Address?,
     locationState: LocationState,
     isLightMode: Boolean = false,
     onRequestLocation: () -> Unit
@@ -232,7 +234,7 @@ fun LocationBarView(
         ) {
             // AREA NAME (Yellow or Blue)
             Text(
-                text = locationState.areaName,
+                text = selectedAddress?.let { "Deliver to ${it.name}" } ?: locationState.areaName,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Black, // Heavy bold
                 color = if (isLightMode) Color(0xFF2563EB) else iOSActiveBg,
@@ -244,7 +246,7 @@ fun LocationBarView(
             // Full Address + Arrow
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = locationState.fullAddress,
+                    text = selectedAddress?.let { "${it.addressLine1}, ${it.city} - ${it.pincode}" } ?: locationState.fullAddress,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = primaryTextColor,
@@ -430,13 +432,23 @@ fun HomeHeaderWithContent(
         com.localforvocalstartup.app.data.manager.NavigationManager.setServicesTabActive(activeTab == TabType.Services)
         com.localforvocalstartup.app.data.manager.NavigationManager.setInfluencersTabActive(activeTab == TabType.Influencers)
     }
+
+    androidx.activity.compose.BackHandler(enabled = activeTab != TabType.Shopping) {
+        activeTab = TabType.Shopping
+    }
     val locationState by locationViewModel.locationState.collectAsState()
     val forYouState by forYouViewModel.state.collectAsState()
+    
+    val savedAddresses by com.localforvocalstartup.app.data.manager.AddressManager.savedAddresses.collectAsState()
+    val selectedAddress by com.localforvocalstartup.app.data.manager.AddressManager.selectedAddress.collectAsState()
+    var showAddressSheet by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val headerState by headerViewModel.state.collectAsState()
     
     val listState = rememberLazyListState()
     var topHeaderHeight by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     var stickyHeaderHeight by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    var sduiHeaderHeight by remember { androidx.compose.runtime.mutableIntStateOf(0) }
 
     val density = LocalDensity.current
     val maxParallaxOffsetPx = with(density) { 1000.dp.toPx().toInt() }
@@ -455,7 +467,7 @@ fun HomeHeaderWithContent(
     }
 
     val totalHeaderHeightDp = with(density) { (topHeaderHeight + stickyHeaderHeight).toDp() }
-    val lottieOffsetY = if (totalHeaderHeightDp > 0.dp) totalHeaderHeightDp - 80.dp else 160.dp
+    val lottieOffsetY = if (totalHeaderHeightDp > 0.dp) totalHeaderHeightDp - 180.dp else 80.dp
 
     val showIcons by remember {
         derivedStateOf {
@@ -548,8 +560,16 @@ fun HomeHeaderWithContent(
                                         add(stop to color)
                                     }
                                 }
-                                // Then fade to page background
-                                add(0.85f to lastGradientColor)
+                                
+                                // Dynamic fade point: where the SDUIPage becomes solid white
+                                val contentWhiteStartDp = with(density) { (topHeaderHeight + stickyHeaderHeight + sduiHeaderHeight).toDp() } + 280.dp
+                                val contentWhiteStartFraction = (contentWhiteStartDp.value / 1000f).coerceIn(headerFraction, 1f)
+                                
+                                // Keep the gradient rich until right before it needs to fade out
+                                val fadeStartFraction = ((contentWhiteStartDp.value - 100f) / 1000f).coerceIn(headerFraction, contentWhiteStartFraction)
+                                
+                                add(fadeStartFraction to lastGradientColor)
+                                add(contentWhiteStartFraction to pageBgColor)
                                 add(1.0f to pageBgColor)
                             }.toTypedArray()
                         )
@@ -595,8 +615,9 @@ fun HomeHeaderWithContent(
                             onTabSelected = { activeTab = it }
                         )
                         LocationBarView(
+                            selectedAddress = selectedAddress,
                             locationState = locationState,
-                            onRequestLocation = { com.localforvocalstartup.app.data.manager.NavigationManager.navigate("locationPicker") }
+                            onRequestLocation = { showAddressSheet = true }
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
@@ -626,6 +647,7 @@ fun HomeHeaderWithContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .onGloballyPositioned { sduiHeaderHeight = it.size.height }
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         val otherHeaderComponents = headerState.components.filter {
@@ -755,6 +777,28 @@ fun HomeHeaderWithContent(
 
     if (showGlobalSearch) {
         com.localforvocalstartup.app.ui.pages.GlobalSearchView(onDismiss = { showGlobalSearch = false })
+    }
+    
+    if (showAddressSheet) {
+        com.localforvocalstartup.app.ui.components.UserAddressSelectorView(
+            isVisible = true,
+            savedUserAddresses = savedAddresses,
+            selectedUserAddressId = selectedAddress?.id,
+            onSelectUserAddress = { 
+                com.localforvocalstartup.app.data.manager.AddressManager.selectAddress(it)
+                showAddressSheet = false 
+            },
+            onUseCurrentLocation = {
+                com.localforvocalstartup.app.data.manager.LocationManager.startUpdating(context)
+                locationViewModel.fetchCurrentLocation()
+                showAddressSheet = false
+            },
+            onAddNewUserAddress = {
+                showAddressSheet = false
+                com.localforvocalstartup.app.data.manager.NavigationManager.navigate("locationPicker")
+            },
+            onDismiss = { showAddressSheet = false }
+        )
     }
 }
 

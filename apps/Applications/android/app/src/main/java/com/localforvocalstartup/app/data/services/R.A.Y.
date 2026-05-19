@@ -1,0 +1,1738 @@
+R.A.Y.
+Beta
+Beta
+[Pricing](https://razorpay.com/pricing/)
+Pricing
+[API Reference](https://razorpay.com/docs/api)
+API Reference
+[Support](https://razorpay.com/support/)
+Support
+[Log In](https://dashboard.razorpay.com/?next=%2Fpayments%2Fpayment-gateway%2Fandroid-integration%2Fstandard%2Fintegration-steps#/access/signin)
+Log In
+[Sign Up](https://dashboard.razorpay.com/signup)
+Sign Up
+[Home](https://razorpay.com/docs/)
+[Payments](https://razorpay.com/docs/payments/)
+[Engage](https://razorpay.com/docs/engage/)
+[POS](https://razorpay.com/docs/pos/)
+[Banking Plus](https://razorpay.com/docs/x/)
+[Payroll](https://razorpay.com/docs/payroll/)
+[Partners](https://razorpay.com/docs/partners/)
+[API Reference](https://razorpay.com/docs/api/)
+[Developer Tools](https://razorpay.com/docs/developer-tools/)
+[Razorpay Payments Suite](https://razorpay.com/docs/payments/)
+[Quickstart Guide](https://razorpay.com/docs/payments/quickstart/)
+Solutions by Industry
+Sign Up
+Dashboard
+Customers
+Orders
+Payments
+International Payments
+Payment Methods
+Settlements
+Refunds
+Disputes
+Payment Gateway
+[About Payment Gateway](https://razorpay.com/docs/payments/payment-gateway/)
+[How Payment Gateway Works](https://razorpay.com/docs/payments/payment-gateway/how-it-works/)
+Features
+Web Integration
+Android Integration
+[Prerequisites](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/)
+[Integration Steps](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps/)
+Payment Methods
+[Customisation Options](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/customisation/)
+[Troubleshooting & FAQs](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/troubleshooting-faqs/)
+[Google Play Console - Data Safety](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/google-data-safety/)
+iOS Integration
+React Native
+Cordova & Ionic
+Flutter Plugin
+Capacitor Integration
+Quick Integration
+Server Integration
+Ecommerce Plugins
+Widgets
+Magic Checkout
+Razorpay - Payments on WhatsApp
+Payment Links
+Payment Button
+Payment Pages
+Webstore
+Invoices
+QR Codes
+Offers
+EMI²
+Subscriptions
+Smart Collect
+Optimizer
+Route
+Third-Party Validation
+Payments Mobile App
+[Payments Changelog](https://razorpay.com/docs/payments/changelog/)
+[Glossary](https://razorpay.com/docs/payments/glossary/)
+[Payments](https://razorpay.com/docs/payments)
+Payments
+[Payment Gateway](https://razorpay.com/docs/payments/payment-gateway)
+Payment Gateway
+Android Integration
+[Standard](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard)
+Standard
+Integration Steps
+
+# Integration Steps
+
+Steps to integrate your Android application with Razorpay Android Standard SDK.
+Follow these steps to integrate your Android application:
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#1-build-integrationhttps://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#1-build-integration[1. Build Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#1.%20Build%20Integration)
+[1. Build Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#1.%20Build%20Integration)
+1. Build Integration
+Integrate Android Standard Checkout.
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#2-test-integrationhttps://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#2-test-integration[2. Test Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#2.%20Test%20Integration)
+[2. Test Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#2.%20Test%20Integration)
+2. Test Integration
+Test the integration by making a test payment.
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#3-go-live-checklisthttps://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#3-go-live-checklist[3. Go-live Checklist](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#3.%20Go-live%20Checklist)
+[3. Go-live Checklist](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#3.%20Go-live%20Checklist)
+3. Go-live Checklist
+Check the go-live checklist.
+Watch Out!
+The Android app must have a minSDKversion of 19 or higher. If you want to support devices below API level 19, you must override minSDKversion. Use the sample code below to override minSDKversion:
+
+```
+minSDKversion
+```
+
+
+```
+minSDKversion
+```
+
+
+```
+minSDKversion
+```
+
+copy
+
+```
+<uses-sdk android:targetSdkVersion="27" android:minSdkVersion="19" tools:overrideLibrary="com.razorpay"/>
+```
+
+## [1. Build Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#1-build-integration)
+
+[1. Build Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#1-build-integration)
+1. Build Integration
+Follow the steps given below:
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#11-install-razorpay-android-standard-sdk1.1 Install Razorpay Android Standard SDK
+1.1 Install Razorpay Android Standard SDK
+To install the SDK in your Android project:
+Add the code given below to your project's top-level build.gradle file: This gives access to the SDK library.
+
+```
+build.gradle
+```
+
+copy
+
+```
+repositories { mavenCentral()} dependencies { implementation 'com.razorpay:checkout:1.6.40'}
+```
+
+Handy Tips
+From version 1.6.40 onwards, the latest version is automatically updated, eliminating the need for manual updates.
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#12-initialize-razorpay-android-standard-sdk1.2 Initialize Razorpay Android Standard SDK
+1.2 Initialize Razorpay Android Standard SDK
+Add your <API_KEY_ID> dynamically using Checkout's setKeyId() method. You can generate the
+
+```
+<API_KEY_ID>
+```
+
+
+```
+setKeyId()
+```
+
+[API Keys](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys)
+API Keys
+To quickly load the Checkout form, the preload method of Checkout must be called much earlier than the other methods in the payment flow. The loading time of the preload resources can vary depending on your network's bandwidth.
+
+```
+Checkout
+```
+
+
+```
+preload
+```
+
+
+```
+Checkout
+```
+
+copy
+
+```
+public class PaymentActivity extends Activity { // ... @Override public void onCreate(Bundle savedInstanceState) { super.onCreate(savedInstanceState); /** * Preload payment resources */ Checkout.preload(getApplicationContext()); // ... checkout.setKeyID("<YOUR_KEY_ID>"); // ... }}
+```
+
+Watch Out!
+It is recommended to send the API Key ID from your server-side as app-related metadata fetch. Do not add API Keys in the AndroidManifest file.
+
+```
+AndroidManifest
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#proguard-rulesProguard Rules
+Proguard Rules
+If you are using Proguard for your builds, you must add the following lines to your proguard-rules.pro file.
+
+```
+proguard-rules.pro
+```
+
+copy
+
+```
+-keepclassmembers class * { @android.webkit.JavascriptInterface <methods>;} -keepattributes JavascriptInterface-keepattributes *Annotation* -dontwarn com.razorpay.**-keep class com.razorpay.** {*;} -optimizations !method/inlining/* -keepclasseswithmembers class * { public void onPayment*(...);}
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#sdk-integration-checkSDK Integration Check
+SDK Integration Check
+Call Checkout.sdkCheckIntegration(activity) to check the health of integration. This will also let you know if the SDK version is outdated. This will only appear in debug mode and not in the release.
+
+```
+Checkout.sdkCheckIntegration(activity)
+```
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#13-create-an-order-in-server1.3 Create an Order in Server
+
+1.3 Create an Order in Server
+Order is an important step in the payment process.
+- An order should be created for every payment.
+- You can create an order using the [Orders API](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#api-sample-code). It is a server-side API call. Know how to [authenticate](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys) Orders API.
+- The order_id received in the response should be passed to the checkout. This ties the order with the payment and secures the request from being tampered.
+[Orders API](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#api-sample-code)
+Orders API
+[authenticate](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys)
+authenticate
+
+```
+order_id
+```
+
+Watch Out!
+Payments made without an order_id cannot be captured and will be automatically refunded. You must create an order before initiating payments to ensure proper payment processing.
+
+```
+order_id
+```
+
+You can create an order using:
+API Sample Code
+Razorpay Postman Public Workspace
+Use this endpoint to create an order using the Orders API.
+copy
+
+```
+curl -X POST https://api.razorpay.com/v1/orders -U [YOUR_KEY_ID]:[YOUR_KEY_SECRET]-H 'content-type:application/json'-d '{ "amount": 50000, "currency": "", "receipt": "qwsaq1", "partial_payment": true, "first_payment_min_amount": 230}'
+```
+
+copy
+
+```
+{ "id": "order_IluGWxBm9U8zJ8", "entity": "order", "amount": 50000, "amount_paid": 0, "amount_due": 50000, "currency": "", "receipt": "rcptid_11", "offer_id": null, "status": "created", "attempts": 0, "notes": [], "created_at": 1642662092}
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#request-parametersRequest Parameters
+Request Parameters
+amount
+mandatory
+integer The transaction amount, expressed in the currency subunit. For example, for an actual amount of ₹222.25, the value of this field should be 22225.
+
+```
+integer
+```
+
+
+```
+22225
+```
+
+currency
+mandatory
+string The currency in which the transaction should be made. See the
+
+```
+string
+```
+
+[list of supported currencies](https://razorpay.com/docs/payments/international-payments/#supported-currencies)
+list of supported currencies
+receipt
+optional
+string Your receipt id for this order should be passed here. Maximum length is 40 characters.
+
+```
+string
+```
+
+notes
+optional
+json object Key-value pair that can be used to store additional information about the entity. Maximum 15 key-value pairs, 256 characters (maximum) each. For example, "note_key": "Beam me up Scotty”.
+
+```
+json object
+```
+
+
+```
+"note_key": "Beam me up Scotty”
+```
+
+partial_payment
+optional
+boolean Indicates whether the customer can make a partial payment. Possible values:
+
+```
+boolean
+```
+
+- true: The customer can make partial payments.
+- false (default): The customer cannot make partial payments.
+
+```
+true
+```
+
+
+```
+false
+```
+
+first_payment_min_amount
+optional
+integer Minimum amount that must be paid by the customer as the first partial payment. For example, if an amount of ₹7,000 is to be received from the customer in two installments of #1 - ₹5,000, #2 - ₹2,000, then you can set this value as 500000. This parameter should be passed only if partial_payment is true.
+
+```
+integer
+```
+
+
+```
+500000
+```
+
+
+```
+partial_payment
+```
+
+
+```
+true
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#response-parametersResponse Parameters
+Response Parameters
+Descriptions for the response parameters are present in the
+[Orders Entity](https://razorpay.com/docs/api/orders/entity/)
+Orders Entity
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#error-response-parametersError Response Parameters
+Error Response Parameters
+The error response parameters are available in the
+[API Reference Guide](https://razorpay.com/docs/api/orders/create/)
+API Reference Guide
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#14-initiate-payment-and-display-checkout-form1.4 Initiate Payment and Display Checkout Form
+
+1.4 Initiate Payment and Display Checkout Form
+There are two ways to pass the checkout parameters. You can either use payloadhelper or the JSONObject options. We recommend using payloadhelper to ensure that the right data types are used for the parameter values.
+
+```
+payloadhelper
+```
+
+
+```
+JSONObject
+```
+
+
+```
+payloadhelper
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#payloadhelperPayloadHelper
+PayloadHelper
+Create a JSONObject to send it to the SDK.
+
+```
+JSONObject
+```
+
+copy
+
+```
+PayloadHelper payloadHelper = new PayloadHelper("", 100, "order_XXXXXXXXX"); payloadHelper.setName("Gaurav Kumar"); payloadHelper.setDescription("Description"); payloadHelper.setPrefillEmail("gaurav.kumar@example.com"); payloadHelper.setPrefillContact("+919876543210"); payloadHelper.setPrefillCardNum("4628 9499 7226 2986"); payloadHelper.setPrefillCardCvv("111"); payloadHelper.setPrefillCardExp("11/30"); payloadHelper.setPrefillMethod("card"); payloadHelper.setPrefillName("MerchantName"); payloadHelper.setSendSmsHash(true); payloadHelper.setRetryMaxCount(4); payloadHelper.setRetryEnabled(true); payloadHelper.setColor("#000000"); payloadHelper.setAllowRotation(true); payloadHelper.setRememberCustomer(true); payloadHelper.setTimeout(10); payloadHelper.setRedirect(true); payloadHelper.setRecurring("1"); payloadHelper.setSubscriptionCardChange(true); payloadHelper.setCustomerId("cust_XXXXXXXXXX"); payloadHelper.setCallbackUrl("https://accepts-posts.request"); payloadHelper.setSubscriptionId("sub_XXXXXXXXXX"); payloadHelper.setModalConfirmClose(true); payloadHelper.setBackDropColor("#ffffff"); payloadHelper.setHideTopBar(true); payloadHelper.setNotes(new JSONObject("{\"remarks\":\"Discount to customer\"}")); payloadHelper.setReadOnlyEmail(true); payloadHelper.setReadOnlyContact(true); payloadHelper.setReadOnlyName(true); payloadHelper.setImage("https://www.razorpay.com"); payloadHelper.setAmount(100); payloadHelper.setCurrency(""); payloadHelper.setOrderId("order_XXXXXXXXXXXXXX");
+```
+
+If you want to create certain options that are not available, add them to the JSONObject we get from payloadHelper.getJson().
+
+```
+JSONObject
+```
+
+
+```
+payloadHelper.getJson()
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#jsonobjectJSONObject
+JSONObject
+You can alternatively use the JSONObject options given below.
+Create an instance of the Checkout and pass the payment details and options as a JSONObject. Ensure that you add the order_id generated in
+
+```
+Checkout
+```
+
+
+```
+JSONObject
+```
+
+
+```
+order_id
+```
+
+[Step 3](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps/#13-create-an-order-in-server)
+Step 3
+copy
+
+```
+public void startPayment() { checkout.setKeyID("<YOUR_KEY_ID>"); /** * Instantiate Checkout */ Checkout checkout = new Checkout(); /** * Set your logo here */ checkout.setImage(R.drawable.logo); /** * Reference to current activity */ final Activity activity = this; /** * Pass your payment options to the Razorpay Checkout as a JSONObject */ try { JSONObject options = new JSONObject(); options.put("name", "Merchant Name"); options.put("description", "Reference No. #123456"); options.put("image", "http://example.com/image/rzp.jpg"); options.put("order_id", "order_DBJOWzybf0sJbb");//from response of step 3. options.put("theme.color", "#3399cc"); options.put("currency", ""); options.put("amount", "50000");//pass amount in currency subunits options.put("prefill.email", "gaurav.kumar@example.com"); options.put("prefill.contact","+919876543210"); JSONObject retryObj = new JSONObject(); retryObj.put("enabled", true); retryObj.put("max_count", 4); options.put("retry", retryObj); checkout.open(activity, options); } catch(Exception e) { Log.e(TAG, "Error in starting Razorpay Checkout", e); }}
+```
+
+Handy Tips
+When you paste the checkout options given above, the following error message appears: 'TAG has private access in androidx.fragment.app.FragmentActivity'. You can resolve this by adding the following code:
+
+```
+TAG
+```
+
+
+```
+androidx.fragment.app.FragmentActivity
+```
+
+copy
+
+```
+public class MainActivity extends AppCompatActivity implements PaymentResultListener {private static final String TAG = MainActivity.class.getSimpleName();
+```
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#14-initiate-payment-and-display-checkout-form1.4 Initiate Payment and Display Checkout Form
+
+Checkout.open() launches the Checkout form where the customer completes the payment and returns the payment result via appropriate callbacks on the PaymentResultListener.
+
+```
+Checkout.open()
+```
+
+
+```
+PaymentResultListener
+```
+
+Payment Options in JSONObject: All available options in the Standard Web Checkout are also available in Android.
+
+```
+Standard Web Checkout
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#checkout-optionsCheckout Options
+Checkout Options
+You must pass these parameters in Checkout to initiate the payment.
+key
+mandatory
+string API Key ID generated from the Dashboard.
+
+```
+string
+```
+
+amount
+mandatory
+integer Payment amount in the smallest currency subunit. For example, if the amount to be charged is ₹2,222.50, enter 222250 in this field. In the case of three decimal currencies, such as KWD, BHD and OMR, to accept a payment of 295.991, pass the value as 295990. And in the case of zero decimal currencies such as JPY, to accept a payment of 295, pass the value as 295.
+
+```
+integer
+```
+
+
+```
+222250
+```
+
+Watch Out!
+As per payment guidelines, you should pass the last decimal number as 0 for three decimal currency payments. For example, if you want to charge a customer 99.991 KD for a transaction, you should pass the value for the amount parameter as 99990 and not 99991.
+
+```
+99990
+```
+
+
+```
+99991
+```
+
+currency
+mandatory
+string The currency in which the payment should be made by the customer. See the list of
+
+```
+string
+```
+
+[supported currencies](https://razorpay.com/docs/payments/international-payments/#supported-currencies)
+supported currencies
+Handy Tips
+Razorpay has added support for zero decimal currencies, such as JPY, and three decimal currencies, such as KWD, BHD, and OMR, allowing businesses to accept international payments in these currencies. Know more about
+[Currency Conversion](https://razorpay.com/docs/payments/international-payments/currency-conversion/)
+Currency Conversion
+name
+mandatory
+string Your Business/Enterprise name shown on the Checkout form. For example, Acme Corp.
+
+```
+string
+```
+
+description
+optional
+string Description of the purchase item shown on the Checkout form. It should start with an alphanumeric character.
+
+```
+string
+```
+
+image
+optional
+string Link to an image (usually your business logo) shown on the Checkout form. Can also be a base64 string if you are not loading the image from a network.
+
+```
+string
+```
+
+order_id
+mandatory
+string Order ID generated via
+
+```
+string
+```
+
+[Orders API](https://razorpay.com/docs/api/orders/)
+Orders API
+prefill
+object You can prefill the following details at Checkout.
+
+```
+object
+```
+
+Boost Conversions and Minimise Drop-offs
+- Autofill customer contact details, especially phone number to ease form completion. Include customer’s phone number in the contact parameter of the JSON request's prefill object. Format: +(country code)(phone number). Example: "contact": "+919000090000".
+- This is not applicable if you do not collect customer contact details on your website before checkout, have Shopify stores or use any of the no-code apps.
+
+```
+contact
+```
+
+
+```
+prefill
+```
+
+name
+optional
+string Cardholder's name to be prefilled if customer is to make card payments on Checkout. For example, Gaurav Kumar.
+
+```
+string
+```
+
+email
+optional
+string Email address of the customer.
+
+```
+string
+```
+
+contact
+optional
+string Phone number of the customer. The expected format of the phone number is + {country code}{phone number}. If the country code is not specified, 91 will be used as the default value. This is particularly important while prefilling contact of customers with phone numbers issued outside India. Examples:
+
+```
+string
+```
+
+
+```
++ {country code}{phone number}
+```
+
+
+```
+91
+```
+
+
+```
+contact
+```
+
+- +14155552671 (a valid non-Indian number)
+- +919977665544 (a valid Indian number). If 9977665544 is entered, +91 is added to it as +919977665544.
+
+```
++91
+```
+
+method
+optional
+string Pre-selection of the payment method for the customer. Will only work if contact and email are also prefilled. Possible values:
+
+```
+string
+```
+
+
+```
+contact
+```
+
+
+```
+email
+```
+
+- card
+- netbanking
+- wallet
+- upi
+- emi
+
+```
+card
+```
+
+
+```
+netbanking
+```
+
+
+```
+wallet
+```
+
+
+```
+upi
+```
+
+
+```
+emi
+```
+
+notes
+optional
+object Set of key-value pairs that can be used to store additional information about the payment. It can hold a maximum of 15 key-value pairs, each 256 characters long (maximum).
+
+```
+object
+```
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#14-initiate-payment-and-display-checkout-form1.4 Initiate Payment and Display Checkout Form
+
+theme
+object Thematic options to modify the appearance of Checkout.
+
+```
+object
+```
+
+color
+optional
+string Enter your brand colour's HEX code to alter the text, payment method icons and CTA (call-to-action) button colour of the Checkout form.
+
+```
+string
+```
+
+backdrop_color
+optional
+string Enter a HEX code to change the Checkout's backdrop colour.
+
+```
+string
+```
+
+modal
+object Options to handle the Checkout modal.
+
+```
+object
+```
+
+backdropclose
+optional
+boolean Indicates whether clicking the translucent blank space outside the Checkout form should close the form. Possible values:
+
+```
+boolean
+```
+
+- true: Closes the form when your customer clicks outside the checkout form.
+- false (default): Does not close the form when customer clicks outside the checkout form.
+
+```
+true
+```
+
+
+```
+false
+```
+
+escape
+optional
+boolean Indicates whether pressing the escape key should close the Checkout form. Possible values:
+
+```
+boolean
+```
+
+- true (default): Closes the form when the customer presses the escape key.
+- false: Does not close the form when the customer presses the escape key.
+
+```
+true
+```
+
+
+```
+false
+```
+
+handleback
+optional
+boolean Determines whether Checkout must behave similar to the browser when back button is pressed. Possible values:
+
+```
+boolean
+```
+
+- true (default): Checkout behaves similarly to the browser. That is, when the browser's back button is pressed, the Checkout also simulates a back press. This happens as long as the Checkout modal is open.
+- false: Checkout does not simulate a back press when browser's back button is pressed.
+
+```
+true
+```
+
+
+```
+false
+```
+
+confirm_close
+optional
+boolean Determines whether a confirmation dialog box should be shown if customers attempts to close Checkout. Possible values:
+
+```
+boolean
+```
+
+- true: Confirmation dialog box is shown.
+- false (default): Confirmation dialog box is not shown.
+
+```
+true
+```
+
+
+```
+false
+```
+
+ondismiss
+optional
+function Used to track the status of Checkout. You can pass a modal object with ondismiss: function()\{\} as options. This function is called when the modal is closed by the user. If retry is false, the ondismiss function is triggered when checkout closes, even after a failure.
+
+```
+function
+```
+
+
+```
+ondismiss: function()\{\}
+```
+
+
+```
+retry
+```
+
+
+```
+false
+```
+
+
+```
+ondismiss
+```
+
+animation
+optional
+boolean Shows an animation before loading of Checkout. Possible values:
+
+```
+boolean
+```
+
+- true(default): Animation appears.
+- false: Animation does not appear.
+
+```
+true
+```
+
+
+```
+false
+```
+
+subscription_id
+optional
+string If you are accepting recurring payments using Razorpay Checkout, you should pass the relevant subscription_id to the Checkout. Know more about
+
+```
+string
+```
+
+
+```
+subscription_id
+```
+
+[Subscriptions on Checkout](https://razorpay.com/docs/api/payments/subscriptions/#checkout-integration)
+Subscriptions on Checkout
+subscription_card_change
+optional
+boolean Permit or restrict customer from changing the card linked to the subscription. You can also do this from the
+
+```
+boolean
+```
+
+[hosted page](https://razorpay.com/docs/payments/subscriptions/payment-retries/#update-the-payment-method-via-our-hosted-page)
+hosted page
+- true: Allow the customer to change the card from Checkout.
+- false (default): Do not allow the customer to change the card from Checkout.
+
+```
+true
+```
+
+
+```
+false
+```
+
+recurring
+optional
+boolean Determines if you are accepting
+
+```
+boolean
+```
+
+[recurring (charge-at-will) payments on Checkout](https://razorpay.com/docs/api/payments/recurring-payments/)
+recurring (charge-at-will) payments on Checkout
+- true: You are accepting recurring payments.
+- false (default): You are not accepting recurring payments.
+
+```
+true
+```
+
+
+```
+false
+```
+
+callback_url
+optional
+string Customers will be redirected to this URL on successful payment. Ensure that the domain of the Callback URL is allowlisted.
+
+```
+string
+```
+
+redirect
+optional
+boolean Determines whether to post a response to the event handler post payment completion or redirect to Callback URL. callback_url must be passed while using this parameter. Possible values:
+
+```
+boolean
+```
+
+
+```
+callback_url
+```
+
+- true: Customer is redirected to the specified callback URL in case of payment failure.
+- false (default): Customer is shown the Checkout popup to retry the payment with the suggested next best option.
+
+```
+true
+```
+
+
+```
+false
+```
+
+customer_id
+optional
+string Unique identifier of customer. Used for:
+
+```
+string
+```
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#14-initiate-payment-and-display-checkout-form1.4 Initiate Payment and Display Checkout Form
+
+- [Local saved cards feature](https://razorpay.com/docs/payments/payment-methods/cards/features/saved-cards/#manage-saved-cards).
+- Static bank account details on Checkout in case of [Bank Transfer payment method](https://razorpay.com/docs/payments/payment-methods/bank-transfer/).
+[Local saved cards feature](https://razorpay.com/docs/payments/payment-methods/cards/features/saved-cards/#manage-saved-cards)
+Local saved cards feature
+[Bank Transfer payment method](https://razorpay.com/docs/payments/payment-methods/bank-transfer/)
+Bank Transfer payment method
+remember_customer
+optional
+boolean Determines whether to allow saving of cards. Can also be configured via the
+
+```
+boolean
+```
+
+[Dashboard](https://razorpay.com/docs/payments/dashboard/account-settings/checkout-features/#flash-checkout)
+Dashboard
+- true: Enables card saving feature.
+- false (default): Disables card saving feature.
+
+```
+true
+```
+
+
+```
+false
+```
+
+timeout
+optional
+integer Sets a timeout on Checkout, in seconds. After the specified time limit, the customer will not be able to use Checkout.
+
+```
+integer
+```
+
+Watch Out!
+Some browsers may pause JavaScript timers when the user switches tabs, especially in power saver mode. This can cause the checkout session to stay active beyond the set timeout duration.
+
+```
+JavaScript
+```
+
+readonly
+object Marks fields as read-only.
+
+```
+object
+```
+
+contact
+optional
+boolean Used to set the contact field as readonly. Possible values:
+
+```
+boolean
+```
+
+
+```
+contact
+```
+
+- true: Customer will not be able to edit this field.
+- false (default): Customer will be able to edit this field.
+
+```
+true
+```
+
+
+```
+false
+```
+
+email
+optional
+boolean Used to set the email field as readonly. Possible values:
+
+```
+boolean
+```
+
+
+```
+email
+```
+
+- true: Customer will not be able to edit this field.
+- false (default): Customer will be able to edit this field.
+
+```
+true
+```
+
+
+```
+false
+```
+
+name
+optional
+boolean Used to set the name field as readonly. Possible values:
+
+```
+boolean
+```
+
+
+```
+name
+```
+
+- true: Customer will not be able to edit this field.
+- false (default): Customer will be able to edit this field.
+
+```
+true
+```
+
+
+```
+false
+```
+
+hidden
+object Hides the contact details.
+
+```
+object
+```
+
+contact
+optional
+boolean Used to set the contact field as optional. Possible values:
+
+```
+boolean
+```
+
+
+```
+contact
+```
+
+- true: Customer will not be able to view this field.
+- false (default): Customer will be able to view this field.
+
+```
+true
+```
+
+
+```
+false
+```
+
+email
+optional
+boolean Used to set the email field as optional. Possible values:
+
+```
+boolean
+```
+
+
+```
+email
+```
+
+- true: Customer will not be able to view this field.
+- false (default): Customer will be able to view this field.
+
+```
+true
+```
+
+
+```
+false
+```
+
+send_sms_hash
+optional
+boolean Used to auto-read OTP for cards and netbanking pages. Applicable from Android SDK version 1.5.9 and above. Possible values:
+
+```
+boolean
+```
+
+- true: OTP is auto-read.
+- false (default): OTP is not auto-read.
+
+```
+true
+```
+
+
+```
+false
+```
+
+allow_rotation
+optional
+boolean Used to rotate payment page as per screen orientation. Applicable from Android SDK version 1.6.4 and above. Possible values:
+
+```
+boolean
+```
+
+- true: Payment page can be rotated.
+- false (default): Payment page cannot be rotated.
+
+```
+true
+```
+
+
+```
+false
+```
+
+retry
+optional
+object Parameters that enable retry of payment on the checkout.
+
+```
+object
+```
+
+enabled
+boolean Determines whether the customers can retry payments on the checkout. Possible values:
+
+```
+boolean
+```
+
+- true (default): Enables customers to retry payments.
+- false: Disables customers from retrying the payment.
+
+```
+true
+```
+
+
+```
+false
+```
+
+max_count
+integer The number of times the customer can retry the payment. We recommend you to set this to 4. Having a larger number here can cause loops to occur.
+
+```
+integer
+```
+
+Watch Out!
+Web Integration does not support the max_count parameter. It is applicable only in Android and iOS SDKs.
+
+```
+max_count
+```
+
+config
+optional
+object Parameters that enable checkout configuration. Know more about how to
+
+```
+object
+```
+
+[configure payment methods on Razorpay standard checkout](https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/configure-payment-methods/)
+configure payment methods on Razorpay standard checkout
+display
+object Child parameter that enables configuration of checkout display language.
+
+```
+object
+```
+
+language
+string The language in which checkout should be displayed. Possible values:
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#14-initiate-payment-and-display-checkout-form1.4 Initiate Payment and Display Checkout Form
+```
+string
+```
+
+- en: English
+- ben: Bengali
+- hi: Hindi
+- mar: Marathi
+- guj: Gujarati
+- tam: Tamil
+- tel: Telugu
+
+```
+en
+```
+
+
+```
+ben
+```
+
+
+```
+hi
+```
+
+
+```
+mar
+```
+
+
+```
+guj
+```
+
+
+```
+tam
+```
+
+
+```
+tel
+```
+
+Handy Tips
+If you call the payment start method inside a fragment, ensure that the fragment's parent activity implements the PaymentResultListener interface.
+
+```
+fragment
+```
+
+
+```
+activity
+```
+
+
+```
+PaymentResultListener
+```
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#15-handle-success-and-error-events1.5 Handle Success and Error Events
+1.5 Handle Success and Error Events
+You have the option to implement PaymentResultListener or PaymentResultWithDataListener to receive callbacks for the payment result.
+
+```
+PaymentResultListener
+```
+
+
+```
+PaymentResultWithDataListener
+```
+
+- PaymentResultListener provides only payment_id as the payment result.
+- PaymentResultWithDataListener provides additional payment data such as email and contact of the customer, along with the order_id, payment_id, signature and more.
+
+```
+PaymentResultListener
+```
+
+
+```
+payment_id
+```
+
+
+```
+PaymentResultWithDataListener
+```
+
+
+```
+order_id
+```
+
+
+```
+payment_id
+```
+
+
+```
+signature
+```
+
+Use the code below to import the function in your .java file. This should be added at the beginning of the file.
+
+```
+.java
+```
+
+copy
+
+```
+import com.razorpay.PaymentResultListener
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#151-sample-code1.5.1 Sample Code
+1.5.1 Sample Code
+Given below are the sample codes for implementation:
+copy
+
+```
+public class PaymentActivity extends Activity implements PaymentResultListener { // ... @Override public void onPaymentSuccess(String razorpayPaymentID) { /** * Add your logic here for a successful payment response */ } @Override public void onPaymentError(int code, String response) { /** * Add your logic here for a failed payment response */ }}
+```
+
+copy
+
+```
+public class PaymentActivity extends Activity implements PaymentResultWithDataListener { // ... @Override public void onPaymentSuccess(String razorpayPaymentID, PaymentData paymentData) { /** * Add your logic here for a successful payment response */ } @Override public void onPaymentError(int code, String response) { /** * Add your logic here for a failed payment response */ }}
+```
+
+Watch Out!
+- Razorpay's payment process takes place in a new activity. Since there are two activities involved, your activity can get corrupted or destroyed if the device is low on memory. These two methods should not depend on any variables not set through your life cycle hooks.
+- It is recommended that you test everything by enabling "Don't Keep Activities" in Developer Options under Settings.
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#error-codesError Codes
+Error Codes
+The error codes are returned in the onPaymentError method:
+
+```
+onPaymentError
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#152-erase-user-data-from-sdk1.5.2 Erase User Data from SDK
+1.5.2 Erase User Data from SDK
+The SDK stores customer-specific data such as email, contact number, and user-session cookies if the customer wants to make another payment in the same session. You can delete such sensitive information before another customer logs into the app.
+To erase customer data from the app, you can call the following method anywhere in your app.
+copy
+
+```
+Checkout.clearUserData(Context)
+```
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#16-store-fields-in-your-server1.6 Store Fields in Your Server
+
+1.6 Store Fields in Your Server
+A successful payment returns the following fields to the Checkout form.
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#success-callbackSuccess Callback
+Success Callback
+- You need to store these fields in your server.
+- You can confirm the authenticity of these details by verifying the signature in the next step.
+copy
+
+```
+{ "razorpay_payment_id": "pay_29QQoUBi66xm2f", "razorpay_order_id": "order_9A33XWu170gUtm", "razorpay_signature": "9ef4dffbfd84f1318f6739a3ce19f9d85851857ae648f114332d8401e0949a3d"}
+```
+
+razorpay_payment_id
+string Unique identifier for the payment returned by Checkout only for successful payments.
+
+```
+string
+```
+
+razorpay_order_id
+string Unique identifier for the order returned by Checkout.
+
+```
+string
+```
+
+razorpay_signature
+string Signature returned by the Checkout. This is used to verify the payment.
+
+```
+string
+```
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#17-verify-payment-signature1.7 Verify Payment Signature
+
+1.7 Verify Payment Signature
+This is a mandatory step to confirm the authenticity of the details returned to the Checkout form for successful payments.
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#to-verify-theTo verify the razorpay_signature returned to you by the Checkout form:
+To verify the razorpay_signature returned to you by the Checkout form:
+
+```
+razorpay_signature
+```
+
+1. 
+Create a signature in your server using the following attributes:
+
+order_id: Retrieve the order_id from your server. Do not use the razorpay_order_id returned by Checkout.
+razorpay_payment_id: Returned by Checkout.
+key_secret: Available in your server. The key_secret that was generated from the [Dashboard](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys).
+
+
+2. order_id: Retrieve the order_id from your server. Do not use the razorpay_order_id returned by Checkout.
+3. razorpay_payment_id: Returned by Checkout.
+4. key_secret: Available in your server. The key_secret that was generated from the [Dashboard](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys).
+5. 
+Use the SHA256 algorithm, the razorpay_payment_id and the order_id to construct a HMAC hex digest as shown below:
+HMAC Hex Digestcopygenerated_signature = hmac_sha256(order_id + "|" + razorpay_payment_id, secret);
+  if (generated_signature == razorpay_signature) {    payment is successful  }
+
+6. 
+If the signature you generate on your server matches the razorpay_signature returned to you by the Checkout form, the payment received is from an authentic source.
+
+Create a signature in your server using the following attributes:
+- order_id: Retrieve the order_id from your server. Do not use the razorpay_order_id returned by Checkout.
+- razorpay_payment_id: Returned by Checkout.
+- key_secret: Available in your server. The key_secret that was generated from the [Dashboard](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys).
+
+```
+order_id
+```
+
+
+```
+order_id
+```
+
+
+```
+razorpay_order_id
+```
+
+
+```
+razorpay_payment_id
+```
+
+
+```
+key_secret
+```
+
+
+```
+key_secret
+```
+
+[Dashboard](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys)
+Dashboard
+Use the SHA256 algorithm, the razorpay_payment_id and the order_id to construct a HMAC hex digest as shown below:
+
+```
+razorpay_payment_id
+```
+
+
+```
+order_id
+```
+
+copy
+
+```
+generated_signature = hmac_sha256(order_id + "|" + razorpay_payment_id, secret); if (generated_signature == razorpay_signature) { payment is successful }
+```
+
+If the signature you generate on your server matches the razorpay_signature returned to you by the Checkout form, the payment received is from an authentic source.
+
+```
+razorpay_signature
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#generate-signature-on-your-serverGenerate Signature on Your Server
+Generate Signature on Your Server
+Given below is the sample code for payment signature verification:
+copy
+
+```
+RazorpayClient razorpay = new RazorpayClient("[YOUR_KEY_ID]", "[YOUR_KEY_SECRET]"); String secret = "EnLs21M47BllR3X8PSFtjtbd"; JSONObject options = new JSONObject();options.put("razorpay_order_id", "order_IEIaMR65cu6nz3");options.put("razorpay_payment_id", "pay_IH4NVgf4Dreq1l");options.put("razorpay_signature", "0d4e745a1838664ad6c9c9902212a32d627d68e917290b0ad5f08ff4561bc50f"); boolean status = Utils.verifyPaymentSignature(options, secret);
+```
+
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#post-signature-verificationPost Signature Verification
+Post Signature Verification
+After you have completed the integration, you can
+[set up webhooks](https://razorpay.com/docs/webhooks/setup-edit-payments/)
+set up webhooks
+[APIs](https://razorpay.com/docs/api/)
+APIs
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#18-verify-payment-status1.8 Verify Payment Status
+
+1.8 Verify Payment Status
+Handy Tips
+On the Razorpay Dashboard, ensure that the payment status is captured. Refer to the payment capture settings page to know how to
+
+```
+captured
+```
+
+[capture payments automatically](https://razorpay.com/docs/payments/payments/capture-settings/)
+capture payments automatically
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#you-can-track-the-payment-status-in-threeYou can track the payment status in three ways:
+You can track the payment status in three ways:
+Verify Status from Dashboard
+Subscribe to Webhook Events
+Poll APIs
+To verify the payment status from the Razorpay Dashboard:
+1. Log in to the Razorpay Dashboard and navigate to Transactions → Payments.
+2. Check if a Payment Id has been generated and note the status. In case of a successful payment, the status is marked as Captured.
+
+## [2. Test Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#2-test-integration)
+
+[2. Test Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#2-test-integration)
+2. Test Integration
+After the integration is complete, a Pay button appears on your webpage/app.
+Click the button and make a test transaction to ensure the integration is working as expected. You can start accepting actual payments from your customers once the test transaction is successful.
+Watch Out!
+This is a mock payment page that uses your test API keys, test card and payment details.
+- Ensure you have entered only your [Test Mode API keys](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys) in the Checkout code.
+- Test mode features a mock bank page with Success and Failure buttons to replicate the live payment experience.
+- No real money is deducted due to the usage of test API keys. This is a simulated transaction.
+[Test Mode API keys](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/#generate-api-keys)
+Test Mode API keys
+Following are all the payment modes that the customer can use to complete the payment on the Checkout. Some of them are available by default, while others may require approval from us. Raise a request from the Dashboard to enable such payment methods.
+You can make test payments using one of the payment methods configured at the Checkout.
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#netbankingNetbanking
+Netbanking
+You can select any of the listed banks. After choosing a bank, Razorpay will redirect to a mock page where you can make the payment success or a failure. Since this is Test Mode, we will not redirect you to the bank login portals.
+
+```
+success
+```
+
+
+```
+failure
+```
+
+Check the list of
+[supported banks](https://razorpay.com/docs/payments/payment-methods/netbanking/#supported-banks)
+supported banks
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#upiUPI
+UPI
+You can enter one of the following UPI IDs:
+- success@razorpay: To make the payment successful.
+- failure@razorpay: To fail the payment.
+
+```
+success@razorpay
+```
+
+
+```
+failure@razorpay
+```
+
+Check the list of
+[supported UPI flows](https://razorpay.com/docs/payments/payment-methods/upi/)
+supported UPI flows
+Handy Tips
+You can use Test Mode to test UPI payments, and Live Mode for UPI Intent and QR payments.
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#cardsCards
+Cards
+You can use the following test cards to test transactions for your integration in Test Mode.
+
+### [Domestic Cards](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#Domestic%20Cards)
+[Domestic Cards](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#Domestic%20Cards)
+Domestic Cards
+Use the following test cards for Indian payments:
+
+#### [Error Scenarios](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#Error%20Scenarios)
+[Error Scenarios](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#Error%20Scenarios)
+Error Scenarios
+Use these test cards to simulate payment errors. See the
+[complete list](https://razorpay.com/docs/payments/payments/test-card-details/#error-scenario-test-cards)
+complete list
+- [Supported Card Networks](https://razorpay.com/docs/payments/payment-methods/cards/).
+- [Cards Error Codes](https://razorpay.com/docs/errors/payments/cards/).
+[Supported Card Networks](https://razorpay.com/docs/payments/payment-methods/cards/)
+Supported Card Networks
+[Cards Error Codes](https://razorpay.com/docs/errors/payments/cards/)
+Cards Error Codes
+
+### [International Cards](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#International%20Cards)
+[International Cards](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#International%20Cards)
+International Cards
+Use the following test cards to test international payments. Use any valid expiration date in the future in the MM/YY format and any random CVV to create a successful payment.
+Check the list of
+[supported card networks](https://razorpay.com/docs/payments/payment-methods/cards/)
+supported card networks
+
+#### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#walletWallet
+Wallet
+You can select any of the listed wallets. After choosing a wallet, Razorpay will redirect to a mock page where you can make the payment success or a failure. Since this is Test Mode, we will not redirect you to the wallet login portals.
+
+```
+success
+```
+
+
+```
+failure
+```
+
+Check the list of
+[supported wallets](https://razorpay.com/docs/payments/payment-methods/wallets/#supported-wallets)
+supported wallets
+
+## [3. Go-live Checklist](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#3-go-live-checklist)
+
+[3. Go-live Checklist](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#3-go-live-checklist)
+3. Go-live Checklist
+Check the go-live checklist for Razorpay Android Standard SDK. Consider these steps before taking the integration live.
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#31-accept-live-payments3.1 Accept Live Payments
+3.1 Accept Live Payments
+Perform an end-to-end simulation of funds flow in the Test Mode. Once confident that the integration is working as expected, switch to the Live Mode and start accepting payments from customers.
+Watch Out!
+Ensure you are switching your test API keys with API keys generated in Live Mode.
+To generate API Keys in Live Mode on your Razorpay Dashboard:
+1. Log in to the Razorpay Dashboard and switch to Live Mode on the menu.
+2. Navigate to Account & Settings → API Keys → Generate Key to generate the API Key for Live Mode.
+3. Download the keys and save them securely.
+4. Replace the Test API Key with the Live Key in the Checkout code and start accepting actual payments.
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#32-payment-capture3.2 Payment Capture
+3.2 Payment Capture
+After payment is authorized, you need to capture it to settle the amount to your bank account as per the settlement schedule. Payments that are not captured are auto-refunded after a fixed time.
+
+```
+authorized
+```
+
+Watch Out
+- You should deliver the products or services to your customers only after the payment is captured. Razorpay automatically refunds all the uncaptured payments.
+- You can track the payment status using our [Fetch a Payment API](https://razorpay.com/docs/api/payments/#fetch-a-payment) or webhooks.
+[Fetch a Payment API](https://razorpay.com/docs/api/payments/#fetch-a-payment)
+Fetch a Payment API
+Auto-capture Payments (Recommended)
+Manually Capture Payments
+Authorized payments can be automatically captured. You can auto-capture all payments
+[using global settings](https://razorpay.com/docs/payments/payments/capture-settings/#auto-capture-all-payments)
+using global settings
+[capture settings for payments](https://razorpay.com/docs/payments/payments/capture-settings/)
+capture settings for payments
+Watch Out!
+Payment capture settings work only if you have integrated with Orders API on your server side. Know more about the
+[Orders API](https://razorpay.com/docs/api/orders/create/)
+Orders API
+
+### https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#33-set-up-webhooks3.3 Set Up Webhooks
+3.3 Set Up Webhooks
+Ensure you have
+[set up webhooks](https://razorpay.com/docs/webhooks/setup-edit-payments/)
+set up webhooks
+Implementation Considerations
+Webhooks are the primary and most efficient method for event notifications. They are delivered asynchronously in near real-time. For critical user-facing flows that need instant confirmation (like showing "Payment Successful" immediately), supplement webhooks with API verification.
+Recommended approach
+- Rely on webhooks for all automation, which can be asynchronous.
+- If a critical user-facing flow requires instant status, but the webhook notification has not arrived within the time mandated by your business needs, perform an immediate API Fetch call ([Payments](https://razorpay.com/docs/api/payments/fetch-with-id/), [Orders](https://razorpay.com/docs/api/orders/fetch-with-id/) and [Refunds](https://razorpay.com/docs/api/refunds/fetch-specific-refund-payment/)) to verify the status.
+[Payments](https://razorpay.com/docs/api/payments/fetch-with-id/)
+Payments
+[Orders](https://razorpay.com/docs/api/orders/fetch-with-id/)
+Orders
+[Refunds](https://razorpay.com/docs/api/refunds/fetch-specific-refund-payment/)
+Refunds
+
+### [Related Information](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#related-information)
+
+[Related Information](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#related-information)
+Related Information
+[Google Play's Data Safety](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/google-data-safety/)
+Google Play's Data Safety
+Is this integration guide useful?
+Yes
+No
+SUBSCRIBE TO DEVELOPER UPDATES
+Subscribe
+[API Reference Guide](https://razorpay.com/docs/api)
+API Reference Guide
+[Integrations](https://razorpay.com/integrations)
+Integrations
+[Support](https://razorpay.com/support)
+Support
+ON THIS PAGE
+- [1. Build Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#1-build-integration)
+- [2. Test Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#2-test-integration)
+- [3. Go-live Checklist](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#3-go-live-checklist)
+- [Related Information](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#related-information)
+[1. Build Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#1-build-integration)
+1. Build Integration
+[2. Test Integration](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#2-test-integration)
+2. Test Integration
+[3. Go-live Checklist](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#3-go-live-checklist)
+3. Go-live Checklist
+[Related Information](https://razorpay.com/docs/payments/payment-gateway/android-integration/standard/integration-steps#related-information)
+Related Information

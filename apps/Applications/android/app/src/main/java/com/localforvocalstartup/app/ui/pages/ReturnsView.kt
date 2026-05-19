@@ -112,8 +112,8 @@ fun ReturnsView(onDismiss: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp),
-                    placeholder = { Text("Describe the issue in detail...") },
-                    colors = OutlinedTextFieldDefaults.colors(
+                    placeholder = { Text("Describe the issue in detail...", color = Color.Black) },
+                    textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.White,
                         unfocusedContainerColor = Color.White
                     ),

@@ -32,7 +32,7 @@ data class AddressPayload(
 )
 
 data class OrderPayload(
-    val items: List<OrderItem>,
+    val items: List<Map<String, Any>>,
     val address: AddressPayload?,
     val addressId: String?,
     val paymentMethod: String,
@@ -50,21 +50,35 @@ data class OrderResponse(
 )
 
 object OrderService {
+    @Suppress("UNUSED_PARAMETER")
     suspend fun createOrder(
         items: List<OrderItem>,
         address: AddressPayload? = null,
         addressId: String? = null,
         paymentMethod: String,
-        authToken: String,
+        authToken: String,   // kept for API compatibility
         donation: Double? = null,
         protectPromiseFee: Double? = null,
         shippingFee: Double? = null,
         lastChanceOffers: List<LastChanceOfferPayload>? = null
     ): OrderResponse = withContext(Dispatchers.IO) {
+        // Backend expects items as { productId, quantity } only
+        val itemsPayload: List<Map<String, Any>> = items.map { item ->
+            mapOf(
+                "productId" to item.productId,
+                "quantity" to item.quantity
+            )
+        }
+
+        // Only send addressId if it looks like a real MongoDB ObjectId (24 hex chars)
+        val validAddressId = if (addressId != null && addressId.length == 24 && addressId.all { it.isLetterOrDigit() } && addressId != "current-location") {
+            addressId
+        } else null
+
         val payload = OrderPayload(
-            items = items,
-            address = address,
-            addressId = addressId,
+            items = itemsPayload,
+            address = address,    // always send inline address as fallback
+            addressId = validAddressId,
             paymentMethod = paymentMethod,
             donation = donation,
             protectPromiseFee = protectPromiseFee,
@@ -74,8 +88,8 @@ object OrderService {
         NetworkClient.apiService.createOrder(payload)
     }
 
-    suspend fun updateOrderStatus(orderId: String, status: String, authToken: String) = withContext(Dispatchers.IO) {
-        val body = mapOf("status" to status)
-        // NetworkClient.apiService.updateOrderStatus(orderId, body)
+    @Suppress("UNUSED_PARAMETER")
+    suspend fun updateOrderStatus(orderId: String, status: String, authToken: String) {
+        // Reserved for future use
     }
 }

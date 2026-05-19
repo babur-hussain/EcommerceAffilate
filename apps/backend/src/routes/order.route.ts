@@ -98,9 +98,10 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
     const user = (req as any).user as { id?: string } | undefined;
     if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { items, addressId, couponCode, influencerCode, selectedOfferIds, paymentMethod, shippingFee, donation, protectPromiseFee, lastChanceOffers } = req.body as {
+    const { items, addressId, address: inlineAddress, couponCode, influencerCode, selectedOfferIds, paymentMethod, shippingFee, donation, protectPromiseFee, lastChanceOffers } = req.body as {
       items?: Array<{ productId: string; quantity: number }>;
       addressId?: string;
+      address?: { name: string; phone: string; addressLine1: string; addressLine2?: string; city: string; state: string; pincode: string; country?: string };
       couponCode?: string;
       influencerCode?: string;
       selectedOfferIds?: string[];
@@ -113,8 +114,11 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
     }
-    if (!addressId || !mongoose.Types.ObjectId.isValid(addressId)) {
-      return res.status(400).json({ error: 'addressId is required' });
+    // Require either a valid addressId OR an inline address object
+    const hasValidAddressId = addressId && mongoose.Types.ObjectId.isValid(addressId);
+    const hasInlineAddress = inlineAddress && inlineAddress.addressLine1 && inlineAddress.city && inlineAddress.pincode;
+    if (!hasValidAddressId && !hasInlineAddress) {
+      return res.status(400).json({ error: 'A valid addressId or inline address object is required' });
     }
 
     // DEBUG: Log what client sent
@@ -139,10 +143,25 @@ router.post('/orders', requireCustomer, async (req: Request, res: Response) => {
 
     try {
       await session.withTransaction(async () => {
-        // Load and validate address belongs to user
-        const address = await Address.findOne({ _id: addressId, userId: user.id }).session(session);
-        if (!address) {
-          throw new Error('INVALID_ADDRESS');
+        // Load address: prefer server-saved address (via addressId), fallback to inline address
+        let address: any;
+        if (hasValidAddressId) {
+          address = await Address.findOne({ _id: addressId, userId: user.id }).session(session);
+          if (!address) {
+            throw new Error('INVALID_ADDRESS');
+          }
+        } else {
+          // Use inline address provided by client (e.g. current GPS location, or new unsaved address)
+          address = {
+            name: inlineAddress!.name || '',
+            phone: inlineAddress!.phone || '',
+            addressLine1: inlineAddress!.addressLine1,
+            addressLine2: inlineAddress!.addressLine2 || null,
+            city: inlineAddress!.city,
+            state: inlineAddress!.state || inlineAddress!.city,
+            pincode: inlineAddress!.pincode,
+            country: inlineAddress!.country || 'India',
+          };
         }
 
         const productIds = items.map((i) => i.productId);

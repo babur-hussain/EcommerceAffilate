@@ -41,6 +41,7 @@ fun CategoriesPageView(
     var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var selectedCategoryId by remember { mutableStateOf(FOR_YOU_ID) }
+    var showGlobalSearch by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val sidebarCategories = categories.filter { it.parentCategory == null }
@@ -58,8 +59,13 @@ fun CategoriesPageView(
         }
     }
 
-    Row(modifier = Modifier.fillMaxSize()) {
-        // Left Sidebar (90dp width)
+    androidx.activity.compose.BackHandler(enabled = selectedCategoryId != FOR_YOU_ID) {
+        selectedCategoryId = FOR_YOU_ID
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+            // Left Sidebar (90dp width)
         Box(
             modifier = Modifier
                 .width(90.dp)
@@ -114,10 +120,21 @@ fun CategoriesPageView(
                 CategoryRightPaneView(
                     categoryId = selectedCategoryId,
                     categoryName = categories.find { it._id == selectedCategoryId }?.name,
-                    subCategoriesFromParent = subCategories
+                    subCategoriesFromParent = subCategories,
+                    onSearchTap = { showGlobalSearch = true }
                 )
             }
         }
+    }
+
+    if (showGlobalSearch) {
+        Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+            com.localforvocalstartup.app.ui.pages.GlobalSearchView(
+                onDismiss = { showGlobalSearch = false },
+                categoryId = if (selectedCategoryId == FOR_YOU_ID) null else selectedCategoryId
+            )
+        }
+    }
     }
 }
 
@@ -134,6 +151,7 @@ fun SidebarItem(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .height(IntrinsicSize.Min)
             .clickable(onClick = onClick)
             .background(if (isSelected) Color.White else Color.Transparent)
     ) {
@@ -144,16 +162,16 @@ fun SidebarItem(
                 .padding(vertical = 16.dp)
         ) {
             // Icon / Image Circle
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .background(
-                        if (isCustom) Color(0xFFE0F2FE) else Color(0xFFF3F4F6),
-                        shape = CircleShape
-                    )
-                    .clip(CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .background(
+                            if (isCustom) Color(0xFFE0F2FE) else Color(0xFFF3F4F6),
+                            shape = CircleShape
+                        )
+                        .clip(CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
                 if (icon == "Tag") {
                     Icon(
                         imageVector = Icons.Default.Tag,
@@ -291,8 +309,8 @@ fun GridItemView(title: String, image: String, modifier: Modifier = Modifier, is
         Box(
             modifier = Modifier
                 .size(70.dp)
-                .background(if (isRound) Color(0xFFF3F4F6) else Color.White, shape = if (isRound) CircleShape else RoundedCornerShape(0.dp))
-                .clip(if (isRound) CircleShape else RoundedCornerShape(0.dp))
+                .background(if (isRound) Color(0xFFF3F4F6) else Color.White, shape = if (isRound) CircleShape else RoundedCornerShape(16.dp))
+                .clip(if (isRound) CircleShape else RoundedCornerShape(16.dp))
         ) {
             AsyncImage(
                 model = image,

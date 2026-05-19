@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.localforvocalstartup.app.data.model.SDUIComponent
+import com.localforvocalstartup.app.ui.components.handleActionUrl
 import com.google.gson.JsonObject
 
 @Composable
@@ -37,11 +38,7 @@ fun ShopByPriceView(component: SDUIComponent) {
             color = Color(0xFF111827),
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .clickable {
-                    headerActionUrl?.let {
-                        // Navigate
-                    }
-                }
+                .clickable { handleActionUrl(headerActionUrl) }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -67,12 +64,8 @@ fun ShopByPriceView(component: SDUIComponent) {
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFFF3F4F6)) // Placeholder gray
-                                    .clickable {
-                                        actionUrl?.let {
-                                            // Navigate
-                                        }
-                                    }
+                                    .background(Color(0xFFF3F4F6))
+                                    .clickable { handleActionUrl(actionUrl) }
                             ) {
                                 AsyncImage(
                                     model = image,

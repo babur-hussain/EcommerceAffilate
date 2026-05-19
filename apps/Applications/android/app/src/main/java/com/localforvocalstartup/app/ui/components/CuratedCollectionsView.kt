@@ -1,6 +1,7 @@
 package com.localforvocalstartup.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -99,7 +100,11 @@ fun CuratedCollectionsView(collections: List<Map<String, Any>>) {
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 rowItems.forEach { item ->
-                                    CuratedItemCard(item, modifier = Modifier.weight(1f))
+                                    CuratedItemCard(
+                                        item = item,
+                                        modifier = Modifier.weight(1f),
+                                        onClick = { handleActionUrl(item["actionUrl"]) }
+                                    )
                                 }
                                 // Fill empty space if odd number
                                 if (rowItems.size < 2) {
@@ -115,7 +120,7 @@ fun CuratedCollectionsView(collections: List<Map<String, Any>>) {
 }
 
 @Composable
-fun CuratedItemCard(item: Map<String, String>, modifier: Modifier = Modifier) {
+fun CuratedItemCard(item: Map<String, String>, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     val name = item["name"] ?: ""
     val image = item["image"] ?: ""
     val bgColor = item["bgColor"] ?: "#EEEEEE"
@@ -123,6 +128,7 @@ fun CuratedItemCard(item: Map<String, String>, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .background(Color.White.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+            .clickable { onClick() }
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)

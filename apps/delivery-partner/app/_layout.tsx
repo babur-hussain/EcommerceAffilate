@@ -10,6 +10,27 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
     console.log('Message handled in the background!', remoteMessage);
 });
 
+import { AuthProvider, useAuth } from '../services/auth';
+
+function AuthGuard({ children }: { children: React.ReactNode }) {
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading) {
+            if (!user) {
+                router.replace('/auth/login');
+            }
+        }
+    }, [user, isLoading]);
+
+    if (isLoading) {
+        return null; // Or a splash screen component
+    }
+
+    return <>{children}</>;
+}
+
 export default function RootLayout() {
     const router = useRouter();
 
@@ -50,17 +71,19 @@ export default function RootLayout() {
     };
 
     return (
-        <>
-            <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-                <Stack.Screen name="alarm" options={{
-                    presentation: 'fullScreenModal',
-                    animation: 'slide_from_bottom',
-                    headerShown: false
-                }} />
-            </Stack>
-            <StatusBar style="dark" />
-        </>
+        <AuthProvider>
+            <AuthGuard>
+                <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+                    <Stack.Screen name="alarm" options={{
+                        presentation: 'fullScreenModal',
+                        animation: 'slide_from_bottom',
+                        headerShown: false
+                    }} />
+                </Stack>
+                <StatusBar style="dark" />
+            </AuthGuard>
+        </AuthProvider>
     );
 }

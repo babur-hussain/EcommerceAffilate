@@ -6,16 +6,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -24,24 +23,41 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.localforvocalstartup.app.data.manager.NavigationManager
 import com.localforvocalstartup.app.data.model.Product
 import com.localforvocalstartup.app.data.remote.NetworkClient
-import com.localforvocalstartup.app.ui.components.ProductCardView
 
 @Composable
 fun FiftyPercentOffZoneView(
     title: String = "50% OFF ZONE",
     subtitle: String = "Half the price, double the joy!",
-    bannerImage: String = "https://png.pngtree.com/png-vector/20240125/ourmid/pngtree-grocery-shopping-bag-isolated-png-image_11549419.png",
-    discountText: String = "50%"
+    discountText: String = "50%",
+    categoryId: String? = null,
+    subCategoryIds: List<String> = emptyList(),
+    isGrocery: Boolean = false,
+    onProductClick: (Product) -> Unit = {}
 ) {
     var products by remember { mutableStateOf<List<Product>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(categoryId, subCategoryIds) {
         try {
-            val fetched = NetworkClient.apiService.getProductsRaw(10).products
-            products = fetched
+            val fetched = when {
+                isGrocery && subCategoryIds.isNotEmpty() ->
+                    NetworkClient.apiService.getProductsBySubCategoryIdsRaw(
+                        subCategoryIds.joinToString(","), 12
+                    ).products
+                subCategoryIds.isNotEmpty() ->
+                    NetworkClient.apiService.getProductsBySubCategoryIdsRaw(
+                        subCategoryIds.joinToString(","), 12
+                    ).products
+                categoryId != null ->
+                    NetworkClient.apiService.getProductsRaw(12, categoryId).products
+                else ->
+                    NetworkClient.apiService.getProductsRaw(12).products
+            }
+            // filter to approx 50% discounted products if possible, else show all
+            products = fetched.sortedByDescending { it.discountPercentage ?: 0 }
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
@@ -49,19 +65,26 @@ fun FiftyPercentOffZoneView(
         }
     }
 
+    // Build the "See All" navigation url
+    val seeAllUrl = when {
+        subCategoryIds.isNotEmpty() -> "category://All Products?subCategoryIds=${subCategoryIds.joinToString(",")}"
+        categoryId != null -> "category://All Products?categoryId=$categoryId"
+        else -> "category://All Products"
+    }
+
     Column(
         modifier = Modifier
             .padding(vertical = 12.dp)
             .background(Color.White)
     ) {
-        // Header Banner
+        // Header Banner — bold gradient
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(140.dp)
                 .background(
                     Brush.horizontalGradient(
-                        colors = listOf(safeParseColor("#F0F9FF"), safeParseColor("#E0F2FE"))
+                        colors = listOf(Color(0xFF1E3A8A), Color(0xFF2563EB), Color(0xFF3B82F6))
                     )
                 )
         ) {
@@ -69,35 +92,32 @@ fun FiftyPercentOffZoneView(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Text Content
                 Column(
                     modifier = Modifier
                         .padding(start = 20.dp)
                         .weight(1f)
                 ) {
                     Row(verticalAlignment = Alignment.Bottom) {
-                         Text(
+                        Text(
                             text = discountText,
-                            fontSize = 42.sp,
+                            fontSize = 52.sp,
                             fontWeight = FontWeight.Black,
                             fontStyle = FontStyle.Italic,
-                            color = safeParseColor("#2563EB")
+                            color = Color.White
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Column(modifier = Modifier.padding(bottom = 6.dp)) {
+                        Column(modifier = Modifier.padding(bottom = 8.dp)) {
                             Text(
                                 text = "OFF",
-                                fontSize = 14.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                fontStyle = FontStyle.Italic,
-                                color = safeParseColor("#2563EB")
+                                color = Color(0xFFBFDBFE)
                             )
                             Text(
                                 text = "ZONE",
-                                fontSize = 14.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                fontStyle = FontStyle.Italic,
-                                color = safeParseColor("#3B82F6")
+                                color = Color(0xFFBFDBFE)
                             )
                         }
                     }
@@ -105,27 +125,39 @@ fun FiftyPercentOffZoneView(
                         text = subtitle,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
-                        color = safeParseColor("#1F2937")
+                        color = Color.White.copy(alpha = 0.9f)
                     )
                 }
 
-                // Image
-                AsyncImage(
-                    model = bannerImage,
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
+                // Percentage badge on the right
+                Box(
                     modifier = Modifier
-                        .width(140.dp)
-                        .height(100.dp)
-                        .padding(end = 10.dp)
-                )
+                        .padding(end = 20.dp)
+                        .size(90.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color.White.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🏷️", fontSize = 28.sp)
+                        Text(
+                            text = "DEALS",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
 
         // Product List
         if (isLoading) {
-            Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            Box(
+                modifier = Modifier.fillMaxWidth().height(200.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color(0xFF2563EB))
             }
         } else if (products.isNotEmpty()) {
             LazyRow(
@@ -133,7 +165,11 @@ fun FiftyPercentOffZoneView(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(products) { product ->
-                    ProductCardView(product = product, modifier = Modifier.width(150.dp))
+                    ProductCardView(
+                        product = product,
+                        modifier = Modifier.width(150.dp),
+                        onClick = { onProductClick(product) }
+                    )
                 }
             }
         }
@@ -144,24 +180,28 @@ fun FiftyPercentOffZoneView(
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(safeParseColor("#EEF2FF"))
-                .clickable { }
-                .padding(vertical = 12.dp),
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(Color(0xFFEFF6FF), Color(0xFFDBEAFE))
+                    )
+                )
+                .clickable { NavigationManager.navigate(seeAllUrl) }
+                .padding(vertical = 14.dp),
             contentAlignment = Alignment.Center
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "See all",
+                    text = "See all ${discountText} off deals",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = safeParseColor("#4F46E5")
+                    color = Color(0xFF2563EB)
                 )
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = safeParseColor("#4F46E5"),
-                    modifier = Modifier.size(16.dp)
+                    tint = Color(0xFF2563EB),
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }

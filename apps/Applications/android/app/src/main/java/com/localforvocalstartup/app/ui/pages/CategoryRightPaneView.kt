@@ -41,14 +41,15 @@ import kotlinx.coroutines.launch
 fun CategoryRightPaneView(
     categoryId: String?,
     categoryName: String?,
-    subCategoriesFromParent: List<Category>
+    subCategoriesFromParent: List<Category>,
+    onSearchTap: () -> Unit = {}
 ) {
     var products by remember { mutableStateOf<List<Product>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var activeSubCategoryId by remember { mutableStateOf<String?>(null) }
     var showProductList by remember { mutableStateOf(false) }
-    var showGlobalSearch by remember { mutableStateOf(false) }
     var showBasket by remember { mutableStateOf(false) }
+    val expandedGroups = remember { androidx.compose.runtime.mutableStateListOf<String>() }
     val coroutineScope = rememberCoroutineScope()
     val basketItems by com.localforvocalstartup.app.data.manager.BasketManager.items.collectAsState()
     val basketCount = basketItems.size
@@ -69,8 +70,11 @@ fun CategoryRightPaneView(
         if (activeSubCategoryId != null || showProductList) {
             isLoading = true
             try {
-                // Not passing subCategoryId if null, in a real env it would be a query param
-                products = NetworkClient.apiService.getProductsRaw(limit = 20).products
+                products = NetworkClient.apiService.getProductsRaw(
+                    limit = 20,
+                    categoryId = if (activeSubCategoryId == null) categoryId else null,
+                    subCategoryId = activeSubCategoryId
+                ).products
                 isLoading = false
             } catch (e: Exception) {
                 isLoading = false
@@ -87,7 +91,7 @@ fun CategoryRightPaneView(
         RightPaneHeader(
             title = categoryName ?: "Category",
             cartCount = basketCount,
-            onSearchTap = { showGlobalSearch = true },
+            onSearchTap = onSearchTap,
             onCartTap = { showBasket = true }
         )
 
@@ -126,7 +130,12 @@ fun CategoryRightPaneView(
                     ) {
                         items(products) { product ->
                             ProductCardView(product = product, onClick = {
-                                com.localforvocalstartup.app.data.manager.NavigationManager.openGroceryProduct(product.id)
+                                val safeId = if (product.id.isNullOrBlank()) "not_found" else product.id
+                                if (categoryId?.lowercase() == "grocery") {
+                                    com.localforvocalstartup.app.data.manager.NavigationManager.openGroceryProduct(safeId)
+                                } else {
+                                    com.localforvocalstartup.app.data.manager.NavigationManager.navigate("product/$safeId")
+                                }
                             })
                         }
                     }
@@ -185,28 +194,34 @@ fun CategoryRightPaneView(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                             )
 
-                            // Mapping subcategories into a pseudo-grid flow
-                            // Simple implementation for fixed 3-column
-                            val chunkedItems = items.take(8).chunked(3)
+                            val isExpanded = expandedGroups.contains(groupName)
+                            val showViewAll = !isExpanded && items.size > 8
+                            val displayItems = if (isExpanded) items else items.take(if (showViewAll) 7 else 8)
                             
-                            chunkedItems.forEach { rowItems ->
+                            val totalSlots = displayItems.size + (if (showViewAll) 1 else 0)
+                            val rows = (totalSlots + 2) / 3
+                            
+                            for (rowIndex in 0 until rows) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp, vertical = 10.dp),
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    for (sub in rowItems) {
+                                    for (colIndex in 0 until 3) {
+                                        val itemIndex = rowIndex * 3 + colIndex
                                         Box(modifier = Modifier.weight(1f)) {
-                                            SubCategoryItemExt(sub = sub) {
-                                                activeSubCategoryId = sub._id
-                                                showProductList = true
+                                            if (itemIndex < displayItems.size) {
+                                                SubCategoryItemExt(sub = displayItems[itemIndex]) {
+                                                    activeSubCategoryId = displayItems[itemIndex]._id
+                                                    showProductList = true
+                                                }
+                                            } else if (itemIndex == displayItems.size && showViewAll) {
+                                                ViewAllCategoryButton {
+                                                    expandedGroups.add(groupName)
+                                                }
                                             }
                                         }
-                                    }
-                                    // Pad empty spaces
-                                    for (i in 0 until (3 - rowItems.size)) {
-                                        Spacer(modifier = Modifier.weight(1f))
                                     }
                                 }
                             }
@@ -216,13 +231,6 @@ fun CategoryRightPaneView(
                 Spacer(modifier = Modifier.height(50.dp))
             }
         }
-    }
-
-    if (showGlobalSearch) {
-        com.localforvocalstartup.app.ui.pages.GlobalSearchView(
-            onDismiss = { showGlobalSearch = false },
-            categoryId = categoryId
-        )
     }
 
     if (showBasket) {
@@ -273,6 +281,50 @@ fun SubCategoryItemExt(sub: Category, onClick: () -> Unit) {
 }
 
 @Composable
+fun ViewAllCategoryButton(onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(85.dp)
+                .background(Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .shadow(3.dp, CircleShape)
+                    .background(Color.White, CircleShape)
+                    .clip(CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "View All",
+                    tint = Color(0xFF2874F0),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = "View all",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2874F0),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.height(32.dp)
+        )
+    }
+}
+
+@Composable
 fun RightPaneHeader(title: String, cartCount: Int, onSearchTap: () -> Unit = {}, onCartTap: () -> Unit = {}) {
     Row(
         modifier = Modifier
@@ -285,8 +337,9 @@ fun RightPaneHeader(title: String, cartCount: Int, onSearchTap: () -> Unit = {},
         Row(
             modifier = Modifier
                 .weight(1f)
-                .background(Color.White, RoundedCornerShape(12.dp))
                 .shadow(2.dp, RoundedCornerShape(12.dp))
+                .background(Color.White, RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .clickable { onSearchTap() }
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -319,12 +372,12 @@ fun RightPaneHeader(title: String, cartCount: Int, onSearchTap: () -> Unit = {},
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = 4.dp, y = (-4).dp)
-                        .size(16.dp)
+                        .offset(x = 6.dp, y = (-6).dp)
+                        .size(18.dp)
                         .background(Color(0xFFEF4444), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "$cartCount", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "$cartCount", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

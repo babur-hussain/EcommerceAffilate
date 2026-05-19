@@ -47,7 +47,7 @@ fun GroceryListingView(onNavigateBack: () -> Unit = {}) {
             OutlinedTextField(
                 value = "",
                 onValueChange = {},
-                placeholder = { Text("Search for products...") },
+                placeholder = { Text("Search for products...", color = Color.Black) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.height(48.dp).weight(1f),
                 colors = TextFieldDefaults.outlinedTextFieldColors(

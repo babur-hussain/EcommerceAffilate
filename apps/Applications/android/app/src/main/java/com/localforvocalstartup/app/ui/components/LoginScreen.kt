@@ -174,10 +174,10 @@ fun LoginScreen(onDismiss: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 20.dp),
-                    placeholder = { Text("Enter your email", color = Color(0xFF6B7280)) },
+                    placeholder = { Text("Enter your email", color = Color.Black) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    colors = OutlinedTextFieldDefaults.colors(
+                    textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color(0xFFD1D5DB),
                         focusedBorderColor = Color(0xFF2874F0),
                         focusedContainerColor = Color.White,
@@ -195,7 +195,7 @@ fun LoginScreen(onDismiss: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 24.dp),
-                    placeholder = { Text("Enter password", color = Color(0xFF6B7280)) },
+                    placeholder = { Text("Enter password", color = Color.Black) },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -205,7 +205,7 @@ fun LoginScreen(onDismiss: () -> Unit) {
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    colors = OutlinedTextFieldDefaults.colors(
+                    textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color(0xFFD1D5DB),
                         focusedBorderColor = Color(0xFF2874F0),
                         focusedContainerColor = Color.White,
@@ -420,7 +420,7 @@ fun SignupScreen(onDismiss: () -> Unit, onRegistrationSuccess: () -> Unit, onAcc
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
-                    placeholder = { Text("Enter password", color = Color(0xFF6B7280)) },
+                    placeholder = { Text("Enter password", color = Color.Black) },
                     singleLine = true,
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -430,7 +430,7 @@ fun SignupScreen(onDismiss: () -> Unit, onRegistrationSuccess: () -> Unit, onAcc
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    colors = OutlinedTextFieldDefaults.colors(
+                    textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color(0xFFD1D5DB),
                         focusedBorderColor = Color(0xFF2874F0),
                         focusedContainerColor = Color.White,
@@ -448,11 +448,11 @@ fun SignupScreen(onDismiss: () -> Unit, onRegistrationSuccess: () -> Unit, onAcc
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
-                    placeholder = { Text("Confirm password", color = Color(0xFF6B7280)) },
+                    placeholder = { Text("Confirm password", color = Color.Black) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    colors = OutlinedTextFieldDefaults.colors(
+                    textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = if (password == confirmPassword || confirmPassword.isEmpty()) Color(0xFFD1D5DB) else Color.Red,
                         focusedBorderColor = if (password == confirmPassword || confirmPassword.isEmpty()) Color(0xFF2874F0) else Color.Red,
                         focusedContainerColor = Color.White,
@@ -546,10 +546,10 @@ private fun FormField(label: String, placeholder: String, value: String, onValue
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp),
-        placeholder = { Text(placeholder, color = Color(0xFF6B7280)) },
+        placeholder = { Text(placeholder, color = Color.Black) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        colors = OutlinedTextFieldDefaults.colors(
+        textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
             unfocusedBorderColor = Color(0xFFD1D5DB),
             focusedBorderColor = Color(0xFF2874F0),
             focusedContainerColor = Color.White,

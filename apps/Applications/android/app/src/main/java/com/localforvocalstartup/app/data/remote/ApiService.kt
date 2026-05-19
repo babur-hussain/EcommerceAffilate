@@ -16,6 +16,7 @@ import com.localforvocalstartup.app.data.model.UpdateCartRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.DELETE
 import com.localforvocalstartup.app.data.model.ServiceCategoryModel
 import com.localforvocalstartup.app.data.model.ServiceSubCategoryModel
 import com.localforvocalstartup.app.data.model.ServiceProviderListResponse
@@ -23,11 +24,25 @@ import com.localforvocalstartup.app.data.model.ServiceProviderModel
 import com.localforvocalstartup.app.data.model.ServiceReviewListResponse
 import com.localforvocalstartup.app.data.model.ServiceReviewModel
 
-data class CreatePaymentOrderRequest(val orderId: String)
-data class NetworkRazorpayOrderResponse(val id: String, val amount: Int, val currency: String)
+data class CreatePaymentOrderRequest(val provider: String = "RAZORPAY")
+data class NetworkRazorpayOrderResponse(val paymentOrderId: String, val amount: Int, val currency: String)
 data class VerifyPaymentRequest(val razorpay_order_id: String, val razorpay_payment_id: String, val razorpay_signature: String)
-data class VerifyPaymentResponse(val success: Boolean, val message: String?)
+data class VerifyPaymentResponse(val status: String, val message: String?)
 data class UpdateProfileRequest(val name: String, val phone: String?, val bio: String?, val profileImage: String? = null)
+
+data class SaveAddressRequest(
+    val name: String,
+    val phone: String,
+    val addressLine1: String,
+    val addressLine2: String?,
+    val city: String,
+    val state: String,
+    val pincode: String,
+    val country: String = "India",
+    val isDefault: Boolean = false
+)
+
+data class SetDefaultAddressResponse(val _id: String, val isDefault: Boolean)
 data class CreatorApplicationRequest(
     val fullName: String,
     val email: String,
@@ -97,18 +112,24 @@ interface ApiService {
     suspend fun createOrder(@Body body: com.localforvocalstartup.app.data.services.OrderPayload): com.localforvocalstartup.app.data.services.OrderResponse
 
     // Payment Endpoints
-    @POST("payments/create-order")
-    suspend fun createPaymentOrder(@Body request: CreatePaymentOrderRequest): NetworkRazorpayOrderResponse
+    @POST("orders/{id}/pay")
+    suspend fun createPaymentOrder(@Path("id") orderId: String, @Body request: CreatePaymentOrderRequest): NetworkRazorpayOrderResponse
 
-    @POST("payments/verify")
-    suspend fun verifyPayment(@Body request: VerifyPaymentRequest): VerifyPaymentResponse
+    @POST("orders/{id}/verify")
+    suspend fun verifyPayment(@Path("id") orderId: String, @Body request: VerifyPaymentRequest): VerifyPaymentResponse
 
     // Address Endpoints
     @GET("addresses")
     suspend fun getAddresses(): List<com.localforvocalstartup.app.data.model.Address>
 
     @POST("addresses")
-    suspend fun saveAddress(@Body body: com.localforvocalstartup.app.data.model.Address): com.localforvocalstartup.app.data.model.Address
+    suspend fun saveAddress(@Body body: SaveAddressRequest): com.localforvocalstartup.app.data.model.Address
+
+    @DELETE("addresses/{id}")
+    suspend fun deleteAddress(@Path("id") id: String): retrofit2.Response<Unit>
+
+    @POST("addresses/{id}/default")
+    suspend fun setDefaultAddress(@Path("id") id: String): com.localforvocalstartup.app.data.model.Address
 
     // Cart Endpoints
     @GET("cart")
@@ -201,6 +222,14 @@ interface ApiService {
 
     @POST("wishlist/remove")
     suspend fun removeFromWishlist(@Body body: WishlistToggleRequest): WishlistResponse
+
+    // Notify Me - Back in Stock
+    @POST("notify-me")
+    suspend fun notifyMeWhenInStock(@Body body: Map<String, String>): retrofit2.Response<Unit>
+
+    // Reviews
+    @POST("reviews")
+    suspend fun submitReview(@Body body: Map<String, Any>): retrofit2.Response<Unit>
 }
 
 data class ProductListResponse(val products: List<Product>)

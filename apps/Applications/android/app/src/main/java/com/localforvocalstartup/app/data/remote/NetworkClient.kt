@@ -44,6 +44,33 @@ object NetworkClient {
                 android.util.Log.d("NetworkClient", "← ${response.code} ${original.url}")
                 response
             }
+            .authenticator(object : okhttp3.Authenticator {
+                override fun authenticate(route: okhttp3.Route?, response: okhttp3.Response): okhttp3.Request? {
+                    // Prevent infinite loops if the new token also returns 401
+                    if (response.priorResponse != null) {
+                        return null // Only try once
+                    }
+
+                    val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    if (firebaseUser != null) {
+                        try {
+                            // Force refresh the token
+                            val tokenResult = com.google.android.gms.tasks.Tasks.await(firebaseUser.getIdToken(true))
+                            val newToken = tokenResult.token
+                            if (newToken != null) {
+                                com.localforvocalstartup.app.data.manager.AuthManager.updateToken(newToken)
+                                // Retry the request with the new token
+                                return response.request.newBuilder()
+                                    .header("Authorization", "Bearer $newToken")
+                                    .build()
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("NetworkClient", "Failed to refresh Firebase token", e)
+                        }
+                    }
+                    return null
+                }
+            })
             .build()
     }
 

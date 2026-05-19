@@ -30,6 +30,10 @@ import coil.compose.AsyncImage
 import com.localforvocalstartup.app.data.manager.BasketManager
 import com.localforvocalstartup.app.data.manager.CartItem
 import com.localforvocalstartup.app.data.manager.CartManager
+import com.localforvocalstartup.app.data.manager.AddressManager
+import com.localforvocalstartup.app.data.manager.LocationManager
+import com.localforvocalstartup.app.data.manager.NavigationManager
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,11 +41,16 @@ fun CartScreen(onBackClick: () -> Unit) {
     var selectedTab by remember { mutableStateOf("Shopping") }
     val cartItems by CartManager.items.collectAsState()
     val basketItems by BasketManager.items.collectAsState()
+    
+    val savedAddresses by AddressManager.savedAddresses.collectAsState()
+    val selectedAddress by AddressManager.selectedAddress.collectAsState()
+    var showAddressSheet by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
         // --- Header ---
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick, modifier = Modifier.size(24.dp).padding(end = 8.dp)) {
@@ -109,16 +118,37 @@ fun CartScreen(onBackClick: () -> Unit) {
 
         // --- Content ---
         if (selectedTab == "Shopping") {
-            ShoppingView(cartItems, CartManager.cartTotal, CartManager.cartCount)
+            ShoppingView(cartItems, CartManager.cartTotal, CartManager.cartCount, selectedAddress, onChangeAddress = { showAddressSheet = true })
         } else {
             GroceryView(basketItems, BasketManager.basketTotal, BasketManager.basketSavings)
         }
+    }
+    
+    if (showAddressSheet) {
+        UserAddressSelectorView(
+            isVisible = true,
+            savedUserAddresses = savedAddresses,
+            selectedUserAddressId = selectedAddress?.id,
+            onSelectUserAddress = { 
+                AddressManager.selectAddress(it)
+                showAddressSheet = false 
+            },
+            onUseCurrentLocation = {
+                LocationManager.startUpdating(context)
+                showAddressSheet = false
+            },
+            onAddNewUserAddress = {
+                showAddressSheet = false
+                NavigationManager.navigate("locationPicker")
+            },
+            onDismiss = { showAddressSheet = false }
+        )
     }
 }
 
 // MARK: - Shopping View
 @Composable
-fun ShoppingView(cartItems: List<CartItem>, cartTotal: Double, cartCount: Int) {
+fun ShoppingView(cartItems: List<CartItem>, cartTotal: Double, cartCount: Int, selectedAddress: com.localforvocalstartup.app.data.model.Address?, onChangeAddress: () -> Unit) {
     if (cartItems.isEmpty()) {
         EmptyStandardCartView()
     } else {
@@ -134,24 +164,29 @@ fun ShoppingView(cartItems: List<CartItem>, cartTotal: Double, cartCount: Int) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Deliver to: ", fontSize = 14.sp, color = Color.Black)
-                        Text("Main Address", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.Black)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "HOME",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF666666),
-                            modifier = Modifier
-                                .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
+                        Text(selectedAddress?.name ?: "Main Address", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.Black)
+                        if (selectedAddress?.isDefault == true) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "HOME",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF666666),
+                                modifier = Modifier
+                                    .background(Color(0xFFF0F0F0), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Select your location to see delivery options", fontSize = 13.sp, color = Color(0xFF878787))
+                    Text(
+                        selectedAddress?.let { "${it.addressLine1}, ${it.city} - ${it.pincode}" } ?: "Select your location to see delivery options",
+                        fontSize = 13.sp, color = Color(0xFF878787), maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
                 }
                 
                 Button(
-                    onClick = { /* Change Address */ },
+                    onClick = { onChangeAddress() },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     shape = RoundedCornerShape(4.dp),
@@ -194,7 +229,7 @@ fun ShoppingView(cartItems: List<CartItem>, cartTotal: Double, cartCount: Int) {
                     }
                     
                     Button(
-                        onClick = { /* checkout */ },
+                        onClick = { NavigationManager.navigate("checkout") },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFB641B)),
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.width(160.dp).height(48.dp)
@@ -260,7 +295,7 @@ fun GroceryView(basketItems: List<CartItem>, basketTotal: Double, basketSavings:
                 }
 
                 Button(
-                    onClick = { /* proceed */ },
+                    onClick = { NavigationManager.navigate("grocery-checkout") },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF15803D)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -321,8 +356,10 @@ fun StandardCartItemView(item: CartItem) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
             // Image + Qty Selector
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(100.dp)) {
+                val rawUrl = item.product.images.firstOrNull() ?: ""
+                val fullUrl = if (rawUrl.isEmpty()) "" else if (rawUrl.startsWith("http")) rawUrl else if (rawUrl.startsWith("/")) "https://api.lfvs.in$rawUrl" else "https://api.lfvs.in/$rawUrl"
                 AsyncImage(
-                    model = item.product.images.firstOrNull(),
+                    model = fullUrl,
                     contentDescription = null,
                     modifier = Modifier.size(80.dp).padding(bottom = 8.dp),
                     contentScale = ContentScale.Fit
@@ -411,8 +448,10 @@ fun StandardCartItemView(item: CartItem) {
 @Composable
 fun BasketItemCell(item: CartItem) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp, horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        val rawUrl = item.product.images.firstOrNull() ?: ""
+        val fullUrl = if (rawUrl.isEmpty()) "" else if (rawUrl.startsWith("http")) rawUrl else if (rawUrl.startsWith("/")) "https://api.lfvs.in$rawUrl" else "https://api.lfvs.in/$rawUrl"
         AsyncImage(
-            model = item.product.images.firstOrNull(),
+            model = fullUrl,
             contentDescription = null,
             modifier = Modifier.size(60.dp),
             contentScale = ContentScale.Fit

@@ -38,6 +38,11 @@ fun ServicesPageView(
 
     val locationViewModel: LocationViewModel = viewModel()
     val locationState by locationViewModel.locationState.collectAsState()
+    
+    val savedAddresses by com.localforvocalstartup.app.data.manager.AddressManager.savedAddresses.collectAsState()
+    val selectedAddress by com.localforvocalstartup.app.data.manager.AddressManager.selectedAddress.collectAsState()
+    var showAddressSheet by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     BackHandler(enabled = currentRoute != ServicesRoute.HOME) {
         when (currentRoute) {
@@ -55,9 +60,10 @@ fun ServicesPageView(
                 onTabSelected = onOuterTabSelected
             )
             LocationBarView(
+                selectedAddress = selectedAddress,
                 locationState = locationState,
                 isLightMode = true,
-                onRequestLocation = { com.localforvocalstartup.app.data.manager.NavigationManager.navigate("locationPicker") }
+                onRequestLocation = { showAddressSheet = true }
             )
         }
     }
@@ -112,5 +118,26 @@ fun ServicesPageView(
                 }
             }
         }
+    }
+    
+    if (showAddressSheet) {
+        com.localforvocalstartup.app.ui.components.UserAddressSelectorView(
+            isVisible = true,
+            savedUserAddresses = savedAddresses,
+            selectedUserAddressId = selectedAddress?.id,
+            onSelectUserAddress = { 
+                com.localforvocalstartup.app.data.manager.AddressManager.selectAddress(it)
+                showAddressSheet = false 
+            },
+            onUseCurrentLocation = {
+                com.localforvocalstartup.app.data.manager.LocationManager.startUpdating(context)
+                showAddressSheet = false
+            },
+            onAddNewUserAddress = {
+                showAddressSheet = false
+                com.localforvocalstartup.app.data.manager.NavigationManager.navigate("locationPicker")
+            },
+            onDismiss = { showAddressSheet = false }
+        )
     }
 }

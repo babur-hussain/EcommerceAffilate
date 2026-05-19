@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.localforvocalstartup.app.data.manager.NavigationManager
 import com.localforvocalstartup.app.data.manager.OverlayDestination
 import com.localforvocalstartup.app.data.model.Product
@@ -39,8 +40,23 @@ fun ContentView() {
     val productId by NavigationManager.productId.collectAsState()
     val groceryProductId by NavigationManager.groceryProductId.collectAsState()
 
+    val canGoBack = productId != null || 
+                    groceryProductId != null || 
+                    activeOverlay != null || 
+                    currentTab != MainTab.HOME
+
+    androidx.activity.compose.BackHandler(enabled = canGoBack) {
+        when {
+            productId != null -> NavigationManager.dismissProduct()
+            groceryProductId != null -> NavigationManager.dismissGroceryProduct()
+            activeOverlay != null -> NavigationManager.goBack()
+            currentTab != MainTab.HOME -> NavigationManager.navigate("home")
+        }
+    }
+
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
+        containerColor = Color.White,
         bottomBar = {
             if (activeOverlay == null && productId == null && groceryProductId == null && 
                 !(currentTab == MainTab.HOME && (isGroceryTabActive || isServicesTabActive || isInfluencersTabActive))) {
@@ -111,7 +127,7 @@ fun ContentView() {
             !isServicesTabActive && 
             !isInfluencersTabActive
             
-        val shouldDrawBehindStatusBar = isShoppingTab && activeOverlay == null && productId == null && groceryProductId == null
+        val shouldDrawBehindStatusBar = (isShoppingTab && activeOverlay == null && productId == null && groceryProductId == null) || activeOverlay == OverlayDestination.CATEGORY_PAGE
         
         val baseModifier = Modifier
             .fillMaxSize()
@@ -183,13 +199,13 @@ fun OverlayRouterView(destination: OverlayDestination) {
             .background(Color.White)
     ) {
         when (destination) {
-            OverlayDestination.BEAUTY -> SDUIPage(slug = "beauty-page", onProductClick = { NavigationManager.navigate("product/${it.id}") })
-            OverlayDestination.SPECIAL_DEAL -> SpecialDealNewStyleView()
-            OverlayDestination.BRAND_NEW_ARRIVAL -> BrandNewArrivalView()
-            OverlayDestination.MEN_FASHION -> MenFashionView()
-            OverlayDestination.GRAND_MOBILES -> GrandMobilesView()
-            OverlayDestination.CYBER_SALE -> CyberSaleView()
-            OverlayDestination.SHOES_SALES -> SDUIPage(slug = "footwear-collection", onProductClick = { NavigationManager.navigate("product/${it.id}") })
+            OverlayDestination.BEAUTY -> BeautyProductView()
+            OverlayDestination.SPECIAL_DEAL -> SpecialDealNewStyleView(onNavigateBack = { NavigationManager.goBack() })
+            OverlayDestination.BRAND_NEW_ARRIVAL -> BrandNewArrivalView(onNavigateBack = { NavigationManager.goBack() })
+            OverlayDestination.MEN_FASHION -> MenFashionView(onNavigateBack = { NavigationManager.goBack() })
+            OverlayDestination.GRAND_MOBILES -> GrandMobilesView(onNavigateBack = { NavigationManager.goBack() })
+            OverlayDestination.CYBER_SALE -> CyberSaleView(onNavigateBack = { NavigationManager.goBack() })
+            OverlayDestination.SHOES_SALES -> ShoesSalesView(onNavigateBack = { NavigationManager.goBack() })
             OverlayDestination.CATEGORY_PAGE -> {
                 val navParams by NavigationManager.categoryNavigation.collectAsState()
                 com.localforvocalstartup.app.ui.pages.CategoryProductsListView(
@@ -209,6 +225,33 @@ fun OverlayRouterView(destination: OverlayDestination) {
                 onPaymentSelect = { NavigationManager.goBack() },
                 isLoading = false
             )
+            OverlayDestination.CHECKOUT -> {
+                val cartItems by com.localforvocalstartup.app.data.manager.CartManager.items.collectAsState()
+                val checkoutItems = cartItems.map {
+                    com.localforvocalstartup.app.ui.viewmodel.CheckoutItem(
+                        product = it.product,
+                        quantity = it.quantity,
+                        selectedOfferIds = emptyList()
+                    )
+                }
+                val checkoutViewModel = remember { com.localforvocalstartup.app.ui.viewmodel.CheckoutViewModel(checkoutItems) }
+                Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
+                    com.localforvocalstartup.app.ui.pages.CheckoutView(
+                        viewModel = checkoutViewModel,
+                        onBack = { NavigationManager.goBack() }
+                    )
+                }
+            }
+            OverlayDestination.GROCERY_CHECKOUT -> {
+                val basketItems by com.localforvocalstartup.app.data.manager.BasketManager.items.collectAsState()
+                val checkoutViewModel = remember { com.localforvocalstartup.app.ui.viewmodel.GroceryCheckoutViewModel(basketItems) }
+                Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
+                    com.localforvocalstartup.app.ui.pages.GroceryCheckoutView(
+                        viewModel = checkoutViewModel,
+                        onBack = { NavigationManager.goBack() }
+                    )
+                }
+            }
             OverlayDestination.PROFILE_EDIT -> ProfileEditScreen(onNavigateBack = { NavigationManager.goBack() })
             OverlayDestination.INFLUENCER_REGISTRATION -> InfluencerRegistrationSheet(onDismiss = { NavigationManager.goBack() })
 

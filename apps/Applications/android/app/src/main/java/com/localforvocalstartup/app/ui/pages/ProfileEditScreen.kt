@@ -134,8 +134,8 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit) {
                         value = name,
                         onValueChange = { name = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Enter your name", color = Color.Gray) },
-                        colors = OutlinedTextFieldDefaults.colors(
+                        placeholder = { Text("Enter your name", color = Color.Black) },
+                        textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color(0xFFE5E7EB),
                             focusedBorderColor = Color(0xFF2563EB)
                         ),
@@ -158,8 +158,8 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit) {
                         value = phone,
                         onValueChange = { phone = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Enter phone number", color = Color.Gray) },
-                        colors = OutlinedTextFieldDefaults.colors(
+                        placeholder = { Text("Enter phone number", color = Color.Black) },
+                        textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color(0xFFE5E7EB),
                             focusedBorderColor = Color(0xFF2563EB)
                         ),
@@ -172,8 +172,8 @@ fun ProfileEditScreen(onNavigateBack: () -> Unit) {
                         value = bio,
                         onValueChange = { bio = it },
                         modifier = Modifier.fillMaxWidth().height(100.dp),
-                        placeholder = { Text("Tell something about yourself", color = Color.Gray) },
-                        colors = OutlinedTextFieldDefaults.colors(
+                        placeholder = { Text("Tell something about yourself", color = Color.Black) },
+                        textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color(0xFFE5E7EB),
                             focusedBorderColor = Color(0xFF2563EB)
                         )

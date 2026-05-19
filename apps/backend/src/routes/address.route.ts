@@ -25,14 +25,19 @@ router.post('/addresses', requireCustomer, async (req: Request, res: Response) =
     const { name, phone, addressLine1, addressLine2, city, state, pincode, country, isDefault } =
       (req.body as any) ?? {};
 
-    const required = { name, phone, addressLine1, city, state, pincode, country };
+    const required = { name, phone, addressLine1, city, state, pincode };
     for (const [k, v] of Object.entries(required)) {
       if (typeof v !== 'string' || v.trim().length === 0) {
         return res.status(400).json({ error: `${k} is required` });
       }
     }
+    const resolvedCountry = (typeof country === 'string' && country.trim().length > 0) ? country.trim() : 'India';
 
-    if (isDefault === true) {
+    // Auto-default: if user has no addresses yet, make this one the default
+    const existingCount = await Address.countDocuments({ userId: user.id });
+    const shouldBeDefault = !!isDefault || existingCount === 0;
+
+    if (shouldBeDefault) {
       await Address.updateMany({ userId: user.id, isDefault: true }, { $set: { isDefault: false } });
     }
 
@@ -45,8 +50,8 @@ router.post('/addresses', requireCustomer, async (req: Request, res: Response) =
       city: String(city).trim(),
       state: String(state).trim(),
       pincode: String(pincode).trim(),
-      country: String(country).trim(),
-      isDefault: !!isDefault,
+      country: resolvedCountry,
+      isDefault: shouldBeDefault,
     });
 
     res.status(201).json(created);

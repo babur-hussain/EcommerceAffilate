@@ -31,12 +31,14 @@ import com.localforvocalstartup.app.data.model.LastChanceOffer
 fun LastChancePopupView(
     isVisible: Boolean,
     offers: List<LastChanceOffer>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onGoToCheckout: (selectedOfferIds: Set<String>) -> Unit = { onDismiss() },
+    onContinueShopping: (selectedOfferIds: Set<String>) -> Unit = { onDismiss() }
 ) {
     if (!isVisible || offers.isEmpty()) return
 
     var selectedOfferIds by remember { mutableStateOf(setOf<String>()) }
-    val savings = offers.filter { it.id?.let { id -> selectedOfferIds.contains(id) } == true }
+    val savings = offers.filter { it.id?.let { id -> selectedOfferIds.contains(id) } == true || it._id?.let { id -> selectedOfferIds.contains(id) } == true }
         .sumOf { ((it.originalPrice ?: 0.0) - (it.offerPrice ?: 0.0)) }
 
     Dialog(
@@ -44,12 +46,22 @@ fun LastChancePopupView(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                ) { onDismiss() },
             contentAlignment = Alignment.BottomCenter
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    ) { /* consume click */ }
                     .background(Color.White, RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                     .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             ) {
@@ -84,8 +96,8 @@ fun LastChancePopupView(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        itemsIndexed(offers) { _, offer ->
-                            val offerId = offer.id ?: offer._id ?: ""
+                        itemsIndexed(offers) { index, offer ->
+                            val offerId = offer.id ?: offer._id ?: offer.tempId(index)
                             OfferCard(
                                 offer = offer,
                                 isSelected = selectedOfferIds.contains(offerId),
@@ -124,23 +136,28 @@ fun LastChancePopupView(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 32.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
-                        onClick = onDismiss,
+                        onClick = { onGoToCheckout(selectedOfferIds) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f).border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
                     ) {
                         Text("Go to checkout", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF374151))
                     }
 
                     Button(
-                        onClick = onDismiss,
+                        onClick = { onContinueShopping(selectedOfferIds) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700)),
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
                     ) {
                         Text("Continue", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1F2937))
                     }
@@ -149,6 +166,7 @@ fun LastChancePopupView(
         }
     }
 }
+
 
 @Composable
 fun OfferCard(

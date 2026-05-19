@@ -126,7 +126,7 @@ fun KBeautyView(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFFFF6F00),
-                    modifier = Modifier.clickable { }
+                    modifier = Modifier.clickable { handleActionUrl(headerActionUrl) }
                 )
             }
         }
@@ -175,7 +175,7 @@ fun KBeautyCard(item: KBeautyItem) {
             .fillMaxSize()
             .clip(RoundedCornerShape(20.dp))
             .background(bgColor)
-            .clickable { }
+            .clickable { handleActionUrl(item.actionUrl) }
     ) {
         // Main Image
         AsyncImage(
@@ -295,7 +295,7 @@ fun BeautyTrendMoreView(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFFFF6F00),
-                    modifier = Modifier.clickable { }
+                    modifier = Modifier.clickable { handleActionUrl(headerActionUrl) }
                 )
             }
         }
@@ -316,7 +316,7 @@ fun BeautyTrendMoreView(
 fun TrendMoreCard(item: TrendMoreItem) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { }
+        modifier = Modifier.clickable { handleActionUrl(item.actionUrl) }
     ) {
         // Main Card
         Box(
@@ -444,7 +444,7 @@ fun LaunchPartyCard(item: LaunchPartyItem) {
             .width(150.dp)
             .height(200.dp)
             .clip(RoundedCornerShape(16.dp))
-            .clickable { }
+            .clickable { handleActionUrl(item.actionUrl) }
     ) {
         // Image
         AsyncImage(
@@ -551,7 +551,7 @@ fun InternetFamedCard(item: InternetFamedItem) {
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { }
+        modifier = Modifier.clickable { handleActionUrl(item.actionUrl) }
     ) {
         Box(
             modifier = Modifier
@@ -691,7 +691,7 @@ fun GlamBudgetCard(item: GlamBudgetItem) {
             .aspectRatio(1f)
             .clip(RoundedCornerShape(12.dp))
             .background(Brush.verticalGradient(gradientColors))
-            .clickable { },
+            .clickable { handleActionUrl(item.actionUrl) },
         contentAlignment = Alignment.Center
     ) {
         Column(

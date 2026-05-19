@@ -44,6 +44,16 @@ fun CyberSaleView(onNavigateBack: () -> Unit = {}) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
+            // Standard Navigation Header
+            com.localforvocalstartup.app.ui.components.StandardNavigationHeader(
+                title = "Cyber Sale",
+                onNavigateBack = onNavigateBack,
+                bgColor = cyberBlue,
+                textColor = Color.White,
+                iconBgColor = Color.White.copy(alpha = 0.2f),
+                iconTintColor = Color.White
+            )
+            
             // Header Area (Including pseudo status bar since it's edge-to-edge in iOS)
             CyberSaleHeader()
             

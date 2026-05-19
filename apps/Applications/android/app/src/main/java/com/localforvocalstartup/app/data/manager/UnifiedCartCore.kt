@@ -107,7 +107,7 @@ object UnifiedCartCore {
         val index = cartItems.indexOfFirst { it.productId == product.id }
 
         if (index != -1) {
-            cartItems[index].quantity += quantity
+            cartItems[index] = cartItems[index].copy(quantity = cartItems[index].quantity + quantity)
         } else {
             cartItems.add(CartItem(product.id, quantity, product))
         }
@@ -133,7 +133,7 @@ object UnifiedCartCore {
         val cartItems = items[type] ?: return
         val index = cartItems.indexOfFirst { it.productId == productId }
         if (index != -1) {
-            cartItems[index].quantity = quantity
+            cartItems[index] = cartItems[index].copy(quantity = quantity)
             items[type] = cartItems
             rebuildIndex(type)
             scheduleSave(type)

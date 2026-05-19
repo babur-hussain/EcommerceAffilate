@@ -160,7 +160,7 @@ fun ProfileEditView() {
                 label = { Text("Full Name") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
+                textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF2874F0),
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White
@@ -176,7 +176,7 @@ fun ProfileEditView() {
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 enabled = false, // Email is tied to auth and typically locked
-                colors = OutlinedTextFieldDefaults.colors(
+                textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                     disabledBorderColor = Color(0xFFD1D5DB),
                     disabledTextColor = Color.Gray,
                     disabledContainerColor = Color(0xFFF9FAFB)
@@ -191,7 +191,7 @@ fun ProfileEditView() {
                 label = { Text("Phone Number") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
+                textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.Black),colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF2874F0),
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White

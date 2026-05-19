@@ -19,6 +19,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.clickable
+import com.localforvocalstartup.app.ui.components.handleActionUrl
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -49,11 +51,13 @@ fun HeroBannerView(banners: List<Map<String, String>>) {
         ) { page ->
             val banner = banners[page]
             val imageUrl = banner["imageUrl"] ?: banner["image"]
+            val actionUrl = banner["actionUrl"]
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(16f / 9f),
+                    .aspectRatio(16f / 9f)
+                    .clickable { handleActionUrl(actionUrl) },
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)

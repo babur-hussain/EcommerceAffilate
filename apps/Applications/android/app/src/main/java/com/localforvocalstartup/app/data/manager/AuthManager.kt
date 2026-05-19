@@ -43,6 +43,8 @@ object AuthManager {
         if (json != null && token != null) {
             try {
                 _userState.value = gson.fromJson(json, User::class.java)
+                NetworkClient.tempToken = token
+                AddressManager.init()
             } catch (e: Exception) {
                 e.printStackTrace()
                 _userState.value = null
@@ -178,6 +180,9 @@ object AuthManager {
             .apply()
         _userState.value = user
         Log.d("AuthManager", "userState updated. Current value: ${_userState.value?.email}")
+        
+        // Load addresses for the user
+        AddressManager.init()
     }
 
     fun updateUserSession(user: User) {
@@ -189,10 +194,16 @@ object AuthManager {
         auth.signOut()
         prefs.edit().clear().apply()
         _userState.value = null
+        AddressManager.clear()
     }
 
     fun getToken(): String? {
         return prefs.getString(KEY_TOKEN, null)
+    }
+
+    fun updateToken(newToken: String) {
+        prefs.edit().putString(KEY_TOKEN, newToken).apply()
+        NetworkClient.tempToken = newToken
     }
     
     fun isLoggedIn(): Boolean {

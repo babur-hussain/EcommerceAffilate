@@ -1,4 +1,4 @@
-package com.localforvocalstartup.app.ui.pages
+package com.localforvocalstartup.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,82 +18,65 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.localforvocalstartup.app.data.manager.NavigationManager
+
 
 @Composable
-fun BeautyProductView() {
-    val bgColor = Color(0xFFFDF5F5) // iOS: Color(red: 0.99, green: 0.96, blue: 0.96)
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(bgColor)
-    ) {
-        // Sticky Header
-        BeautyHeaderView()
-        
-        // Scrollable SDUI Content
-        Box(modifier = Modifier.weight(1f)) {
-            SDUIPage(slug = "beauty_product")
-        }
-    }
-}
-
-@Composable
-private fun BeautyHeaderView() {
-    Column {
+fun StandardNavigationHeader(
+    title: String,
+    onNavigateBack: () -> Unit,
+    bgColor: Color = Color.White,
+    iconBgColor: Color = Color(0xFFF3F4F6),
+    textColor: Color = Color(0xFF0F1729),
+    iconTintColor: Color = Color.Black
+) {
+    Column(modifier = Modifier.background(bgColor)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFFDF5F5).copy(alpha = 0.95f))
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(
-                onClick = { NavigationManager.goBack() },
-                modifier = Modifier
-                    .background(Color(0xFFE91E63).copy(alpha = 0.05f), CircleShape)
+                onClick = onNavigateBack,
+                modifier = Modifier.background(iconBgColor, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Back",
-                    tint = Color.Black
+                    tint = iconTintColor
                 )
             }
 
             Text(
-                text = "Beauty & Perfume",
+                text = title,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F1729) // iOS: Color(red: 0.06, green: 0.09, blue: 0.16)
+                color = textColor
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconButton(
-                    onClick = { /* TODO: Show Search */ },
-                    modifier = Modifier
-                        .background(Color(0xFFE91E63).copy(alpha = 0.05f), CircleShape)
+                    onClick = { /* TODO: Search */ },
+                    modifier = Modifier.background(iconBgColor, CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = Color.Black
+                        tint = iconTintColor
                     )
                 }
 
                 IconButton(
-                    onClick = { /* TODO: Show Cart */ },
-                    modifier = Modifier
-                        .background(Color(0xFFE91E63).copy(alpha = 0.05f), CircleShape)
+                    onClick = { /* TODO: Cart */ },
+                    modifier = Modifier.background(iconBgColor, CircleShape)
                 ) {
                     Box(contentAlignment = Alignment.TopEnd) {
                         Icon(
                             imageVector = Icons.Default.ShoppingCart,
                             contentDescription = "Cart",
-                            tint = Color.Black
+                            tint = iconTintColor
                         )
-                        // Cart Badge Stub
                         Box(
                             modifier = Modifier
                                 .size(14.dp)
@@ -107,11 +90,5 @@ private fun BeautyHeaderView() {
                 }
             }
         }
-        
-        Divider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 1.dp,
-            color = Color(0xFFE91E63).copy(alpha = 0.15f)
-        )
     }
 }

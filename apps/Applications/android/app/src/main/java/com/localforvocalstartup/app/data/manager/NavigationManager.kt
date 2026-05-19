@@ -35,6 +35,8 @@ enum class OverlayDestination(val id: String) {
     LOCATION_PICKER("locationPicker"),
     PLUS_MEMBERSHIP("plusMembership"),
     PAYMENT("payment"),
+    CHECKOUT("checkout"),
+    GROCERY_CHECKOUT("groceryCheckout"),
     PROFILE_EDIT("profileEdit"),
     INFLUENCER_REGISTRATION("influencerRegistration")
 }
@@ -140,7 +142,11 @@ object NavigationManager {
                 _activeTab.value = MainTab.HOME
             }
             "categories" -> _activeTab.value = MainTab.CATEGORIES
-            "cart" -> _activeTab.value = MainTab.CART
+            "cart" -> {
+                _activeTab.value = MainTab.CART
+                _productId.value = null
+                _activeOverlay.value = null
+            }
             "account" -> _activeTab.value = MainTab.ACCOUNT
             
             // Legacy internal routings
@@ -158,6 +164,8 @@ object NavigationManager {
             "locationPicker" -> setOverlay(OverlayDestination.LOCATION_PICKER)
             "plus-membership" -> setOverlay(OverlayDestination.PLUS_MEMBERSHIP)
             "payment" -> setOverlay(OverlayDestination.PAYMENT)
+            "checkout" -> setOverlay(OverlayDestination.CHECKOUT)
+            "grocery-checkout" -> setOverlay(OverlayDestination.GROCERY_CHECKOUT)
             "profile-edit" -> setOverlay(OverlayDestination.PROFILE_EDIT)
             "influencer-registration" -> setOverlay(OverlayDestination.INFLUENCER_REGISTRATION)
             else -> {

@@ -12,7 +12,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -29,6 +35,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.localforvocalstartup.app.data.model.Product
 import com.localforvocalstartup.app.data.model.SDUIComponent
+import com.localforvocalstartup.app.data.remote.NetworkClient
 import com.localforvocalstartup.app.ui.components.RecentHistoryView
 import com.localforvocalstartup.app.ui.components.GroceryRowView
 import com.localforvocalstartup.app.ui.components.TrendingNearYouView
@@ -62,11 +69,13 @@ fun SDUIRenderer(
         "Gradient" -> RenderGradient(component, onProductClick)
         "Text" -> RenderText(component)
         "Image" -> RenderImage(component)
-        "hero_carousel" -> RenderHeroCarousel(component)
+        "hero_carousel", "banner" -> RenderHeroCarousel(component)
         "top_deals" -> com.localforvocalstartup.app.ui.components.TopDealsView(component)
         "upcoming_launches" -> com.localforvocalstartup.app.ui.components.UpcomingLaunchesView(component)
         "shop_by_price" -> com.localforvocalstartup.app.ui.components.ShopByPriceView(component)
         "curated_collections" -> RenderCuratedCollections(component)
+        "best_quality" -> RenderBestQuality(component)
+        "beautiful_image_slider" -> RenderBeautifulImageSlider(component)
         "lightning_deals" -> RenderLightningDeals(component, onProductClick)
         "ProductGrid", "product_grid" -> RenderProductGrid(component, onProductClick)
         "recent_history" -> RecentHistoryView()
@@ -77,9 +86,26 @@ fun SDUIRenderer(
         "grocery_shop_by_category" -> GroceryShopByCategoryComponent(component)
         "grocery_special_picks" -> GrocerySpecialPicksComponent(component)
         "grocery_wholesale_text" -> GroceryWholesaleTextComponent(component)
-        "product_list_horizontal", "trending_near_you" -> TrendingNearYouView(onProductClick = onProductClick)
-        "grand_kitchen" -> GrandKitchenSaleView()
-        "fifty_percent_off" -> FiftyPercentOffZoneView()
+        "product_list_horizontal", "trending_near_you" -> TrendingNearYouView(
+            title = component.props?.getString("title") ?: "Trending near you",
+            limit = component.props?.getInt("limit") ?: 10,
+            onProductClick = onProductClick
+        )
+        "grand_kitchen" -> GrandKitchenSaleView(onProductClick = onProductClick)
+        "fifty_percent_off" -> {
+            val props = component.props
+            val subCatIds = props?.getArray("subCategoryIds")
+                ?.mapNotNull { if (!it.isJsonNull) it.asString else null } ?: emptyList()
+            FiftyPercentOffZoneView(
+                title = props?.getString("title") ?: "50% OFF ZONE",
+                subtitle = props?.getString("subtitle") ?: "Half the price, double the joy!",
+                discountText = props?.getString("discountText") ?: "50%",
+                categoryId = props?.getString("categoryId"),
+                subCategoryIds = subCatIds,
+                isGrocery = props?.getBool("isGrocery") ?: false,
+                onProductClick = onProductClick
+            )
+        }
         "fashion_forecast" -> RenderFashionForecast(component)
         "winter_collection" -> RenderWinterCollection(component)
         "promo_poster" -> RenderPromoPoster(component)
@@ -368,8 +394,29 @@ fun RenderHeroCarousel(component: SDUIComponent) {
 }
 
 @Composable
+fun RenderBestQuality(component: SDUIComponent) {
+    val props = component.props ?: return
+    val title = props.getString("title") ?: "Best Quality"
+    val headerImage = props.getString("headerImage")
+    val headerActionUrl = props.getString("headerActionUrl")
+    val bgHex = props.getString("backgroundColor")
+    val bgColor = if (!bgHex.isNullOrBlank()) safeParseColor(bgHex) else androidx.compose.ui.graphics.Color(0xFFE5E7EB)
+    val items = parseItems<BestQualityItem>(props.getArray("items"))
+    BestQualityView(
+        title = title,
+        headerImage = headerImage,
+        headerActionUrl = headerActionUrl,
+        backgroundColor = bgColor,
+        items = items,
+        onNavigate = { url -> handleActionUrl(url) }
+    )
+}
+
+@Composable
 fun RenderCuratedCollections(component: SDUIComponent) {
+    // Support both props.collections and props.data.collections (SDUI JSON nesting)
     val collectionsArr = component.props?.getArray("collections")
+        ?: component.props?.getObj("data")?.getArray("collections")
     val collections: List<Map<String, Any>> = if (collectionsArr != null) {
         collectionsArr.mapNotNull { el ->
             if (el.isJsonObject) {
@@ -385,59 +432,144 @@ fun RenderCuratedCollections(component: SDUIComponent) {
 
 @Composable
 fun RenderLightningDeals(component: SDUIComponent, onProductClick: (Product) -> Unit = {}) {
-    val props = component.props ?: return
-    val title = props.getString("title") ?: "Lightning deals"
-    val subtitle = props.getString("subtitle") ?: ""
-    val products = parseProducts(props.getArray("products"))
+    val props = component.props
+    val title = props?.getString("title") ?: "⚡ Lightning Deals"
+    val subtitle = props?.getString("subtitle") ?: ""
+    val limit = props?.getInt("limit") ?: 6
+    val inlineProducts = parseProducts(props?.getArray("products"))
 
-    LightningDealsView(title, subtitle, products, onProductClick)
+    if (inlineProducts.isNotEmpty()) {
+        // Use inline products from JSON
+        LightningDealsView(title, subtitle, inlineProducts, onProductClick)
+    } else {
+        // Fetch from API using limit
+        LightningDealsViewFromApi(title, subtitle, limit, onProductClick)
+    }
+}
+
+@Composable
+fun LightningDealsViewFromApi(
+    title: String,
+    subtitle: String,
+    limit: Int,
+    onProductClick: (Product) -> Unit
+) {
+    var products by remember { mutableStateOf<List<Product>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(limit) {
+        try {
+            products = NetworkClient.apiService.getProductsRaw(limit).products
+        } catch (e: Exception) {
+            android.util.Log.e("LightningDeals", "Failed to fetch: ${e.message}")
+        } finally {
+            isLoading = false
+        }
+    }
+
+    if (isLoading) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(220.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color(0xFFFF6B35))
+        }
+    } else if (products.isNotEmpty()) {
+        LightningDealsView(title, subtitle, products, onProductClick)
+    }
 }
 
 @Composable
 fun RenderProductGrid(component: SDUIComponent, onProductClick: (Product) -> Unit = {}) {
     val props = component.props
-    val cardStyle = props.getString("cardStyle") ?: "vertical"
-    val products = parseProducts(props?.getArray("products"))
+    val title = props?.getString("title")
+    val cardStyle = props?.getString("cardStyle") ?: "vertical"
+    val limit = props?.getInt("limit") ?: 10
+    val inlineProducts = parseProducts(props?.getArray("products"))
 
-    if (products.isEmpty()) return
+    if (inlineProducts.isNotEmpty()) {
+        ProductGridContent(title, cardStyle, inlineProducts, onProductClick)
+    } else {
+        // Fetch from API
+        var products by remember { mutableStateOf<List<Product>>(emptyList()) }
+        var isLoading by remember { mutableStateOf(true) }
 
-    if (cardStyle == "horizontal" || cardStyle == "lightning") {
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max)
-        ) {
-            items(products) { product ->
-                ProductCardView(
-                    product = product,
-                    modifier = Modifier.width(160.dp),
-                    onClick = { onProductClick(product) }
-                )
+        LaunchedEffect(limit) {
+            try {
+                products = NetworkClient.apiService.getProductsRaw(limit).products
+            } catch (e: Exception) {
+                android.util.Log.e("ProductGrid", "Failed: ${e.message}")
+            } finally {
+                isLoading = false
             }
         }
-    } else {
-        val columns = 2
-        val rows = (products.size + columns - 1) / columns
-        
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            for (i in 0 until rows) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    for (j in 0 until columns) {
-                        val index = i * columns + j
-                        if (index < products.size) {
-                             ProductCardView(
-                                 product = products[index],
-                                 modifier = Modifier.weight(1f),
-                                 onClick = { onProductClick(products[index]) }
-                             )
-                        } else {
-                            Spacer(modifier = Modifier.weight(1f))
+
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            ProductGridContent(title, cardStyle, products, onProductClick)
+        }
+    }
+}
+
+@Composable
+private fun ProductGridContent(
+    title: String?,
+    cardStyle: String,
+    products: List<Product>,
+    onProductClick: (Product) -> Unit
+) {
+    Column {
+        if (!title.isNullOrBlank()) {
+            Text(
+                text = title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF111827),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+        }
+
+        if (cardStyle == "horizontal" || cardStyle == "lightning") {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max)
+            ) {
+                items(products) { product ->
+                    ProductCardView(
+                        product = product,
+                        modifier = Modifier.width(160.dp),
+                        onClick = { onProductClick(product) }
+                    )
+                }
+            }
+        } else {
+            val columns = 2
+            val rows = (products.size + columns - 1) / columns
+
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                for (i in 0 until rows) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        for (j in 0 until columns) {
+                            val index = i * columns + j
+                            if (index < products.size) {
+                                ProductCardView(
+                                    product = products[index],
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onProductClick(products[index]) }
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }
