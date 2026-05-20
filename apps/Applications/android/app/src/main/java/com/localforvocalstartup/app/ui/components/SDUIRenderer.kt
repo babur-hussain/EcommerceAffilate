@@ -629,7 +629,7 @@ fun RenderDealsOfTheDay(component: SDUIComponent) {
     val headerActionUrl = props.getString("headerActionUrl")
     val items = parseItems<DealOfTheDayItem>(props.getArray("items"))
 
-    DealsOfTheDayView(title, subtitle, headerActionUrl, items)
+    DealsOfTheDayView(title, subtitle, headerActionUrl, items, onNavigate = { handleActionUrl(it) })
 }
 
 @Composable
@@ -639,7 +639,7 @@ fun RenderBudgetBuys(component: SDUIComponent) {
     val headerActionUrl = props.getString("headerActionUrl")
     val items = parseItems<BudgetItem>(props.getArray("items"))
 
-    BudgetBuysView(title, headerActionUrl, items)
+    BudgetBuysView(title, headerActionUrl, items, onNavigate = { handleActionUrl(it) })
 }
 
 inline fun <reified T> parseItems(data: com.google.gson.JsonElement?): List<T> {
@@ -668,7 +668,10 @@ fun RenderShoppingForOthersHub(component: SDUIComponent) {
     val props = component.props ?: return
     val title = props.getString("title") ?: "Shopping for others?"
     val subtitle = props.getString("subtitle") ?: "Choose a category to start exploring"
-    val items = parseItems<ShoppingCategoryItem>(props.getArray("items"))
+    // JSON may use "categories" or "items" — support both
+    val items = parseItems<ShoppingCategoryItem>(
+        props.getArray("categories") ?: props.getArray("items")
+    )
     ShoppingForOthersHubView(title, subtitle, items)
 }
 
@@ -678,7 +681,7 @@ fun RenderEarlyBirdDeals(component: SDUIComponent) {
     val title = props.getString("title") ?: "Early Bird Deals!"
     val headerActionUrl = props.getString("headerActionUrl")
     val items = parseItems<EarlyBirdDealItem>(props.getArray("items"))
-    EarlyBirdDealsView(title, headerActionUrl, items)
+    EarlyBirdDealsView(title, headerActionUrl, items, onNavigate = { handleActionUrl(it) })
 }
 
 @Composable
@@ -687,7 +690,7 @@ fun RenderSankrantiFestival(component: SDUIComponent) {
     val title = props.getString("title") ?: "Shine bright this Sankranti"
     val headerActionUrl = props.getString("headerActionUrl")
     val items = parseItems<FestiveItem>(props.getArray("items"))
-    SankrantiFestivalView(title, headerActionUrl, items)
+    SankrantiFestivalView(title, headerActionUrl, items, onNavigate = { handleActionUrl(it) })
 }
 
 @Composable
@@ -696,7 +699,7 @@ fun RenderShoeStealFest(component: SDUIComponent) {
     val title = props.getString("title") ?: "Shoe's Steal Fest"
     val headerActionUrl = props.getString("headerActionUrl")
     val items = parseItems<ShoeItem>(props.getArray("items"))
-    ShoeStealFestView(title, headerActionUrl, items)
+    ShoeStealFestView(title, headerActionUrl, items, onNavigate = { handleActionUrl(it) })
 }
 
 @Composable

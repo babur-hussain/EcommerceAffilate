@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, FlatList, Animated } from 'react-native';
 import CategoryPulseLoader from '../../shared/CategoryPulseLoader';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -173,7 +173,8 @@ export default function CategoriesScreen() {
                         contentContainerStyle={styles.rightContentScroll}
                     >
                         {selectedCategoryId === FOR_YOU_ID ? (
-                            <ForYouView />
+                            // <ForYouView /> // Temporarily disabled
+                            <ForYouSkeletonView />
                         ) : (
                             <>
                                 {/* Grouped Subcategory Display */}
@@ -298,6 +299,83 @@ export default function CategoriesScreen() {
         </SafeAreaView>
     );
 }
+
+// --- Skeleton Loading Components ---
+const SkeletonBlock = ({ width, height, borderRadius = 4, style }: any) => {
+    const fadeAnim = React.useRef(new Animated.Value(0.3)).current;
+
+    React.useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(fadeAnim, {
+                    toValue: 0.7,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(fadeAnim, {
+                    toValue: 0.3,
+                    duration: 800,
+                    useNativeDriver: true,
+                })
+            ])
+        ).start();
+    }, [fadeAnim]);
+
+    return (
+        <Animated.View
+            style={[
+                {
+                    width,
+                    height,
+                    backgroundColor: '#E5E7EB',
+                    borderRadius,
+                    opacity: fadeAnim,
+                },
+                style
+            ]}
+        />
+    );
+};
+
+const ForYouSkeletonView = () => {
+    return (
+        <View style={styles.forYouContainer}>
+            {/* Popular Store Section Skeleton */}
+            <SkeletonBlock width={120} height={18} style={{ marginBottom: 16 }} />
+            <View style={styles.gridRow}>
+                {[1, 2, 3].map((key) => (
+                    <View key={key} style={styles.gridItem}>
+                        <SkeletonBlock width={70} height={70} borderRadius={8} style={{ marginBottom: 8 }} />
+                        <SkeletonBlock width={60} height={12} borderRadius={4} />
+                    </View>
+                ))}
+            </View>
+
+            {/* Recently Viewed Stores Skeleton */}
+            <SkeletonBlock width={160} height={18} style={{ marginTop: 24, marginBottom: 16 }} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+                {[1, 2, 3, 4].map((key) => (
+                    <View key={key} style={[styles.storeCard, { padding: 8, borderWidth: 1, borderColor: '#F3F4F6' }]}>
+                        <SkeletonBlock width={100} height={100} borderRadius={8} style={{ marginBottom: 8 }} />
+                        <SkeletonBlock width={70} height={12} borderRadius={4} />
+                    </View>
+                ))}
+            </ScrollView>
+
+            {/* Have you tried? Skeleton */}
+            <SkeletonBlock width={140} height={18} style={{ marginTop: 24, marginBottom: 16 }} />
+            <View style={styles.gridRow}>
+                {[1, 2, 3].map((key) => (
+                    <View key={key} style={styles.gridItem}>
+                        <SkeletonBlock width={70} height={70} borderRadius={35} style={{ marginBottom: 8 }} />
+                        <SkeletonBlock width={60} height={12} borderRadius={4} />
+                    </View>
+                ))}
+            </View>
+            <View style={{ height: 50 }} />
+        </View>
+    );
+};
 
 // --- Specific "For You" View Component ---
 const ForYouView = () => {

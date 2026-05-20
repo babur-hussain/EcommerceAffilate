@@ -161,7 +161,8 @@ fun CategoriesScreen(
                         .background(Color(0xFFF9FAFB))
                 ) {
                     if (selectedCategoryId == FOR_YOU_ID) {
-                        ForYouView()
+                        // ForYouView() // Temporarily commented out/disabled
+                        ForYouSkeletonView()
                     } else if (selectedCategory?.slug == "fashion" || selectedCategory?.name?.equals("Fashion", ignoreCase = true) == true) {
                         SDUIPage(slug = "fashion", onProductClick = onProductClick)
                     } else {
@@ -499,6 +500,100 @@ fun ActionItemView(label: String, isExpand: Boolean, onClick: () -> Unit) {
     }
 }
 
+
+// --- For You Skeleton View ---
+@Composable
+fun ForYouSkeletonView() {
+    LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
+        // Popular Store Skeleton
+        item {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Box(
+                    modifier = Modifier
+                        .width(130.dp)
+                        .height(20.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .shimmerEffect()
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    repeat(3) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.width(100.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(70.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .shimmerEffect()
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .width(75.dp)
+                                    .height(12.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .shimmerEffect()
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Recently Viewed Stores Skeleton
+        item {
+            Column(modifier = Modifier.padding(top = 24.dp)) {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .width(190.dp)
+                        .height(20.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .shimmerEffect()
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(3) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .width(120.dp)
+                                .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(8.dp))
+                                .padding(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .shimmerEffect()
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .width(85.dp)
+                                    .height(12.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .shimmerEffect()
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 // --- For You View ---
 @Composable

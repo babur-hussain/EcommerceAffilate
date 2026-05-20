@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "EcommerceEarn"
+rootProject.name = "Local For Vocal Startup"
 include(":app")

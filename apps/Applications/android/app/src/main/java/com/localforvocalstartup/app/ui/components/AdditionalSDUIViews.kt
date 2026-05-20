@@ -45,7 +45,7 @@ data class WinterClearanceItem(
 @Composable
 fun WinterClearanceSaleView(
     title: String = "Winter Clearance Sale",
-    _headerActionUrl: String?,
+    headerActionUrl: String?,
     items: List<WinterClearanceItem>
 ) {
     Column(
@@ -58,7 +58,7 @@ fun WinterClearanceSaleView(
         Row(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .clickable { },
+                .clickable { headerActionUrl?.let { handleActionUrl(it) } },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -89,7 +89,7 @@ fun WinterClearanceCard(item: WinterClearanceItem) {
             .width(150.dp)
             .height(240.dp)
             .background(Color(0xFF1E88E5), RoundedCornerShape(16.dp))
-            .clickable { }
+            .clickable { item.actionUrl?.let { handleActionUrl(it) } }
     ) {
         // Image with rounded bottom corners
         AsyncImage(

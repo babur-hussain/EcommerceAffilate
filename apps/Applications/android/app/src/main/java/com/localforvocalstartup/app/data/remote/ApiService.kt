@@ -91,6 +91,9 @@ interface ApiService {
     @GET("categories")
     suspend fun getCategories(): List<Category>
 
+    @GET("categories/{id}")
+    suspend fun getCategory(@Path("id") id: String): com.google.gson.JsonObject
+
     @GET("categories/{id}/subcategories")
     suspend fun getSubCategories(@Path("id") parentId: String): List<Category>
 

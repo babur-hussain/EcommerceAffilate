@@ -31,26 +31,32 @@ import coil.compose.AsyncImage
 import com.localforvocalstartup.app.data.model.Category
 import com.localforvocalstartup.app.data.remote.NetworkClient
 import kotlinx.coroutines.launch
-
-private val FOR_YOU_ID = "for-you-special-id"
+import com.localforvocalstartup.app.ui.components.shimmerEffect
 
 @Composable
 fun CategoriesPageView(
     onProductClick: (com.localforvocalstartup.app.data.model.Product) -> Unit = {}
 ) {
     var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
+    var subCategories by remember { mutableStateOf<List<Category>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var selectedCategoryId by remember { mutableStateOf(FOR_YOU_ID) }
+    var selectedCategoryId by remember { mutableStateOf("") }
     var showGlobalSearch by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val sidebarCategories = categories.filter { it.parentCategory == null }
-    val subCategories = categories.filter { it.parentCategory == selectedCategoryId }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             try {
-                categories = NetworkClient.apiService.getCategories()
+                val fetchedCategories = NetworkClient.apiService.getCategories()
+                categories = fetchedCategories
+                if (fetchedCategories.isNotEmpty()) {
+                    val firstParent = fetchedCategories.firstOrNull { it.parentCategory == null }
+                    if (firstParent != null && selectedCategoryId.isEmpty()) {
+                        selectedCategoryId = firstParent._id
+                    }
+                }
                 isLoading = false
             } catch (e: Exception) {
                 // Log error
@@ -59,8 +65,20 @@ fun CategoriesPageView(
         }
     }
 
-    androidx.activity.compose.BackHandler(enabled = selectedCategoryId != FOR_YOU_ID) {
-        selectedCategoryId = FOR_YOU_ID
+    LaunchedEffect(selectedCategoryId) {
+        if (selectedCategoryId.isNotEmpty()) {
+            try {
+                subCategories = emptyList() // Clear while fetching
+                subCategories = NetworkClient.apiService.getSubCategories(selectedCategoryId)
+            } catch (e: Exception) {
+                subCategories = emptyList()
+            }
+        }
+    }
+
+    if (isLoading) {
+        CategoriesSkeletonView()
+        return
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -75,17 +93,6 @@ fun CategoriesPageView(
             LazyColumn(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                item {
-                    SidebarItem(
-                        id = FOR_YOU_ID,
-                        name = "For You",
-                        icon = "Tag", // Just a flag
-                        isSelected = selectedCategoryId == FOR_YOU_ID,
-                        onClick = { selectedCategoryId = FOR_YOU_ID },
-                        isCustom = true
-                    )
-                }
-
                 items(sidebarCategories) { category ->
                     SidebarItem(
                         id = category._id,
@@ -114,16 +121,12 @@ fun CategoriesPageView(
                 .fillMaxHeight()
                 .background(Color.White)
         ) {
-            if (selectedCategoryId == FOR_YOU_ID) {
-                ForYouContentView()
-            } else {
                 CategoryRightPaneView(
                     categoryId = selectedCategoryId,
                     categoryName = categories.find { it._id == selectedCategoryId }?.name,
                     subCategoriesFromParent = subCategories,
                     onSearchTap = { showGlobalSearch = true }
                 )
-            }
         }
     }
 
@@ -131,7 +134,7 @@ fun CategoriesPageView(
         Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
             com.localforvocalstartup.app.ui.pages.GlobalSearchView(
                 onDismiss = { showGlobalSearch = false },
-                categoryId = if (selectedCategoryId == FOR_YOU_ID) null else selectedCategoryId
+                categoryId = selectedCategoryId
             )
         }
     }
@@ -224,6 +227,108 @@ fun SidebarItem(
     }
 }
 
+// MARK: - Skeleton Loading Components
+@Composable
+fun CategoriesSkeletonView() {
+    Row(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        // Left Sidebar Skeleton (90dp width)
+        Box(
+            modifier = Modifier
+                .width(90.dp)
+                .fillMaxHeight()
+                .background(Color(0xFFF0F2F5))
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(8) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .shimmerEffect()
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(50.dp)
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .shimmerEffect()
+                        )
+                    }
+                }
+            }
+            // Right border line
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(Color(0xFFE5E7EB))
+                    .align(Alignment.CenterEnd)
+            )
+        }
+
+        // Right Content Area Skeleton
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .background(Color.White)
+        ) {
+            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                // Header skeleton
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .shimmerEffect()
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Group Title Skeleton
+                Box(
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .shimmerEffect()
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Grid of items skeleton
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    repeat(3) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(75.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .shimmerEffect()
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .width(60.dp)
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .shimmerEffect()
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Content Components
 
 @Composable
@@ -270,32 +375,6 @@ fun ForYouContentView() {
             item { StoreCardView("Blankets", "https://rukminim1.flixcart.com/image/612/612/kc54b0w0/blanket/q/d/a/ultra-soft-warm-single-bed-mink-blanket-for-winter-brown-original-imaftc6gh9z3z3gz.jpeg?q=70") }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Have you tried
-        Text(
-            text = "Have you tried?",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF111827),
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start
-        ) {
-            Box(Modifier.weight(1f)) {
-                GridItemView("Flipkart UPI", "https://rukminim1.flixcart.com/fk-p-flap/100/100/image/4890d7945d81b835.png?q=100", isRound = true)
-            }
-            Box(Modifier.weight(1f)) {
-                GridItemView("SuperCoin", "https://rukminim1.flixcart.com/fk-p-flap/100/100/image/913e9a786d149090.png?q=100", isRound = true)
-            }
-            Box(Modifier.weight(1f)) {
-                GridItemView("Plus Zone", "https://rukminim1.flixcart.com/fk-p-flap/100/100/image/21a5ebeb69248446.png?q=100", isRound = true)
-            }
-        }
-        
         Spacer(modifier = Modifier.height(100.dp))
     }
 }

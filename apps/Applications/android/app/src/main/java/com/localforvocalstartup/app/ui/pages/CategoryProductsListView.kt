@@ -44,6 +44,7 @@ fun CategoryProductsListView(
     title: String = "Products",
     minimumDiscount: Int = 0
 ) {
+    var displayTitle by remember { mutableStateOf(title) }
     var products by remember { mutableStateOf<List<Product>>(emptyList()) }
     var relatedProducts by remember { mutableStateOf<List<Product>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -51,6 +52,22 @@ fun CategoryProductsListView(
 
     LaunchedEffect(Unit) {
         try {
+            // Attempt to fetch proper category name if it's an ID
+            val potentialId = categoryId ?: if (title.isNotEmpty() && title != "Products") title else null
+            if (potentialId != null && potentialId.length == 24 && potentialId.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) {
+                try {
+                    val category = NetworkClient.apiService.getCategory(potentialId)
+                    if (category.has("name") && !category.get("name").isJsonNull) {
+                        val nameStr = category.get("name").asString
+                        if (nameStr.isNotBlank()) {
+                            displayTitle = nameStr
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Ignore errors, keep original title
+                }
+            }
+
             var fetched: List<Product> = emptyList()
             if (isGrocery) {
                 if (subCategoryIds.isNotEmpty()) {
@@ -115,7 +132,7 @@ fun CategoryProductsListView(
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = title,
+                text = displayTitle,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1F2937),
@@ -175,7 +192,7 @@ fun CategoryProductsListView(
                         Button(
                             onClick = {
                                 android.widget.Toast.makeText(context, "You will be notified when deals are available!", android.widget.Toast.LENGTH_SHORT).show()
-                                com.localforvocalstartup.app.data.manager.NotifyMeManager.register(context, categoryId ?: title, title)
+                                com.localforvocalstartup.app.data.manager.NotifyMeManager.register(context, categoryId ?: title, displayTitle)
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2874F0)),
                             shape = RoundedCornerShape(8.dp)

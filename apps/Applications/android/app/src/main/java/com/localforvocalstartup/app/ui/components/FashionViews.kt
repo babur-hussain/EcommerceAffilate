@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import com.localforvocalstartup.app.data.manager.NavigationManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -82,10 +83,7 @@ fun FashionForecastView(
             color = Color(0xFF111111),
             modifier = Modifier
                 .clickable {
-                    headerActionUrl?.let {
-                        // Handle navigation
-                        // Toast.makeText(context, "Navigating to $it", Toast.LENGTH_SHORT).show()
-                    }
+                    headerActionUrl?.let { handleActionUrl(it) }
                 }
                 .padding(bottom = 8.dp)
         )
@@ -107,9 +105,7 @@ fun FashionForecastCard(item: FashionForecastItem) {
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0xFFF0F0F0))
             .clickable {
-               item.actionUrl?.let {
-                  // Handle navigation
-               }
+               item.actionUrl?.let { handleActionUrl(it) }
             }
     ) {
         AsyncImage(
@@ -169,7 +165,7 @@ fun WinterCollectionView(
         Row(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .clickable { headerActionUrl?.let { } },
+                .clickable { headerActionUrl?.let { handleActionUrl(it) } },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -207,7 +203,7 @@ fun WinterCollectionCard(item: WinterCollectionItem) {
             .height(220.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFFF5F5DC))
-            .clickable { item.actionUrl?.let { } }
+            .clickable { item.actionUrl?.let { handleActionUrl(it) } }
     ) {
         // Image (70%)
         AsyncImage(

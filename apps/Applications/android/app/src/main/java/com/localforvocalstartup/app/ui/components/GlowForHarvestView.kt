@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.localforvocalstartup.app.data.manager.NavigationManager
 
 data class GlowForHarvestItem(
     val id: String,
@@ -62,7 +63,7 @@ fun GlowForHarvestView(
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFFFF6F00),
                     modifier = Modifier.clickable { 
-                        // Handle navigation to headerActionUrl
+                        headerActionUrl?.let { handleActionUrl(it) }
                     }
                 )
             }
@@ -84,9 +85,7 @@ fun GlowForHarvestView(
 fun GlowForHarvestCard(item: GlowForHarvestItem) {
     Column(
         modifier = Modifier.clickable {
-            item.actionUrl?.let {
-                // Navigate
-            }
+            item.actionUrl?.let { handleActionUrl(it) }
         },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)

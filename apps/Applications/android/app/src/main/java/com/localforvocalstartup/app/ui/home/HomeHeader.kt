@@ -82,6 +82,7 @@ import com.localforvocalstartup.app.ui.home.ForYouViewModel
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -364,7 +365,7 @@ fun CategoriesSliderView(
     LazyRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = Modifier.padding(bottom = 4.dp)
+        modifier = Modifier.padding(bottom = 0.dp)
     ) {
         items(categories) { category ->
             val isSelected = selectedCategory == category.name
@@ -374,7 +375,7 @@ fun CategoriesSliderView(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .clickable { onCategoryResult(category.name) }
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = 6.dp)
             ) {
                 // Icon Container
                 AnimatedVisibility(
@@ -639,6 +640,32 @@ fun HomeHeaderWithContent(
                         showIcons = showIcons,
                         onCategoryResult = { selectedCategory = it }
                     )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp)
+                            .background(
+                                color = Color.Black.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Announcement",
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "We're launching soon! Sellers are joining and products will be live shortly.  •  ",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.basicMarquee()
+                        )
+                    }
                 }
             }
 

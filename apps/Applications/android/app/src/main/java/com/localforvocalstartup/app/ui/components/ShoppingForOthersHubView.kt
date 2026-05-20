@@ -1,5 +1,6 @@
 package com.localforvocalstartup.app.ui.components
 
+import com.localforvocalstartup.app.data.manager.NavigationManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -69,7 +70,10 @@ fun ShoppingForOthersHubView(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             categories.forEach { item ->
-                ShoppingCategoryCard(item = item, onClick = { onNavigate(item.slug ?: item.id) })
+                ShoppingCategoryCard(item = item, onClick = {
+                    val url = item.actionUrl ?: item.slug ?: item.id
+                    handleActionUrl(url)
+                })
             }
         }
     }

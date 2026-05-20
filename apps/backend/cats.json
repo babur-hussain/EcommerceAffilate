@@ -1,0 +1,2566 @@
+[
+  {
+    "_id": "695f88c75f463eeb3c42e764",
+    "name": "Electronics"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e765",
+    "name": "Fashion"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e767",
+    "name": "Beauty"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e768",
+    "name": "Sports"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e76a",
+    "name": "Toys"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e76b",
+    "name": "Health"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e76c",
+    "name": "Automotive"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e76d",
+    "name": "Food"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e76e",
+    "name": "Jewelry"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e76f",
+    "name": "Pet Supplies"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e770",
+    "name": "Baby Products"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e771",
+    "name": "Furniture"
+  },
+  {
+    "_id": "695f88c75f463eeb3c42e772",
+    "name": "Garden & Outdoor"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8523",
+    "name": "T-Shirts"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8524",
+    "name": "Casual Shirts"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8525",
+    "name": "Formal Shirts"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8526",
+    "name": "Jeans"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8527",
+    "name": "Trousers"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8528",
+    "name": "Jackets & Coats"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8529",
+    "name": "Dresses"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b852a",
+    "name": "Tops & Tees"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b852b",
+    "name": "Kurtas & Kurtis"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b852c",
+    "name": "Sarees"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b852d",
+    "name": "Jeans & Jeggings"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b852e",
+    "name": "Skirts"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b852f",
+    "name": "Boys Clothing"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8530",
+    "name": "Girls Clothing"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8531",
+    "name": "Infant Wear"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8532",
+    "name": "Men's Sports Shoes"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8533",
+    "name": "Men's Casual Shoes"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8534",
+    "name": "Women's Flats"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8535",
+    "name": "Women's Heels"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8536",
+    "name": "Kids' Shoes"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8537",
+    "name": "Watches"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8538",
+    "name": "Bags & Backpacks"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b8539",
+    "name": "Sunglasses"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b853a",
+    "name": "Belts & Wallets"
+  },
+  {
+    "_id": "6967c4f5b76df21b066b853b",
+    "name": "Jewellery"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11d4",
+    "name": "Lipsticks"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11d5",
+    "name": "Foundations"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11d6",
+    "name": "Eye Shadows"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11d7",
+    "name": "Mascaras"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11d8",
+    "name": "Eyeliners"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11d9",
+    "name": "Blushes"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11da",
+    "name": "Highlighters"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11db",
+    "name": "Nail Polishes"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11dc",
+    "name": "Moisturizers"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11dd",
+    "name": "Face Washes"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11de",
+    "name": "Sunscreens"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11df",
+    "name": "Serums"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e0",
+    "name": "Face Masks"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e1",
+    "name": "Toners"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e2",
+    "name": "Body Lotions"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e3",
+    "name": "Shampoos"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e4",
+    "name": "Conditioners"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e5",
+    "name": "Hair Oils"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e6",
+    "name": "Hair Serums"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e7",
+    "name": "Hair Colors"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e8",
+    "name": "Perfumes"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11e9",
+    "name": "Deodorants"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11ea",
+    "name": "Body Mists"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11eb",
+    "name": "Beard Care"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11ec",
+    "name": "Shaving Essentials"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11ed",
+    "name": "Makeup Brushes"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11ee",
+    "name": "Hair Dryers"
+  },
+  {
+    "_id": "6967d82c85d7230e4eac11ef",
+    "name": "Straighteners"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b16",
+    "name": "Lipsticks"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b17",
+    "name": "Foundations"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b18",
+    "name": "Eye Shadows"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b19",
+    "name": "Mascaras"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b1a",
+    "name": "Eyeliners"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b1b",
+    "name": "Blushes"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b1c",
+    "name": "Highlighters"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b1d",
+    "name": "Nail Polishes"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b1e",
+    "name": "Moisturizers"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b1f",
+    "name": "Face Washes"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b20",
+    "name": "Sunscreens"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b21",
+    "name": "Serums"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b22",
+    "name": "Face Masks"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b23",
+    "name": "Toners"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b24",
+    "name": "Body Lotions"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b25",
+    "name": "Shampoos"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b26",
+    "name": "Conditioners"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b27",
+    "name": "Hair Oils"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b28",
+    "name": "Hair Serums"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b29",
+    "name": "Hair Colors"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b2a",
+    "name": "Perfumes"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b2b",
+    "name": "Deodorants"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b2c",
+    "name": "Body Mists"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b2d",
+    "name": "Beard Care"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b2e",
+    "name": "Shaving Essentials"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b2f",
+    "name": "Makeup Brushes"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b30",
+    "name": "Hair Dryers"
+  },
+  {
+    "_id": "6967d96b2555d78b3d158b31",
+    "name": "Straighteners"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515730",
+    "name": "Literary Fiction"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515731",
+    "name": "Mystery & Thriller"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515732",
+    "name": "Science Fiction"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515733",
+    "name": "Fantasy"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515734",
+    "name": "Romance"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515735",
+    "name": "Horror"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515736",
+    "name": "Biography & Memoir"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515737",
+    "name": "Self-Help"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515738",
+    "name": "Business & Economics"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515739",
+    "name": "History"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51573a",
+    "name": "Science & Nature"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51573b",
+    "name": "Philosophy"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51573c",
+    "name": "Textbooks"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51573d",
+    "name": "Study Guides"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51573e",
+    "name": "Test Preparation"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51573f",
+    "name": "Language Learning"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515740",
+    "name": "Picture Books"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515741",
+    "name": "Early Readers"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515742",
+    "name": "Middle Grade"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515743",
+    "name": "Young Adult"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515744",
+    "name": "Comics"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515745",
+    "name": "Manga"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515746",
+    "name": "Graphic Novels"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515747",
+    "name": "Cookbooks"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515748",
+    "name": "Baking"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a515749",
+    "name": "Healthy Eating"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51574a",
+    "name": "Art History"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51574b",
+    "name": "Photography"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51574c",
+    "name": "Design"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51574d",
+    "name": "Religious Texts"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51574e",
+    "name": "Meditation & Mindfulness"
+  },
+  {
+    "_id": "696805b4a4dbfe4b6a51574f",
+    "name": "Spirituality"
+  },
+  {
+    "_id": "695ff7de3f61939001a0637e",
+    "name": "Home & Kitchen"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad831b",
+    "name": "Sofas & Couches"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad831c",
+    "name": "Coffee Tables"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad831d",
+    "name": "TV Units"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad831e",
+    "name": "Recliners"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad831f",
+    "name": "Bookshelves"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8320",
+    "name": "Beds"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8321",
+    "name": "Wardrobes"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8322",
+    "name": "Mattresses"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8323",
+    "name": "Bedside Tables"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8324",
+    "name": "Dressers"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8325",
+    "name": "Dining Tables"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8326",
+    "name": "Dining Chairs"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8327",
+    "name": "Bar Stools"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8328",
+    "name": "Crockery Units"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8329",
+    "name": "Curtains & Blinds"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad832a",
+    "name": "Cushions & Covers"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad832b",
+    "name": "Wall Art"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad832c",
+    "name": "Mirrors"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad832d",
+    "name": "Rugs & Carpets"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad832e",
+    "name": "Ceiling Lights"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad832f",
+    "name": "Table Lamps"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8330",
+    "name": "Floor Lamps"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8331",
+    "name": "Wall Lights"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8332",
+    "name": "Shoe Racks"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8333",
+    "name": "Storage Boxes"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8334",
+    "name": "Cabinets"
+  },
+  {
+    "_id": "696814d9ca93a6c27aad8335",
+    "name": "Shelving Units"
+  },
+  {
+    "_id": "697094804ca42b9c20456daa",
+    "name": "Groceries"
+  },
+  {
+    "_id": "697094804ca42b9c20456dab",
+    "name": "Potato"
+  },
+  {
+    "_id": "697094804ca42b9c20456dac",
+    "name": "Onion"
+  },
+  {
+    "_id": "697094804ca42b9c20456dad",
+    "name": "Tomato"
+  },
+  {
+    "_id": "697094804ca42b9c20456dae",
+    "name": "Green Chili"
+  },
+  {
+    "_id": "697094804ca42b9c20456daf",
+    "name": "Ginger"
+  },
+  {
+    "_id": "697094804ca42b9c20456db0",
+    "name": "Garlic"
+  },
+  {
+    "_id": "697094804ca42b9c20456db1",
+    "name": "Lemon"
+  },
+  {
+    "_id": "697094804ca42b9c20456db2",
+    "name": "Carrot"
+  },
+  {
+    "_id": "697094804ca42b9c20456db3",
+    "name": "Cucumber"
+  },
+  {
+    "_id": "697094804ca42b9c20456db4",
+    "name": "Capsicum"
+  },
+  {
+    "_id": "697094804ca42b9c20456db5",
+    "name": "Cauliflower"
+  },
+  {
+    "_id": "697094804ca42b9c20456db6",
+    "name": "Cabbage"
+  },
+  {
+    "_id": "697094804ca42b9c20456db7",
+    "name": "Spinach"
+  },
+  {
+    "_id": "697094804ca42b9c20456db8",
+    "name": "Brinjal"
+  },
+  {
+    "_id": "697094804ca42b9c20456db9",
+    "name": "Okra"
+  },
+  {
+    "_id": "697094804ca42b9c20456dba",
+    "name": "Peas"
+  },
+  {
+    "_id": "697094804ca42b9c20456dbb",
+    "name": "Beans"
+  },
+  {
+    "_id": "697094804ca42b9c20456dbc",
+    "name": "Beetroot"
+  },
+  {
+    "_id": "697094804ca42b9c20456dbd",
+    "name": "Radish"
+  },
+  {
+    "_id": "697094804ca42b9c20456dbe",
+    "name": "Pumpkin"
+  },
+  {
+    "_id": "697094804ca42b9c20456dbf",
+    "name": "Banana"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc0",
+    "name": "Apple"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc1",
+    "name": "Orange"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc2",
+    "name": "Grapes"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc3",
+    "name": "Mango"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc4",
+    "name": "Papaya"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc5",
+    "name": "Pomegranate"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc6",
+    "name": "Watermelon"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc7",
+    "name": "Pineapple"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc8",
+    "name": "Kiwi"
+  },
+  {
+    "_id": "697094804ca42b9c20456dc9",
+    "name": "Guava"
+  },
+  {
+    "_id": "697094804ca42b9c20456dca",
+    "name": "Pear"
+  },
+  {
+    "_id": "697094804ca42b9c20456dcb",
+    "name": "Muskmelon"
+  },
+  {
+    "_id": "697094804ca42b9c20456dcc",
+    "name": "Avocado"
+  },
+  {
+    "_id": "697094804ca42b9c20456dcd",
+    "name": "Strawberry"
+  },
+  {
+    "_id": "697094804ca42b9c20456dce",
+    "name": "Blueberry"
+  },
+  {
+    "_id": "697094804ca42b9c20456dcf",
+    "name": "Dragon Fruit"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd0",
+    "name": "Cherry"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd1",
+    "name": "Peach"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd2",
+    "name": "Plum"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd3",
+    "name": "Leafy Vegetables"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd4",
+    "name": "Herbs & Seasonings"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd5",
+    "name": "Exotic Fruits & Veggies"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd6",
+    "name": "Organic Fruits & Vegetables"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd7",
+    "name": "Cuts & Sprouts"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd8",
+    "name": "Flowers"
+  },
+  {
+    "_id": "697094804ca42b9c20456dd9",
+    "name": "Frozen Veggies"
+  },
+  {
+    "_id": "697094804ca42b9c20456dda",
+    "name": "Dried Fruits"
+  },
+  {
+    "_id": "697094804ca42b9c20456ddb",
+    "name": "Milk"
+  },
+  {
+    "_id": "697094804ca42b9c20456ddc",
+    "name": "Curd & Yogurt"
+  },
+  {
+    "_id": "697094804ca42b9c20456ddd",
+    "name": "Cheese"
+  },
+  {
+    "_id": "697094804ca42b9c20456dde",
+    "name": "Butter & Cream"
+  },
+  {
+    "_id": "697094804ca42b9c20456ddf",
+    "name": "Paneer & Tofu"
+  },
+  {
+    "_id": "697094804ca42b9c20456de0",
+    "name": "Eggs"
+  },
+  {
+    "_id": "697094804ca42b9c20456de1",
+    "name": "Bread & Buns"
+  },
+  {
+    "_id": "697094804ca42b9c20456de2",
+    "name": "Toast & Rusk"
+  },
+  {
+    "_id": "697094804ca42b9c20456de3",
+    "name": "Bakery Snacks"
+  },
+  {
+    "_id": "697094804ca42b9c20456de4",
+    "name": "Dairy Alternative"
+  },
+  {
+    "_id": "697094804ca42b9c20456de5",
+    "name": "Condensed Milk"
+  },
+  {
+    "_id": "697094804ca42b9c20456de6",
+    "name": "Flavoured Milk"
+  },
+  {
+    "_id": "697094804ca42b9c20456de7",
+    "name": "Lassi & Buttermilk"
+  },
+  {
+    "_id": "697094804ca42b9c20456de8",
+    "name": "Milkshake"
+  },
+  {
+    "_id": "697094804ca42b9c20456de9",
+    "name": "Ice Creams"
+  },
+  {
+    "_id": "697094804ca42b9c20456dea",
+    "name": "Atta & Flours"
+  },
+  {
+    "_id": "697094804ca42b9c20456deb",
+    "name": "Rice & Rice Products"
+  },
+  {
+    "_id": "697094804ca42b9c20456dec",
+    "name": "Dals & Pulses"
+  },
+  {
+    "_id": "697094804ca42b9c20456ded",
+    "name": "Edible Oils & Ghee"
+  },
+  {
+    "_id": "697094804ca42b9c20456dee",
+    "name": "Salt, Sugar & Jaggery"
+  },
+  {
+    "_id": "697094804ca42b9c20456def",
+    "name": "Spices & Masalas"
+  },
+  {
+    "_id": "697094804ca42b9c20456df0",
+    "name": "Dry Fruits & Nuts"
+  },
+  {
+    "_id": "697094804ca42b9c20456df1",
+    "name": "Whole Spices"
+  },
+  {
+    "_id": "697094804ca42b9c20456df2",
+    "name": "Powdered Spices"
+  },
+  {
+    "_id": "697094804ca42b9c20456df3",
+    "name": "Cooking Pastes"
+  },
+  {
+    "_id": "697094804ca42b9c20456df4",
+    "name": "Blended Masalas"
+  },
+  {
+    "_id": "697094804ca42b9c20456df5",
+    "name": "Soya Products"
+  },
+  {
+    "_id": "697094804ca42b9c20456df6",
+    "name": "Grains & Millets"
+  },
+  {
+    "_id": "697094804ca42b9c20456df7",
+    "name": "Poha & Puffed Rice"
+  },
+  {
+    "_id": "697094804ca42b9c20456df8",
+    "name": "Vermicelli"
+  },
+  {
+    "_id": "697094804ca42b9c20456df9",
+    "name": "Organic Atta & Flours"
+  },
+  {
+    "_id": "697094804ca42b9c20456dfa",
+    "name": "Organic Rice & Rice Products"
+  },
+  {
+    "_id": "697094804ca42b9c20456dfb",
+    "name": "Organic Dals & Pulses"
+  },
+  {
+    "_id": "697094804ca42b9c20456dfc",
+    "name": "Organic Edible Oils & Ghee"
+  },
+  {
+    "_id": "697094804ca42b9c20456dfd",
+    "name": "Organic Salt, Sugar & Jaggery"
+  },
+  {
+    "_id": "697094804ca42b9c20456dfe",
+    "name": "Organic Spices & Masalas"
+  },
+  {
+    "_id": "697094804ca42b9c20456dff",
+    "name": "Organic Dry Fruits & Nuts"
+  },
+  {
+    "_id": "697094804ca42b9c20456e00",
+    "name": "Organic Whole Spices"
+  },
+  {
+    "_id": "697094804ca42b9c20456e01",
+    "name": "Organic Powdered Spices"
+  },
+  {
+    "_id": "697094804ca42b9c20456e02",
+    "name": "Organic Cooking Pastes"
+  },
+  {
+    "_id": "697094804ca42b9c20456e03",
+    "name": "Organic Blended Masalas"
+  },
+  {
+    "_id": "697094804ca42b9c20456e04",
+    "name": "Organic Soya Products"
+  },
+  {
+    "_id": "697094804ca42b9c20456e05",
+    "name": "Organic Grains & Millets"
+  },
+  {
+    "_id": "697094804ca42b9c20456e06",
+    "name": "Organic Poha & Puffed Rice"
+  },
+  {
+    "_id": "697094804ca42b9c20456e07",
+    "name": "Organic Vermicelli"
+  },
+  {
+    "_id": "697094804ca42b9c20456e08",
+    "name": "Chips & Crisps"
+  },
+  {
+    "_id": "697094804ca42b9c20456e09",
+    "name": "Nachos"
+  },
+  {
+    "_id": "697094804ca42b9c20456e0a",
+    "name": "Popcorn"
+  },
+  {
+    "_id": "697094804ca42b9c20456e0b",
+    "name": "Biscuits & Cookies"
+  },
+  {
+    "_id": "697094804ca42b9c20456e0c",
+    "name": "Rusks & Wafers"
+  },
+  {
+    "_id": "697094804ca42b9c20456e0d",
+    "name": "Namkeen & Savouries"
+  },
+  {
+    "_id": "697094804ca42b9c20456e0e",
+    "name": "Chocolates & Candies"
+  },
+  {
+    "_id": "697094804ca42b9c20456e0f",
+    "name": "Indian Sweets"
+  },
+  {
+    "_id": "697094804ca42b9c20456e10",
+    "name": "Healthy Snacks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e11",
+    "name": "Pasta & Macaroni"
+  },
+  {
+    "_id": "697094804ca42b9c20456e12",
+    "name": "Noodles & Vermicelli"
+  },
+  {
+    "_id": "697094804ca42b9c20456e13",
+    "name": "Instant Noodles"
+  },
+  {
+    "_id": "697094804ca42b9c20456e14",
+    "name": "Soup & Soup Mixes"
+  },
+  {
+    "_id": "697094804ca42b9c20456e15",
+    "name": "Breakfast Cereals"
+  },
+  {
+    "_id": "697094804ca42b9c20456e16",
+    "name": "Energy Bars"
+  },
+  {
+    "_id": "697094804ca42b9c20456e17",
+    "name": "Frozen Snacks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e18",
+    "name": "Ketchup & Sauces"
+  },
+  {
+    "_id": "697094804ca42b9c20456e19",
+    "name": "Jams & Spreads"
+  },
+  {
+    "_id": "697094804ca42b9c20456e1a",
+    "name": "Pickles & Chutneys"
+  },
+  {
+    "_id": "697094804ca42b9c20456e1b",
+    "name": "Honey"
+  },
+  {
+    "_id": "697094804ca42b9c20456e1c",
+    "name": "Premium Chips & Crisps"
+  },
+  {
+    "_id": "697094804ca42b9c20456e1d",
+    "name": "Premium Nachos"
+  },
+  {
+    "_id": "697094804ca42b9c20456e1e",
+    "name": "Premium Popcorn"
+  },
+  {
+    "_id": "697094804ca42b9c20456e1f",
+    "name": "Premium Biscuits & Cookies"
+  },
+  {
+    "_id": "697094804ca42b9c20456e20",
+    "name": "Premium Rusks & Wafers"
+  },
+  {
+    "_id": "697094804ca42b9c20456e21",
+    "name": "Premium Namkeen & Savouries"
+  },
+  {
+    "_id": "697094804ca42b9c20456e22",
+    "name": "Premium Chocolates & Candies"
+  },
+  {
+    "_id": "697094804ca42b9c20456e23",
+    "name": "Premium Indian Sweets"
+  },
+  {
+    "_id": "697094804ca42b9c20456e24",
+    "name": "Premium Healthy Snacks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e25",
+    "name": "Premium Pasta & Macaroni"
+  },
+  {
+    "_id": "697094804ca42b9c20456e26",
+    "name": "Premium Noodles & Vermicelli"
+  },
+  {
+    "_id": "697094804ca42b9c20456e27",
+    "name": "Premium Instant Noodles"
+  },
+  {
+    "_id": "697094804ca42b9c20456e28",
+    "name": "Premium Soup & Soup Mixes"
+  },
+  {
+    "_id": "697094804ca42b9c20456e29",
+    "name": "Premium Breakfast Cereals"
+  },
+  {
+    "_id": "697094804ca42b9c20456e2a",
+    "name": "Premium Energy Bars"
+  },
+  {
+    "_id": "697094804ca42b9c20456e2b",
+    "name": "Premium Frozen Snacks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e2c",
+    "name": "Premium Ketchup & Sauces"
+  },
+  {
+    "_id": "697094804ca42b9c20456e2d",
+    "name": "Premium Jams & Spreads"
+  },
+  {
+    "_id": "697094804ca42b9c20456e2e",
+    "name": "Premium Pickles & Chutneys"
+  },
+  {
+    "_id": "697094804ca42b9c20456e2f",
+    "name": "Premium Honey"
+  },
+  {
+    "_id": "697094804ca42b9c20456e30",
+    "name": "Tea"
+  },
+  {
+    "_id": "697094804ca42b9c20456e31",
+    "name": "Coffee"
+  },
+  {
+    "_id": "697094804ca42b9c20456e32",
+    "name": "Fruit Juices"
+  },
+  {
+    "_id": "697094804ca42b9c20456e33",
+    "name": "Soft Drinks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e34",
+    "name": "Energy Drinks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e35",
+    "name": "Health Drinks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e36",
+    "name": "Water"
+  },
+  {
+    "_id": "697094804ca42b9c20456e37",
+    "name": "Soda & Mixers"
+  },
+  {
+    "_id": "697094804ca42b9c20456e38",
+    "name": "Syrups & Concentrates"
+  },
+  {
+    "_id": "697094804ca42b9c20456e39",
+    "name": "Organic Tea"
+  },
+  {
+    "_id": "697094804ca42b9c20456e3a",
+    "name": "Green Tea"
+  },
+  {
+    "_id": "697094804ca42b9c20456e3b",
+    "name": "Herbal Tea"
+  },
+  {
+    "_id": "697094804ca42b9c20456e3c",
+    "name": "Ground Coffee"
+  },
+  {
+    "_id": "697094804ca42b9c20456e3d",
+    "name": "Instant Coffee"
+  },
+  {
+    "_id": "697094804ca42b9c20456e3e",
+    "name": "Cold Coffee"
+  },
+  {
+    "_id": "697094804ca42b9c20456e3f",
+    "name": "Bath & Body"
+  },
+  {
+    "_id": "697094804ca42b9c20456e40",
+    "name": "Hair Care"
+  },
+  {
+    "_id": "697094804ca42b9c20456e41",
+    "name": "Skin Care"
+  },
+  {
+    "_id": "697094804ca42b9c20456e42",
+    "name": "Oral Care"
+  },
+  {
+    "_id": "697094804ca42b9c20456e43",
+    "name": "Fragrances"
+  },
+  {
+    "_id": "697094804ca42b9c20456e44",
+    "name": "Face Wash"
+  },
+  {
+    "_id": "697094804ca42b9c20456e45",
+    "name": "Shower Gel"
+  },
+  {
+    "_id": "697094804ca42b9c20456e46",
+    "name": "Soaps"
+  },
+  {
+    "_id": "697094804ca42b9c20456e47",
+    "name": "Shampoo"
+  },
+  {
+    "_id": "697094804ca42b9c20456e48",
+    "name": "Conditioner"
+  },
+  {
+    "_id": "697094804ca42b9c20456e49",
+    "name": "Hair Oil"
+  },
+  {
+    "_id": "697094804ca42b9c20456e4a",
+    "name": "Hair Color"
+  },
+  {
+    "_id": "697094804ca42b9c20456e4b",
+    "name": "Toothpaste"
+  },
+  {
+    "_id": "697094804ca42b9c20456e4c",
+    "name": "Toothbrush"
+  },
+  {
+    "_id": "697094804ca42b9c20456e4d",
+    "name": "Mouthwash"
+  },
+  {
+    "_id": "697094804ca42b9c20456e4e",
+    "name": "Hand Wash"
+  },
+  {
+    "_id": "697094804ca42b9c20456e4f",
+    "name": "Sanitizers"
+  },
+  {
+    "_id": "697094804ca42b9c20456e50",
+    "name": "Body Lotions"
+  },
+  {
+    "_id": "697094804ca42b9c20456e51",
+    "name": "Face Creams"
+  },
+  {
+    "_id": "697094804ca42b9c20456e52",
+    "name": "Deodorants"
+  },
+  {
+    "_id": "697094804ca42b9c20456e53",
+    "name": "Perfumes"
+  },
+  {
+    "_id": "697094804ca42b9c20456e54",
+    "name": "Shaving Needs"
+  },
+  {
+    "_id": "697094804ca42b9c20456e55",
+    "name": "Feminine Hygiene"
+  },
+  {
+    "_id": "697094804ca42b9c20456e56",
+    "name": "Men's Grooming"
+  },
+  {
+    "_id": "697094804ca42b9c20456e57",
+    "name": "Makeup"
+  },
+  {
+    "_id": "697094804ca42b9c20456e58",
+    "name": "Detergents & Bars"
+  },
+  {
+    "_id": "697094804ca42b9c20456e59",
+    "name": "Dishwashing"
+  },
+  {
+    "_id": "697094804ca42b9c20456e5a",
+    "name": "Toilet Cleaners"
+  },
+  {
+    "_id": "697094804ca42b9c20456e5b",
+    "name": "Floor Cleaners"
+  },
+  {
+    "_id": "697094804ca42b9c20456e5c",
+    "name": "Glass Cleaners"
+  },
+  {
+    "_id": "697094804ca42b9c20456e5d",
+    "name": "Kitchen Cleaners"
+  },
+  {
+    "_id": "697094804ca42b9c20456e5e",
+    "name": "Fabric Care"
+  },
+  {
+    "_id": "697094804ca42b9c20456e5f",
+    "name": "Disposables"
+  },
+  {
+    "_id": "697094804ca42b9c20456e60",
+    "name": "Garbage Bags"
+  },
+  {
+    "_id": "697094804ca42b9c20456e61",
+    "name": "Tissues & Wipes"
+  },
+  {
+    "_id": "697094804ca42b9c20456e62",
+    "name": "Air Fresheners"
+  },
+  {
+    "_id": "697094804ca42b9c20456e63",
+    "name": "Repellents"
+  },
+  {
+    "_id": "697094804ca42b9c20456e64",
+    "name": "Shoe Care"
+  },
+  {
+    "_id": "697094804ca42b9c20456e65",
+    "name": "Car Care"
+  },
+  {
+    "_id": "697094804ca42b9c20456e66",
+    "name": "Pooja Needs"
+  },
+  {
+    "_id": "697094804ca42b9c20456e67",
+    "name": "Brooms & Mops"
+  },
+  {
+    "_id": "697094804ca42b9c20456e68",
+    "name": "Cleaning Tools"
+  },
+  {
+    "_id": "697094804ca42b9c20456e69",
+    "name": "Stationery"
+  },
+  {
+    "_id": "697094804ca42b9c20456e6a",
+    "name": "Electricals"
+  },
+  {
+    "_id": "697094804ca42b9c20456e6b",
+    "name": "Bulbs & Batteries"
+  },
+  {
+    "_id": "697094804ca42b9c20456e6c",
+    "name": "Diapers & Wipes"
+  },
+  {
+    "_id": "697094804ca42b9c20456e6d",
+    "name": "Baby Food"
+  },
+  {
+    "_id": "697094804ca42b9c20456e6e",
+    "name": "Baby Skincare"
+  },
+  {
+    "_id": "697094804ca42b9c20456e6f",
+    "name": "Baby Bath"
+  },
+  {
+    "_id": "697094804ca42b9c20456e70",
+    "name": "Baby Oil"
+  },
+  {
+    "_id": "697094804ca42b9c20456e71",
+    "name": "Baby Powder"
+  },
+  {
+    "_id": "697094804ca42b9c20456e72",
+    "name": "Baby Accessories"
+  },
+  {
+    "_id": "697094804ca42b9c20456e73",
+    "name": "Feeding Bottles"
+  },
+  {
+    "_id": "697094804ca42b9c20456e74",
+    "name": "Baby Oral Care"
+  },
+  {
+    "_id": "697094804ca42b9c20456e75",
+    "name": "Baby Detergents"
+  },
+  {
+    "_id": "697094804ca42b9c20456e76",
+    "name": "Cookware"
+  },
+  {
+    "_id": "697094804ca42b9c20456e77",
+    "name": "Storage & Containers"
+  },
+  {
+    "_id": "697094804ca42b9c20456e78",
+    "name": "Bottles & Flasks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e79",
+    "name": "Tiffin Boxes"
+  },
+  {
+    "_id": "697094804ca42b9c20456e7a",
+    "name": "Dining & Serving"
+  },
+  {
+    "_id": "697094804ca42b9c20456e7b",
+    "name": "Cutlery"
+  },
+  {
+    "_id": "697094804ca42b9c20456e7c",
+    "name": "Kitchen Tools"
+  },
+  {
+    "_id": "697094804ca42b9c20456e7d",
+    "name": "Bakeware"
+  },
+  {
+    "_id": "697094804ca42b9c20456e7e",
+    "name": "Gas Stoves"
+  },
+  {
+    "_id": "697094804ca42b9c20456e7f",
+    "name": "Pressure Cookers"
+  },
+  {
+    "_id": "697094804ca42b9c20456e80",
+    "name": "Dog Food"
+  },
+  {
+    "_id": "697094804ca42b9c20456e81",
+    "name": "Cat Food"
+  },
+  {
+    "_id": "697094804ca42b9c20456e82",
+    "name": "Pet Accessories"
+  },
+  {
+    "_id": "697094804ca42b9c20456e83",
+    "name": "Pet Grooming"
+  },
+  {
+    "_id": "697094804ca42b9c20456e84",
+    "name": "Pet Toys"
+  },
+  {
+    "_id": "697094804ca42b9c20456e85",
+    "name": "Fish Food"
+  },
+  {
+    "_id": "697094804ca42b9c20456e86",
+    "name": "Bird Food"
+  },
+  {
+    "_id": "697094804ca42b9c20456e87",
+    "name": "Small Animal Food"
+  },
+  {
+    "_id": "697094804ca42b9c20456e88",
+    "name": "Pet Hygiene"
+  },
+  {
+    "_id": "697094804ca42b9c20456e89",
+    "name": "Pet Health"
+  },
+  {
+    "_id": "697094804ca42b9c20456e8a",
+    "name": "Fresh Chicken"
+  },
+  {
+    "_id": "697094804ca42b9c20456e8b",
+    "name": "Fresh Mutton"
+  },
+  {
+    "_id": "697094804ca42b9c20456e8c",
+    "name": "Fresh Fish"
+  },
+  {
+    "_id": "697094804ca42b9c20456e8d",
+    "name": "Prawns & Crabs"
+  },
+  {
+    "_id": "697094804ca42b9c20456e8e",
+    "name": "Eggs (Non-Veg)"
+  },
+  {
+    "_id": "697094804ca42b9c20456e8f",
+    "name": "Frozen Meat"
+  },
+  {
+    "_id": "697094804ca42b9c20456e90",
+    "name": "Dried Fish"
+  },
+  {
+    "_id": "697094804ca42b9c20456e91",
+    "name": "Marinades"
+  },
+  {
+    "_id": "697094804ca42b9c20456e92",
+    "name": "Cold Cuts"
+  },
+  {
+    "_id": "697094804ca42b9c20456e93",
+    "name": "Sausages"
+  },
+  {
+    "_id": "697094804ca42b9c20456e94",
+    "name": "Oils & Vinegar"
+  },
+  {
+    "_id": "697094804ca42b9c20456e95",
+    "name": "Dairy & Cheese"
+  },
+  {
+    "_id": "697094804ca42b9c20456e96",
+    "name": "Snacks"
+  },
+  {
+    "_id": "697094804ca42b9c20456e97",
+    "name": "Pasta & Sauces"
+  },
+  {
+    "_id": "697094804ca42b9c20456e98",
+    "name": "Cereals & Granola"
+  },
+  {
+    "_id": "697094804ca42b9c20456e99",
+    "name": "Chocolates & Biscuits"
+  },
+  {
+    "_id": "697094804ca42b9c20456e9a",
+    "name": "Sauces & Condiments"
+  },
+  {
+    "_id": "697094804ca42b9c20456e9b",
+    "name": "Beverages"
+  },
+  {
+    "_id": "697094804ca42b9c20456e9c",
+    "name": "Baking Needs"
+  },
+  {
+    "_id": "697094804ca42b9c20456e9d",
+    "name": "Canned Food"
+  },
+  {
+    "_id": "6970956db7f81cb07934844b",
+    "name": "Potato"
+  },
+  {
+    "_id": "6970956db7f81cb07934844c",
+    "name": "Onion"
+  },
+  {
+    "_id": "6970956db7f81cb07934844d",
+    "name": "Tomato"
+  },
+  {
+    "_id": "6970956db7f81cb07934844e",
+    "name": "Green Chili"
+  },
+  {
+    "_id": "6970956db7f81cb07934844f",
+    "name": "Ginger"
+  },
+  {
+    "_id": "6970956db7f81cb079348450",
+    "name": "Garlic"
+  },
+  {
+    "_id": "6970956db7f81cb079348451",
+    "name": "Lemon"
+  },
+  {
+    "_id": "6970956db7f81cb079348452",
+    "name": "Carrot"
+  },
+  {
+    "_id": "6970956db7f81cb079348453",
+    "name": "Cucumber"
+  },
+  {
+    "_id": "6970956db7f81cb079348454",
+    "name": "Capsicum"
+  },
+  {
+    "_id": "6970956db7f81cb079348455",
+    "name": "Cauliflower"
+  },
+  {
+    "_id": "6970956db7f81cb079348456",
+    "name": "Cabbage"
+  },
+  {
+    "_id": "6970956db7f81cb079348457",
+    "name": "Spinach"
+  },
+  {
+    "_id": "6970956db7f81cb079348458",
+    "name": "Brinjal"
+  },
+  {
+    "_id": "6970956db7f81cb079348459",
+    "name": "Okra"
+  },
+  {
+    "_id": "6970956db7f81cb07934845a",
+    "name": "Peas"
+  },
+  {
+    "_id": "6970956db7f81cb07934845b",
+    "name": "Beans"
+  },
+  {
+    "_id": "6970956db7f81cb07934845c",
+    "name": "Beetroot"
+  },
+  {
+    "_id": "6970956db7f81cb07934845d",
+    "name": "Radish"
+  },
+  {
+    "_id": "6970956db7f81cb07934845e",
+    "name": "Pumpkin"
+  },
+  {
+    "_id": "6970956db7f81cb07934845f",
+    "name": "Banana"
+  },
+  {
+    "_id": "6970956db7f81cb079348460",
+    "name": "Apple"
+  },
+  {
+    "_id": "6970956db7f81cb079348461",
+    "name": "Orange"
+  },
+  {
+    "_id": "6970956db7f81cb079348462",
+    "name": "Grapes"
+  },
+  {
+    "_id": "6970956db7f81cb079348463",
+    "name": "Mango"
+  },
+  {
+    "_id": "6970956db7f81cb079348464",
+    "name": "Papaya"
+  },
+  {
+    "_id": "6970956db7f81cb079348465",
+    "name": "Pomegranate"
+  },
+  {
+    "_id": "6970956db7f81cb079348466",
+    "name": "Watermelon"
+  },
+  {
+    "_id": "6970956db7f81cb079348467",
+    "name": "Pineapple"
+  },
+  {
+    "_id": "6970956db7f81cb079348468",
+    "name": "Kiwi"
+  },
+  {
+    "_id": "6970956db7f81cb079348469",
+    "name": "Guava"
+  },
+  {
+    "_id": "6970956db7f81cb07934846a",
+    "name": "Pear"
+  },
+  {
+    "_id": "6970956db7f81cb07934846b",
+    "name": "Muskmelon"
+  },
+  {
+    "_id": "6970956db7f81cb07934846c",
+    "name": "Avocado"
+  },
+  {
+    "_id": "6970956db7f81cb07934846d",
+    "name": "Strawberry"
+  },
+  {
+    "_id": "6970956db7f81cb07934846e",
+    "name": "Blueberry"
+  },
+  {
+    "_id": "6970956db7f81cb07934846f",
+    "name": "Dragon Fruit"
+  },
+  {
+    "_id": "6970956db7f81cb079348470",
+    "name": "Cherry"
+  },
+  {
+    "_id": "6970956db7f81cb079348471",
+    "name": "Peach"
+  },
+  {
+    "_id": "6970956db7f81cb079348472",
+    "name": "Plum"
+  },
+  {
+    "_id": "6970956db7f81cb079348473",
+    "name": "Leafy Vegetables"
+  },
+  {
+    "_id": "6970956db7f81cb079348474",
+    "name": "Herbs & Seasonings"
+  },
+  {
+    "_id": "6970956db7f81cb079348475",
+    "name": "Exotic Fruits & Veggies"
+  },
+  {
+    "_id": "6970956db7f81cb079348476",
+    "name": "Organic Fruits & Vegetables"
+  },
+  {
+    "_id": "6970956db7f81cb079348477",
+    "name": "Cuts & Sprouts"
+  },
+  {
+    "_id": "6970956db7f81cb079348478",
+    "name": "Flowers"
+  },
+  {
+    "_id": "6970956db7f81cb079348479",
+    "name": "Frozen Veggies"
+  },
+  {
+    "_id": "6970956db7f81cb07934847a",
+    "name": "Dried Fruits"
+  },
+  {
+    "_id": "6970956db7f81cb07934847b",
+    "name": "Milk"
+  },
+  {
+    "_id": "6970956db7f81cb07934847c",
+    "name": "Curd & Yogurt"
+  },
+  {
+    "_id": "6970956db7f81cb07934847d",
+    "name": "Cheese"
+  },
+  {
+    "_id": "6970956db7f81cb07934847e",
+    "name": "Butter & Cream"
+  },
+  {
+    "_id": "6970956db7f81cb07934847f",
+    "name": "Paneer & Tofu"
+  },
+  {
+    "_id": "6970956db7f81cb079348480",
+    "name": "Eggs"
+  },
+  {
+    "_id": "6970956db7f81cb079348481",
+    "name": "Bread & Buns"
+  },
+  {
+    "_id": "6970956db7f81cb079348482",
+    "name": "Toast & Rusk"
+  },
+  {
+    "_id": "6970956db7f81cb079348483",
+    "name": "Bakery Snacks"
+  },
+  {
+    "_id": "6970956db7f81cb079348484",
+    "name": "Dairy Alternative"
+  },
+  {
+    "_id": "6970956db7f81cb079348485",
+    "name": "Condensed Milk"
+  },
+  {
+    "_id": "6970956db7f81cb079348486",
+    "name": "Flavoured Milk"
+  },
+  {
+    "_id": "6970956db7f81cb079348487",
+    "name": "Lassi & Buttermilk"
+  },
+  {
+    "_id": "6970956db7f81cb079348488",
+    "name": "Milkshake"
+  },
+  {
+    "_id": "6970956db7f81cb079348489",
+    "name": "Ice Creams"
+  },
+  {
+    "_id": "6970956db7f81cb07934848a",
+    "name": "Atta & Flours"
+  },
+  {
+    "_id": "6970956db7f81cb07934848b",
+    "name": "Rice & Rice Products"
+  },
+  {
+    "_id": "6970956db7f81cb07934848c",
+    "name": "Dals & Pulses"
+  },
+  {
+    "_id": "6970956db7f81cb07934848d",
+    "name": "Edible Oils & Ghee"
+  },
+  {
+    "_id": "6970956db7f81cb07934848e",
+    "name": "Salt, Sugar & Jaggery"
+  },
+  {
+    "_id": "6970956db7f81cb07934848f",
+    "name": "Spices & Masalas"
+  },
+  {
+    "_id": "6970956db7f81cb079348490",
+    "name": "Dry Fruits & Nuts"
+  },
+  {
+    "_id": "6970956db7f81cb079348491",
+    "name": "Whole Spices"
+  },
+  {
+    "_id": "6970956db7f81cb079348492",
+    "name": "Powdered Spices"
+  },
+  {
+    "_id": "6970956db7f81cb079348493",
+    "name": "Cooking Pastes"
+  },
+  {
+    "_id": "6970956db7f81cb079348494",
+    "name": "Blended Masalas"
+  },
+  {
+    "_id": "6970956db7f81cb079348495",
+    "name": "Soya Products"
+  },
+  {
+    "_id": "6970956db7f81cb079348496",
+    "name": "Grains & Millets"
+  },
+  {
+    "_id": "6970956db7f81cb079348497",
+    "name": "Poha & Puffed Rice"
+  },
+  {
+    "_id": "6970956db7f81cb079348498",
+    "name": "Vermicelli"
+  },
+  {
+    "_id": "6970956db7f81cb079348499",
+    "name": "Organic Atta & Flours"
+  },
+  {
+    "_id": "6970956db7f81cb07934849a",
+    "name": "Organic Rice & Rice Products"
+  },
+  {
+    "_id": "6970956db7f81cb07934849b",
+    "name": "Organic Dals & Pulses"
+  },
+  {
+    "_id": "6970956db7f81cb07934849c",
+    "name": "Organic Edible Oils & Ghee"
+  },
+  {
+    "_id": "6970956db7f81cb07934849d",
+    "name": "Organic Salt, Sugar & Jaggery"
+  },
+  {
+    "_id": "6970956db7f81cb07934849e",
+    "name": "Organic Spices & Masalas"
+  },
+  {
+    "_id": "6970956db7f81cb07934849f",
+    "name": "Organic Dry Fruits & Nuts"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a0",
+    "name": "Organic Whole Spices"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a1",
+    "name": "Organic Powdered Spices"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a2",
+    "name": "Organic Cooking Pastes"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a3",
+    "name": "Organic Blended Masalas"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a4",
+    "name": "Organic Soya Products"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a5",
+    "name": "Organic Grains & Millets"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a6",
+    "name": "Organic Poha & Puffed Rice"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a7",
+    "name": "Organic Vermicelli"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a8",
+    "name": "Chips & Crisps"
+  },
+  {
+    "_id": "6970956db7f81cb0793484a9",
+    "name": "Nachos"
+  },
+  {
+    "_id": "6970956db7f81cb0793484aa",
+    "name": "Popcorn"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ab",
+    "name": "Biscuits & Cookies"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ac",
+    "name": "Rusks & Wafers"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ad",
+    "name": "Namkeen & Savouries"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ae",
+    "name": "Chocolates & Candies"
+  },
+  {
+    "_id": "6970956db7f81cb0793484af",
+    "name": "Indian Sweets"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b0",
+    "name": "Healthy Snacks"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b1",
+    "name": "Pasta & Macaroni"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b2",
+    "name": "Noodles & Vermicelli"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b3",
+    "name": "Instant Noodles"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b4",
+    "name": "Soup & Soup Mixes"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b5",
+    "name": "Breakfast Cereals"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b6",
+    "name": "Energy Bars"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b7",
+    "name": "Frozen Snacks"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b8",
+    "name": "Ketchup & Sauces"
+  },
+  {
+    "_id": "6970956db7f81cb0793484b9",
+    "name": "Jams & Spreads"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ba",
+    "name": "Pickles & Chutneys"
+  },
+  {
+    "_id": "6970956db7f81cb0793484bb",
+    "name": "Honey"
+  },
+  {
+    "_id": "6970956db7f81cb0793484bc",
+    "name": "Premium Chips & Crisps"
+  },
+  {
+    "_id": "6970956db7f81cb0793484bd",
+    "name": "Premium Nachos"
+  },
+  {
+    "_id": "6970956db7f81cb0793484be",
+    "name": "Premium Popcorn"
+  },
+  {
+    "_id": "6970956db7f81cb0793484bf",
+    "name": "Premium Biscuits & Cookies"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c0",
+    "name": "Premium Rusks & Wafers"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c1",
+    "name": "Premium Namkeen & Savouries"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c2",
+    "name": "Premium Chocolates & Candies"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c3",
+    "name": "Premium Indian Sweets"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c4",
+    "name": "Premium Healthy Snacks"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c5",
+    "name": "Premium Pasta & Macaroni"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c6",
+    "name": "Premium Noodles & Vermicelli"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c7",
+    "name": "Premium Instant Noodles"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c8",
+    "name": "Premium Soup & Soup Mixes"
+  },
+  {
+    "_id": "6970956db7f81cb0793484c9",
+    "name": "Premium Breakfast Cereals"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ca",
+    "name": "Premium Energy Bars"
+  },
+  {
+    "_id": "6970956db7f81cb0793484cb",
+    "name": "Premium Frozen Snacks"
+  },
+  {
+    "_id": "6970956db7f81cb0793484cc",
+    "name": "Premium Ketchup & Sauces"
+  },
+  {
+    "_id": "6970956db7f81cb0793484cd",
+    "name": "Premium Jams & Spreads"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ce",
+    "name": "Premium Pickles & Chutneys"
+  },
+  {
+    "_id": "6970956db7f81cb0793484cf",
+    "name": "Premium Honey"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d0",
+    "name": "Tea"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d1",
+    "name": "Coffee"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d2",
+    "name": "Fruit Juices"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d3",
+    "name": "Soft Drinks"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d4",
+    "name": "Energy Drinks"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d5",
+    "name": "Health Drinks"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d6",
+    "name": "Water"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d7",
+    "name": "Soda & Mixers"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d8",
+    "name": "Syrups & Concentrates"
+  },
+  {
+    "_id": "6970956db7f81cb0793484d9",
+    "name": "Organic Tea"
+  },
+  {
+    "_id": "6970956db7f81cb0793484da",
+    "name": "Green Tea"
+  },
+  {
+    "_id": "6970956db7f81cb0793484db",
+    "name": "Herbal Tea"
+  },
+  {
+    "_id": "6970956db7f81cb0793484dc",
+    "name": "Ground Coffee"
+  },
+  {
+    "_id": "6970956db7f81cb0793484dd",
+    "name": "Instant Coffee"
+  },
+  {
+    "_id": "6970956db7f81cb0793484de",
+    "name": "Cold Coffee"
+  },
+  {
+    "_id": "6970956db7f81cb0793484df",
+    "name": "Bath & Body"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e0",
+    "name": "Hair Care"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e1",
+    "name": "Skin Care"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e2",
+    "name": "Oral Care"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e3",
+    "name": "Fragrances"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e4",
+    "name": "Face Wash"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e5",
+    "name": "Shower Gel"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e6",
+    "name": "Soaps"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e7",
+    "name": "Shampoo"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e8",
+    "name": "Conditioner"
+  },
+  {
+    "_id": "6970956db7f81cb0793484e9",
+    "name": "Hair Oil"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ea",
+    "name": "Hair Color"
+  },
+  {
+    "_id": "6970956db7f81cb0793484eb",
+    "name": "Toothpaste"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ec",
+    "name": "Toothbrush"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ed",
+    "name": "Mouthwash"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ee",
+    "name": "Hand Wash"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ef",
+    "name": "Sanitizers"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f0",
+    "name": "Body Lotions"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f1",
+    "name": "Face Creams"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f2",
+    "name": "Deodorants"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f3",
+    "name": "Perfumes"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f4",
+    "name": "Shaving Needs"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f5",
+    "name": "Feminine Hygiene"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f6",
+    "name": "Men's Grooming"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f7",
+    "name": "Makeup"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f8",
+    "name": "Detergents & Bars"
+  },
+  {
+    "_id": "6970956db7f81cb0793484f9",
+    "name": "Dishwashing"
+  },
+  {
+    "_id": "6970956db7f81cb0793484fa",
+    "name": "Toilet Cleaners"
+  },
+  {
+    "_id": "6970956db7f81cb0793484fb",
+    "name": "Floor Cleaners"
+  },
+  {
+    "_id": "6970956db7f81cb0793484fc",
+    "name": "Glass Cleaners"
+  },
+  {
+    "_id": "6970956db7f81cb0793484fd",
+    "name": "Kitchen Cleaners"
+  },
+  {
+    "_id": "6970956db7f81cb0793484fe",
+    "name": "Fabric Care"
+  },
+  {
+    "_id": "6970956db7f81cb0793484ff",
+    "name": "Disposables"
+  },
+  {
+    "_id": "6970956db7f81cb079348500",
+    "name": "Garbage Bags"
+  },
+  {
+    "_id": "6970956db7f81cb079348501",
+    "name": "Tissues & Wipes"
+  },
+  {
+    "_id": "6970956db7f81cb079348502",
+    "name": "Air Fresheners"
+  },
+  {
+    "_id": "6970956db7f81cb079348503",
+    "name": "Repellents"
+  },
+  {
+    "_id": "6970956db7f81cb079348504",
+    "name": "Shoe Care"
+  },
+  {
+    "_id": "6970956db7f81cb079348505",
+    "name": "Car Care"
+  },
+  {
+    "_id": "6970956db7f81cb079348506",
+    "name": "Pooja Needs"
+  },
+  {
+    "_id": "6970956db7f81cb079348507",
+    "name": "Brooms & Mops"
+  },
+  {
+    "_id": "6970956db7f81cb079348508",
+    "name": "Cleaning Tools"
+  },
+  {
+    "_id": "6970956db7f81cb079348509",
+    "name": "Stationery"
+  },
+  {
+    "_id": "6970956db7f81cb07934850a",
+    "name": "Electricals"
+  },
+  {
+    "_id": "6970956db7f81cb07934850b",
+    "name": "Bulbs & Batteries"
+  },
+  {
+    "_id": "6970956db7f81cb07934850c",
+    "name": "Diapers & Wipes"
+  },
+  {
+    "_id": "6970956db7f81cb07934850d",
+    "name": "Baby Food"
+  },
+  {
+    "_id": "6970956db7f81cb07934850e",
+    "name": "Baby Skincare"
+  },
+  {
+    "_id": "6970956db7f81cb07934850f",
+    "name": "Baby Bath"
+  },
+  {
+    "_id": "6970956db7f81cb079348510",
+    "name": "Baby Oil"
+  },
+  {
+    "_id": "6970956db7f81cb079348511",
+    "name": "Baby Powder"
+  },
+  {
+    "_id": "6970956db7f81cb079348512",
+    "name": "Baby Accessories"
+  },
+  {
+    "_id": "6970956db7f81cb079348513",
+    "name": "Feeding Bottles"
+  },
+  {
+    "_id": "6970956db7f81cb079348514",
+    "name": "Baby Oral Care"
+  },
+  {
+    "_id": "6970956db7f81cb079348515",
+    "name": "Baby Detergents"
+  },
+  {
+    "_id": "6970956db7f81cb079348516",
+    "name": "Cookware"
+  },
+  {
+    "_id": "6970956db7f81cb079348517",
+    "name": "Storage & Containers"
+  },
+  {
+    "_id": "6970956db7f81cb079348518",
+    "name": "Bottles & Flasks"
+  },
+  {
+    "_id": "6970956db7f81cb079348519",
+    "name": "Tiffin Boxes"
+  },
+  {
+    "_id": "6970956db7f81cb07934851a",
+    "name": "Dining & Serving"
+  },
+  {
+    "_id": "6970956db7f81cb07934851b",
+    "name": "Cutlery"
+  },
+  {
+    "_id": "6970956db7f81cb07934851c",
+    "name": "Kitchen Tools"
+  },
+  {
+    "_id": "6970956db7f81cb07934851d",
+    "name": "Bakeware"
+  },
+  {
+    "_id": "6970956db7f81cb07934851e",
+    "name": "Gas Stoves"
+  },
+  {
+    "_id": "6970956db7f81cb07934851f",
+    "name": "Pressure Cookers"
+  },
+  {
+    "_id": "6970956db7f81cb079348520",
+    "name": "Dog Food"
+  },
+  {
+    "_id": "6970956db7f81cb079348521",
+    "name": "Cat Food"
+  },
+  {
+    "_id": "6970956db7f81cb079348522",
+    "name": "Pet Accessories"
+  },
+  {
+    "_id": "6970956db7f81cb079348523",
+    "name": "Pet Grooming"
+  },
+  {
+    "_id": "6970956db7f81cb079348524",
+    "name": "Pet Toys"
+  },
+  {
+    "_id": "6970956db7f81cb079348525",
+    "name": "Fish Food"
+  },
+  {
+    "_id": "6970956db7f81cb079348526",
+    "name": "Bird Food"
+  },
+  {
+    "_id": "6970956db7f81cb079348527",
+    "name": "Small Animal Food"
+  },
+  {
+    "_id": "6970956db7f81cb079348528",
+    "name": "Pet Hygiene"
+  },
+  {
+    "_id": "6970956db7f81cb079348529",
+    "name": "Pet Health"
+  },
+  {
+    "_id": "6970956db7f81cb07934852a",
+    "name": "Fresh Chicken"
+  },
+  {
+    "_id": "6970956db7f81cb07934852b",
+    "name": "Fresh Mutton"
+  },
+  {
+    "_id": "6970956db7f81cb07934852c",
+    "name": "Fresh Fish"
+  },
+  {
+    "_id": "6970956db7f81cb07934852d",
+    "name": "Prawns & Crabs"
+  },
+  {
+    "_id": "6970956db7f81cb07934852e",
+    "name": "Eggs (Non-Veg)"
+  },
+  {
+    "_id": "6970956db7f81cb07934852f",
+    "name": "Frozen Meat"
+  },
+  {
+    "_id": "6970956db7f81cb079348530",
+    "name": "Dried Fish"
+  },
+  {
+    "_id": "6970956db7f81cb079348531",
+    "name": "Marinades"
+  },
+  {
+    "_id": "6970956db7f81cb079348532",
+    "name": "Cold Cuts"
+  },
+  {
+    "_id": "6970956db7f81cb079348533",
+    "name": "Sausages"
+  },
+  {
+    "_id": "6970956db7f81cb079348534",
+    "name": "Oils & Vinegar"
+  },
+  {
+    "_id": "6970956db7f81cb079348535",
+    "name": "Dairy & Cheese"
+  },
+  {
+    "_id": "6970956db7f81cb079348536",
+    "name": "Snacks"
+  },
+  {
+    "_id": "6970956db7f81cb079348537",
+    "name": "Pasta & Sauces"
+  },
+  {
+    "_id": "6970956db7f81cb079348538",
+    "name": "Cereals & Granola"
+  },
+  {
+    "_id": "6970956db7f81cb079348539",
+    "name": "Chocolates & Biscuits"
+  },
+  {
+    "_id": "6970956db7f81cb07934853a",
+    "name": "Sauces & Condiments"
+  },
+  {
+    "_id": "6970956db7f81cb07934853b",
+    "name": "Beverages"
+  },
+  {
+    "_id": "6970956db7f81cb07934853c",
+    "name": "Baking Needs"
+  },
+  {
+    "_id": "6970956db7f81cb07934853d",
+    "name": "Canned Food"
+  }
+]
