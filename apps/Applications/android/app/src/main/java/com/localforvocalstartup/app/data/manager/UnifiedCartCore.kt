@@ -20,7 +20,8 @@ enum class CartType(val id: String) {
 data class CartItem(
     val productId: String,
     var quantity: Int,
-    val product: Product
+    val product: Product,
+    val selectedOfferIds: MutableSet<String> = mutableSetOf()
 ) {
     val id: String get() = productId
 }
@@ -116,6 +117,15 @@ object UnifiedCartCore {
         rebuildIndex(type)
         scheduleSave(type)
         HapticManager.impact()
+    }
+
+    fun addOffersToItem(type: CartType, productId: String, offerIds: List<String>) {
+        val cartItems = items[type] ?: return
+        val index = cartItems.indexOfFirst { it.productId == productId }
+        if (index != -1) {
+            cartItems[index].selectedOfferIds.addAll(offerIds)
+            scheduleSave(type)
+        }
     }
 
     fun removeItem(type: CartType, productId: String) {

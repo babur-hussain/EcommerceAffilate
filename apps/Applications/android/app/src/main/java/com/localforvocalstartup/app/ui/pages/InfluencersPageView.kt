@@ -246,6 +246,7 @@ fun InfluencerTrendingCard(item: Influencer) {
             .height(220.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0xFF1E1E1E))
+            .clickable { NavigationManager.navigate("influencer/${item.id}") }
     ) {
         AsyncImage(
             model = item.image,
@@ -291,6 +292,7 @@ fun InfluencerFeaturedCard(item: FeaturedContent) {
             .height(400.dp)
             .clip(RoundedCornerShape(30.dp))
             .background(Color(0xFF1A1A1A))
+            .clickable { NavigationManager.navigate("influencer/${item.id}") }
     ) {
         AsyncImage(
             model = item.image,
@@ -346,7 +348,7 @@ fun InfluencerFeaturedCard(item: FeaturedContent) {
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color.White)
-                    .clickable { }
+                    .clickable { NavigationManager.navigate("influencer/${item.id}") }
                     .padding(vertical = 14.dp),
                 contentAlignment = Alignment.Center
             ) {

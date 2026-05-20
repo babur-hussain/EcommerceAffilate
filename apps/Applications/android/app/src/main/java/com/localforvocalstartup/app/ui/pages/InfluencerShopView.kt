@@ -69,16 +69,38 @@ data class ShopProductDetail(
 }
 
 @Composable
-fun InfluencerShopView() {
+fun InfluencerShopView(
+    influencerId: String? = null,
+    onBack: (() -> Unit)? = null
+) {
+    val isMyShop = influencerId == null
     val user = AuthManager.userState.collectAsState().value
-    val affiliateProducts = user?.affiliateLinks ?: emptyList()
+
+    var mockAffiliateProducts by remember { mutableStateOf<List<AffiliateLink>>(emptyList()) }
+    val affiliateProducts = if (isMyShop) (user?.affiliateLinks ?: emptyList()) else mockAffiliateProducts
     
     var productDetails by remember { mutableStateOf<Map<String, ShopProductDetail>>(emptyMap()) }
     var isLoading by remember { mutableStateOf(false) }
     var stories by remember { mutableStateOf<List<Story>>(emptyList()) }
     var showStoryPlayer by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(influencerId) {
+        if (!isMyShop) {
+            try {
+                val products = NetworkClient.apiService.getProductsRaw(limit = 10).products
+                mockAffiliateProducts = products.map { 
+                    AffiliateLink(
+                        id = java.util.UUID.randomUUID().toString(),
+                        productId = it.id, 
+                        productName = it.name ?: it.title ?: "Product", 
+                        link = ""
+                    ) 
+                }
+            } catch (e: Exception) {}
+        }
+    }
+
+    LaunchedEffect(affiliateProducts) {
         if (affiliateProducts.isNotEmpty()) {
             isLoading = true
             val updatedDetails = mutableMapOf<String, ShopProductDetail>()
@@ -170,8 +192,12 @@ fun InfluencerShopView() {
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("${user?.name ?: "Influencer"}'s Boutique", fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, color = ShopTextMain)
-                    Text("Sharing my favorite product recommendations ✨", fontSize = 14.sp, color = ShopTextSecondary, modifier = Modifier.padding(horizontal = 40.dp), textAlign = TextAlign.Center)
+                    
+                    val displayName = if (isMyShop) user?.name ?: "Influencer" else "Influencer"
+                    val displayDesc = if (isMyShop) "Sharing my favorite product recommendations ✨" else "Check out my favorite picks!"
+
+                    Text("$displayName's Boutique", fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, color = ShopTextMain)
+                    Text(displayDesc, fontSize = 14.sp, color = ShopTextSecondary, modifier = Modifier.padding(horizontal = 40.dp), textAlign = TextAlign.Center)
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(
@@ -234,7 +260,7 @@ fun InfluencerShopView() {
             // Product Grid
             items(affiliateProducts) { link ->
                 val detail = productDetails[link.productId]
-                val curatorName = user?.name?.split(" ")?.firstOrNull() ?: "Me"
+                val curatorName = if (isMyShop) (user?.name?.split(" ")?.firstOrNull() ?: "Me") else "INFLUENCER"
                 
                 Column(
                     modifier = Modifier
@@ -286,19 +312,26 @@ fun InfluencerShopView() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = { NavigationManager.navigate("home") }, modifier = Modifier.size(40.dp).background(Color.White.copy(alpha = 0.9f), CircleShape)) {
+                IconButton(
+                    onClick = { 
+                        if (onBack != null) onBack() else NavigationManager.navigate("home") 
+                    }, 
+                    modifier = Modifier.size(40.dp).background(Color.White.copy(alpha = 0.9f), CircleShape)
+                ) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = ShopTextMain, modifier = Modifier.size(20.dp))
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (!user?.profileImage.isNullOrEmpty()) {
+                    if (isMyShop && !user?.profileImage.isNullOrEmpty()) {
                         AsyncImage(model = user?.profileImage, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(28.dp).clip(CircleShape))
                     } else {
                         Box(modifier = Modifier.size(28.dp).clip(CircleShape).background(Color.Gray.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
                             Icon(Icons.Default.Person, contentDescription = null, tint = ShopTextSecondary, modifier = Modifier.size(12.dp))
                         }
                     }
-                    Text("${user?.name ?: "My"}'s Shop", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShopTextMain)
+                    
+                    val headerName = if (isMyShop) "${user?.name ?: "My"}'s Shop" else "Influencer Shop"
+                    Text(headerName, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShopTextMain)
                 }
 
                 IconButton(onClick = { /* Share */ }, modifier = Modifier.size(40.dp).background(Color.White.copy(alpha = 0.9f), CircleShape)) {

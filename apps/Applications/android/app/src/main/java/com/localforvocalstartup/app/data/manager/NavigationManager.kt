@@ -61,6 +61,9 @@ object NavigationManager {
     private val _groceryProductId = MutableStateFlow<String?>(null)
     val groceryProductId: StateFlow<String?> = _groceryProductId.asStateFlow()
 
+    private val _influencerId = MutableStateFlow<String?>(null)
+    val influencerId: StateFlow<String?> = _influencerId.asStateFlow()
+
     private val _isGroceryTabActive = MutableStateFlow(false)
     val isGroceryTabActive: StateFlow<Boolean> = _isGroceryTabActive.asStateFlow()
 
@@ -88,6 +91,14 @@ object NavigationManager {
 
     fun dismissGroceryProduct() {
         _groceryProductId.value = null
+    }
+
+    fun openInfluencer(id: String) {
+        _influencerId.value = id
+    }
+
+    fun dismissInfluencer() {
+        _influencerId.value = null
     }
 
     private val _productId = MutableStateFlow<String?>(null)
@@ -118,6 +129,11 @@ object NavigationManager {
     fun navigate(url: String) {
         if (url.startsWith("product/")) {
             openProduct(url.removePrefix("product/"))
+            return
+        }
+
+        if (url.startsWith("influencer/")) {
+            openInfluencer(url.removePrefix("influencer/"))
             return
         }
 

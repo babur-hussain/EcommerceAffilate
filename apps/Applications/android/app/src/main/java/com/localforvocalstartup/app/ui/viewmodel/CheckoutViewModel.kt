@@ -258,11 +258,16 @@ class CheckoutViewModel(
                 _showLoginPrompt.value = true
                 return
             }
-        // Use saved address or a blank default so payment can proceed even without one
-        val address = currentUserAddress ?: com.localforvocalstartup.app.data.model.UserAddress(
-            _id = "", userId = "", name = "", phone = "",
-            addressLine1 = "", city = "", state = "", pincode = "", isDefault = false
-        )
+
+        val address = currentUserAddress ?: return run {
+            _errorMessage.value = "Please select a delivery address to proceed."
+            return
+        }
+        
+        if (address.addressLine1.isBlank() || address.city.isBlank() || address.pincode.isBlank()) {
+            _errorMessage.value = "Please ensure your delivery address is complete (Line 1, City, and Pincode)."
+            return
+        }
 
         _isProcessingPayment.value = true
 
@@ -326,8 +331,24 @@ class CheckoutViewModel(
                 _createdOrderNumber.value = response._id
                 AppLogger.debug("Order created: ${response._id}")
             } catch (e: Exception) {
-                AppLogger.error("Order creation failed: ${e.message}")
-                _errorMessage.value = "Failed to create order: ${e.message}"
+                var errorMsg = e.message
+                if (e is retrofit2.HttpException) {
+                    try {
+                        val errorBody = e.response()?.errorBody()?.string()
+                        if (errorBody != null) {
+                            val jsonObject = org.json.JSONObject(errorBody)
+                            if (jsonObject.has("error")) {
+                                errorMsg = jsonObject.getString("error")
+                            } else {
+                                errorMsg = errorBody
+                            }
+                        }
+                    } catch (ex: Exception) {
+                        // ignore parsing error
+                    }
+                }
+                AppLogger.error("Order creation failed: $errorMsg")
+                _errorMessage.value = "Failed to create order: $errorMsg"
                 _isProcessingPayment.value = false
                 return@launch
             }

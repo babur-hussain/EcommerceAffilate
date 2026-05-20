@@ -291,25 +291,11 @@ fun ProductDetailScreen(
                 showLastChancePopup = false
             },
             onGoToCheckout = { selectedIds ->
-                // Add selected last-chance offers to the correct cart/basket
                 if (popupProduct != null && selectedIds.isNotEmpty()) {
-                    val allOffers = popupProduct.lastChanceOffers ?: emptyList()
-                    allOffers.forEachIndexed { index, offer ->
-                        val offerId = offer.id ?: offer._id ?: offer.tempId(index)
-                        if (selectedIds.contains(offerId)) {
-                            val offerProduct = Product(
-                                id = offerId,
-                                name = offer.title ?: "Offer Item",
-                                price = offer.offerPrice,
-                                mrp = offer.originalPrice,
-                                rawImages = listOfNotNull(offer.image)
-                            )
-                            if (isGroceryProduct) {
-                                BasketManager.addToBasket(offerProduct, 1)
-                            } else {
-                                scope.launch { CartManager.addToCart(offerProduct, 1) }
-                            }
-                        }
+                    if (isGroceryProduct) {
+                        BasketManager.addOffersToItem(popupProduct.id, selectedIds.toList())
+                    } else {
+                        CartManager.addOffersToItem(popupProduct.id, selectedIds.toList())
                     }
                 }
                 showLastChancePopup = false
@@ -317,25 +303,11 @@ fun ProductDetailScreen(
                 NavigationManager.navigate("cart")
             },
             onContinueShopping = { selectedIds ->
-                // Add selected last-chance offers, then dismiss to continue browsing
                 if (popupProduct != null && selectedIds.isNotEmpty()) {
-                    val allOffers = popupProduct.lastChanceOffers ?: emptyList()
-                    allOffers.forEachIndexed { index, offer ->
-                        val offerId = offer.id ?: offer._id ?: offer.tempId(index)
-                        if (selectedIds.contains(offerId)) {
-                            val offerProduct = Product(
-                                id = offerId,
-                                name = offer.title ?: "Offer Item",
-                                price = offer.offerPrice,
-                                mrp = offer.originalPrice,
-                                rawImages = listOfNotNull(offer.image)
-                            )
-                            if (isGroceryProduct) {
-                                BasketManager.addToBasket(offerProduct, 1)
-                            } else {
-                                scope.launch { CartManager.addToCart(offerProduct, 1) }
-                            }
-                        }
+                    if (isGroceryProduct) {
+                        BasketManager.addOffersToItem(popupProduct.id, selectedIds.toList())
+                    } else {
+                        CartManager.addOffersToItem(popupProduct.id, selectedIds.toList())
                     }
                 }
                 showLastChancePopup = false

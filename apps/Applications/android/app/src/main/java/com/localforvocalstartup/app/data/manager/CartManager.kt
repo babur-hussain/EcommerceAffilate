@@ -43,6 +43,11 @@ object CartManager {
         syncFromCore()
     }
 
+    fun addOffersToItem(productId: String, offerIds: List<String>) {
+        core.addOffersToItem(type, productId, offerIds)
+        syncFromCore()
+    }
+
     private fun syncFromCore() {
         _items.value = core.getItems(type)
     }

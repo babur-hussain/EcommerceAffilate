@@ -48,6 +48,11 @@ object BasketManager {
         syncFromCore()
     }
 
+    fun addOffersToItem(productId: String, offerIds: List<String>) {
+        core.addOffersToItem(type, productId, offerIds)
+        syncFromCore()
+    }
+
     fun getItemCount(productId: String): Int {
         return core.getItemCount(type, productId)
     }

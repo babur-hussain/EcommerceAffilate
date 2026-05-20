@@ -39,9 +39,11 @@ fun ContentView() {
     val isInfluencersTabActive by NavigationManager.isInfluencersTabActive.collectAsState()
     val productId by NavigationManager.productId.collectAsState()
     val groceryProductId by NavigationManager.groceryProductId.collectAsState()
+    val influencerId by NavigationManager.influencerId.collectAsState()
 
     val canGoBack = productId != null || 
                     groceryProductId != null || 
+                    influencerId != null ||
                     activeOverlay != null || 
                     currentTab != MainTab.HOME
 
@@ -49,6 +51,7 @@ fun ContentView() {
         when {
             productId != null -> NavigationManager.dismissProduct()
             groceryProductId != null -> NavigationManager.dismissGroceryProduct()
+            influencerId != null -> NavigationManager.dismissInfluencer()
             activeOverlay != null -> NavigationManager.goBack()
             currentTab != MainTab.HOME -> NavigationManager.navigate("home")
         }
@@ -58,7 +61,7 @@ fun ContentView() {
         contentWindowInsets = WindowInsets(0.dp),
         containerColor = Color.White,
         bottomBar = {
-            if (activeOverlay == null && productId == null && groceryProductId == null && 
+            if (activeOverlay == null && productId == null && groceryProductId == null && influencerId == null && 
                 !(currentTab == MainTab.HOME && (isGroceryTabActive || isServicesTabActive || isInfluencersTabActive))) {
                 NavigationBar(
                     modifier = Modifier.height(65.dp),
@@ -127,7 +130,7 @@ fun ContentView() {
             !isServicesTabActive && 
             !isInfluencersTabActive
             
-        val shouldDrawBehindStatusBar = (isShoppingTab && activeOverlay == null && productId == null && groceryProductId == null) || activeOverlay == OverlayDestination.CATEGORY_PAGE
+        val shouldDrawBehindStatusBar = (isShoppingTab && activeOverlay == null && productId == null && groceryProductId == null && influencerId == null) || activeOverlay == OverlayDestination.CATEGORY_PAGE
         
         val baseModifier = Modifier
             .fillMaxSize()
@@ -181,6 +184,15 @@ fun ContentView() {
                     productId = id,
                     onBack = { NavigationManager.dismissGroceryProduct() }
                 )
+            }
+
+            influencerId?.let { id ->
+                Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
+                    InfluencerShopView(
+                        influencerId = id,
+                        onBack = { NavigationManager.dismissInfluencer() }
+                    )
+                }
             }
         }
     }
